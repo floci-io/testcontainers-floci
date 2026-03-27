@@ -12,10 +12,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: write
-  checks: write
-  pull-requests: write
-  security-events: write
+      contents: read
 
 jobs:
   commit-lint:
@@ -31,6 +28,11 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      checks: write
+      pull-requests: write
+      security-events: write
     steps:
       - uses: actions/checkout@v6
 
