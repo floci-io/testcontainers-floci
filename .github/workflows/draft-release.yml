@@ -1,4 +1,4 @@
-name: Release
+name: Draft Release
 
 on:
   push:
@@ -9,7 +9,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  release-please:
+  draft-release:
     runs-on: ubuntu-latest
     steps:
       - uses: googleapis/release-please-action@v4
