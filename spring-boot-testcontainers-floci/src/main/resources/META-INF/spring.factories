@@ -1,2 +1,2 @@
 org.springframework.boot.autoconfigure.service.connection.ConnectionDetailsFactory=\
-  io.github.hectorvent.testcontainers.floci.spring.FlociAwsContainerConnectionDetailsFactory
+  io.floci.testcontainers.spring.FlociAwsContainerConnectionDetailsFactory

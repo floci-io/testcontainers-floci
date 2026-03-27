@@ -1,1 +1,1 @@
-io.github.hectorvent.testcontainers.floci.spring.FlociAwsAutoConfiguration
+io.floci.testcontainers.spring.FlociAwsAutoConfiguration

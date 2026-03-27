@@ -4,14 +4,14 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.github.hectorvent</groupId>
+    <groupId>io.floci</groupId>
     <artifactId>testcontainers-floci-parent</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Testcontainers Floci Parent</name>
     <description>Testcontainers module for Floci — a free, open-source local AWS emulator</description>
-    <url>https://github.com/hectorvent/testcontainers-floci</url>
+    <url>https://github.com/floci-io/testcontainers-floci</url>
 
     <licenses>
         <license>
@@ -29,9 +29,9 @@
     </developers>
 
     <scm>
-        <connection>scm:git:git://github.com/hectorvent/testcontainers-floci.git</connection>
-        <developerConnection>scm:git:ssh://github.com:hectorvent/testcontainers-floci.git</developerConnection>
-        <url>https://github.com/hectorvent/testcontainers-floci</url>
+        <connection>scm:git:git://github.com/floci-io/testcontainers-floci.git</connection>
+        <developerConnection>scm:git:ssh://github.com:floci-io/testcontainers-floci.git</developerConnection>
+        <url>https://github.com/floci-io/testcontainers-floci</url>
     </scm>
 
     <modules>
@@ -57,7 +57,7 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>io.github.hectorvent</groupId>
+                <groupId>io.floci</groupId>
                 <artifactId>testcontainers-floci</artifactId>
                 <version>${project.version}</version>
             </dependency>

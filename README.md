@@ -1,7 +1,7 @@
 # Testcontainers Floci
 
-[![CI](https://github.com/hectorvent/testcontainers-floci/actions/workflows/ci.yml/badge.svg)](https://github.com/hectorvent/testcontainers-floci/actions/workflows/ci.yml)
-[![Maven Central](https://img.shields.io/maven-central/v/io.github.hectorvent/testcontainers-floci)](https://central.sonatype.com/artifact/io.github.hectorvent/testcontainers-floci)
+[![CI](https://github.com/floci-io/testcontainers-floci/actions/workflows/ci.yml/badge.svg)](https://github.com/floci-io/testcontainers-floci/actions/workflows/ci.yml)
+[![Maven Central](https://img.shields.io/maven-central/v/io.floci/testcontainers-floci)](https://central.sonatype.com/artifact/io.floci/testcontainers-floci)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 [Testcontainers](https://testcontainers.com/) module for [Floci](https://github.com/hectorvent/floci) — a free, open-source local AWS emulator.
@@ -33,7 +33,7 @@ The core module provides a `FlociContainer` class that starts and manages a Floc
 
 ```xml
 <dependency>
-    <groupId>io.github.hectorvent</groupId>
+    <groupId>io.floci</groupId>
     <artifactId>testcontainers-floci</artifactId>
     <version>${testcontainers-floci.version}</version>
     <scope>test</scope>
@@ -43,13 +43,13 @@ The core module provides a `FlociContainer` class that starts and manages a Floc
 **Gradle (Kotlin DSL):**
 
 ```kotlin
-testImplementation("io.github.hectorvent:testcontainers-floci:${testcontainersFlociVersion}")
+testImplementation("io.floci:testcontainers-floci:${testcontainersFlociVersion}")
 ```
 
 **Gradle (Groovy DSL):**
 
 ```groovy
-testImplementation 'io.github.hectorvent:testcontainers-floci:${testcontainersFlociVersion}'
+testImplementation 'io.floci:testcontainers-floci:${testcontainersFlociVersion}'
 ```
 
 ### Usage
@@ -57,7 +57,7 @@ testImplementation 'io.github.hectorvent:testcontainers-floci:${testcontainersFl
 #### Java
 
 ```java
-import io.github.hectorvent.testcontainers.floci.FlociContainer;
+import io.floci.testcontainers.FlociContainer;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -97,7 +97,7 @@ class S3IntegrationTest {
 #### Kotlin
 
 ```kotlin
-import io.github.hectorvent.testcontainers.floci.FlociContainer
+import io.floci.testcontainers.FlociContainer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.testcontainers.junit.jupiter.Container
@@ -180,7 +180,7 @@ This module integrates `FlociContainer` with [Spring Boot](https://spring.io/pro
 
 ```xml
 <dependency>
-    <groupId>io.github.hectorvent</groupId>
+    <groupId>io.floci</groupId>
     <artifactId>spring-boot-testcontainers-floci</artifactId>
     <version>${testcontainers-floci.version}</version>
     <scope>test</scope>
@@ -200,14 +200,14 @@ You also need a Spring Cloud AWS starter for the services you want to test, for 
 **Gradle (Kotlin DSL):**
 
 ```kotlin
-testImplementation("io.github.hectorvent:spring-boot-testcontainers-floci:${testcontainersFlociVersion}")
+testImplementation("io.floci:spring-boot-testcontainers-floci:${testcontainersFlociVersion}")
 testImplementation("io.awspring.cloud:spring-cloud-aws-starter-s3")
 ```
 
 **Gradle (Groovy DSL):**
 
 ```groovy
-testImplementation 'io.github.hectorvent:spring-boot-testcontainers-floci:${testcontainersFlociVersion}'
+testImplementation 'io.floci:spring-boot-testcontainers-floci:${testcontainersFlociVersion}'
 testImplementation 'io.awspring.cloud:spring-cloud-aws-starter-s3'
 ```
 
@@ -216,7 +216,7 @@ testImplementation 'io.awspring.cloud:spring-cloud-aws-starter-s3'
 #### Java
 
 ```java
-import io.github.hectorvent.testcontainers.floci.FlociContainer;
+import io.floci.testcontainers.FlociContainer;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -251,7 +251,7 @@ class S3IntegrationTest {
 #### Kotlin
 
 ```kotlin
-import io.github.hectorvent.testcontainers.floci.FlociContainer
+import io.floci.testcontainers.FlociContainer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired

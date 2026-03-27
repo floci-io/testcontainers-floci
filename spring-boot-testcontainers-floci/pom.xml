@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>io.github.hectorvent</groupId>
+        <groupId>io.floci</groupId>
         <artifactId>testcontainers-floci-parent</artifactId>
         <version>0.1.0-SNAPSHOT</version>
     </parent>
@@ -35,7 +35,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>io.github.hectorvent</groupId>
+            <groupId>io.floci</groupId>
             <artifactId>testcontainers-floci</artifactId>
         </dependency>
         <dependency>
