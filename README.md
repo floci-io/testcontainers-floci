@@ -321,12 +321,6 @@ class FlociTestConfig {
 }
 ```
 
-### Compatibility
-
-| Module version | Spring Boot | Spring Cloud AWS | Testcontainers |
-|---------------|-------------|------------------|----------------|
-| 0.x           | 4.0.x       | 4.0.x            | 2.x            |
-
 ---
 
 ## Conventional Commits
