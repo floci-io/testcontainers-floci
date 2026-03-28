@@ -7,9 +7,26 @@ updates:
     open-pull-requests-limit: 10
     labels:
       - dependencies
+  - package-ecosystem: maven
+    directory: /
+    target-branch: releases/1.x
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    labels:
+      - dependencies
 
   - package-ecosystem: github-actions
     directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - github-actions
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: releases/1.x
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
