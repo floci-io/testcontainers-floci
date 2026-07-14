@@ -5,6 +5,8 @@ import org.slf4j.event.Level;
 import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.images.builder.Transferable;
 
+import java.nio.file.Path;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -146,5 +148,22 @@ class FlociContainerTest {
             assertThat(container.execInContainer("test", "-f", "/tmp/floci-start-script-completed")
                     .getExitCode()).isZero();
         }
+    }
+
+    @Test
+    void shouldDeleteContainerOwnedPersistentStorage() throws Exception {
+        FlociContainer container = new FlociContainer()
+                .withStorageConfig(config -> config.randomHostPersistentPath());
+        Path persistentStorage = container.getStorageConfig().getHostPersistentPath().orElseThrow();
+        try {
+            container.start();
+            var result = container.execInContainer(
+                    "sh", "-c", "mkdir -p /app/data/restricted && touch /app/data/restricted/file && chmod 000 /app/data/restricted");
+            assertThat(result.getExitCode()).isZero();
+        } finally {
+            container.stop();
+        }
+
+        assertThat(persistentStorage).doesNotExist();
     }
 }
