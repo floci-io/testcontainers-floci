@@ -31,6 +31,10 @@ updates:
     labels:
       - dependencies
       - github-actions
+    groups:
+      codeql-group:
+        patterns:
+          - "github/codeql-action*"
   - package-ecosystem: github-actions
     directory: /
     target-branch: releases/1.x
@@ -40,3 +44,7 @@ updates:
     labels:
       - dependencies
       - github-actions
+    groups:
+      codeql-group:
+        patterns:
+          - "github/codeql-action*"
