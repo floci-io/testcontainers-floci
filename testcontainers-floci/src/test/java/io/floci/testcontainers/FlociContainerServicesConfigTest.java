@@ -592,6 +592,102 @@ class FlociContainerServicesConfigTest {
     }
 
     @Test
+    void shouldStoreIotConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withIotConfig(c -> c
+                    .mqttAutoStart(true)
+                    .mqttHost("127.0.0.1")
+                    .mqttPort(18830));
+
+            assertThat(container.getIotConfig().isMqttAutoStart()).isTrue();
+            assertThat(container.getIotConfig().getMqttHost()).isEqualTo("127.0.0.1");
+            assertThat(container.getIotConfig().getMqttPort()).isEqualTo(18830);
+        }
+    }
+
+    @Test
+    void shouldStoreIotDataConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withIotDataConfig(c -> c.enabled(false));
+
+            assertThat(container.getIotDataConfig().isEnabled()).isFalse();
+        }
+    }
+
+    @Test
+    void shouldStoreLightsailConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withLightsailConfig(c -> c.enabled(false));
+
+            assertThat(container.getLightsailConfig().isEnabled()).isFalse();
+        }
+    }
+
+    @Test
+    void shouldStoreCloudControlConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withCloudControlConfig(c -> c.enabled(false));
+
+            assertThat(container.getCloudControlConfig().isEnabled()).isFalse();
+        }
+    }
+
+    @Test
+    void shouldStoreS3VectorsConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withS3VectorsConfig(c -> c.enabled(false));
+
+            assertThat(container.getS3VectorsConfig().isEnabled()).isFalse();
+        }
+    }
+
+    @Test
+    void shouldStoreElasticBeanstalkConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withElasticBeanstalkConfig(c -> c.enabled(false));
+
+            assertThat(container.getElasticBeanstalkConfig().isEnabled()).isFalse();
+        }
+    }
+
+    @Test
+    void shouldStoreCodePipelineConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withCodePipelineConfig(c -> c.enabled(false));
+
+            assertThat(container.getCodePipelineConfig().isEnabled()).isFalse();
+        }
+    }
+
+    @Test
+    void shouldStoreAmazonMqConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withAmazonMqConfig(c -> c
+                    .mock(true)
+                    .defaultImage("rabbitmq:4-management"));
+
+            assertThat(container.getAmazonMqConfig().isMock()).isTrue();
+            assertThat(container.getAmazonMqConfig().getDefaultImage()).isEqualTo("rabbitmq:4-management");
+        }
+    }
+
+    @Test
+    void shouldStoreMemoryDbConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withMemoryDbConfig(c -> c
+                    .mock(true)
+                    .proxyPortRange(7000, 20)
+                    .defaultImage("valkey/valkey:8.1"));
+
+            assertThat(container.getMemoryDbConfig().isMock()).isTrue();
+            assertThat(container.getMemoryDbConfig().getProxyBasePort()).isEqualTo(7000);
+            assertThat(container.getMemoryDbConfig().getProxyMaxPort()).isEqualTo(7019);
+            assertThat(container.getMemoryDbConfig().getProxyPortsCount()).isEqualTo(20);
+            assertThat(container.getMemoryDbConfig().getDefaultImage()).isEqualTo("valkey/valkey:8.1");
+        }
+    }
+
+    @Test
     void shouldStoreDuckDbConfigOnContainer() {
         try (FlociContainer container = new FlociContainer()) {
             container.withDuckDbConfig(c -> c
