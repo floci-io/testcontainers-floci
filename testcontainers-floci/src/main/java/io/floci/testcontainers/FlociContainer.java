@@ -1404,7 +1404,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * new FlociContainer()
      *     .withMskConfig(c -> c
      *         .mock(true)
-     *         .defaultImage("redpandadata/redpanda:v24"));
+     *         .defaultImage("redpandadata/redpanda:v24")
+     *         .kafkaHostPortRange(9300, 10));
      * }</pre>
      *
      * @param configurer a consumer that receives a {@link MskConfig.Builder} to modify
@@ -1414,6 +1415,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         MskConfig.Builder builder = MskConfig.builder();
         configurer.accept(builder);
         this.mskConfig = builder.build();
+        configureExposedPorts();
         mskConfig.applyEnvVarsToContainer(this);
         return this;
     }
@@ -2493,6 +2495,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         neptuneConfig.applyExposedPortsToContainer(this);
         iotConfig.applyExposedPortsToContainer(this);
         memoryDbConfig.applyExposedPortsToContainer(this);
+        mskConfig.applyExposedPortsToContainer(this);
     }
 
     /**
