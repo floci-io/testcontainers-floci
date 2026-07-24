@@ -6,7 +6,7 @@
 
     <groupId>io.floci</groupId>
     <artifactId>testcontainers-floci-parent</artifactId>
-    <version>1.10.1-SNAPSHOT</version>
+    <version>1.11.0</version>
     <packaging>pom</packaging>
 
     <name>Testcontainers Floci Parent</name>
