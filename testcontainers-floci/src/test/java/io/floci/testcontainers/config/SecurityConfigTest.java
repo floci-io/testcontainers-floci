@@ -17,6 +17,7 @@ class SecurityConfigTest {
         assertThat(config.getExtraCorsAllowedHeaders()).isEmpty();
         assertThat(config.getExtraCorsExposeHeaders()).isEmpty();
         assertThat(config.isDisableCorsHeaders()).isFalse();
+        assertThat(config.isCorsAllowPrivateNetwork()).isFalse();
     }
 
     @Test
@@ -26,11 +27,13 @@ class SecurityConfigTest {
                 .extraCorsAllowedHeaders(List.of("X-Custom-Header"))
                 .extraCorsExposeHeaders(List.of("X-Expose-Header"))
                 .disableCorsHeaders(true)
+                .corsAllowPrivateNetwork(true)
                 .build();
         assertThat(config.getExtraCorsAllowedOrigins()).contains(List.of("https://example.com", "https://other.com"));
         assertThat(config.getExtraCorsAllowedHeaders()).contains(List.of("X-Custom-Header"));
         assertThat(config.getExtraCorsExposeHeaders()).contains(List.of("X-Expose-Header"));
         assertThat(config.isDisableCorsHeaders()).isTrue();
+        assertThat(config.isCorsAllowPrivateNetwork()).isTrue();
     }
 
     @Test
@@ -40,6 +43,7 @@ class SecurityConfigTest {
 
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_SECURITY_DISABLE_CORS_HEADERS", "false")
+                .containsEntry("FLOCI_SECURITY_CORS_ALLOW_PRIVATE_NETWORK", "false")
                 .doesNotContainKey("FLOCI_SECURITY_EXTRA_CORS_ALLOWED_ORIGINS")
                 .doesNotContainKey("FLOCI_SECURITY_EXTRA_CORS_ALLOWED_HEADERS")
                 .doesNotContainKey("FLOCI_SECURITY_EXTRA_CORS_EXPOSE_HEADERS");
@@ -53,11 +57,13 @@ class SecurityConfigTest {
                 .extraCorsAllowedHeaders(List.of("X-Custom-Header"))
                 .extraCorsExposeHeaders(List.of("X-Expose-Header"))
                 .disableCorsHeaders(true)
+                .corsAllowPrivateNetwork(true)
                 .build()
                 .applyEnvVarsToContainer(container);
 
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_SECURITY_DISABLE_CORS_HEADERS", "true")
+                .containsEntry("FLOCI_SECURITY_CORS_ALLOW_PRIVATE_NETWORK", "true")
                 .containsEntry("FLOCI_SECURITY_EXTRA_CORS_ALLOWED_ORIGINS", "https://example.com,https://other.com")
                 .containsEntry("FLOCI_SECURITY_EXTRA_CORS_ALLOWED_HEADERS", "X-Custom-Header")
                 .containsEntry("FLOCI_SECURITY_EXTRA_CORS_EXPOSE_HEADERS", "X-Expose-Header");
