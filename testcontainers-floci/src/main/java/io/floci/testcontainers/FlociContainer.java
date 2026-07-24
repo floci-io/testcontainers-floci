@@ -2374,7 +2374,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * new FlociContainer()
      *     .withMemoryDbConfig(c -> c
      *         .mock(true)
-     *         .proxyPortRange(6400, 6419)
+     *         .proxyPortRange(6400, 20)
      *         .defaultImage("valkey/valkey:9"));
      * }</pre>
      *
