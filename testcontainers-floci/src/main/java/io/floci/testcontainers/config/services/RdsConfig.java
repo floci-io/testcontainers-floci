@@ -10,7 +10,7 @@ import org.testcontainers.containers.Container;
  * RdsConfig config = RdsConfig.builder()
  *     .enabled(true)
  *     .mock(true)
- *     .proxyPortRange(7000, 7099)
+ *     .proxyPortRange(7000, 100)
  *     .defaultPostgresImage("postgres:16-alpine")
  *     .build();
  * }</pre>
