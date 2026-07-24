@@ -409,10 +409,14 @@ class FlociContainerServicesConfigTest {
         try (FlociContainer container = new FlociContainer()) {
             container.withMskConfig(c -> c
                     .mock(true)
-                    .defaultImage("redpandadata/redpanda:v24"));
+                    .defaultImage("redpandadata/redpanda:v24")
+                    .kafkaHostPortRange(9500, 20));
 
             assertThat(container.getMskConfig().isMock()).isTrue();
             assertThat(container.getMskConfig().getDefaultImage()).isEqualTo("redpandadata/redpanda:v24");
+            assertThat(container.getMskConfig().getKafkaHostPortBase()).isEqualTo(9500);
+            assertThat(container.getMskConfig().getKafkaHostPortsCount()).isEqualTo(20);
+            assertThat(container.getMskConfig().getKafkaHostPortMax()).isEqualTo(9519);
         }
     }
 
