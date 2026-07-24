@@ -1,6 +1,7 @@
 package io.floci.testcontainers;
 
 import io.floci.testcontainers.config.DuckDbConfig;
+import io.floci.testcontainers.config.ProtocolsConfig;
 import io.floci.testcontainers.config.SecurityConfig;
 import io.floci.testcontainers.config.StorageConfig;
 import io.floci.testcontainers.config.TlsConfig;
@@ -69,6 +70,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private StorageConfig storageConfig = StorageConfig.builder().build();
     private DuckDbConfig duckDbConfig = DuckDbConfig.builder().build();
     private SecurityConfig securityConfig = SecurityConfig.builder().build();
+    private ProtocolsConfig protocolsConfig = ProtocolsConfig.builder().build();
 
     // Services config
     private AcmConfig acmConfig = AcmConfig.builder().build();
@@ -2177,6 +2179,34 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     }
 
     /**
+     * Returns the current protocols configuration.
+     *
+     * @return the protocols configuration
+     */
+    public ProtocolsConfig getProtocolsConfig() {
+        return protocolsConfig;
+    }
+
+    /**
+     * Configures protocol-related settings such as strict RPC protocol claiming.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withProtocolsConfig(c -> c.strictClaiming(true));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link ProtocolsConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withProtocolsConfig(Consumer<ProtocolsConfig.Builder> configurer) {
+        ProtocolsConfig.Builder builder = ProtocolsConfig.builder();
+        configurer.accept(builder);
+        this.protocolsConfig = builder.build();
+        protocolsConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
      * Configures all exposed ports of the Floci container
      */
     private void configureExposedPorts() {
@@ -2201,6 +2231,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         storageConfig.applyEnvVarsToContainer(this);
         duckDbConfig.applyEnvVarsToContainer(this);
         securityConfig.applyEnvVarsToContainer(this);
+        protocolsConfig.applyEnvVarsToContainer(this);
 
         // Services config
         acmConfig.applyEnvVarsToContainer(this);
