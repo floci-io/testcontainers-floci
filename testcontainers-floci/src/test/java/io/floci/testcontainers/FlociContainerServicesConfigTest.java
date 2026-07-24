@@ -492,12 +492,16 @@ class FlociContainerServicesConfigTest {
         try (FlociContainer container = new FlociContainer()) {
             container.withNeptuneConfig(c -> c
                     .proxyPortRange(9000, 51)
-                    .defaultImage("tinkerpop/gremlin-server:3.8.0"));
+                    .dbType("neo4j")
+                    .defaultImage("tinkerpop/gremlin-server:3.8.0")
+                    .defaultNeo4jImage("neo4j:5.24-community"));
 
             assertThat(container.getNeptuneConfig().getProxyBasePort()).isEqualTo(9000);
             assertThat(container.getNeptuneConfig().getProxyPortsCount()).isEqualTo(51);
             assertThat(container.getNeptuneConfig().getProxyMaxPort()).isEqualTo(9050);
+            assertThat(container.getNeptuneConfig().getDbType()).isEqualTo("neo4j");
             assertThat(container.getNeptuneConfig().getDefaultImage()).isEqualTo("tinkerpop/gremlin-server:3.8.0");
+            assertThat(container.getNeptuneConfig().getDefaultNeo4jImage()).isEqualTo("neo4j:5.24-community");
         }
     }
 
