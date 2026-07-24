@@ -15,6 +15,7 @@ class TlsConfigTest {
         assertThat(config.isSelfSigned()).isTrue();
         assertThat(config.getCertPath()).isEmpty();
         assertThat(config.getKeyPath()).isEmpty();
+        assertThat(config.getAwsHttpsPort()).isEqualTo(443);
     }
 
     @Test
@@ -24,11 +25,21 @@ class TlsConfigTest {
                 .selfSigned(false)
                 .certPath("/certs/server.crt")
                 .keyPath("/certs/server.key")
+                .awsHttpsPort(8443)
                 .build();
         assertThat(config.isEnabled()).isTrue();
         assertThat(config.isSelfSigned()).isFalse();
         assertThat(config.getCertPath()).contains("/certs/server.crt");
         assertThat(config.getKeyPath()).contains("/certs/server.key");
+        assertThat(config.getAwsHttpsPort()).isEqualTo(8443);
+    }
+
+    @Test
+    void shouldAllowDisablingAwsHttpsPort() {
+        TlsConfig config = TlsConfig.builder()
+                .awsHttpsPort(0)
+                .build();
+        assertThat(config.getAwsHttpsPort()).isZero();
     }
 
     @Test
@@ -54,6 +65,7 @@ class TlsConfigTest {
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_TLS_ENABLED", "true")
                 .containsEntry("FLOCI_TLS_SELF_SIGNED", "true")
+                .containsEntry("FLOCI_TLS_AWS_HTTPS_PORT", "443")
                 .doesNotContainKey("FLOCI_TLS_CERT_PATH")
                 .doesNotContainKey("FLOCI_TLS_KEY_PATH");
     }
@@ -66,6 +78,7 @@ class TlsConfigTest {
                 .selfSigned(false)
                 .certPath("/certs/server.crt")
                 .keyPath("/certs/server.key")
+                .awsHttpsPort(8443)
                 .build()
                 .applyEnvVarsToContainer(container);
 
@@ -73,6 +86,20 @@ class TlsConfigTest {
                 .containsEntry("FLOCI_TLS_ENABLED", "true")
                 .containsEntry("FLOCI_TLS_SELF_SIGNED", "false")
                 .containsEntry("FLOCI_TLS_CERT_PATH", "/certs/server.crt")
-                .containsEntry("FLOCI_TLS_KEY_PATH", "/certs/server.key");
+                .containsEntry("FLOCI_TLS_KEY_PATH", "/certs/server.key")
+                .containsEntry("FLOCI_TLS_AWS_HTTPS_PORT", "8443");
+    }
+
+    @Test
+    void shouldApplyDisabledAwsHttpsPortEnvVarToContainer() {
+        GenericContainer<?> container = genericContainer();
+        TlsConfig.builder()
+                .enabled(true)
+                .awsHttpsPort(0)
+                .build()
+                .applyEnvVarsToContainer(container);
+
+        assertThat(container.getEnvMap())
+                .containsEntry("FLOCI_TLS_AWS_HTTPS_PORT", "0");
     }
 }
