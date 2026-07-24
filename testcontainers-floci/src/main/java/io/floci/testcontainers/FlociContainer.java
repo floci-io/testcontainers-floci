@@ -15,15 +15,15 @@ import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
-import java.util.Comparator;
 import java.util.UUID;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
 
 /**
  * Testcontainers module for <a href="https://github.com/floci-io/floci">Floci</a> — a
@@ -174,16 +174,67 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
 
     @Override
     public void stop() {
+        preparePersistentStorageForCleanup();
         super.stop();
+        deletePersistentStorage();
+    }
 
-        // Cleanup persistent storage if a host path was configured
+    private void preparePersistentStorageForCleanup() {
+        if (storageConfig.getHostPersistentPath().isEmpty() || !isRunning()) {
+            return;
+        }
+
+        // Child containers can create root-owned files in Floci's bind-mounted data directory.
+        try {
+            ExecResult result = execInContainer("chmod", "-R", "a+rwX", "/app/data");
+            if (result.getExitCode() != 0) {
+                logger.warn("Failed to make Floci persistent storage deletable: {}", result.getStderr());
+            }
+        } catch (IOException e) {
+            logger.warn("Failed to make Floci persistent storage deletable", e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            logger.warn("Interrupted while making Floci persistent storage deletable", e);
+        }
+    }
+
+    private void deletePersistentStorage() {
         storageConfig.getHostPersistentPath().ifPresent(path -> {
-            try (Stream<Path> paths = Files.walk(path)) {
-                paths.sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
+            try {
+                Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) {
+                        deletePath(file);
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult visitFileFailed(Path file, IOException failure) {
+                        logger.warn("Failed to visit Floci persistent storage path {}", file, failure);
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult postVisitDirectory(Path directory, IOException failure) {
+                        if (failure != null) {
+                            logger.warn("Failed to visit Floci persistent storage directory {}", directory, failure);
+                        }
+                        deletePath(directory);
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
             } catch (IOException e) {
-                // Ignore exception silently
+                logger.warn("Failed to delete Floci persistent storage at {}", path, e);
             }
         });
+    }
+
+    private static void deletePath(Path path) {
+        try {
+            Files.deleteIfExists(path);
+        } catch (IOException e) {
+            logger.warn("Failed to delete Floci persistent storage path {}", path, e);
+        }
     }
 
     /**
