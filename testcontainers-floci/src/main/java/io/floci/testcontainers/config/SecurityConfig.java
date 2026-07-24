@@ -19,17 +19,20 @@ import java.util.Optional;
 public class SecurityConfig {
 
     private static final boolean DEFAULT_DISABLE_CORS_HEADERS = false;
+    private static final boolean DEFAULT_CORS_ALLOW_PRIVATE_NETWORK = false;
 
     private final List<String> extraCorsAllowedOrigins;
     private final List<String> extraCorsAllowedHeaders;
     private final List<String> extraCorsExposeHeaders;
     private final boolean disableCorsHeaders;
+    private final boolean corsAllowPrivateNetwork;
 
     private SecurityConfig(Builder builder) {
         this.extraCorsAllowedOrigins = builder.extraCorsAllowedOrigins;
         this.extraCorsAllowedHeaders = builder.extraCorsAllowedHeaders;
         this.extraCorsExposeHeaders = builder.extraCorsExposeHeaders;
         this.disableCorsHeaders = builder.disableCorsHeaders;
+        this.corsAllowPrivateNetwork = builder.corsAllowPrivateNetwork;
     }
 
     /**
@@ -78,6 +81,17 @@ public class SecurityConfig {
     }
 
     /**
+     * Returns whether Private Network Access preflights are granted (responds with
+     * {@code Access-Control-Allow-Private-Network: true}) once the origin already
+     * passes the CORS allow-list.
+     *
+     * @return {@code true} if Private Network Access preflights are granted
+     */
+    public boolean isCorsAllowPrivateNetwork() {
+        return corsAllowPrivateNetwork;
+    }
+
+    /**
      * Applies this security configuration to the given container by setting
      * the appropriate environment variables.
      *
@@ -85,6 +99,7 @@ public class SecurityConfig {
      */
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SECURITY_DISABLE_CORS_HEADERS", String.valueOf(disableCorsHeaders));
+        container.withEnv("FLOCI_SECURITY_CORS_ALLOW_PRIVATE_NETWORK", String.valueOf(corsAllowPrivateNetwork));
 
         if (extraCorsAllowedOrigins != null) {
             container.withEnv("FLOCI_SECURITY_EXTRA_CORS_ALLOWED_ORIGINS", String.join(",", extraCorsAllowedOrigins));
@@ -106,6 +121,7 @@ public class SecurityConfig {
         private List<String> extraCorsAllowedHeaders = null;
         private List<String> extraCorsExposeHeaders = null;
         private boolean disableCorsHeaders = DEFAULT_DISABLE_CORS_HEADERS;
+        private boolean corsAllowPrivateNetwork = DEFAULT_CORS_ALLOW_PRIVATE_NETWORK;
 
         private Builder() {
             // Allow instantiation only via SecurityConfig.builder()
@@ -185,6 +201,24 @@ public class SecurityConfig {
          */
         public Builder disableCorsHeaders(boolean disableCorsHeaders) {
             this.disableCorsHeaders = disableCorsHeaders;
+            return this;
+        }
+
+        /**
+         * Sets whether to grant Private Network Access preflights (respond with
+         * {@code Access-Control-Allow-Private-Network: true}) when the browser asks.
+         * Only takes effect after the origin already passes the CORS allow-list, so a
+         * page served from a public/secure origin can reach this loopback backend.
+         *
+         * <p>Off by default: it lets a public origin reach the private network, so it
+         * must be opted into explicitly.</p>
+         *
+         * @param corsAllowPrivateNetwork {@code true} to grant Private Network Access preflights
+         *                                (default {@value DEFAULT_CORS_ALLOW_PRIVATE_NETWORK})
+         * @return this builder
+         */
+        public Builder corsAllowPrivateNetwork(boolean corsAllowPrivateNetwork) {
+            this.corsAllowPrivateNetwork = corsAllowPrivateNetwork;
             return this;
         }
 
