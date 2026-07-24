@@ -13,6 +13,7 @@ class CloudWatchLogsConfigTest {
         CloudWatchLogsConfig config = CloudWatchLogsConfig.builder().build();
         assertThat(config.isEnabled()).isTrue();
         assertThat(config.getMaxEventsPerQuery()).isEqualTo(10000);
+        assertThat(config.getQueryCompletionDelayMs()).isEqualTo(0);
     }
 
     @Test
@@ -20,9 +21,11 @@ class CloudWatchLogsConfigTest {
         CloudWatchLogsConfig config = CloudWatchLogsConfig.builder()
                 .enabled(false)
                 .maxEventsPerQuery(5000)
+                .queryCompletionDelayMs(2000)
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.getMaxEventsPerQuery()).isEqualTo(5000);
+        assertThat(config.getQueryCompletionDelayMs()).isEqualTo(2000);
     }
 
     @Test
@@ -32,7 +35,8 @@ class CloudWatchLogsConfigTest {
 
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_SERVICES_CLOUDWATCHLOGS_ENABLED", "true")
-                .containsEntry("FLOCI_SERVICES_CLOUDWATCHLOGS_MAX_EVENTS_PER_QUERY", "10000");
+                .containsEntry("FLOCI_SERVICES_CLOUDWATCHLOGS_MAX_EVENTS_PER_QUERY", "10000")
+                .containsEntry("FLOCI_SERVICES_CLOUDWATCHLOGS_QUERY_COMPLETION_DELAY_MS", "0");
     }
 
     @Test
@@ -40,10 +44,13 @@ class CloudWatchLogsConfigTest {
         GenericContainer<?> container = genericContainer();
         CloudWatchLogsConfig.builder()
                 .maxEventsPerQuery(5000)
+                .queryCompletionDelayMs(2000)
                 .build()
                 .applyEnvVarsToContainer(container);
 
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_CLOUDWATCHLOGS_MAX_EVENTS_PER_QUERY", "5000");
+        assertThat(container.getEnvMap())
+                .containsEntry("FLOCI_SERVICES_CLOUDWATCHLOGS_MAX_EVENTS_PER_QUERY", "5000")
+                .containsEntry("FLOCI_SERVICES_CLOUDWATCHLOGS_QUERY_COMPLETION_DELAY_MS", "2000");
     }
 
     @Test
