@@ -18,18 +18,24 @@ public class NeptuneConfig extends AbstractServiceConfig {
 
     private static final int DEFAULT_PROXY_BASE_PORT = 8182;
     private static final int DEFAULT_PROXY_PORTS_COUNT = 10;
+    private static final String DEFAULT_DB_TYPE = "gremlin";
     private static final String DEFAULT_IMAGE = "tinkerpop/gremlin-server:3.7.3";
+    private static final String DEFAULT_NEO4J_IMAGE = "neo4j:5-community";
 
     private final int proxyBasePort;
     private final int proxyPortsCount;
+    private final String dbType;
     private final String defaultImage;
+    private final String defaultNeo4jImage;
     private final String dockerNetwork;
 
     private NeptuneConfig(Builder builder) {
         super(builder.enabled);
         this.proxyBasePort = builder.proxyBasePort;
         this.proxyPortsCount = builder.proxyPortsCount;
+        this.dbType = builder.dbType;
         this.defaultImage = builder.defaultImage;
+        this.defaultNeo4jImage = builder.defaultNeo4jImage;
         this.dockerNetwork = builder.dockerNetwork;
     }
 
@@ -70,12 +76,33 @@ public class NeptuneConfig extends AbstractServiceConfig {
     }
 
     /**
-     * Returns the default Docker image used for Neptune (Gremlin Server) instances.
+     * Returns the backend graph engine and query language used for Neptune: {@code gremlin}
+     * (Apache TinkerPop, Gremlin over WebSocket) or {@code neo4j} (Neo4j, openCypher over Bolt).
+     * Mirrors LocalStack's {@code NEPTUNE_DB_TYPE}.
+     *
+     * @return the database type
+     */
+    public String getDbType() {
+        return dbType;
+    }
+
+    /**
+     * Returns the default Docker image used when {@link #getDbType()} is {@code gremlin}.
      *
      * @return the image name
      */
     public String getDefaultImage() {
         return defaultImage;
+    }
+
+    /**
+     * Returns the default Docker image used when {@link #getDbType()} is {@code neo4j}
+     * (openCypher / Bolt).
+     *
+     * @return the image name
+     */
+    public String getDefaultNeo4jImage() {
+        return defaultNeo4jImage;
     }
 
     /**
@@ -94,7 +121,9 @@ public class NeptuneConfig extends AbstractServiceConfig {
         if (isEnabled()) {
             container.withEnv("FLOCI_SERVICES_NEPTUNE_PROXY_BASE_PORT", String.valueOf(proxyBasePort));
             container.withEnv("FLOCI_SERVICES_NEPTUNE_PROXY_MAX_PORT", String.valueOf(getProxyMaxPort()));
+            container.withEnv("FLOCI_SERVICES_NEPTUNE_DB_TYPE", dbType);
             container.withEnv("FLOCI_SERVICES_NEPTUNE_DEFAULT_IMAGE", defaultImage);
+            container.withEnv("FLOCI_SERVICES_NEPTUNE_DEFAULT_NEO4J_IMAGE", defaultNeo4jImage);
 
             if (dockerNetwork != null) {
                 container.withEnv("FLOCI_SERVICES_NEPTUNE_DOCKER_NETWORK", dockerNetwork);
@@ -119,7 +148,9 @@ public class NeptuneConfig extends AbstractServiceConfig {
         private boolean enabled = DEFAULT_ENABLED;
         private int proxyBasePort = DEFAULT_PROXY_BASE_PORT;
         private int proxyPortsCount = DEFAULT_PROXY_PORTS_COUNT;
+        private String dbType = DEFAULT_DB_TYPE;
         private String defaultImage = DEFAULT_IMAGE;
+        private String defaultNeo4jImage = DEFAULT_NEO4J_IMAGE;
         private String dockerNetwork;
 
         private Builder() {
@@ -151,13 +182,39 @@ public class NeptuneConfig extends AbstractServiceConfig {
         }
 
         /**
-         * Sets the default Docker image for Neptune (Gremlin Server) instances.
+         * Sets the backend graph engine and query language for Neptune: {@code gremlin}
+         * (Apache TinkerPop, Gremlin over WebSocket) or {@code neo4j} (Neo4j, openCypher over
+         * Bolt). Mirrors LocalStack's {@code NEPTUNE_DB_TYPE}.
+         *
+         * @param dbType the database type (default {@value DEFAULT_DB_TYPE})
+         * @return this builder
+         */
+        public Builder dbType(String dbType) {
+            this.dbType = dbType;
+            return this;
+        }
+
+        /**
+         * Sets the default Docker image for Neptune (Gremlin Server) instances, used when
+         * {@code db-type=gremlin}.
          *
          * @param defaultImage the image name (default {@value DEFAULT_IMAGE})
          * @return this builder
          */
         public Builder defaultImage(String defaultImage) {
             this.defaultImage = defaultImage;
+            return this;
+        }
+
+        /**
+         * Sets the default Docker image for Neptune (Neo4j / openCypher) instances, used when
+         * {@code db-type=neo4j}.
+         *
+         * @param defaultNeo4jImage the image name (default {@value DEFAULT_NEO4J_IMAGE})
+         * @return this builder
+         */
+        public Builder defaultNeo4jImage(String defaultNeo4jImage) {
+            this.defaultNeo4jImage = defaultNeo4jImage;
             return this;
         }
 
