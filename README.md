@@ -158,6 +158,8 @@ class S3IntegrationTest {
 | `withDedicatedNetwork()`              | Creates a dedicated Docker network shared by Floci and its sibling containers (RDS, Lambda, ElastiCache, etc.) |
 | `withTlsConfig(...)`                  | Configures TLS/HTTPS (self-signed by default; optionally provide cert/key paths)                               |
 | `withStorageConfig(...)`              | Configures persistent storage and volume behaviour                                                             |
+| `withSecurityConfig(...)`             | Configures CORS-related security settings                                                                      |
+| `withProtocolsConfig(...)`            | Configures RPC wire-protocol handling (e.g. strict protocol claiming)                                          |
 | `with*Config(...)`                    | Configures service-specific settings                                                                           |
 
 Each AWS service emulated by Floci can be individually configured via a `with*Config(...)` method on
@@ -186,6 +188,8 @@ FlociContainer floci = new FlociContainer()
 | `getDedicatedNetworkName()`   | Name of the dedicated Docker network, or `null` if not configured | `null`           |
 | `getTlsConfig()`              | Current TLS configuration                                         | —                |
 | `getStorageConfig()`          | Current storage configuration                                     | —                |
+| `getSecurityConfig()`         | Current security configuration                                    | —                |
+| `getProtocolsConfig()`        | Current protocols configuration                                   | —                |
 | `get*Config()`                | Current configuration of a service                                | —                |
 
 

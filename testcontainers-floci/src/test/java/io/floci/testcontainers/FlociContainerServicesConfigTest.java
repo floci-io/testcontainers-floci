@@ -611,4 +611,13 @@ class FlociContainerServicesConfigTest {
             assertThat(container.getSecurityConfig().isDisableCorsHeaders()).isTrue();
         }
     }
+
+    @Test
+    void shouldStoreProtocolsConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withProtocolsConfig(c -> c.strictClaiming(true));
+
+            assertThat(container.getProtocolsConfig().isStrictClaiming()).isTrue();
+        }
+    }
 }
