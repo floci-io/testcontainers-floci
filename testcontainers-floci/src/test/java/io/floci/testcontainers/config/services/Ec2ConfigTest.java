@@ -1,5 +1,6 @@
 package io.floci.testcontainers.config.services;
 
+import io.floci.testcontainers.FlociContainer;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.GenericContainer;
 
@@ -16,6 +17,12 @@ class Ec2ConfigTest {
         assertThat(config.getImdsPort()).isEqualTo(9169);
         assertThat(config.getSshPortRangeStart()).isEqualTo(2200);
         assertThat(config.getSshPortRangeEnd()).isEqualTo(2299);
+        assertThat(config.isPublishSecurityGroupPorts()).isTrue();
+        assertThat(config.getAppPortRangeStart()).isEqualTo(30000);
+        assertThat(config.getAppPortsCount()).isEqualTo(10);
+        assertThat(config.getAppPortRangeEnd()).isEqualTo(30009);
+        assertThat(config.getMaxPublishedPortsPerInstance()).isEqualTo(2);
+        assertThat(config.getSocatImage()).isEqualTo("alpine/socat");
         assertThat(config.getAutoScaling().enabled()).isTrue();
     }
 
@@ -26,6 +33,10 @@ class Ec2ConfigTest {
                 .mock(true)
                 .imdsPort(9170)
                 .sshPortRange(2300, 2399)
+                .publishSecurityGroupPorts(false)
+                .appPortRange(40000, 500)
+                .maxPublishedPortsPerInstance(50)
+                .socatImage("alpine/socat:1.8.0.0")
                 .autoScaling(false)
                 .build();
         assertThat(config.isEnabled()).isFalse();
@@ -33,6 +44,12 @@ class Ec2ConfigTest {
         assertThat(config.getImdsPort()).isEqualTo(9170);
         assertThat(config.getSshPortRangeStart()).isEqualTo(2300);
         assertThat(config.getSshPortRangeEnd()).isEqualTo(2399);
+        assertThat(config.isPublishSecurityGroupPorts()).isFalse();
+        assertThat(config.getAppPortRangeStart()).isEqualTo(40000);
+        assertThat(config.getAppPortsCount()).isEqualTo(500);
+        assertThat(config.getAppPortRangeEnd()).isEqualTo(40499);
+        assertThat(config.getMaxPublishedPortsPerInstance()).isEqualTo(50);
+        assertThat(config.getSocatImage()).isEqualTo("alpine/socat:1.8.0.0");
         assertThat(config.getAutoScaling().enabled()).isFalse();
     }
 
@@ -47,6 +64,11 @@ class Ec2ConfigTest {
                 .containsEntry("FLOCI_SERVICES_EC2_IMDS_PORT", "9169")
                 .containsEntry("FLOCI_SERVICES_EC2_SSH_PORT_RANGE_START", "2200")
                 .containsEntry("FLOCI_SERVICES_EC2_SSH_PORT_RANGE_END", "2299")
+                .containsEntry("FLOCI_SERVICES_EC2_PUBLISH_SECURITY_GROUP_PORTS", "true")
+                .containsEntry("FLOCI_SERVICES_EC2_APP_PORT_RANGE_START", "30000")
+                .containsEntry("FLOCI_SERVICES_EC2_APP_PORT_RANGE_END", "30009")
+                .containsEntry("FLOCI_SERVICES_EC2_MAX_PUBLISHED_PORTS_PER_INSTANCE", "2")
+                .containsEntry("FLOCI_SERVICES_EC2_SOCAT_IMAGE", "alpine/socat")
                 .containsEntry("FLOCI_SERVICES_AUTOSCALING_ENABLED", "true");
     }
 
@@ -58,6 +80,10 @@ class Ec2ConfigTest {
                 .mock(true)
                 .imdsPort(9170)
                 .sshPortRange(2300, 2399)
+                .publishSecurityGroupPorts(false)
+                .appPortRange(40000, 500)
+                .maxPublishedPortsPerInstance(50)
+                .socatImage("alpine/socat:1.8.0.0")
                 .autoScaling(false)
                 .build()
                 .applyEnvVarsToContainer(container);
@@ -68,6 +94,11 @@ class Ec2ConfigTest {
                 .containsEntry("FLOCI_SERVICES_EC2_IMDS_PORT", "9170")
                 .containsEntry("FLOCI_SERVICES_EC2_SSH_PORT_RANGE_START", "2300")
                 .containsEntry("FLOCI_SERVICES_EC2_SSH_PORT_RANGE_END", "2399")
+                .containsEntry("FLOCI_SERVICES_EC2_PUBLISH_SECURITY_GROUP_PORTS", "false")
+                .containsEntry("FLOCI_SERVICES_EC2_APP_PORT_RANGE_START", "40000")
+                .containsEntry("FLOCI_SERVICES_EC2_APP_PORT_RANGE_END", "40499")
+                .containsEntry("FLOCI_SERVICES_EC2_MAX_PUBLISHED_PORTS_PER_INSTANCE", "50")
+                .containsEntry("FLOCI_SERVICES_EC2_SOCAT_IMAGE", "alpine/socat:1.8.0.0")
                 .containsEntry("FLOCI_SERVICES_AUTOSCALING_ENABLED", "false");
     }
 
@@ -77,5 +108,42 @@ class Ec2ConfigTest {
         Ec2Config.builder().enabled(false).build().applyEnvVarsToContainer(container);
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_EC2_ENABLED", "false");
+    }
+
+    @Test
+    void shouldExposeAppPortsWhenEnabled() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withEc2Config(c -> c
+                    .publishSecurityGroupPorts(true)
+                    .appPortRange(30000, 10));
+
+            var ports = container.getExposedPorts();
+            for (int port = 30000; port < 30010; port++) {
+                assertThat(ports).contains(port);
+            }
+        }
+    }
+
+    @Test
+    void shouldNotExposeAppPortsWhenPublishSecurityGroupPortsDisabled() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withEc2Config(c -> c
+                    .publishSecurityGroupPorts(false)
+                    .appPortRange(30000, 10));
+
+            assertThat(container.getExposedPorts()).doesNotContain(30000);
+        }
+    }
+
+    @Test
+    void shouldNotExposeAppPortsWhenDisabled() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withEc2Config(c -> c
+                    .enabled(false)
+                    .appPortRange(30000, 10));
+
+            assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_EC2_ENABLED", "false");
+            assertThat(container.getExposedPorts()).doesNotContain(30000);
+        }
     }
 }

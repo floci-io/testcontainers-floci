@@ -8,6 +8,7 @@ import org.testcontainers.containers.Container;
  * <p>Instances are created via {@link Builder}:
  * <pre>{@code
  * Ec2Config config = Ec2Config.builder()
+ *     .appPortRange(30000, 10)
  *     .build();
  * }</pre>
  */
@@ -17,11 +18,21 @@ public class Ec2Config extends AbstractServiceConfig {
     private static final int DEFAULT_IMDS_PORT = 9169;
     private static final int DEFAULT_SSH_PORT_RANGE_START = 2200;
     private static final int DEFAULT_SSH_PORT_RANGE_END = 2299;
+    private static final boolean DEFAULT_PUBLISH_SECURITY_GROUP_PORTS = true;
+    private static final int DEFAULT_APP_PORT_RANGE_START = 30000;
+    private static final int DEFAULT_APP_PORTS_COUNT = 10;
+    private static final int DEFAULT_MAX_PUBLISHED_PORTS_PER_INSTANCE = 2;
+    private static final String DEFAULT_SOCAT_IMAGE = "alpine/socat";
 
     private final boolean mock;
     private final int imdsPort;
     private final int sshPortRangeStart;
     private final int sshPortRangeEnd;
+    private final boolean publishSecurityGroupPorts;
+    private final int appPortRangeStart;
+    private final int appPortsCount;
+    private final int maxPublishedPortsPerInstance;
+    private final String socatImage;
     private final AutoScaling autoScaling;
 
     private Ec2Config(Builder builder) {
@@ -30,6 +41,11 @@ public class Ec2Config extends AbstractServiceConfig {
         this.imdsPort = builder.imdsPort;
         this.sshPortRangeStart = builder.sshPortRangeStart;
         this.sshPortRangeEnd = builder.sshPortRangeEnd;
+        this.publishSecurityGroupPorts = builder.publishSecurityGroupPorts;
+        this.appPortRangeStart = builder.appPortRangeStart;
+        this.appPortsCount = builder.appPortsCount;
+        this.maxPublishedPortsPerInstance = builder.maxPublishedPortsPerInstance;
+        this.socatImage = builder.socatImage;
         this.autoScaling = builder.autoScaling;
     }
 
@@ -79,6 +95,65 @@ public class Ec2Config extends AbstractServiceConfig {
     }
 
     /**
+     * Returns whether TCP ports opened by an instance's security-group ingress rules are
+     * published on the host via a socat sidecar container, both at launch and on later
+     * authorize-security-group-ingress. When {@code false}, security groups are metadata only.
+     *
+     * @return {@code true} if published security-group ports are enabled
+     */
+    public boolean isPublishSecurityGroupPorts() {
+        return publishSecurityGroupPorts;
+    }
+
+    /**
+     * Returns the lowest host port in the range allocated for published security-group app ports.
+     *
+     * @return the app port range start
+     */
+    public int getAppPortRangeStart() {
+        return appPortRangeStart;
+    }
+
+    /**
+     * Returns the number of ports allocated for published security-group app ports, starting
+     * from {@link #getAppPortRangeStart()}.
+     *
+     * @return the number of app ports
+     */
+    public int getAppPortsCount() {
+        return appPortsCount;
+    }
+
+    /**
+     * Returns the highest host port in the range allocated for published security-group app ports.
+     *
+     * @return the app port range end
+     */
+    public int getAppPortRangeEnd() {
+        return appPortRangeStart + appPortsCount - 1;
+    }
+
+    /**
+     * Returns the upper bound on app ports published per instance. Also bounds any single
+     * ingress rule's port span: wider ranges (e.g. an allow-all 0-65535 rule) are skipped so a
+     * single rule cannot spawn thousands of socat sidecars or exhaust the host-port range.
+     *
+     * @return the maximum published ports per instance
+     */
+    public int getMaxPublishedPortsPerInstance() {
+        return maxPublishedPortsPerInstance;
+    }
+
+    /**
+     * Returns the image used for the socat sidecar that forwards published security-group ports.
+     *
+     * @return the socat image name
+     */
+    public String getSocatImage() {
+        return socatImage;
+    }
+
+    /**
      * Returns the Auto Scaling configuration.
      *
      * @return the Auto Scaling configuration
@@ -97,6 +172,11 @@ public class Ec2Config extends AbstractServiceConfig {
             container.withEnv("FLOCI_SERVICES_EC2_IMDS_PORT", String.valueOf(imdsPort));
             container.withEnv("FLOCI_SERVICES_EC2_SSH_PORT_RANGE_START", String.valueOf(sshPortRangeStart));
             container.withEnv("FLOCI_SERVICES_EC2_SSH_PORT_RANGE_END", String.valueOf(sshPortRangeEnd));
+            container.withEnv("FLOCI_SERVICES_EC2_PUBLISH_SECURITY_GROUP_PORTS", String.valueOf(publishSecurityGroupPorts));
+            container.withEnv("FLOCI_SERVICES_EC2_APP_PORT_RANGE_START", String.valueOf(appPortRangeStart));
+            container.withEnv("FLOCI_SERVICES_EC2_APP_PORT_RANGE_END", String.valueOf(getAppPortRangeEnd()));
+            container.withEnv("FLOCI_SERVICES_EC2_MAX_PUBLISHED_PORTS_PER_INSTANCE", String.valueOf(maxPublishedPortsPerInstance));
+            container.withEnv("FLOCI_SERVICES_EC2_SOCAT_IMAGE", socatImage);
         }
     }
 
@@ -104,6 +184,12 @@ public class Ec2Config extends AbstractServiceConfig {
     public void applyExposedPortsToContainer(Container<?> container) {
         if (isEnabled()) {
             container.addExposedPorts(imdsPort);
+
+            if (publishSecurityGroupPorts) {
+                for (int port = appPortRangeStart; port <= getAppPortRangeEnd(); port++) {
+                    container.addExposedPorts(port);
+                }
+            }
         }
     }
 
@@ -117,6 +203,11 @@ public class Ec2Config extends AbstractServiceConfig {
         private int imdsPort = DEFAULT_IMDS_PORT;
         private int sshPortRangeStart = DEFAULT_SSH_PORT_RANGE_START;
         private int sshPortRangeEnd = DEFAULT_SSH_PORT_RANGE_END;
+        private boolean publishSecurityGroupPorts = DEFAULT_PUBLISH_SECURITY_GROUP_PORTS;
+        private int appPortRangeStart = DEFAULT_APP_PORT_RANGE_START;
+        private int appPortsCount = DEFAULT_APP_PORTS_COUNT;
+        private int maxPublishedPortsPerInstance = DEFAULT_MAX_PUBLISHED_PORTS_PER_INSTANCE;
+        private String socatImage = DEFAULT_SOCAT_IMAGE;
         private AutoScaling autoScaling = new DefaultAutoScaling(true);
 
         private Builder() {
@@ -166,6 +257,58 @@ public class Ec2Config extends AbstractServiceConfig {
         public Builder sshPortRange(int start, int end) {
             this.sshPortRangeStart = start;
             this.sshPortRangeEnd = end;
+            return this;
+        }
+
+        /**
+         * Sets whether TCP ports opened by an instance's security-group ingress rules are
+         * published on the host via a socat sidecar container, both at launch and on later
+         * authorize-security-group-ingress.
+         *
+         * @param publishSecurityGroupPorts {@code true} to publish security-group ports
+         *                                   (default {@value DEFAULT_PUBLISH_SECURITY_GROUP_PORTS})
+         * @return this builder
+         */
+        public Builder publishSecurityGroupPorts(boolean publishSecurityGroupPorts) {
+            this.publishSecurityGroupPorts = publishSecurityGroupPorts;
+            return this;
+        }
+
+        /**
+         * Sets the port range allocated for published security-group app ports.
+         *
+         * @param start the lowest host port in the range (default {@value DEFAULT_APP_PORT_RANGE_START})
+         * @param count the number of ports in the range (default {@value DEFAULT_APP_PORTS_COUNT})
+         * @return this builder
+         */
+        public Builder appPortRange(int start, int count) {
+            this.appPortRangeStart = start;
+            this.appPortsCount = count;
+            return this;
+        }
+
+        /**
+         * Sets the upper bound on app ports published per instance. Also bounds any single
+         * ingress rule's port span: wider ranges (e.g. an allow-all 0-65535 rule) are skipped so
+         * a single rule cannot spawn thousands of socat sidecars or exhaust the host-port range.
+         *
+         * @param maxPublishedPortsPerInstance the maximum published ports per instance
+         *                                     (default {@value DEFAULT_MAX_PUBLISHED_PORTS_PER_INSTANCE})
+         * @return this builder
+         */
+        public Builder maxPublishedPortsPerInstance(int maxPublishedPortsPerInstance) {
+            this.maxPublishedPortsPerInstance = maxPublishedPortsPerInstance;
+            return this;
+        }
+
+        /**
+         * Sets the image used for the socat sidecar that forwards published security-group ports.
+         *
+         * @param socatImage the socat image name (default {@value DEFAULT_SOCAT_IMAGE})
+         * @return this builder
+         */
+        public Builder socatImage(String socatImage) {
+            this.socatImage = socatImage;
             return this;
         }
 
