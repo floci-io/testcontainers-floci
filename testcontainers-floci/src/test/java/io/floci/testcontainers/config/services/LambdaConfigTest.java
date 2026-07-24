@@ -126,10 +126,10 @@ class LambdaConfigTest {
         try (FlociContainer container = new FlociContainer()) {
             container.withLambdaConfig(c -> c
                     .exposeRuntimePorts(true)
-                    .runtimeApiPortRange(9300, 10));
+                    .runtimeApiPortRange(9500, 10));
 
             var ports = container.getExposedPorts();
-            for (int port = 9300; port < 9310; port++) {
+            for (int port = 9500; port < 9510; port++) {
                 assertThat(ports).contains(port);
             }
         }
@@ -140,10 +140,10 @@ class LambdaConfigTest {
         try (FlociContainer container = new FlociContainer()) {
             container.withLambdaConfig(c -> c
                     .enabled(false)
-                    .runtimeApiPortRange(9300, 10));
+                    .runtimeApiPortRange(9500, 10));
 
             assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_LAMBDA_ENABLED", "false");
-            assertThat(container.getExposedPorts()).doesNotContain(9300);
+            assertThat(container.getExposedPorts()).doesNotContain(9500);
         }
     }
 
