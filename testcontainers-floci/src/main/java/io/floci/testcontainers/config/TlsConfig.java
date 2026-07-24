@@ -23,17 +23,20 @@ public class TlsConfig {
 
     private static final boolean DEFAULT_ENABLED = false;
     private static final boolean DEFAULT_SELF_SIGNED = true;
+    private static final int DEFAULT_AWS_HTTPS_PORT = 443;
 
     private final boolean enabled;
     private final String certPath;
     private final String keyPath;
     private final boolean selfSigned;
+    private final int awsHttpsPort;
 
     private TlsConfig(Builder builder) {
         this.enabled = builder.enabled;
         this.certPath = builder.certPath;
         this.keyPath = builder.keyPath;
         this.selfSigned = builder.selfSigned;
+        this.awsHttpsPort = builder.awsHttpsPort;
     }
 
     /**
@@ -83,6 +86,26 @@ public class TlsConfig {
     }
 
     /**
+     * Returns the additional port the TLS proxy binds for AWS-style HTTPS traffic, alongside the
+     * public Floci port.
+     *
+     * <p>CDK/CloudFormation custom resources send their {@code cfn-response} callback with
+     * bundled code that hardcodes {@code https://} and ignores the port in the ResponseURL,
+     * so the PUT lands on the conventional 443 regardless of Floci's configured port. Binding
+     * 443 here (with the same HTTP/HTTPS protocol detection used on the main port) lets those
+     * callbacks — and any other client that assumes AWS lives on 443 — reach Floci.
+     *
+     * <p>Default {@value DEFAULT_AWS_HTTPS_PORT}. Set to {@code 0} to disable the extra binding
+     * (e.g. when Floci runs unprivileged or another process owns 443). When equal to the main
+     * Floci port only a single listener is started.
+     *
+     * @return the additional AWS-style HTTPS port
+     */
+    public int getAwsHttpsPort() {
+        return awsHttpsPort;
+    }
+
+    /**
      * Applies this TLS configuration to the given container by setting
      * the appropriate environment variables.
      *
@@ -100,6 +123,8 @@ public class TlsConfig {
             if (keyPath != null) {
                 container.withEnv("FLOCI_TLS_KEY_PATH", keyPath);
             }
+
+            container.withEnv("FLOCI_TLS_AWS_HTTPS_PORT", String.valueOf(awsHttpsPort));
         }
     }
 
@@ -112,6 +137,7 @@ public class TlsConfig {
         private String certPath;
         private String keyPath;
         private boolean selfSigned = DEFAULT_SELF_SIGNED;
+        private int awsHttpsPort = DEFAULT_AWS_HTTPS_PORT;
 
         private Builder() {
             // Allow instantiation only via TlsConfig.builder()
@@ -163,6 +189,28 @@ public class TlsConfig {
          */
         public Builder selfSigned(boolean selfSigned) {
             this.selfSigned = selfSigned;
+            return this;
+        }
+
+        /**
+         * Sets the additional port the TLS proxy binds for AWS-style HTTPS traffic, alongside the
+         * public Floci port.
+         *
+         * <p>CDK/CloudFormation custom resources send their {@code cfn-response} callback with
+         * bundled code that hardcodes {@code https://} and ignores the port in the ResponseURL,
+         * so the PUT lands on the conventional 443 regardless of Floci's configured port. Binding
+         * 443 here (with the same HTTP/HTTPS protocol detection used on the main port) lets those
+         * callbacks — and any other client that assumes AWS lives on 443 — reach Floci.
+         *
+         * <p>Set to {@code 0} to disable the extra binding (e.g. when Floci runs unprivileged or
+         * another process owns 443). When equal to the main Floci port only a single listener is
+         * started.
+         *
+         * @param awsHttpsPort the additional AWS-style HTTPS port (default {@value DEFAULT_AWS_HTTPS_PORT})
+         * @return this builder
+         */
+        public Builder awsHttpsPort(int awsHttpsPort) {
+            this.awsHttpsPort = awsHttpsPort;
             return this;
         }
 
