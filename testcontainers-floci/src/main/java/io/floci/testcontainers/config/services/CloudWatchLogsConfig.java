@@ -15,12 +15,15 @@ import org.testcontainers.containers.Container;
 public class CloudWatchLogsConfig extends AbstractServiceConfig {
 
     private static final int DEFAULT_MAX_EVENTS_PER_QUERY = 10000;
+    private static final long DEFAULT_QUERY_COMPLETION_DELAY_MS = 0;
 
     private final int maxEventsPerQuery;
+    private final long queryCompletionDelayMs;
 
     private CloudWatchLogsConfig(Builder builder) {
         super(builder.enabled);
         this.maxEventsPerQuery = builder.maxEventsPerQuery;
+        this.queryCompletionDelayMs = builder.queryCompletionDelayMs;
     }
 
     /**
@@ -42,12 +45,22 @@ public class CloudWatchLogsConfig extends AbstractServiceConfig {
         return maxEventsPerQuery;
     }
 
+    /**
+     * Returns the artificial Logs Insights query completion delay, in milliseconds.
+     *
+     * @return the query completion delay, in milliseconds
+     */
+    public long getQueryCompletionDelayMs() {
+        return queryCompletionDelayMs;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_CLOUDWATCHLOGS_ENABLED", String.valueOf(isEnabled()));
 
         if (isEnabled()) {
             container.withEnv("FLOCI_SERVICES_CLOUDWATCHLOGS_MAX_EVENTS_PER_QUERY", String.valueOf(maxEventsPerQuery));
+            container.withEnv("FLOCI_SERVICES_CLOUDWATCHLOGS_QUERY_COMPLETION_DELAY_MS", String.valueOf(queryCompletionDelayMs));
         }
     }
 
@@ -58,6 +71,7 @@ public class CloudWatchLogsConfig extends AbstractServiceConfig {
 
         private boolean enabled = DEFAULT_ENABLED;
         private int maxEventsPerQuery = DEFAULT_MAX_EVENTS_PER_QUERY;
+        private long queryCompletionDelayMs = DEFAULT_QUERY_COMPLETION_DELAY_MS;
 
         private Builder() {
             // Allow instantiation only via CloudWatchLogsConfig.builder()
@@ -82,6 +96,20 @@ public class CloudWatchLogsConfig extends AbstractServiceConfig {
          */
         public Builder maxEventsPerQuery(int maxEventsPerQuery) {
             this.maxEventsPerQuery = maxEventsPerQuery;
+            return this;
+        }
+
+        /**
+         * Sets the artificial Logs Insights query completion delay, in milliseconds. With the
+         * default 0, queries complete immediately (fast local dev). A positive value emulates the
+         * real asynchronous lifecycle — StartQuery → Running → Complete after this delay — which
+         * also makes StopQuery on a still-running query return {@code success=true}.
+         *
+         * @param queryCompletionDelayMs the query completion delay, in milliseconds (default {@value DEFAULT_QUERY_COMPLETION_DELAY_MS})
+         * @return this builder
+         */
+        public Builder queryCompletionDelayMs(long queryCompletionDelayMs) {
+            this.queryCompletionDelayMs = queryCompletionDelayMs;
             return this;
         }
 
