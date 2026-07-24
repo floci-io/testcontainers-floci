@@ -9,7 +9,7 @@ import org.testcontainers.containers.Container;
  * <pre>{@code
  * NeptuneConfig config = NeptuneConfig.builder()
  *     .enabled(true)
- *     .proxyPortRange(8182, 101)
+ *     .proxyPortRange(8182, 10)
  *     .defaultImage("tinkerpop/gremlin-server:3.7.3")
  *     .build();
  * }</pre>
@@ -17,7 +17,7 @@ import org.testcontainers.containers.Container;
 public class NeptuneConfig extends AbstractServiceConfig {
 
     private static final int DEFAULT_PROXY_BASE_PORT = 8182;
-    private static final int DEFAULT_PROXY_PORTS_COUNT = 101;
+    private static final int DEFAULT_PROXY_PORTS_COUNT = 10;
     private static final String DEFAULT_IMAGE = "tinkerpop/gremlin-server:3.7.3";
 
     private final int proxyBasePort;

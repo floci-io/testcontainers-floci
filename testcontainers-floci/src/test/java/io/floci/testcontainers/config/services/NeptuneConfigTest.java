@@ -14,8 +14,8 @@ class NeptuneConfigTest {
         NeptuneConfig config = NeptuneConfig.builder().build();
         assertThat(config.isEnabled()).isTrue();
         assertThat(config.getProxyBasePort()).isEqualTo(8182);
-        assertThat(config.getProxyPortsCount()).isEqualTo(101);
-        assertThat(config.getProxyMaxPort()).isEqualTo(8282);
+        assertThat(config.getProxyPortsCount()).isEqualTo(10);
+        assertThat(config.getProxyMaxPort()).isEqualTo(8191);
         assertThat(config.getDefaultImage()).isEqualTo("tinkerpop/gremlin-server:3.7.3");
         assertThat(config.getDockerNetwork()).isNull();
     }
@@ -44,7 +44,7 @@ class NeptuneConfigTest {
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_SERVICES_NEPTUNE_ENABLED", "true")
                 .containsEntry("FLOCI_SERVICES_NEPTUNE_PROXY_BASE_PORT", "8182")
-                .containsEntry("FLOCI_SERVICES_NEPTUNE_PROXY_MAX_PORT", "8282")
+                .containsEntry("FLOCI_SERVICES_NEPTUNE_PROXY_MAX_PORT", "8191")
                 .containsEntry("FLOCI_SERVICES_NEPTUNE_DEFAULT_IMAGE", "tinkerpop/gremlin-server:3.7.3")
                 .doesNotContainKey("FLOCI_SERVICES_NEPTUNE_DOCKER_NETWORK");
     }
