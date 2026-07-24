@@ -9,18 +9,22 @@ import org.testcontainers.containers.Container;
  * <pre>{@code
  * S3Config config = S3Config.builder()
  *     .defaultPresignExpirySeconds(7200)
+ *     .enforceAuth(true)
  *     .build();
  * }</pre>
  */
 public class S3Config extends AbstractServiceConfig {
 
     private static final int DEFAULT_PRESIGN_EXPIRY_SECONDS = 3600;
+    private static final boolean DEFAULT_ENFORCE_AUTH = false;
 
     private final int defaultPresignExpirySeconds;
+    private final boolean enforceAuth;
 
     private S3Config(Builder builder) {
         super(builder.enabled);
         this.defaultPresignExpirySeconds = builder.defaultPresignExpirySeconds;
+        this.enforceAuth = builder.enforceAuth;
     }
 
     /**
@@ -42,12 +46,22 @@ public class S3Config extends AbstractServiceConfig {
         return defaultPresignExpirySeconds;
     }
 
+    /**
+     * Returns whether S3 requests must be authenticated with valid AWS SigV4 credentials.
+     *
+     * @return {@code true} if authentication is enforced
+     */
+    public boolean isEnforceAuth() {
+        return enforceAuth;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_S3_ENABLED", String.valueOf(isEnabled()));
 
         if (isEnabled()) {
             container.withEnv("FLOCI_SERVICES_S3_DEFAULT_PRESIGN_EXPIRY_SECONDS", String.valueOf(defaultPresignExpirySeconds));
+            container.withEnv("FLOCI_SERVICES_S3_ENFORCE_AUTH", String.valueOf(enforceAuth));
         }
     }
 
@@ -58,6 +72,7 @@ public class S3Config extends AbstractServiceConfig {
 
         private boolean enabled = DEFAULT_ENABLED;
         private int defaultPresignExpirySeconds = DEFAULT_PRESIGN_EXPIRY_SECONDS;
+        private boolean enforceAuth = DEFAULT_ENFORCE_AUTH;
 
         private Builder() {
             // Allow instantiation only via S3Config.builder()
@@ -82,6 +97,17 @@ public class S3Config extends AbstractServiceConfig {
          */
         public Builder defaultPresignExpirySeconds(int defaultPresignExpirySeconds) {
             this.defaultPresignExpirySeconds = defaultPresignExpirySeconds;
+            return this;
+        }
+
+        /**
+         * Sets whether S3 requests must be authenticated with valid AWS SigV4 credentials.
+         *
+         * @param enforceAuth {@code true} to enforce authentication (default {@value DEFAULT_ENFORCE_AUTH})
+         * @return this builder
+         */
+        public Builder enforceAuth(boolean enforceAuth) {
+            this.enforceAuth = enforceAuth;
             return this;
         }
 
