@@ -13,6 +13,7 @@ class RdsConfigTest {
     void shouldApplyDefaultRdsConfig() {
         RdsConfig config = RdsConfig.builder().build();
         assertThat(config.isEnabled()).isTrue();
+        assertThat(config.isMock()).isFalse();
         assertThat(config.getProxyBasePort()).isEqualTo(7000);
         assertThat(config.getProxyMaxPort()).isEqualTo(7009);
         assertThat(config.getProxyPortsCount()).isEqualTo(10);
@@ -26,6 +27,7 @@ class RdsConfigTest {
     void shouldApplyCustomRdsConfig() {
         RdsConfig config = RdsConfig.builder()
                 .enabled(false)
+                .mock(true)
                 .proxyPortRange(8000, 100)
                 .defaultPostgresImage("postgres:15")
                 .defaultMysqlImage("mysql:9.0")
@@ -33,6 +35,7 @@ class RdsConfigTest {
                 .dockerNetwork("my-rds-network")
                 .build();
         assertThat(config.isEnabled()).isFalse();
+        assertThat(config.isMock()).isTrue();
         assertThat(config.getProxyBasePort()).isEqualTo(8000);
         assertThat(config.getProxyMaxPort()).isEqualTo(8099);
         assertThat(config.getProxyPortsCount()).isEqualTo(100);
@@ -49,6 +52,7 @@ class RdsConfigTest {
 
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_SERVICES_RDS_ENABLED", "true")
+                .containsEntry("FLOCI_SERVICES_RDS_MOCK", "false")
                 .containsEntry("FLOCI_SERVICES_RDS_PROXY_BASE_PORT", "7000")
                 .containsEntry("FLOCI_SERVICES_RDS_PROXY_MAX_PORT", "7009")
                 .containsEntry("FLOCI_SERVICES_RDS_DEFAULT_POSTGRES_IMAGE", "postgres:16-alpine")
@@ -62,6 +66,7 @@ class RdsConfigTest {
         GenericContainer<?> container = genericContainer();
         RdsConfig.builder()
                 .enabled(true)
+                .mock(true)
                 .proxyPortRange(8000, 100)
                 .defaultPostgresImage("postgres:15")
                 .defaultMysqlImage("mysql:9.0")
@@ -72,6 +77,7 @@ class RdsConfigTest {
 
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_SERVICES_RDS_ENABLED", "true")
+                .containsEntry("FLOCI_SERVICES_RDS_MOCK", "true")
                 .containsEntry("FLOCI_SERVICES_RDS_PROXY_BASE_PORT", "8000")
                 .containsEntry("FLOCI_SERVICES_RDS_PROXY_MAX_PORT", "8099")
                 .containsEntry("FLOCI_SERVICES_RDS_DEFAULT_POSTGRES_IMAGE", "postgres:15")

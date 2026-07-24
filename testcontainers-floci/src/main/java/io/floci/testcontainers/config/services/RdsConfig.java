@@ -9,19 +9,22 @@ import org.testcontainers.containers.Container;
  * <pre>{@code
  * RdsConfig config = RdsConfig.builder()
  *     .enabled(true)
- *     .proxyPortRange(7000, 7099)
+ *     .mock(true)
+ *     .proxyPortRange(7000, 100)
  *     .defaultPostgresImage("postgres:16-alpine")
  *     .build();
  * }</pre>
  */
 public class RdsConfig extends AbstractServiceConfig {
 
+    private static final boolean DEFAULT_MOCK = false;
     private static final int DEFAULT_PROXY_BASE_PORT = 7000;
     private static final int DEFAULT_PROXY_PORTS_COUNT = 10;
     private static final String DEFAULT_POSTGRES_IMAGE = "postgres:16-alpine";
     private static final String DEFAULT_MYSQL_IMAGE = "mysql:8.0";
     private static final String DEFAULT_MARIADB_IMAGE = "mariadb:11";
 
+    private final boolean mock;
     private final int proxyBasePort;
     private final int proxyPortsCount;
     private final String defaultPostgresImage;
@@ -31,6 +34,7 @@ public class RdsConfig extends AbstractServiceConfig {
 
     private RdsConfig(Builder builder) {
         super(builder.enabled);
+        this.mock = builder.mock;
         this.proxyBasePort = builder.proxyBasePort;
         this.proxyPortsCount = builder.proxyPortsCount;
         this.defaultPostgresImage = builder.defaultPostgresImage;
@@ -46,6 +50,17 @@ public class RdsConfig extends AbstractServiceConfig {
      */
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * Returns whether DB clusters and instances are created instantly without a real Docker
+     * container or auth proxy (API/metadata only). Useful for CI and environments without
+     * access to the Docker socket.
+     *
+     * @return {@code true} if mock mode is enabled
+     */
+    public boolean isMock() {
+        return mock;
     }
 
     /**
@@ -116,6 +131,7 @@ public class RdsConfig extends AbstractServiceConfig {
         container.withEnv("FLOCI_SERVICES_RDS_ENABLED", String.valueOf(isEnabled()));
 
         if (isEnabled()) {
+            container.withEnv("FLOCI_SERVICES_RDS_MOCK", String.valueOf(mock));
             container.withEnv("FLOCI_SERVICES_RDS_PROXY_BASE_PORT", String.valueOf(proxyBasePort));
             container.withEnv("FLOCI_SERVICES_RDS_PROXY_MAX_PORT", String.valueOf(getProxyMaxPort()));
             container.withEnv("FLOCI_SERVICES_RDS_DEFAULT_POSTGRES_IMAGE", defaultPostgresImage);
@@ -144,6 +160,7 @@ public class RdsConfig extends AbstractServiceConfig {
     public static class Builder {
 
         private boolean enabled = DEFAULT_ENABLED;
+        private boolean mock = DEFAULT_MOCK;
         private int proxyBasePort = DEFAULT_PROXY_BASE_PORT;
         private int proxyPortsCount = DEFAULT_PROXY_PORTS_COUNT;
         private String defaultPostgresImage = DEFAULT_POSTGRES_IMAGE;
@@ -163,6 +180,19 @@ public class RdsConfig extends AbstractServiceConfig {
          */
         public Builder enabled(boolean enabled) {
             this.enabled = enabled;
+            return this;
+        }
+
+        /**
+         * Sets whether DB clusters and instances are created instantly without a real Docker
+         * container or auth proxy (API/metadata only). Useful for CI and environments without
+         * access to the Docker socket.
+         *
+         * @param mock {@code true} to enable mock mode (default {@value DEFAULT_MOCK})
+         * @return this builder
+         */
+        public Builder mock(boolean mock) {
+            this.mock = mock;
             return this;
         }
 

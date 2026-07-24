@@ -22,6 +22,7 @@ class EksConfigTest {
         assertThat(config.getDockerNetwork()).isNull();
         assertThat(config.getEndpointMode()).isEqualTo("host");
         assertThat(config.isIamAuthWebhook()).isTrue();
+        assertThat(config.isEcrRegistryMirror()).isTrue();
     }
 
     @Test
@@ -35,6 +36,7 @@ class EksConfigTest {
                 .dockerNetwork("my-eks-network")
                 .endpointMode("network")
                 .iamAuthWebhook(false)
+                .ecrRegistryMirror(false)
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.isMock()).isTrue();
@@ -46,6 +48,7 @@ class EksConfigTest {
         assertThat(config.getDockerNetwork()).isEqualTo("my-eks-network");
         assertThat(config.getEndpointMode()).isEqualTo("network");
         assertThat(config.isIamAuthWebhook()).isFalse();
+        assertThat(config.isEcrRegistryMirror()).isFalse();
     }
 
     @Test
@@ -62,6 +65,7 @@ class EksConfigTest {
                 .containsEntry("FLOCI_SERVICES_EKS_API_SERVER_MAX_PORT", "6509")
                 .containsEntry("FLOCI_SERVICES_EKS_ENDPOINT_MODE", "host")
                 .containsEntry("FLOCI_SERVICES_EKS_IAM_AUTH_WEBHOOK", "true")
+                .containsEntry("FLOCI_SERVICES_EKS_ECR_REGISTRY_MIRROR", "true")
                 .doesNotContainKey("FLOCI_SERVICES_EKS_DOCKER_NETWORK");
     }
 
@@ -77,6 +81,7 @@ class EksConfigTest {
                 .dockerNetwork("my-eks-network")
                 .endpointMode("network")
                 .iamAuthWebhook(false)
+                .ecrRegistryMirror(false)
                 .build()
                 .applyEnvVarsToContainer(container);
 
@@ -89,7 +94,8 @@ class EksConfigTest {
                 .containsEntry("FLOCI_SERVICES_EKS_API_SERVER_MAX_PORT", "8049")
                 .containsEntry("FLOCI_SERVICES_EKS_DOCKER_NETWORK", "my-eks-network")
                 .containsEntry("FLOCI_SERVICES_EKS_ENDPOINT_MODE", "network")
-                .containsEntry("FLOCI_SERVICES_EKS_IAM_AUTH_WEBHOOK", "false");
+                .containsEntry("FLOCI_SERVICES_EKS_IAM_AUTH_WEBHOOK", "false")
+                .containsEntry("FLOCI_SERVICES_EKS_ECR_REGISTRY_MIRROR", "false");
     }
 
     @Test

@@ -24,6 +24,7 @@ public class EksConfig extends AbstractServiceConfig {
     private static final int DEFAULT_API_SERVER_PORTS_COUNT = 10;
     private static final String DEFAULT_ENDPOINT_MODE = "host";
     private static final boolean DEFAULT_IAM_AUTH_WEBHOOK = true;
+    private static final boolean DEFAULT_ECR_REGISTRY_MIRROR = true;
 
     private final boolean mock;
     private final String provider;
@@ -33,6 +34,7 @@ public class EksConfig extends AbstractServiceConfig {
     private final String dockerNetwork;
     private final String endpointMode;
     private final boolean iamAuthWebhook;
+    private final boolean ecrRegistryMirror;
 
     private EksConfig(Builder builder) {
         super(builder.enabled);
@@ -44,6 +46,7 @@ public class EksConfig extends AbstractServiceConfig {
         this.dockerNetwork = builder.dockerNetwork;
         this.endpointMode = builder.endpointMode;
         this.iamAuthWebhook = builder.iamAuthWebhook;
+        this.ecrRegistryMirror = builder.ecrRegistryMirror;
     }
 
     /**
@@ -145,6 +148,19 @@ public class EksConfig extends AbstractServiceConfig {
         return iamAuthWebhook;
     }
 
+    /**
+     * Returns whether each new k3s cluster gets a generated
+     * {@code /etc/rancher/k3s/registries.yaml} that mirrors every ECR repository URI the
+     * emulator can mint to the registry container's in-network endpoint, so pods can pull images
+     * pushed to Floci ECR without any manual containerd configuration. Only takes effect when
+     * ECR is also enabled.
+     *
+     * @return {@code true} if the ECR registry mirror is enabled
+     */
+    public boolean isEcrRegistryMirror() {
+        return ecrRegistryMirror;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_EKS_ENABLED", String.valueOf(isEnabled()));
@@ -157,6 +173,7 @@ public class EksConfig extends AbstractServiceConfig {
             container.withEnv("FLOCI_SERVICES_EKS_API_SERVER_MAX_PORT", String.valueOf(getApiServerMaxPort()));
             container.withEnv("FLOCI_SERVICES_EKS_ENDPOINT_MODE", endpointMode);
             container.withEnv("FLOCI_SERVICES_EKS_IAM_AUTH_WEBHOOK", String.valueOf(iamAuthWebhook));
+            container.withEnv("FLOCI_SERVICES_EKS_ECR_REGISTRY_MIRROR", String.valueOf(ecrRegistryMirror));
 
             if (dockerNetwork != null) {
                 container.withEnv("FLOCI_SERVICES_EKS_DOCKER_NETWORK", dockerNetwork);
@@ -187,6 +204,7 @@ public class EksConfig extends AbstractServiceConfig {
         private String dockerNetwork;
         private String endpointMode = DEFAULT_ENDPOINT_MODE;
         private boolean iamAuthWebhook = DEFAULT_IAM_AUTH_WEBHOOK;
+        private boolean ecrRegistryMirror = DEFAULT_ECR_REGISTRY_MIRROR;
 
         private Builder() {
             // Allow instantiation only via EksConfig.builder()
@@ -286,6 +304,21 @@ public class EksConfig extends AbstractServiceConfig {
          */
         public Builder iamAuthWebhook(boolean iamAuthWebhook) {
             this.iamAuthWebhook = iamAuthWebhook;
+            return this;
+        }
+
+        /**
+         * Controls whether each new k3s cluster gets a generated
+         * {@code /etc/rancher/k3s/registries.yaml} that mirrors every ECR repository URI the
+         * emulator can mint to the registry container's in-network endpoint, so pods can pull
+         * images pushed to Floci ECR without any manual containerd configuration. Only takes
+         * effect when ECR is also enabled.
+         *
+         * @param ecrRegistryMirror {@code true} to enable the ECR registry mirror (default {@value DEFAULT_ECR_REGISTRY_MIRROR})
+         * @return this builder
+         */
+        public Builder ecrRegistryMirror(boolean ecrRegistryMirror) {
+            this.ecrRegistryMirror = ecrRegistryMirror;
             return this;
         }
 

@@ -1,6 +1,7 @@
 package io.floci.testcontainers;
 
 import io.floci.testcontainers.config.DuckDbConfig;
+import io.floci.testcontainers.config.ProtocolsConfig;
 import io.floci.testcontainers.config.SecurityConfig;
 import io.floci.testcontainers.config.StorageConfig;
 import io.floci.testcontainers.config.TlsConfig;
@@ -69,6 +70,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private StorageConfig storageConfig = StorageConfig.builder().build();
     private DuckDbConfig duckDbConfig = DuckDbConfig.builder().build();
     private SecurityConfig securityConfig = SecurityConfig.builder().build();
+    private ProtocolsConfig protocolsConfig = ProtocolsConfig.builder().build();
 
     // Services config
     private AcmConfig acmConfig = AcmConfig.builder().build();
@@ -130,6 +132,15 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private DocumentDbConfig documentDbConfig = DocumentDbConfig.builder().build();
     private EmrConfig emrConfig = EmrConfig.builder().build();
     private WafV2Config wafV2Config = WafV2Config.builder().build();
+    private IotConfig iotConfig = IotConfig.builder().build();
+    private IotDataConfig iotDataConfig = IotDataConfig.builder().build();
+    private LightsailConfig lightsailConfig = LightsailConfig.builder().build();
+    private CloudControlConfig cloudControlConfig = CloudControlConfig.builder().build();
+    private S3VectorsConfig s3VectorsConfig = S3VectorsConfig.builder().build();
+    private ElasticBeanstalkConfig elasticBeanstalkConfig = ElasticBeanstalkConfig.builder().build();
+    private CodePipelineConfig codePipelineConfig = CodePipelineConfig.builder().build();
+    private AmazonMqConfig amazonMqConfig = AmazonMqConfig.builder().build();
+    private MemoryDbConfig memoryDbConfig = MemoryDbConfig.builder().build();
 
     /**
      * Creates a new Floci container with the default image ({@code floci/floci:latest}).
@@ -1393,7 +1404,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * new FlociContainer()
      *     .withMskConfig(c -> c
      *         .mock(true)
-     *         .defaultImage("redpandadata/redpanda:v24"));
+     *         .defaultImage("redpandadata/redpanda:v24")
+     *         .kafkaHostPortRange(9300, 10));
      * }</pre>
      *
      * @param configurer a consumer that receives a {@link MskConfig.Builder} to modify
@@ -1403,6 +1415,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         MskConfig.Builder builder = MskConfig.builder();
         configurer.accept(builder);
         this.mskConfig = builder.build();
+        configureExposedPorts();
         mskConfig.applyEnvVarsToContainer(this);
         return this;
     }
@@ -2117,6 +2130,267 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     }
 
     /**
+     * IoT Core-specific settings such as the embedded MQTT broker.
+     *
+     * @return the IoT Core configuration
+     */
+    public IotConfig getIotConfig() {
+        return iotConfig;
+    }
+
+    /**
+     * Configures IoT Core-specific settings such as the embedded MQTT broker.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withIotConfig(c -> c
+     *         .mqttAutoStart(true)
+     *         .mqttPort(1883));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link IotConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withIotConfig(Consumer<IotConfig.Builder> configurer) {
+        IotConfig.Builder builder = IotConfig.builder();
+        configurer.accept(builder);
+        this.iotConfig = builder.build();
+        configureExposedPorts();
+        iotConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * IoT Data Plane-specific settings.
+     *
+     * @return the IoT Data Plane configuration
+     */
+    public IotDataConfig getIotDataConfig() {
+        return iotDataConfig;
+    }
+
+    /**
+     * Configures IoT Data Plane-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withIotDataConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link IotDataConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withIotDataConfig(Consumer<IotDataConfig.Builder> configurer) {
+        IotDataConfig.Builder builder = IotDataConfig.builder();
+        configurer.accept(builder);
+        this.iotDataConfig = builder.build();
+        iotDataConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Lightsail-specific settings.
+     *
+     * @return the Lightsail configuration
+     */
+    public LightsailConfig getLightsailConfig() {
+        return lightsailConfig;
+    }
+
+    /**
+     * Configures Lightsail-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withLightsailConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link LightsailConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withLightsailConfig(Consumer<LightsailConfig.Builder> configurer) {
+        LightsailConfig.Builder builder = LightsailConfig.builder();
+        configurer.accept(builder);
+        this.lightsailConfig = builder.build();
+        lightsailConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Cloud Control API-specific settings.
+     *
+     * @return the Cloud Control API configuration
+     */
+    public CloudControlConfig getCloudControlConfig() {
+        return cloudControlConfig;
+    }
+
+    /**
+     * Configures Cloud Control API-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withCloudControlConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link CloudControlConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withCloudControlConfig(Consumer<CloudControlConfig.Builder> configurer) {
+        CloudControlConfig.Builder builder = CloudControlConfig.builder();
+        configurer.accept(builder);
+        this.cloudControlConfig = builder.build();
+        cloudControlConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * S3 Vectors-specific settings.
+     *
+     * @return the S3 Vectors configuration
+     */
+    public S3VectorsConfig getS3VectorsConfig() {
+        return s3VectorsConfig;
+    }
+
+    /**
+     * Configures S3 Vectors-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withS3VectorsConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link S3VectorsConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withS3VectorsConfig(Consumer<S3VectorsConfig.Builder> configurer) {
+        S3VectorsConfig.Builder builder = S3VectorsConfig.builder();
+        configurer.accept(builder);
+        this.s3VectorsConfig = builder.build();
+        s3VectorsConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Elastic Beanstalk-specific settings.
+     *
+     * @return the Elastic Beanstalk configuration
+     */
+    public ElasticBeanstalkConfig getElasticBeanstalkConfig() {
+        return elasticBeanstalkConfig;
+    }
+
+    /**
+     * Configures Elastic Beanstalk-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withElasticBeanstalkConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link ElasticBeanstalkConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withElasticBeanstalkConfig(Consumer<ElasticBeanstalkConfig.Builder> configurer) {
+        ElasticBeanstalkConfig.Builder builder = ElasticBeanstalkConfig.builder();
+        configurer.accept(builder);
+        this.elasticBeanstalkConfig = builder.build();
+        elasticBeanstalkConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * CodePipeline-specific settings.
+     *
+     * @return the CodePipeline configuration
+     */
+    public CodePipelineConfig getCodePipelineConfig() {
+        return codePipelineConfig;
+    }
+
+    /**
+     * Configures CodePipeline-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withCodePipelineConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link CodePipelineConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withCodePipelineConfig(Consumer<CodePipelineConfig.Builder> configurer) {
+        CodePipelineConfig.Builder builder = CodePipelineConfig.builder();
+        configurer.accept(builder);
+        this.codePipelineConfig = builder.build();
+        codePipelineConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Amazon MQ-specific settings such as mock mode and default image.
+     *
+     * @return the Amazon MQ configuration
+     */
+    public AmazonMqConfig getAmazonMqConfig() {
+        return amazonMqConfig;
+    }
+
+    /**
+     * Configures Amazon MQ-specific settings such as mock mode and default image.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withAmazonMqConfig(c -> c
+     *         .mock(true)
+     *         .defaultImage("rabbitmq:4-management"));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link AmazonMqConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withAmazonMqConfig(Consumer<AmazonMqConfig.Builder> configurer) {
+        AmazonMqConfig.Builder builder = AmazonMqConfig.builder();
+        configurer.accept(builder);
+        this.amazonMqConfig = builder.build();
+        amazonMqConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * MemoryDB-specific settings such as mock mode, proxy port range and default image.
+     *
+     * @return the MemoryDB configuration
+     */
+    public MemoryDbConfig getMemoryDbConfig() {
+        return memoryDbConfig;
+    }
+
+    /**
+     * Configures MemoryDB-specific settings such as mock mode, proxy port range and default image.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withMemoryDbConfig(c -> c
+     *         .mock(true)
+     *         .proxyPortRange(6400, 20)
+     *         .defaultImage("valkey/valkey:9"));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link MemoryDbConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withMemoryDbConfig(Consumer<MemoryDbConfig.Builder> configurer) {
+        MemoryDbConfig.Builder builder = MemoryDbConfig.builder();
+        configurer.accept(builder);
+        this.memoryDbConfig = builder.build();
+        configureExposedPorts();
+        memoryDbConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
      * Returns the current DuckDB configuration. Defaults to the default image and no custom URL.
      *
      * @return the DuckDB configuration
@@ -2177,6 +2451,34 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     }
 
     /**
+     * Returns the current protocols configuration.
+     *
+     * @return the protocols configuration
+     */
+    public ProtocolsConfig getProtocolsConfig() {
+        return protocolsConfig;
+    }
+
+    /**
+     * Configures protocol-related settings such as strict RPC protocol claiming.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withProtocolsConfig(c -> c.strictClaiming(true));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link ProtocolsConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withProtocolsConfig(Consumer<ProtocolsConfig.Builder> configurer) {
+        ProtocolsConfig.Builder builder = ProtocolsConfig.builder();
+        configurer.accept(builder);
+        this.protocolsConfig = builder.build();
+        protocolsConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
      * Configures all exposed ports of the Floci container
      */
     private void configureExposedPorts() {
@@ -2191,6 +2493,9 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         ec2Config.applyExposedPortsToContainer(this);
         elbV2Config.applyExposedPortsToContainer(this);
         neptuneConfig.applyExposedPortsToContainer(this);
+        iotConfig.applyExposedPortsToContainer(this);
+        memoryDbConfig.applyExposedPortsToContainer(this);
+        mskConfig.applyExposedPortsToContainer(this);
     }
 
     /**
@@ -2201,6 +2506,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         storageConfig.applyEnvVarsToContainer(this);
         duckDbConfig.applyEnvVarsToContainer(this);
         securityConfig.applyEnvVarsToContainer(this);
+        protocolsConfig.applyEnvVarsToContainer(this);
 
         // Services config
         acmConfig.applyEnvVarsToContainer(this);
@@ -2260,6 +2566,15 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         documentDbConfig.applyEnvVarsToContainer(this);
         emrConfig.applyEnvVarsToContainer(this);
         wafV2Config.applyEnvVarsToContainer(this);
+        iotConfig.applyEnvVarsToContainer(this);
+        iotDataConfig.applyEnvVarsToContainer(this);
+        lightsailConfig.applyEnvVarsToContainer(this);
+        cloudControlConfig.applyEnvVarsToContainer(this);
+        s3VectorsConfig.applyEnvVarsToContainer(this);
+        elasticBeanstalkConfig.applyEnvVarsToContainer(this);
+        codePipelineConfig.applyEnvVarsToContainer(this);
+        amazonMqConfig.applyEnvVarsToContainer(this);
+        memoryDbConfig.applyEnvVarsToContainer(this);
     }
 
     private static String uniqueShortId() {
