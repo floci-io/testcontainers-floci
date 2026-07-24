@@ -73,7 +73,7 @@ jobs:
 
       - name: Calculate version and generate changelog
         id: changelog
-        uses: TriPSs/conventional-changelog-action@952b14bbc4be87e8458a6ac5926fc655608b1b19 # v6.3.1
+        uses: TriPSs/conventional-changelog-action@ee43def3241429afddab215ba89090cbf64fb45c # v6.4.0
         with:
           skip-version-file: 'true'
           skip-commit: 'true'
