@@ -12,7 +12,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class AthenaConfig extends AbstractServiceConfig {
+public class AthenaConfig extends AbstractServiceConfig<AthenaConfig.Builder> {
 
     private static final boolean DEFAULT_MOCK = false;
 
@@ -30,6 +30,16 @@ public class AthenaConfig extends AbstractServiceConfig {
      */
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
     }
 
     /**
@@ -53,9 +63,8 @@ public class AthenaConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link AthenaConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, AthenaConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
         private boolean mock = DEFAULT_MOCK;
 
         private Builder() {
@@ -63,14 +72,13 @@ public class AthenaConfig extends AbstractServiceConfig {
         }
 
         /**
-         * Enables or disables the Athena service.
+         * Creates a new builder initialized with the values of the given {@link AthenaConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(AthenaConfig instance) {
+            super(instance);
+            this.mock = instance.isMock();
         }
 
         /**

@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class OpenSearchConfig extends AbstractServiceConfig {
+public class OpenSearchConfig extends AbstractServiceConfig<OpenSearchConfig.Builder> {
 
     private static final boolean DEFAULT_MOCK = false;
     private static final int DEFAULT_PROXY_BASE_PORT = 9400;
@@ -42,6 +42,16 @@ public class OpenSearchConfig extends AbstractServiceConfig {
      */
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
     }
 
     /**
@@ -121,9 +131,8 @@ public class OpenSearchConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link OpenSearchConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, OpenSearchConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
         private boolean mock = DEFAULT_MOCK;
         private String defaultImage = null;
         private int proxyBasePort = DEFAULT_PROXY_BASE_PORT;
@@ -135,14 +144,17 @@ public class OpenSearchConfig extends AbstractServiceConfig {
         }
 
         /**
-         * Enables or disables the OpenSearch service.
+         * Creates a new builder initialized with the values of the given {@link OpenSearchConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(OpenSearchConfig instance) {
+            super(instance);
+            this.mock = instance.isMock();
+            this.defaultImage = instance.getDefaultImage();
+            this.proxyBasePort = instance.getProxyBasePort();
+            this.proxyPortsCount = instance.getProxyPortsCount();
+            this.dockerNetwork = instance.getDockerNetwork();
         }
 
         /**

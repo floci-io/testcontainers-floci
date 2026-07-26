@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class AmazonMqConfig extends AbstractServiceConfig {
+public class AmazonMqConfig extends AbstractServiceConfig<AmazonMqConfig.Builder> {
 
     private static final boolean DEFAULT_MOCK = false;
     private static final String DEFAULT_IMAGE = "rabbitmq:3-management";
@@ -35,6 +35,16 @@ public class AmazonMqConfig extends AbstractServiceConfig {
      */
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
     }
 
     /**
@@ -68,9 +78,8 @@ public class AmazonMqConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link AmazonMqConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, AmazonMqConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
         private boolean mock = DEFAULT_MOCK;
         private String defaultImage = DEFAULT_IMAGE;
 
@@ -79,14 +88,14 @@ public class AmazonMqConfig extends AbstractServiceConfig {
         }
 
         /**
-         * Enables or disables the Amazon MQ service.
+         * Creates a new builder initialized with the values of the given {@link AmazonMqConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(AmazonMqConfig instance) {
+            super(instance);
+            this.mock = instance.isMock();
+            this.defaultImage = instance.getDefaultImage();
         }
 
         /**

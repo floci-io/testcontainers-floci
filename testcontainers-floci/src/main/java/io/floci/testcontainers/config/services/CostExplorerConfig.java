@@ -12,7 +12,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class CostExplorerConfig extends AbstractServiceConfig {
+public class CostExplorerConfig extends AbstractServiceConfig<CostExplorerConfig.Builder> {
 
     private static final double DEFAULT_CREDIT_USD_MONTHLY = 0.0;
 
@@ -30,6 +30,16 @@ public class CostExplorerConfig extends AbstractServiceConfig {
      */
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
     }
 
     /**
@@ -54,9 +64,8 @@ public class CostExplorerConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link CostExplorerConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, CostExplorerConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
         private double creditUsdMonthly = DEFAULT_CREDIT_USD_MONTHLY;
 
         private Builder() {
@@ -64,14 +73,13 @@ public class CostExplorerConfig extends AbstractServiceConfig {
         }
 
         /**
-         * Enables or disables the Cost Explorer service.
+         * Creates a new builder initialized with the values of the given {@link CostExplorerConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(CostExplorerConfig instance) {
+            super(instance);
+            this.creditUsdMonthly = instance.getCreditUsdMonthly();
         }
 
         /**

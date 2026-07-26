@@ -13,7 +13,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class CurConfig extends AbstractServiceConfig {
+public class CurConfig extends AbstractServiceConfig<CurConfig.Builder> {
 
     private static final String DEFAULT_EMIT_MODE = "synchronous";
     private static final String DEFAULT_STAGING_BUCKET = "floci-cur-staging";
@@ -34,6 +34,16 @@ public class CurConfig extends AbstractServiceConfig {
      */
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
     }
 
     /**
@@ -74,9 +84,8 @@ public class CurConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link CurConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, CurConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
         private String emitMode = DEFAULT_EMIT_MODE;
         private String stagingBucket = DEFAULT_STAGING_BUCKET;
 
@@ -85,14 +94,14 @@ public class CurConfig extends AbstractServiceConfig {
         }
 
         /**
-         * Enables or disables the CUR service.
+         * Creates a new builder initialized with the values of the given {@link CurConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(CurConfig instance) {
+            super(instance);
+            this.emitMode = instance.getEmitMode();
+            this.stagingBucket = instance.getStagingBucket();
         }
 
         /**

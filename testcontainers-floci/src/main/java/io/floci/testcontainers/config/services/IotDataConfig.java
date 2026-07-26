@@ -11,7 +11,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class IotDataConfig extends AbstractServiceConfig {
+public class IotDataConfig extends AbstractServiceConfig<IotDataConfig.Builder> {
 
     private IotDataConfig(Builder builder) {
         super(builder.enabled);
@@ -26,6 +26,16 @@ public class IotDataConfig extends AbstractServiceConfig {
         return new Builder();
     }
 
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_IOTDATA_ENABLED", String.valueOf(isEnabled()));
@@ -34,23 +44,20 @@ public class IotDataConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link IotDataConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, IotDataConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
 
         private Builder() {
             // Allow instantiation only via IotDataConfig.builder()
         }
 
         /**
-         * Enables or disables the IoT Data Plane service.
+         * Creates a new builder initialized with the values of the given {@link IotDataConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(IotDataConfig instance) {
+            super(instance);
         }
 
         /**

@@ -12,7 +12,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class SsmConfig extends AbstractServiceConfig {
+public class SsmConfig extends AbstractServiceConfig<SsmConfig.Builder> {
 
     private static final int DEFAULT_MAX_PARAMETER_HISTORY = 5;
 
@@ -32,6 +32,15 @@ public class SsmConfig extends AbstractServiceConfig {
         return new Builder();
     }
 
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
+    }
 
     /**
      * Returns the maximum parameter history count.
@@ -54,9 +63,8 @@ public class SsmConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link SsmConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, SsmConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
         private int maxParameterHistory = DEFAULT_MAX_PARAMETER_HISTORY;
 
         private Builder() {
@@ -64,14 +72,13 @@ public class SsmConfig extends AbstractServiceConfig {
         }
 
         /**
-         * Enables or disables the SSM service.
+         * Creates a new builder initialized with the values of the given {@link SsmConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(SsmConfig instance) {
+            super(instance);
+            this.maxParameterHistory = instance.getMaxParameterHistory();
         }
 
         /**

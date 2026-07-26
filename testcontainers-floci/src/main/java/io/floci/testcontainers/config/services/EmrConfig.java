@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class EmrConfig extends AbstractServiceConfig {
+public class EmrConfig extends AbstractServiceConfig<EmrConfig.Builder> {
 
     private static final String DEFAULT_RELEASE_LABEL = "emr-7.5.0";
     private static final int DEFAULT_CLUSTER_STARTUP_DELAY_SECONDS = 0;
@@ -35,6 +35,16 @@ public class EmrConfig extends AbstractServiceConfig {
      */
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
     }
 
     /**
@@ -69,9 +79,8 @@ public class EmrConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link EmrConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, EmrConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
         private String defaultReleaseLabel = DEFAULT_RELEASE_LABEL;
         private int clusterStartupDelaySeconds = DEFAULT_CLUSTER_STARTUP_DELAY_SECONDS;
 
@@ -80,14 +89,14 @@ public class EmrConfig extends AbstractServiceConfig {
         }
 
         /**
-         * Enables or disables the EMR service.
+         * Creates a new builder initialized with the values of the given {@link EmrConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(EmrConfig instance) {
+            super(instance);
+            this.defaultReleaseLabel = instance.getDefaultReleaseLabel();
+            this.clusterStartupDelaySeconds = instance.getClusterStartupDelaySeconds();
         }
 
         /**

@@ -12,7 +12,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class AcmConfig extends AbstractServiceConfig {
+public class AcmConfig extends AbstractServiceConfig<AcmConfig.Builder> {
 
     private static final int DEFAULT_VALIDATION_WAIT_SECONDS = 0;
 
@@ -32,6 +32,15 @@ public class AcmConfig extends AbstractServiceConfig {
         return new Builder();
     }
 
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
+    }
 
     /**
      * Returns the validation wait time in seconds.
@@ -54,9 +63,8 @@ public class AcmConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link AcmConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, AcmConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
         private int validationWaitSeconds = DEFAULT_VALIDATION_WAIT_SECONDS;
 
         private Builder() {
@@ -64,14 +72,13 @@ public class AcmConfig extends AbstractServiceConfig {
         }
 
         /**
-         * Enables or disables the ACM service.
+         * Creates a new builder initialized with the values of the given {@link AcmConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(AcmConfig instance) {
+            super(instance);
+            this.validationWaitSeconds = instance.getValidationWaitSeconds();
         }
 
         /**

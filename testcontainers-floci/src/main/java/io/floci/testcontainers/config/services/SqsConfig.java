@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class SqsConfig extends AbstractServiceConfig {
+public class SqsConfig extends AbstractServiceConfig<SqsConfig.Builder> {
 
     private static final int DEFAULT_VISIBILITY_TIMEOUT = 30;
     private static final int DEFAULT_MAX_MESSAGE_SIZE = 1048576;
@@ -40,6 +40,15 @@ public class SqsConfig extends AbstractServiceConfig {
         return new Builder();
     }
 
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
+    }
 
     /**
      * Returns the default visibility timeout in seconds.
@@ -82,9 +91,8 @@ public class SqsConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link SqsConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, SqsConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
         private int defaultVisibilityTimeout = DEFAULT_VISIBILITY_TIMEOUT;
         private int maxMessageSize = DEFAULT_MAX_MESSAGE_SIZE;
         private boolean clearFifoDeduplicationCacheOnPurge = DEFAULT_CLEAR_FIFO_DEDUPLICATION_CACHE_ON_PURGE;
@@ -94,14 +102,15 @@ public class SqsConfig extends AbstractServiceConfig {
         }
 
         /**
-         * Enables or disables the SQS service.
+         * Creates a new builder initialized with the values of the given {@link SqsConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(SqsConfig instance) {
+            super(instance);
+            this.defaultVisibilityTimeout = instance.getDefaultVisibilityTimeout();
+            this.maxMessageSize = instance.getMaxMessageSize();
+            this.clearFifoDeduplicationCacheOnPurge = instance.isClearFifoDeduplicationCacheOnPurge();
         }
 
         /**

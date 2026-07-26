@@ -13,7 +13,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class IotConfig extends AbstractServiceConfig {
+public class IotConfig extends AbstractServiceConfig<IotConfig.Builder> {
 
     private static final boolean DEFAULT_MQTT_ENABLED = true;
     private static final boolean DEFAULT_MQTT_AUTO_START = false;
@@ -40,6 +40,16 @@ public class IotConfig extends AbstractServiceConfig {
      */
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
     }
 
     /**
@@ -101,9 +111,8 @@ public class IotConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link IotConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, IotConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
         private boolean mqttEnabled = DEFAULT_MQTT_ENABLED;
         private boolean mqttAutoStart = DEFAULT_MQTT_AUTO_START;
         private String mqttHost = DEFAULT_MQTT_HOST;
@@ -114,14 +123,16 @@ public class IotConfig extends AbstractServiceConfig {
         }
 
         /**
-         * Enables or disables the IoT Core service.
+         * Creates a new builder initialized with the values of the given {@link IotConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(IotConfig instance) {
+            super(instance);
+            this.mqttEnabled = instance.isMqttEnabled();
+            this.mqttAutoStart = instance.isMqttAutoStart();
+            this.mqttHost = instance.getMqttHost();
+            this.mqttPort = instance.getMqttPort();
         }
 
         /**

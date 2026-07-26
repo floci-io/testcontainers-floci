@@ -12,7 +12,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class SecretsManagerConfig extends AbstractServiceConfig {
+public class SecretsManagerConfig extends AbstractServiceConfig<SecretsManagerConfig.Builder> {
 
     private static final int DEFAULT_RECOVERY_WINDOW_DAYS = 30;
 
@@ -32,6 +32,15 @@ public class SecretsManagerConfig extends AbstractServiceConfig {
         return new Builder();
     }
 
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
+    }
 
     /**
      * Returns the default recovery window in days.
@@ -54,9 +63,8 @@ public class SecretsManagerConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link SecretsManagerConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, SecretsManagerConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
         private int defaultRecoveryWindowDays = DEFAULT_RECOVERY_WINDOW_DAYS;
 
         private Builder() {
@@ -64,14 +72,13 @@ public class SecretsManagerConfig extends AbstractServiceConfig {
         }
 
         /**
-         * Enables or disables the Secrets Manager service.
+         * Creates a new builder initialized with the values of the given {@link SecretsManagerConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(SecretsManagerConfig instance) {
+            super(instance);
+            this.defaultRecoveryWindowDays = instance.getDefaultRecoveryWindowDays();
         }
 
         /**

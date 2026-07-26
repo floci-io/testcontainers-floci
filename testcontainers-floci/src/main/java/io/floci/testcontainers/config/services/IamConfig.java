@@ -12,7 +12,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class IamConfig extends AbstractServiceConfig {
+public class IamConfig extends AbstractServiceConfig<IamConfig.Builder> {
 
     private static final boolean DEFAULT_ENFORCEMENT_ENABLED = false;
     private static final boolean DEFAULT_SEED_DEPLOYER_PRINCIPAL = false;
@@ -35,6 +35,15 @@ public class IamConfig extends AbstractServiceConfig {
         return new Builder();
     }
 
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
+    }
 
     /**
      * Returns whether IAM enforcement is enabled.
@@ -67,9 +76,8 @@ public class IamConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link IamConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, IamConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
         private boolean enforcementEnabled = DEFAULT_ENFORCEMENT_ENABLED;
         private boolean seedDeployerPrincipal = DEFAULT_SEED_DEPLOYER_PRINCIPAL;
 
@@ -78,14 +86,14 @@ public class IamConfig extends AbstractServiceConfig {
         }
 
         /**
-         * Enables or disables the IAM service.
+         * Creates a new builder initialized with the values of the given {@link IamConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(IamConfig instance) {
+            super(instance);
+            this.enforcementEnabled = instance.isEnforcementEnabled();
+            this.seedDeployerPrincipal = instance.isSeedDeployerPrincipal();
         }
 
         /**

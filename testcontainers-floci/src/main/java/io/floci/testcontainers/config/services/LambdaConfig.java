@@ -16,7 +16,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class LambdaConfig extends AbstractServiceConfig {
+public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
 
     private static final boolean DEFAULT_EPHEMERAL = false;
     private static final boolean DEFAULT_EXPOSE_RUNTIME_PORTS = false;
@@ -67,6 +67,16 @@ public class LambdaConfig extends AbstractServiceConfig {
      */
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
     }
 
     /**
@@ -269,9 +279,8 @@ public class LambdaConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link LambdaConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, LambdaConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
         private boolean ephemeral = DEFAULT_EPHEMERAL;
         private boolean exposeRuntimePorts = DEFAULT_EXPOSE_RUNTIME_PORTS;
         private int defaultMemoryMb = DEFAULT_MEMORY_MB;
@@ -291,14 +300,25 @@ public class LambdaConfig extends AbstractServiceConfig {
         }
 
         /**
-         * Enables or disables the Lambda service.
+         * Creates a new builder initialized with the values of the given {@link LambdaConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(LambdaConfig instance) {
+            super(instance);
+            this.ephemeral = instance.isEphemeral();
+            this.exposeRuntimePorts = instance.isExposeRuntimePorts();
+            this.defaultMemoryMb = instance.getDefaultMemoryMb();
+            this.defaultTimeoutSeconds = instance.getDefaultTimeoutSeconds();
+            this.dockerNetwork = instance.getDockerNetwork();
+            this.runtimeApiBasePort = instance.getRuntimeApiBasePort();
+            this.runtimeApiPortsCount = instance.getRuntimeApiPortsCount();
+            this.pollIntervalMs = instance.getPollIntervalMs();
+            this.containerIdleTimeoutSeconds = instance.getContainerIdleTimeoutSeconds();
+            this.regionConcurrencyLimit = instance.getRegionConcurrencyLimit();
+            this.unreservedConcurrencyMin = instance.getUnreservedConcurrencyMin();
+            this.hotReload = instance.getHotReload();
+            this.awsConfigPath = instance.getAwsConfigPath();
         }
 
         /**

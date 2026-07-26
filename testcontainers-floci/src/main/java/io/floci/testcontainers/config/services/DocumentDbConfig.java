@@ -15,7 +15,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class DocumentDbConfig extends AbstractServiceConfig {
+public class DocumentDbConfig extends AbstractServiceConfig<DocumentDbConfig.Builder> {
 
     private static final boolean DEFAULT_MOCK = false;
     private static final String DEFAULT_IMAGE = "mongo:7.0";
@@ -38,6 +38,16 @@ public class DocumentDbConfig extends AbstractServiceConfig {
      */
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
     }
 
     /**
@@ -84,9 +94,8 @@ public class DocumentDbConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link DocumentDbConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, DocumentDbConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
         private boolean mock = DEFAULT_MOCK;
         private String defaultImage = DEFAULT_IMAGE;
         private String dockerNetwork;
@@ -96,14 +105,15 @@ public class DocumentDbConfig extends AbstractServiceConfig {
         }
 
         /**
-         * Enables or disables the DocumentDB service.
+         * Creates a new builder initialized with the values of the given {@link DocumentDbConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(DocumentDbConfig instance) {
+            super(instance);
+            this.mock = instance.isMock();
+            this.defaultImage = instance.getDefaultImage();
+            this.dockerNetwork = instance.getDockerNetwork();
         }
 
         /**

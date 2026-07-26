@@ -13,7 +13,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class S3Config extends AbstractServiceConfig {
+public class S3Config extends AbstractServiceConfig<S3Config.Builder> {
 
     private static final int DEFAULT_PRESIGN_EXPIRY_SECONDS = 3600;
     private static final boolean DEFAULT_ENFORCE_AUTH = false;
@@ -36,6 +36,15 @@ public class S3Config extends AbstractServiceConfig {
         return new Builder();
     }
 
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
+    }
 
     /**
      * Returns the default presign expiry in seconds.
@@ -68,9 +77,8 @@ public class S3Config extends AbstractServiceConfig {
     /**
      * Builder for {@link S3Config}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, S3Config> {
 
-        private boolean enabled = DEFAULT_ENABLED;
         private int defaultPresignExpirySeconds = DEFAULT_PRESIGN_EXPIRY_SECONDS;
         private boolean enforceAuth = DEFAULT_ENFORCE_AUTH;
 
@@ -79,14 +87,14 @@ public class S3Config extends AbstractServiceConfig {
         }
 
         /**
-         * Enables or disables the S3 service.
+         * Creates a new builder initialized with the values of the given {@link S3Config}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(S3Config instance) {
+            super(instance);
+            this.defaultPresignExpirySeconds = instance.getDefaultPresignExpirySeconds();
+            this.enforceAuth = instance.isEnforceAuth();
         }
 
         /**

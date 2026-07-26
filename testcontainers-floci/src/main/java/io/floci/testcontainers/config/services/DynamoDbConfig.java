@@ -11,7 +11,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class DynamoDbConfig extends AbstractServiceConfig {
+public class DynamoDbConfig extends AbstractServiceConfig<DynamoDbConfig.Builder> {
 
 
     private DynamoDbConfig(Builder builder) {
@@ -27,6 +27,15 @@ public class DynamoDbConfig extends AbstractServiceConfig {
         return new Builder();
     }
 
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
+    }
 
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
@@ -36,23 +45,20 @@ public class DynamoDbConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link DynamoDbConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, DynamoDbConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
 
         private Builder() {
             // Allow instantiation only via DynamoDbConfig.builder()
         }
 
         /**
-         * Enables or disables the DynamoDB service.
+         * Creates a new builder initialized with the values of the given {@link DynamoDbConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(DynamoDbConfig instance) {
+            super(instance);
         }
 
         /**
