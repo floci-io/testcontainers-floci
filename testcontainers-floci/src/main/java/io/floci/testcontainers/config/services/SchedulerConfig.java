@@ -13,7 +13,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class SchedulerConfig extends AbstractServiceConfig {
+public class SchedulerConfig extends AbstractServiceConfig<SchedulerConfig.Builder> {
 
     private static final boolean DEFAULT_INVOCATION_ENABLED = true;
     private static final long DEFAULT_TICK_INTERVAL_SECONDS = 10;
@@ -36,6 +36,15 @@ public class SchedulerConfig extends AbstractServiceConfig {
         return new Builder();
     }
 
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
+    }
 
     /**
      * Returns whether the background dispatcher that fires schedule targets is enabled.
@@ -69,9 +78,8 @@ public class SchedulerConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link SchedulerConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, SchedulerConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
         private boolean invocationEnabled = DEFAULT_INVOCATION_ENABLED;
         private long tickIntervalSeconds = DEFAULT_TICK_INTERVAL_SECONDS;
 
@@ -80,14 +88,14 @@ public class SchedulerConfig extends AbstractServiceConfig {
         }
 
         /**
-         * Enables or disables the Scheduler service.
+         * Creates a new builder initialized with the values of the given {@link SchedulerConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(SchedulerConfig instance) {
+            super(instance);
+            this.invocationEnabled = instance.isInvocationEnabled();
+            this.tickIntervalSeconds = instance.getTickIntervalSeconds();
         }
 
         /**

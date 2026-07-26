@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class EcsConfig extends AbstractServiceConfig {
+public class EcsConfig extends AbstractServiceConfig<EcsConfig.Builder> {
 
     private static final boolean DEFAULT_MOCK = false;
     private static final int DEFAULT_MEMORY_MB = 512;
@@ -40,6 +40,16 @@ public class EcsConfig extends AbstractServiceConfig {
      */
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
     }
 
     /**
@@ -96,9 +106,8 @@ public class EcsConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link EcsConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, EcsConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
         private boolean mock = DEFAULT_MOCK;
         private String dockerNetwork;
         private int defaultMemoryMb = DEFAULT_MEMORY_MB;
@@ -109,14 +118,16 @@ public class EcsConfig extends AbstractServiceConfig {
         }
 
         /**
-         * Enables or disables the ECS service.
+         * Creates a new builder initialized with the values of the given {@link EcsConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(EcsConfig instance) {
+            super(instance);
+            this.mock = instance.isMock();
+            this.dockerNetwork = instance.getDockerNetwork();
+            this.defaultMemoryMb = instance.getDefaultMemoryMb();
+            this.defaultCpuUnits = instance.getDefaultCpuUnits();
         }
 
         /**

@@ -15,7 +15,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class MskConfig extends AbstractServiceConfig {
+public class MskConfig extends AbstractServiceConfig<MskConfig.Builder> {
 
     private static final boolean DEFAULT_MOCK = false;
     private static final String DEFAULT_IMAGE = "redpandadata/redpanda:latest";
@@ -42,6 +42,16 @@ public class MskConfig extends AbstractServiceConfig {
      */
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
     }
 
     /**
@@ -114,9 +124,8 @@ public class MskConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link MskConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, MskConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
         private boolean mock = DEFAULT_MOCK;
         private String defaultImage = DEFAULT_IMAGE;
         private int kafkaHostPortBase = DEFAULT_KAFKA_HOST_PORT_BASE;
@@ -127,14 +136,16 @@ public class MskConfig extends AbstractServiceConfig {
         }
 
         /**
-         * Enables or disables the MSK service.
+         * Creates a new builder initialized with the values of the given {@link MskConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(MskConfig instance) {
+            super(instance);
+            this.mock = instance.isMock();
+            this.defaultImage = instance.getDefaultImage();
+            this.kafkaHostPortBase = instance.getKafkaHostPortBase();
+            this.kafkaHostPortsCount = instance.getKafkaHostPortsCount();
         }
 
         /**

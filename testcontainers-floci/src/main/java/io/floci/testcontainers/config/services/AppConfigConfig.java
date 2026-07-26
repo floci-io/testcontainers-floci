@@ -11,7 +11,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class AppConfigConfig extends AbstractServiceConfig {
+public class AppConfigConfig extends AbstractServiceConfig<AppConfigConfig.Builder> {
 
 
     private AppConfigConfig(Builder builder) {
@@ -27,6 +27,15 @@ public class AppConfigConfig extends AbstractServiceConfig {
         return new Builder();
     }
 
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
+    }
 
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
@@ -36,23 +45,20 @@ public class AppConfigConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link AppConfigConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, AppConfigConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
 
         private Builder() {
             // Allow instantiation only via AppConfigConfig.builder()
         }
 
         /**
-         * Enables or disables the AppConfig service.
+         * Creates a new builder initialized with the values of the given {@link AppConfigConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(AppConfigConfig instance) {
+            super(instance);
         }
 
         /**

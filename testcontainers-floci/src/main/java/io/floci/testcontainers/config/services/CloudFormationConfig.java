@@ -12,7 +12,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class CloudFormationConfig extends AbstractServiceConfig {
+public class CloudFormationConfig extends AbstractServiceConfig<CloudFormationConfig.Builder> {
 
     private static final long DEFAULT_DELETED_STACK_RETENTION_SECONDS = 30L;
 
@@ -30,6 +30,16 @@ public class CloudFormationConfig extends AbstractServiceConfig {
      */
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
     }
 
     /**
@@ -53,9 +63,8 @@ public class CloudFormationConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link CloudFormationConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, CloudFormationConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
         private long deletedStackRetentionSeconds = DEFAULT_DELETED_STACK_RETENTION_SECONDS;
 
         private Builder() {
@@ -63,14 +72,13 @@ public class CloudFormationConfig extends AbstractServiceConfig {
         }
 
         /**
-         * Enables or disables the CloudFormation service.
+         * Creates a new builder initialized with the values of the given {@link CloudFormationConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(CloudFormationConfig instance) {
+            super(instance);
+            this.deletedStackRetentionSeconds = instance.getDeletedStackRetentionSeconds();
         }
 
         /**

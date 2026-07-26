@@ -11,7 +11,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class CloudControlConfig extends AbstractServiceConfig {
+public class CloudControlConfig extends AbstractServiceConfig<CloudControlConfig.Builder> {
 
     private CloudControlConfig(Builder builder) {
         super(builder.enabled);
@@ -26,6 +26,16 @@ public class CloudControlConfig extends AbstractServiceConfig {
         return new Builder();
     }
 
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_CLOUDCONTROL_ENABLED", String.valueOf(isEnabled()));
@@ -34,23 +44,20 @@ public class CloudControlConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link CloudControlConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, CloudControlConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
 
         private Builder() {
             // Allow instantiation only via CloudControlConfig.builder()
         }
 
         /**
-         * Enables or disables the Cloud Control API service.
+         * Creates a new builder initialized with the values of the given {@link CloudControlConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(CloudControlConfig instance) {
+            super(instance);
         }
 
         /**

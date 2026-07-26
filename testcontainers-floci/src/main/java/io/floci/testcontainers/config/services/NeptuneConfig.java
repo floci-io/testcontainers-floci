@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class NeptuneConfig extends AbstractServiceConfig {
+public class NeptuneConfig extends AbstractServiceConfig<NeptuneConfig.Builder> {
 
     private static final int DEFAULT_PROXY_BASE_PORT = 8182;
     private static final int DEFAULT_PROXY_PORTS_COUNT = 10;
@@ -46,6 +46,16 @@ public class NeptuneConfig extends AbstractServiceConfig {
      */
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
     }
 
     /**
@@ -143,9 +153,8 @@ public class NeptuneConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link NeptuneConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, NeptuneConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
         private int proxyBasePort = DEFAULT_PROXY_BASE_PORT;
         private int proxyPortsCount = DEFAULT_PROXY_PORTS_COUNT;
         private String dbType = DEFAULT_DB_TYPE;
@@ -158,14 +167,18 @@ public class NeptuneConfig extends AbstractServiceConfig {
         }
 
         /**
-         * Enables or disables the Neptune service.
+         * Creates a new builder initialized with the values of the given {@link NeptuneConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(NeptuneConfig instance) {
+            super(instance);
+            this.proxyBasePort = instance.getProxyBasePort();
+            this.proxyPortsCount = instance.getProxyPortsCount();
+            this.dbType = instance.getDbType();
+            this.defaultImage = instance.getDefaultImage();
+            this.defaultNeo4jImage = instance.getDefaultNeo4jImage();
+            this.dockerNetwork = instance.getDockerNetwork();
         }
 
         /**

@@ -11,7 +11,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class CognitoConfig extends AbstractServiceConfig {
+public class CognitoConfig extends AbstractServiceConfig<CognitoConfig.Builder> {
 
 
     private CognitoConfig(Builder builder) {
@@ -27,6 +27,15 @@ public class CognitoConfig extends AbstractServiceConfig {
         return new Builder();
     }
 
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
+    }
 
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
@@ -36,23 +45,20 @@ public class CognitoConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link CognitoConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, CognitoConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
 
         private Builder() {
             // Allow instantiation only via CognitoConfig.builder()
         }
 
         /**
-         * Enables or disables the Cognito service.
+         * Creates a new builder initialized with the values of the given {@link CognitoConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(CognitoConfig instance) {
+            super(instance);
         }
 
         /**

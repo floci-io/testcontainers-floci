@@ -15,7 +15,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class MemoryDbConfig extends AbstractServiceConfig {
+public class MemoryDbConfig extends AbstractServiceConfig<MemoryDbConfig.Builder> {
 
     private static final boolean DEFAULT_MOCK = false;
     private static final int DEFAULT_PROXY_BASE_PORT = 6400;
@@ -42,6 +42,16 @@ public class MemoryDbConfig extends AbstractServiceConfig {
      */
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
     }
 
     /**
@@ -114,9 +124,8 @@ public class MemoryDbConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link MemoryDbConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, MemoryDbConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
         private boolean mock = DEFAULT_MOCK;
         private int proxyBasePort = DEFAULT_PROXY_BASE_PORT;
         private int proxyPortsCount = DEFAULT_PROXY_PORTS_COUNT;
@@ -127,14 +136,16 @@ public class MemoryDbConfig extends AbstractServiceConfig {
         }
 
         /**
-         * Enables or disables the MemoryDB service.
+         * Creates a new builder initialized with the values of the given {@link MemoryDbConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(MemoryDbConfig instance) {
+            super(instance);
+            this.mock = instance.isMock();
+            this.proxyBasePort = instance.getProxyBasePort();
+            this.proxyPortsCount = instance.getProxyPortsCount();
+            this.defaultImage = instance.getDefaultImage();
         }
 
         /**

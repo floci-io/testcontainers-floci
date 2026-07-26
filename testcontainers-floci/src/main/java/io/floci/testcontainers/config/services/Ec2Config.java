@@ -12,7 +12,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class Ec2Config extends AbstractServiceConfig {
+public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
 
     private static final boolean DEFAULT_MOCK = false;
     private static final int DEFAULT_IMDS_PORT = 9169;
@@ -56,6 +56,16 @@ public class Ec2Config extends AbstractServiceConfig {
      */
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
     }
 
     /**
@@ -196,9 +206,8 @@ public class Ec2Config extends AbstractServiceConfig {
     /**
      * Builder for {@link Ec2Config}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, Ec2Config> {
 
-        private boolean enabled = DEFAULT_ENABLED;
         private boolean mock = DEFAULT_MOCK;
         private int imdsPort = DEFAULT_IMDS_PORT;
         private int sshPortRangeStart = DEFAULT_SSH_PORT_RANGE_START;
@@ -215,14 +224,22 @@ public class Ec2Config extends AbstractServiceConfig {
         }
 
         /**
-         * Enables or disables the EC2 service.
+         * Creates a new builder initialized with the values of the given {@link Ec2Config}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(Ec2Config instance) {
+            super(instance);
+            this.mock = instance.isMock();
+            this.imdsPort = instance.getImdsPort();
+            this.sshPortRangeStart = instance.getSshPortRangeStart();
+            this.sshPortRangeEnd = instance.getSshPortRangeEnd();
+            this.publishSecurityGroupPorts = instance.isPublishSecurityGroupPorts();
+            this.appPortRangeStart = instance.getAppPortRangeStart();
+            this.appPortsCount = instance.getAppPortsCount();
+            this.maxPublishedPortsPerInstance = instance.getMaxPublishedPortsPerInstance();
+            this.socatImage = instance.getSocatImage();
+            this.autoScaling = instance.getAutoScaling();
         }
 
         /**

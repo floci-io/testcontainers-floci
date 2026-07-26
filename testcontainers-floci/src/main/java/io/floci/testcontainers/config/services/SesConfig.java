@@ -16,7 +16,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class SesConfig extends AbstractServiceConfig {
+public class SesConfig extends AbstractServiceConfig<SesConfig.Builder> {
 
     private static final int DEFAULT_SMTP_PORT = 25;
     private static final String DEFAULT_SMTP_STARTTLS = "DISABLED";
@@ -45,6 +45,15 @@ public class SesConfig extends AbstractServiceConfig {
         return new Builder();
     }
 
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
+    }
 
     /**
      * Returns the SMTP server host for email relay, or {@code null} if relay is disabled.
@@ -113,9 +122,8 @@ public class SesConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link SesConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, SesConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
         private String smtpHost;
         private int smtpPort = DEFAULT_SMTP_PORT;
         private String smtpUser;
@@ -127,14 +135,17 @@ public class SesConfig extends AbstractServiceConfig {
         }
 
         /**
-         * Enables or disables the SES service.
+         * Creates a new builder initialized with the values of the given {@link SesConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(SesConfig instance) {
+            super(instance);
+            this.smtpHost = instance.getSmtpHost();
+            this.smtpPort = instance.getSmtpPort();
+            this.smtpUser = instance.getSmtpUser();
+            this.smtpPass = instance.getSmtpPass();
+            this.smtpStarttls = instance.getSmtpStarttls();
         }
 
         /**

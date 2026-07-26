@@ -12,7 +12,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class CloudWatchLogsConfig extends AbstractServiceConfig {
+public class CloudWatchLogsConfig extends AbstractServiceConfig<CloudWatchLogsConfig.Builder> {
 
     private static final int DEFAULT_MAX_EVENTS_PER_QUERY = 10000;
     private static final long DEFAULT_QUERY_COMPLETION_DELAY_MS = 0;
@@ -35,6 +35,15 @@ public class CloudWatchLogsConfig extends AbstractServiceConfig {
         return new Builder();
     }
 
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
+    }
 
     /**
      * Returns the maximum events per query.
@@ -67,9 +76,8 @@ public class CloudWatchLogsConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link CloudWatchLogsConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, CloudWatchLogsConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
         private int maxEventsPerQuery = DEFAULT_MAX_EVENTS_PER_QUERY;
         private long queryCompletionDelayMs = DEFAULT_QUERY_COMPLETION_DELAY_MS;
 
@@ -78,14 +86,14 @@ public class CloudWatchLogsConfig extends AbstractServiceConfig {
         }
 
         /**
-         * Enables or disables the CloudWatch Logs service.
+         * Creates a new builder initialized with the values of the given {@link CloudWatchLogsConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(CloudWatchLogsConfig instance) {
+            super(instance);
+            this.maxEventsPerQuery = instance.getMaxEventsPerQuery();
+            this.queryCompletionDelayMs = instance.getQueryCompletionDelayMs();
         }
 
         /**

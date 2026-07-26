@@ -13,7 +13,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class RdsDataConfig extends AbstractServiceConfig {
+public class RdsDataConfig extends AbstractServiceConfig<RdsDataConfig.Builder> {
 
     private static final long DEFAULT_TRANSACTION_TTL_SECONDS = 180;
 
@@ -31,6 +31,16 @@ public class RdsDataConfig extends AbstractServiceConfig {
      */
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
     }
 
     /**
@@ -54,9 +64,8 @@ public class RdsDataConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link RdsDataConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, RdsDataConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
         private long transactionTtlSeconds = DEFAULT_TRANSACTION_TTL_SECONDS;
 
         private Builder() {
@@ -64,14 +73,13 @@ public class RdsDataConfig extends AbstractServiceConfig {
         }
 
         /**
-         * Enables or disables the RDS Data API service.
+         * Creates a new builder initialized with the values of the given {@link RdsDataConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(RdsDataConfig instance) {
+            super(instance);
+            this.transactionTtlSeconds = instance.getTransactionTtlSeconds();
         }
 
         /**

@@ -11,7 +11,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class CodeBuildConfig extends AbstractServiceConfig {
+public class CodeBuildConfig extends AbstractServiceConfig<CodeBuildConfig.Builder> {
 
     private final String dockerNetwork;
 
@@ -27,6 +27,16 @@ public class CodeBuildConfig extends AbstractServiceConfig {
      */
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
     }
 
     /**
@@ -50,9 +60,8 @@ public class CodeBuildConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link CodeBuildConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, CodeBuildConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
         private String dockerNetwork;
 
         private Builder() {
@@ -60,14 +69,13 @@ public class CodeBuildConfig extends AbstractServiceConfig {
         }
 
         /**
-         * Enables or disables the CodeBuild service.
+         * Creates a new builder initialized with the values of the given {@link CodeBuildConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(CodeBuildConfig instance) {
+            super(instance);
+            this.dockerNetwork = instance.getDockerNetwork();
         }
 
         /**

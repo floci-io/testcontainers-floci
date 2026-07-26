@@ -12,7 +12,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class WafV2Config extends AbstractServiceConfig {
+public class WafV2Config extends AbstractServiceConfig<WafV2Config.Builder> {
 
     private WafV2Config(Builder builder) {
         super(builder.enabled);
@@ -27,6 +27,16 @@ public class WafV2Config extends AbstractServiceConfig {
         return new Builder();
     }
 
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_WAFV2_ENABLED", String.valueOf(isEnabled()));
@@ -35,23 +45,20 @@ public class WafV2Config extends AbstractServiceConfig {
     /**
      * Builder for {@link WafV2Config}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, WafV2Config> {
 
-        private boolean enabled = DEFAULT_ENABLED;
 
         private Builder() {
             // Allow instantiation only via WafV2Config.builder()
         }
 
         /**
-         * Enables or disables the WAF V2 service.
+         * Creates a new builder initialized with the values of the given {@link WafV2Config}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(WafV2Config instance) {
+            super(instance);
         }
 
         /**

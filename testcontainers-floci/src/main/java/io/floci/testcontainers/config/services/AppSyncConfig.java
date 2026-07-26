@@ -11,7 +11,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class AppSyncConfig extends AbstractServiceConfig {
+public class AppSyncConfig extends AbstractServiceConfig<AppSyncConfig.Builder> {
 
     private static final int DEFAULT_SCHEMA_WORKER_THREADS = 4;
     private static final int DEFAULT_SCHEMA_WORKER_SHUTDOWN_TIMEOUT_SECONDS = 30;
@@ -32,6 +32,16 @@ public class AppSyncConfig extends AbstractServiceConfig {
      */
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
     }
 
     /**
@@ -66,9 +76,8 @@ public class AppSyncConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link AppSyncConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, AppSyncConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
         private int schemaWorkerThreads = DEFAULT_SCHEMA_WORKER_THREADS;
         private int schemaWorkerShutdownTimeoutSeconds = DEFAULT_SCHEMA_WORKER_SHUTDOWN_TIMEOUT_SECONDS;
 
@@ -77,14 +86,14 @@ public class AppSyncConfig extends AbstractServiceConfig {
         }
 
         /**
-         * Enables or disables the AppSync service.
+         * Creates a new builder initialized with the values of the given {@link AppSyncConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(AppSyncConfig instance) {
+            super(instance);
+            this.schemaWorkerThreads = instance.getSchemaWorkerThreads();
+            this.schemaWorkerShutdownTimeoutSeconds = instance.getSchemaWorkerShutdownTimeoutSeconds();
         }
 
         /**

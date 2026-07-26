@@ -12,7 +12,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class Route53Config extends AbstractServiceConfig {
+public class Route53Config extends AbstractServiceConfig<Route53Config.Builder> {
 
     private static final String DEFAULT_NAMESERVER_1 = "ns-1.awsdns-01.org";
     private static final String DEFAULT_NAMESERVER_2 = "ns-2.awsdns-02.net";
@@ -39,6 +39,16 @@ public class Route53Config extends AbstractServiceConfig {
      */
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
     }
 
     /**
@@ -92,9 +102,8 @@ public class Route53Config extends AbstractServiceConfig {
     /**
      * Builder for {@link Route53Config}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, Route53Config> {
 
-        private boolean enabled = DEFAULT_ENABLED;
         private String defaultNameserver1 = DEFAULT_NAMESERVER_1;
         private String defaultNameserver2 = DEFAULT_NAMESERVER_2;
         private String defaultNameserver3 = DEFAULT_NAMESERVER_3;
@@ -105,14 +114,16 @@ public class Route53Config extends AbstractServiceConfig {
         }
 
         /**
-         * Enables or disables the Route 53 service.
+         * Creates a new builder initialized with the values of the given {@link Route53Config}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(Route53Config instance) {
+            super(instance);
+            this.defaultNameserver1 = instance.getDefaultNameserver1();
+            this.defaultNameserver2 = instance.getDefaultNameserver2();
+            this.defaultNameserver3 = instance.getDefaultNameserver3();
+            this.defaultNameserver4 = instance.getDefaultNameserver4();
         }
 
         /**

@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class EcrConfig extends AbstractServiceConfig {
+public class EcrConfig extends AbstractServiceConfig<EcrConfig.Builder> {
 
     private static final String DEFAULT_REGISTRY_IMAGE = "registry:2";
     private static final String DEFAULT_REGISTRY_CONTAINER_NAME = "floci-ecr-registry";
@@ -49,6 +49,16 @@ public class EcrConfig extends AbstractServiceConfig {
      */
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
     }
 
     /**
@@ -154,9 +164,8 @@ public class EcrConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link EcrConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, EcrConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
         private String registryImage = DEFAULT_REGISTRY_IMAGE;
         private String registryContainerName = DEFAULT_REGISTRY_CONTAINER_NAME;
         private int registryBasePort = DEFAULT_REGISTRY_BASE_PORT;
@@ -170,14 +179,19 @@ public class EcrConfig extends AbstractServiceConfig {
         }
 
         /**
-         * Enables or disables the ECR service.
+         * Creates a new builder initialized with the values of the given {@link EcrConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(EcrConfig instance) {
+            super(instance);
+            this.registryImage = instance.getRegistryImage();
+            this.registryContainerName = instance.getRegistryContainerName();
+            this.registryBasePort = instance.getRegistryBasePort();
+            this.registryPortsCount = instance.getRegistryPortsCount();
+            this.tlsEnabled = instance.isTlsEnabled();
+            this.uriStyle = instance.getUriStyle();
+            this.dockerNetwork = instance.getDockerNetwork();
         }
 
         /**

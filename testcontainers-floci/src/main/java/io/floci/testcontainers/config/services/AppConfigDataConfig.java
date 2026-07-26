@@ -11,7 +11,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class AppConfigDataConfig extends AbstractServiceConfig {
+public class AppConfigDataConfig extends AbstractServiceConfig<AppConfigDataConfig.Builder> {
 
 
     private AppConfigDataConfig(Builder builder) {
@@ -27,6 +27,15 @@ public class AppConfigDataConfig extends AbstractServiceConfig {
         return new Builder();
     }
 
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
+    }
 
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
@@ -36,23 +45,20 @@ public class AppConfigDataConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link AppConfigDataConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, AppConfigDataConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
 
         private Builder() {
             // Allow instantiation only via AppConfigDataConfig.builder()
         }
 
         /**
-         * Enables or disables the AppConfig Data service.
+         * Creates a new builder initialized with the values of the given {@link AppConfigDataConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(AppConfigDataConfig instance) {
+            super(instance);
         }
 
         /**

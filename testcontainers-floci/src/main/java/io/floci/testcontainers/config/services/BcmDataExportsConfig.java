@@ -12,7 +12,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class BcmDataExportsConfig extends AbstractServiceConfig {
+public class BcmDataExportsConfig extends AbstractServiceConfig<BcmDataExportsConfig.Builder> {
 
     private static final String DEFAULT_EMIT_MODE = "synchronous";
 
@@ -30,6 +30,16 @@ public class BcmDataExportsConfig extends AbstractServiceConfig {
      */
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
     }
 
     /**
@@ -60,9 +70,8 @@ public class BcmDataExportsConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link BcmDataExportsConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, BcmDataExportsConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
         private String emitMode = DEFAULT_EMIT_MODE;
 
         private Builder() {
@@ -70,14 +79,13 @@ public class BcmDataExportsConfig extends AbstractServiceConfig {
         }
 
         /**
-         * Enables or disables the BCM Data Exports service.
+         * Creates a new builder initialized with the values of the given {@link BcmDataExportsConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(BcmDataExportsConfig instance) {
+            super(instance);
+            this.emitMode = instance.getEmitMode();
         }
 
         /**

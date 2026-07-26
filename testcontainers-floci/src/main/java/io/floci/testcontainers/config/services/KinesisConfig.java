@@ -11,7 +11,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class KinesisConfig extends AbstractServiceConfig {
+public class KinesisConfig extends AbstractServiceConfig<KinesisConfig.Builder> {
 
     private KinesisConfig(Builder builder) {
         super(builder.enabled);
@@ -26,6 +26,15 @@ public class KinesisConfig extends AbstractServiceConfig {
         return new Builder();
     }
 
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
+    }
 
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
@@ -35,23 +44,20 @@ public class KinesisConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link KinesisConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, KinesisConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
 
         private Builder() {
             // Allow instantiation only via KinesisConfig.builder()
         }
 
         /**
-         * Enables or disables the Kinesis service.
+         * Creates a new builder initialized with the values of the given {@link KinesisConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(KinesisConfig instance) {
+            super(instance);
         }
 
         /**

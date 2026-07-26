@@ -12,7 +12,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class CloudMapConfig extends AbstractServiceConfig {
+public class CloudMapConfig extends AbstractServiceConfig<CloudMapConfig.Builder> {
 
     private static final int DEFAULT_OPERATION_COMPLETION_DELAY_SECONDS = 0;
 
@@ -30,6 +30,16 @@ public class CloudMapConfig extends AbstractServiceConfig {
      */
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
     }
 
     /**
@@ -54,9 +64,8 @@ public class CloudMapConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link CloudMapConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, CloudMapConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
         private int operationCompletionDelaySeconds = DEFAULT_OPERATION_COMPLETION_DELAY_SECONDS;
 
         private Builder() {
@@ -64,14 +73,13 @@ public class CloudMapConfig extends AbstractServiceConfig {
         }
 
         /**
-         * Enables or disables the CloudMap service.
+         * Creates a new builder initialized with the values of the given {@link CloudMapConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(CloudMapConfig instance) {
+            super(instance);
+            this.operationCompletionDelaySeconds = instance.getOperationCompletionDelaySeconds();
         }
 
         /**

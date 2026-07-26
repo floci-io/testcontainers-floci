@@ -12,7 +12,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class BackupConfig extends AbstractServiceConfig {
+public class BackupConfig extends AbstractServiceConfig<BackupConfig.Builder> {
 
     private static final int DEFAULT_JOB_COMPLETION_DELAY_SECONDS = 3;
 
@@ -30,6 +30,16 @@ public class BackupConfig extends AbstractServiceConfig {
      */
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
     }
 
     /**
@@ -53,9 +63,8 @@ public class BackupConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link BackupConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, BackupConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
         private int jobCompletionDelaySeconds = DEFAULT_JOB_COMPLETION_DELAY_SECONDS;
 
         private Builder() {
@@ -63,14 +72,13 @@ public class BackupConfig extends AbstractServiceConfig {
         }
 
         /**
-         * Enables or disables the Backup service.
+         * Creates a new builder initialized with the values of the given {@link BackupConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(BackupConfig instance) {
+            super(instance);
+            this.jobCompletionDelaySeconds = instance.getJobCompletionDelaySeconds();
         }
 
         /**

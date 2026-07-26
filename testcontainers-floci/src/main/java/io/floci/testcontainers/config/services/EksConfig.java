@@ -15,7 +15,7 @@ import org.testcontainers.containers.Container;
  *     .build();
  * }</pre>
  */
-public class EksConfig extends AbstractServiceConfig {
+public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
 
     private static final boolean DEFAULT_MOCK = false;
     private static final String DEFAULT_PROVIDER = "k3s";
@@ -56,6 +56,16 @@ public class EksConfig extends AbstractServiceConfig {
      */
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
     }
 
     /**
@@ -193,9 +203,8 @@ public class EksConfig extends AbstractServiceConfig {
     /**
      * Builder for {@link EksConfig}.
      */
-    public static class Builder {
+    public static class Builder extends AbstractServiceConfigBuilder<Builder, EksConfig> {
 
-        private boolean enabled = DEFAULT_ENABLED;
         private boolean mock = DEFAULT_MOCK;
         private String provider = DEFAULT_PROVIDER;
         private String defaultImage = DEFAULT_IMAGE;
@@ -211,14 +220,21 @@ public class EksConfig extends AbstractServiceConfig {
         }
 
         /**
-         * Enables or disables the EKS service.
+         * Creates a new builder initialized with the values of the given {@link EksConfig}.
          *
-         * @param enabled {@code true} to enable (default {@value DEFAULT_ENABLED})
-         * @return this builder
+         * @param instance the configuration instance to copy values from
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
+        private Builder(EksConfig instance) {
+            super(instance);
+            this.mock = instance.isMock();
+            this.provider = instance.getProvider();
+            this.defaultImage = instance.getDefaultImage();
+            this.apiServerBasePort = instance.getApiServerBasePort();
+            this.apiServerPortsCount = instance.getApiServerPortsCount();
+            this.dockerNetwork = instance.getDockerNetwork();
+            this.endpointMode = instance.getEndpointMode();
+            this.iamAuthWebhook = instance.isIamAuthWebhook();
+            this.ecrRegistryMirror = instance.isEcrRegistryMirror();
         }
 
         /**
