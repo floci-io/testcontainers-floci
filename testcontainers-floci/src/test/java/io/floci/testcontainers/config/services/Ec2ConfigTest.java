@@ -146,4 +146,32 @@ class Ec2ConfigTest {
             assertThat(container.getExposedPorts()).doesNotContain(30000);
         }
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        Ec2Config config = Ec2Config.builder()
+                .enabled(false)
+                .mock(true)
+                .imdsPort(9999)
+                .sshPortRange(2100, 2199)
+                .publishSecurityGroupPorts(false)
+                .appPortRange(31000, 5)
+                .maxPublishedPortsPerInstance(3)
+                .socatImage("test/socat")
+                .autoScaling(false)
+                .build();
+        Ec2Config copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.isMock()).isTrue();
+        assertThat(copy.getImdsPort()).isEqualTo(9999);
+        assertThat(copy.getSshPortRangeStart()).isEqualTo(2100);
+        assertThat(copy.getSshPortRangeEnd()).isEqualTo(2199);
+        assertThat(copy.isPublishSecurityGroupPorts()).isFalse();
+        assertThat(copy.getAppPortRangeStart()).isEqualTo(31000);
+        assertThat(copy.getAppPortsCount()).isEqualTo(5);
+        assertThat(copy.getMaxPublishedPortsPerInstance()).isEqualTo(3);
+        assertThat(copy.getSocatImage()).isEqualTo("test/socat");
+        assertThat(copy.getAutoScaling().enabled()).isFalse();
+    }
+
 }

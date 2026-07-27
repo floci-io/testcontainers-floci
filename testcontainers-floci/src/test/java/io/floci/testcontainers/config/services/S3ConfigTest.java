@@ -60,4 +60,18 @@ class S3ConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_S3_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        S3Config config = S3Config.builder()
+                .enabled(false)
+                .defaultPresignExpirySeconds(7200)
+                .enforceAuth(true)
+                .build();
+        S3Config copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.getDefaultPresignExpirySeconds()).isEqualTo(7200);
+        assertThat(copy.isEnforceAuth()).isTrue();
+    }
+
 }

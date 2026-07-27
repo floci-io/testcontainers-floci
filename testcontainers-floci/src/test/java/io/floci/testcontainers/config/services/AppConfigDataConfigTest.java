@@ -37,4 +37,14 @@ class AppConfigDataConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_APPCONFIGDATA_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        AppConfigDataConfig config = AppConfigDataConfig.builder()
+                .enabled(false)
+                .build();
+        AppConfigDataConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+    }
+
 }

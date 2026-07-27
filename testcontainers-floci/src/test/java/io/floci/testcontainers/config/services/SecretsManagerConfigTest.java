@@ -53,4 +53,16 @@ class SecretsManagerConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_SECRETSMANAGER_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        SecretsManagerConfig config = SecretsManagerConfig.builder()
+                .enabled(false)
+                .defaultRecoveryWindowDays(14)
+                .build();
+        SecretsManagerConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.getDefaultRecoveryWindowDays()).isEqualTo(14);
+    }
+
 }

@@ -88,4 +88,21 @@ class MemoryDbConfigTest {
             assertThat(container.getExposedPorts()).doesNotContain(8100);
         }
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        MemoryDbConfig config = MemoryDbConfig.builder()
+                .enabled(false)
+                .mock(true)
+                .proxyPortRange(6500, 5)
+                .defaultImage("test-image")
+                .build();
+        MemoryDbConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.isMock()).isTrue();
+        assertThat(copy.getProxyBasePort()).isEqualTo(6500);
+        assertThat(copy.getProxyPortsCount()).isEqualTo(5);
+        assertThat(copy.getDefaultImage()).isEqualTo("test-image");
+    }
+
 }

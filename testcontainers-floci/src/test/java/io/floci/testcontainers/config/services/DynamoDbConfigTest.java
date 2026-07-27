@@ -37,4 +37,14 @@ class DynamoDbConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_DYNAMODB_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        DynamoDbConfig config = DynamoDbConfig.builder()
+                .enabled(false)
+                .build();
+        DynamoDbConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+    }
+
 }

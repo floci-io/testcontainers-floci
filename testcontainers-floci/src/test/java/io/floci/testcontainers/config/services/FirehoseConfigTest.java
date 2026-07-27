@@ -37,4 +37,14 @@ class FirehoseConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_FIREHOSE_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        FirehoseConfig config = FirehoseConfig.builder()
+                .enabled(false)
+                .build();
+        FirehoseConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+    }
+
 }

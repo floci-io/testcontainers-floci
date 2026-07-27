@@ -37,4 +37,14 @@ class SnsConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_SNS_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        SnsConfig config = SnsConfig.builder()
+                .enabled(false)
+                .build();
+        SnsConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+    }
+
 }

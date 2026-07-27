@@ -37,4 +37,14 @@ class CloudControlConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_CLOUDCONTROL_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        CloudControlConfig config = CloudControlConfig.builder()
+                .enabled(false)
+                .build();
+        CloudControlConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+    }
+
 }

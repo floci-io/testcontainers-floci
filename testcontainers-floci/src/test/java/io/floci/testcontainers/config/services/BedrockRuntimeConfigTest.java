@@ -37,4 +37,14 @@ class BedrockRuntimeConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_BEDROCK_RUNTIME_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        BedrockRuntimeConfig config = BedrockRuntimeConfig.builder()
+                .enabled(false)
+                .build();
+        BedrockRuntimeConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+    }
+
 }

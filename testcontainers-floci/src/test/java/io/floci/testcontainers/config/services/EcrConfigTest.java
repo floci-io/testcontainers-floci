@@ -106,4 +106,27 @@ class EcrConfigTest {
             assertThat(container.getExposedPorts()).doesNotContain(6000);
         }
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        EcrConfig config = EcrConfig.builder()
+                .enabled(false)
+                .registryImage("registry:3")
+                .registryContainerName("test-registry")
+                .registryPortRange(5200, 5)
+                .tlsEnabled(true)
+                .uriStyle("ip")
+                .dockerNetwork("test-network")
+                .build();
+        EcrConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.getRegistryImage()).isEqualTo("registry:3");
+        assertThat(copy.getRegistryContainerName()).isEqualTo("test-registry");
+        assertThat(copy.getRegistryBasePort()).isEqualTo(5200);
+        assertThat(copy.getRegistryPortsCount()).isEqualTo(5);
+        assertThat(copy.isTlsEnabled()).isTrue();
+        assertThat(copy.getUriStyle()).isEqualTo("ip");
+        assertThat(copy.getDockerNetwork()).isEqualTo("test-network");
+    }
+
 }

@@ -37,4 +37,14 @@ class CodeDeployConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_CODEDEPLOY_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        CodeDeployConfig config = CodeDeployConfig.builder()
+                .enabled(false)
+                .build();
+        CodeDeployConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+    }
+
 }

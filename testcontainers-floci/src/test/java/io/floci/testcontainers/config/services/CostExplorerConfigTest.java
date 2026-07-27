@@ -56,4 +56,16 @@ class CostExplorerConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_CE_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        CostExplorerConfig config = CostExplorerConfig.builder()
+                .enabled(false)
+                .creditUsdMonthly(9.99)
+                .build();
+        CostExplorerConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.getCreditUsdMonthly()).isEqualTo(9.99);
+    }
+
 }

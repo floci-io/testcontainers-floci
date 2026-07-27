@@ -62,4 +62,18 @@ class CurConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_CUR_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        CurConfig config = CurConfig.builder()
+                .enabled(false)
+                .emitMode("asynchronous")
+                .stagingBucket("test-bucket")
+                .build();
+        CurConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.getEmitMode()).isEqualTo("asynchronous");
+        assertThat(copy.getStagingBucket()).isEqualTo("test-bucket");
+    }
+
 }

@@ -78,4 +78,24 @@ class SesConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_SES_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        SesConfig config = SesConfig.builder()
+                .enabled(false)
+                .smtpHost("localhost")
+                .smtpPort(587)
+                .smtpUser("user")
+                .smtpPass("pass")
+                .smtpStarttls("REQUIRED")
+                .build();
+        SesConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.getSmtpHost()).isEqualTo("localhost");
+        assertThat(copy.getSmtpPort()).isEqualTo(587);
+        assertThat(copy.getSmtpUser()).isEqualTo("user");
+        assertThat(copy.getSmtpPass()).isEqualTo("pass");
+        assertThat(copy.getSmtpStarttls()).isEqualTo("REQUIRED");
+    }
+
 }

@@ -37,4 +37,14 @@ class S3VectorsConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_S3VECTORS_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        S3VectorsConfig config = S3VectorsConfig.builder()
+                .enabled(false)
+                .build();
+        S3VectorsConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+    }
+
 }

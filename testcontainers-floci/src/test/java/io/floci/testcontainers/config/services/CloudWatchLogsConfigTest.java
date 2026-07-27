@@ -60,4 +60,18 @@ class CloudWatchLogsConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_CLOUDWATCHLOGS_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        CloudWatchLogsConfig config = CloudWatchLogsConfig.builder()
+                .enabled(false)
+                .maxEventsPerQuery(500)
+                .queryCompletionDelayMs(100L)
+                .build();
+        CloudWatchLogsConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.getMaxEventsPerQuery()).isEqualTo(500);
+        assertThat(copy.getQueryCompletionDelayMs()).isEqualTo(100L);
+    }
+
 }

@@ -55,4 +55,18 @@ class IamConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_IAM_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        IamConfig config = IamConfig.builder()
+                .enabled(false)
+                .enforcementEnabled(true)
+                .seedDeployerPrincipal(true)
+                .build();
+        IamConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.isEnforcementEnabled()).isTrue();
+        assertThat(copy.isSeedDeployerPrincipal()).isTrue();
+    }
+
 }

@@ -96,4 +96,27 @@ class RdsConfigTest {
             assertThat(container.getExposedPorts()).doesNotContain(8000);
         }
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        RdsConfig config = RdsConfig.builder()
+                .enabled(false)
+                .mock(true)
+                .proxyPortRange(7100, 5)
+                .defaultPostgresImage("test-postgres")
+                .defaultMysqlImage("test-mysql")
+                .defaultMariadbImage("test-mariadb")
+                .dockerNetwork("test-network")
+                .build();
+        RdsConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.isMock()).isTrue();
+        assertThat(copy.getProxyBasePort()).isEqualTo(7100);
+        assertThat(copy.getProxyPortsCount()).isEqualTo(5);
+        assertThat(copy.getDefaultPostgresImage()).isEqualTo("test-postgres");
+        assertThat(copy.getDefaultMysqlImage()).isEqualTo("test-mysql");
+        assertThat(copy.getDefaultMariadbImage()).isEqualTo("test-mariadb");
+        assertThat(copy.getDockerNetwork()).isEqualTo("test-network");
+    }
+
 }

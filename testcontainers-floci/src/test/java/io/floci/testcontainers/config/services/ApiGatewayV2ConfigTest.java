@@ -37,4 +37,14 @@ class ApiGatewayV2ConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_APIGATEWAYV2_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        ApiGatewayV2Config config = ApiGatewayV2Config.builder()
+                .enabled(false)
+                .build();
+        ApiGatewayV2Config copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+    }
+
 }

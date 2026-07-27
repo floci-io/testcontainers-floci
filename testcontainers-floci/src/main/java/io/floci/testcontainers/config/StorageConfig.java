@@ -40,6 +40,16 @@ public class StorageConfig {
     }
 
     /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
+    }
+
+    /**
      * Returns the host path that is bind-mounted (read-write) into the Floci container
      * at {@code /app/data} for persistent storage.
      *
@@ -91,6 +101,11 @@ public class StorageConfig {
 
         private Builder() {
             // Allow instantiation only via StorageConfig.builder()
+        }
+
+        private Builder(StorageConfig instance) {
+            this.hostPersistentPath = instance.hostPersistentPath;
+            this.pruneVolumesOnDelete = instance.pruneVolumesOnDelete;
         }
 
         /**

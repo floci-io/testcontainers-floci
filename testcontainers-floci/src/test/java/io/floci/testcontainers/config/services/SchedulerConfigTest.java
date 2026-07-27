@@ -46,4 +46,18 @@ class SchedulerConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_SCHEDULER_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        SchedulerConfig config = SchedulerConfig.builder()
+                .enabled(false)
+                .invocationEnabled(false)
+                .tickIntervalSeconds(20L)
+                .build();
+        SchedulerConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.isInvocationEnabled()).isFalse();
+        assertThat(copy.getTickIntervalSeconds()).isEqualTo(20L);
+    }
+
 }

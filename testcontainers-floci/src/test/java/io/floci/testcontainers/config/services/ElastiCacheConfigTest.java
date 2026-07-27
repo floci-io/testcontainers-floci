@@ -92,4 +92,23 @@ class ElastiCacheConfigTest {
             assertThat(container.getExposedPorts()).doesNotContain(8100);
         }
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        ElastiCacheConfig config = ElastiCacheConfig.builder()
+                .enabled(false)
+                .proxyPortRange(7379, 5)
+                .defaultImage("test-image")
+                .defaultMemcachedImage("test-memcached")
+                .dockerNetwork("test-network")
+                .build();
+        ElastiCacheConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.getProxyBasePort()).isEqualTo(7379);
+        assertThat(copy.getProxyPortsCount()).isEqualTo(5);
+        assertThat(copy.getDefaultImage()).isEqualTo("test-image");
+        assertThat(copy.getDefaultMemcachedImage()).isEqualTo("test-memcached");
+        assertThat(copy.getDockerNetwork()).isEqualTo("test-network");
+    }
+
 }

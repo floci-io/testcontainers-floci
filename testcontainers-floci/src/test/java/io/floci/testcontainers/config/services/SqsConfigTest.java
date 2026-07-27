@@ -66,4 +66,20 @@ class SqsConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_SQS_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        SqsConfig config = SqsConfig.builder()
+                .enabled(false)
+                .defaultVisibilityTimeout(60)
+                .maxMessageSize(65536)
+                .clearFifoDeduplicationCacheOnPurge(false)
+                .build();
+        SqsConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.getDefaultVisibilityTimeout()).isEqualTo(60);
+        assertThat(copy.getMaxMessageSize()).isEqualTo(65536);
+        assertThat(copy.isClearFifoDeduplicationCacheOnPurge()).isFalse();
+    }
+
 }

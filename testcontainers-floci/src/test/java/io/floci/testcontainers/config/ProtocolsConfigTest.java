@@ -42,4 +42,15 @@ class ProtocolsConfigTest {
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_PROTOCOLS_STRICT_CLAIMING", "true");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        ProtocolsConfig config = ProtocolsConfig.builder()
+                .strictClaiming(true)
+                .build();
+
+        ProtocolsConfig copy = config.toBuilder().build();
+
+        assertThat(copy.isStrictClaiming()).isTrue();
+    }
 }

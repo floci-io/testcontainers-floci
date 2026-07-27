@@ -56,4 +56,16 @@ class CodeBuildConfigTest {
                 .containsEntry("FLOCI_SERVICES_CODEBUILD_ENABLED", "true")
                 .containsEntry("FLOCI_SERVICES_CODEBUILD_DOCKER_NETWORK", "my-network");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        CodeBuildConfig config = CodeBuildConfig.builder()
+                .enabled(false)
+                .dockerNetwork("test-network")
+                .build();
+        CodeBuildConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.getDockerNetwork()).isEqualTo("test-network");
+    }
+
 }

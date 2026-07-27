@@ -80,4 +80,18 @@ class ElbV2ConfigTest {
 
         assertThat(container.getExposedPorts()).doesNotContain(8080);
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        ElbV2Config config = ElbV2Config.builder()
+                .enabled(false)
+                .mock(true)
+                .listenerPort(8080)
+                .build();
+        ElbV2Config copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.isMock()).isTrue();
+        assertThat(copy.getListenerPorts()).contains(8080);
+    }
+
 }

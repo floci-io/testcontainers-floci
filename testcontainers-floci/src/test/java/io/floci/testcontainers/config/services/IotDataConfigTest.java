@@ -37,4 +37,14 @@ class IotDataConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_IOTDATA_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        IotDataConfig config = IotDataConfig.builder()
+                .enabled(false)
+                .build();
+        IotDataConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+    }
+
 }

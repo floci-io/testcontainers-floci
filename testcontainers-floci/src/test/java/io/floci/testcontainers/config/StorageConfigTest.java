@@ -57,4 +57,17 @@ class StorageConfigTest {
                 .containsKey("FLOCI_STORAGE_HOST_PERSISTENT_PATH")
                 .containsEntry("FLOCI_STORAGE_PRUNE_VOLUMES_ON_DELETE", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        StorageConfig config = StorageConfig.builder()
+                .randomHostPersistentPath()
+                .pruneVolumesOnDelete(false)
+                .build();
+
+        StorageConfig copy = config.toBuilder().build();
+
+        assertThat(copy.getHostPersistentPath()).isEqualTo(config.getHostPersistentPath());
+        assertThat(copy.isPruneVolumesOnDelete()).isFalse();
+    }
 }

@@ -61,4 +61,18 @@ class AppSyncConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_APPSYNC_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        AppSyncConfig config = AppSyncConfig.builder()
+                .enabled(false)
+                .schemaWorkerThreads(2)
+                .schemaWorkerShutdownTimeoutSeconds(10)
+                .build();
+        AppSyncConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.getSchemaWorkerThreads()).isEqualTo(2);
+        assertThat(copy.getSchemaWorkerShutdownTimeoutSeconds()).isEqualTo(10);
+    }
+
 }

@@ -74,4 +74,22 @@ class EcsConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_ECS_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        EcsConfig config = EcsConfig.builder()
+                .enabled(false)
+                .mock(true)
+                .dockerNetwork("test-network")
+                .defaultMemoryMb(256)
+                .defaultCpuUnits(512)
+                .build();
+        EcsConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.isMock()).isTrue();
+        assertThat(copy.getDockerNetwork()).isEqualTo("test-network");
+        assertThat(copy.getDefaultMemoryMb()).isEqualTo(256);
+        assertThat(copy.getDefaultCpuUnits()).isEqualTo(512);
+    }
+
 }

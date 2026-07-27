@@ -55,4 +55,16 @@ class CloudMapConfigTest {
                 .containsEntry("FLOCI_SERVICES_CLOUDMAP_ENABLED", "false")
                 .doesNotContainKey("FLOCI_SERVICES_CLOUDMAP_OPERATION_COMPLETION_DELAY_SECONDS");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        CloudMapConfig config = CloudMapConfig.builder()
+                .enabled(false)
+                .operationCompletionDelaySeconds(5)
+                .build();
+        CloudMapConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.getOperationCompletionDelaySeconds()).isEqualTo(5);
+    }
+
 }

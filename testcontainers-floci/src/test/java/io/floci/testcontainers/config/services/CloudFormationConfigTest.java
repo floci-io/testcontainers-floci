@@ -53,4 +53,16 @@ class CloudFormationConfigTest {
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_SERVICES_CLOUDFORMATION_DELETED_STACK_RETENTION_SECONDS", "120");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        CloudFormationConfig config = CloudFormationConfig.builder()
+                .enabled(false)
+                .deletedStackRetentionSeconds(60L)
+                .build();
+        CloudFormationConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.getDeletedStackRetentionSeconds()).isEqualTo(60L);
+    }
+
 }

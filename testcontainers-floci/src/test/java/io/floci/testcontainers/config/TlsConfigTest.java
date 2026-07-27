@@ -102,4 +102,23 @@ class TlsConfigTest {
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_TLS_AWS_HTTPS_PORT", "0");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        TlsConfig config = TlsConfig.builder()
+                .enabled(true)
+                .selfSigned(false)
+                .certPath("/certs/server.crt")
+                .keyPath("/certs/server.key")
+                .awsHttpsPort(8443)
+                .build();
+
+        TlsConfig copy = config.toBuilder().build();
+
+        assertThat(copy.isEnabled()).isTrue();
+        assertThat(copy.isSelfSigned()).isFalse();
+        assertThat(copy.getCertPath()).contains("/certs/server.crt");
+        assertThat(copy.getKeyPath()).contains("/certs/server.key");
+        assertThat(copy.getAwsHttpsPort()).isEqualTo(8443);
+    }
 }

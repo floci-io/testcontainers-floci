@@ -37,4 +37,14 @@ class LightsailConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_LIGHTSAIL_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        LightsailConfig config = LightsailConfig.builder()
+                .enabled(false)
+                .build();
+        LightsailConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+    }
+
 }

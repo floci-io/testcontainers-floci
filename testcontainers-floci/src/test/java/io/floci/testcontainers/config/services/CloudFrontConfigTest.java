@@ -56,4 +56,16 @@ class CloudFrontConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_CLOUDFRONT_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        CloudFrontConfig config = CloudFrontConfig.builder()
+                .enabled(false)
+                .domainSuffix("example.com")
+                .build();
+        CloudFrontConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.getDomainSuffix()).isEqualTo("example.com");
+    }
+
 }

@@ -45,6 +45,16 @@ public class SecurityConfig {
     }
 
     /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
+    }
+
+    /**
      * Returns the extra CORS allowed origins, or {@link Optional#empty()} if not configured.
      *
      * @return the extra CORS allowed origins, or {@link Optional#empty()}
@@ -125,6 +135,14 @@ public class SecurityConfig {
 
         private Builder() {
             // Allow instantiation only via SecurityConfig.builder()
+        }
+
+        private Builder(SecurityConfig instance) {
+            this.extraCorsAllowedOrigins = instance.extraCorsAllowedOrigins;
+            this.extraCorsAllowedHeaders = instance.extraCorsAllowedHeaders;
+            this.extraCorsExposeHeaders = instance.extraCorsExposeHeaders;
+            this.disableCorsHeaders = instance.disableCorsHeaders;
+            this.corsAllowPrivateNetwork = instance.corsAllowPrivateNetwork;
         }
 
         /**

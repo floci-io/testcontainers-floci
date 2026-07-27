@@ -37,4 +37,14 @@ class StepFunctionsConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_STEPFUNCTIONS_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        StepFunctionsConfig config = StepFunctionsConfig.builder()
+                .enabled(false)
+                .build();
+        StepFunctionsConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+    }
+
 }

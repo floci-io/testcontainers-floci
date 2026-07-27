@@ -37,4 +37,14 @@ class EventBridgeConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_EVENTBRIDGE_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        EventBridgeConfig config = EventBridgeConfig.builder()
+                .enabled(false)
+                .build();
+        EventBridgeConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+    }
+
 }
