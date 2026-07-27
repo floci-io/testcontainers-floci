@@ -1,3 +1,17 @@
+# [1.12.0](https://github.com/floci-io/testcontainers-floci/compare/v1.11.0...v1.12.0) (2026-07-27)
+
+
+### Bug Fixes
+
+* **services:** Ensure multiple calls configuring the same service do not override each other. ([1485f4f](https://github.com/floci-io/testcontainers-floci/commit/1485f4f8e2b8a7be01b79fd6ae6b60edcc4dcd0c))
+
+
+### Features
+
+* **services:** Add method to disableAllServices() ([76bb830](https://github.com/floci-io/testcontainers-floci/commit/76bb830f073cda780ef3b96ea21f23d31e74554a))
+
+
+
 # [1.11.0](https://github.com/floci-io/testcontainers-floci/compare/v1.10.0...v1.11.0) (2026-07-24)
 
 
@@ -62,15 +76,6 @@
 * **opensearch:** make defaultImage property optional and use Floci's default instead ([a6646d2](https://github.com/floci-io/testcontainers-floci/commit/a6646d281aaaeea9c690dbe1c6759a876094ff9f))
 * **services:** added support for AWS AppSync ([98b16d1](https://github.com/floci-io/testcontainers-floci/commit/98b16d11310dac36d8a732d514b71337c0fc1852))
 * **seurity:** added support for Browser CORS security config ([8829676](https://github.com/floci-io/testcontainers-floci/commit/88296769686e2168a1c9941e4292e28abf856bf0))
-
-
-
-# [1.7.0](https://github.com/floci-io/testcontainers-floci/compare/v1.6.1...v1.7.0) (2026-05-28)
-
-
-### Features
-
-* empty commit to increase version ([246eb50](https://github.com/floci-io/testcontainers-floci/commit/246eb503621599d3edb051f8a0e446d2e40a9932))
 
 
 
