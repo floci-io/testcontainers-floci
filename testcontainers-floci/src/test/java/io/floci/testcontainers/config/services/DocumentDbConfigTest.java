@@ -70,4 +70,20 @@ class DocumentDbConfigTest {
                 .doesNotContainKey("FLOCI_SERVICES_DOCDB_MOCK")
                 .doesNotContainKey("FLOCI_SERVICES_DOCDB_DEFAULT_IMAGE");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        DocumentDbConfig config = DocumentDbConfig.builder()
+                .enabled(false)
+                .mock(true)
+                .defaultImage("test-image")
+                .dockerNetwork("test-network")
+                .build();
+        DocumentDbConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.isMock()).isTrue();
+        assertThat(copy.getDefaultImage()).isEqualTo("test-image");
+        assertThat(copy.getDockerNetwork()).isEqualTo("test-network");
+    }
+
 }

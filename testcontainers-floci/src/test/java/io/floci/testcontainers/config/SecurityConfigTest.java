@@ -96,4 +96,23 @@ class SecurityConfigTest {
                 .containsEntry("FLOCI_SECURITY_EXTRA_CORS_ALLOWED_HEADERS", "X-Header-One,X-Header-Two")
                 .containsEntry("FLOCI_SECURITY_EXTRA_CORS_EXPOSE_HEADERS", "X-Expose-One");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        SecurityConfig config = SecurityConfig.builder()
+                .extraCorsAllowedOrigins(List.of("https://example.com"))
+                .extraCorsAllowedHeaders(List.of("X-Custom-Header"))
+                .extraCorsExposeHeaders(List.of("X-Expose-Header"))
+                .disableCorsHeaders(true)
+                .corsAllowPrivateNetwork(true)
+                .build();
+
+        SecurityConfig copy = config.toBuilder().build();
+
+        assertThat(copy.getExtraCorsAllowedOrigins()).contains(List.of("https://example.com"));
+        assertThat(copy.getExtraCorsAllowedHeaders()).contains(List.of("X-Custom-Header"));
+        assertThat(copy.getExtraCorsExposeHeaders()).contains(List.of("X-Expose-Header"));
+        assertThat(copy.isDisableCorsHeaders()).isTrue();
+        assertThat(copy.isCorsAllowPrivateNetwork()).isTrue();
+    }
 }

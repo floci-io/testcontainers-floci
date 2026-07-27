@@ -91,4 +91,21 @@ class MskConfigTest {
             assertThat(container.getExposedPorts()).doesNotContain(9500);
         }
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        MskConfig config = MskConfig.builder()
+                .enabled(false)
+                .mock(true)
+                .defaultImage("test-image")
+                .kafkaHostPortRange(9400, 5)
+                .build();
+        MskConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.isMock()).isTrue();
+        assertThat(copy.getDefaultImage()).isEqualTo("test-image");
+        assertThat(copy.getKafkaHostPortBase()).isEqualTo(9400);
+        assertThat(copy.getKafkaHostPortsCount()).isEqualTo(5);
+    }
+
 }

@@ -56,4 +56,16 @@ class AthenaConfigTest {
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_SERVICES_ATHENA_MOCK", "true");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        AthenaConfig config = AthenaConfig.builder()
+                .enabled(false)
+                .mock(true)
+                .build();
+        AthenaConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.isMock()).isTrue();
+    }
+
 }

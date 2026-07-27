@@ -56,4 +56,16 @@ class BcmDataExportsConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_BCM_DATA_EXPORTS_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        BcmDataExportsConfig config = BcmDataExportsConfig.builder()
+                .enabled(false)
+                .emitMode("asynchronous")
+                .build();
+        BcmDataExportsConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.getEmitMode()).isEqualTo("asynchronous");
+    }
+
 }

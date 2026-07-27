@@ -37,4 +37,14 @@ class KmsConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_KMS_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        KmsConfig config = KmsConfig.builder()
+                .enabled(false)
+                .build();
+        KmsConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+    }
+
 }

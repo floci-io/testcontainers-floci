@@ -37,4 +37,14 @@ class CloudWatchMetricsConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_CLOUDWATCHMETRICS_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        CloudWatchMetricsConfig config = CloudWatchMetricsConfig.builder()
+                .enabled(false)
+                .build();
+        CloudWatchMetricsConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+    }
+
 }

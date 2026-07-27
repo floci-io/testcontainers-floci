@@ -64,4 +64,18 @@ class EmrConfigTest {
                 .doesNotContainKey("FLOCI_SERVICES_EMR_DEFAULT_RELEASE_LABEL")
                 .doesNotContainKey("FLOCI_SERVICES_EMR_CLUSTER_STARTUP_DELAY_SECONDS");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        EmrConfig config = EmrConfig.builder()
+                .enabled(false)
+                .defaultReleaseLabel("emr-6.0.0")
+                .clusterStartupDelaySeconds(5)
+                .build();
+        EmrConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.getDefaultReleaseLabel()).isEqualTo("emr-6.0.0");
+        assertThat(copy.getClusterStartupDelaySeconds()).isEqualTo(5);
+    }
+
 }

@@ -37,4 +37,14 @@ class TextractConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_TEXTRACT_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        TextractConfig config = TextractConfig.builder()
+                .enabled(false)
+                .build();
+        TextractConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+    }
+
 }

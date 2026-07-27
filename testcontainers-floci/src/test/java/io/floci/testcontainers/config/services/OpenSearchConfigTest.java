@@ -80,4 +80,23 @@ class OpenSearchConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_OPENSEARCH_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        OpenSearchConfig config = OpenSearchConfig.builder()
+                .enabled(false)
+                .mock(true)
+                .defaultImage("test-image")
+                .proxyPortRange(9500, 5)
+                .dockerNetwork("test-network")
+                .build();
+        OpenSearchConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.isMock()).isTrue();
+        assertThat(copy.getDefaultImage()).isEqualTo("test-image");
+        assertThat(copy.getProxyBasePort()).isEqualTo(9500);
+        assertThat(copy.getProxyPortsCount()).isEqualTo(5);
+        assertThat(copy.getDockerNetwork()).isEqualTo("test-network");
+    }
+
 }

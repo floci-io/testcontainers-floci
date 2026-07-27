@@ -37,4 +37,14 @@ class PipesConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_PIPES_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        PipesConfig config = PipesConfig.builder()
+                .enabled(false)
+                .build();
+        PipesConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+    }
+
 }

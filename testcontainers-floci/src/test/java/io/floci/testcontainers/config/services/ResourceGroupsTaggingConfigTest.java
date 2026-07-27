@@ -37,4 +37,14 @@ class ResourceGroupsTaggingConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_TAGGING_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        ResourceGroupsTaggingConfig config = ResourceGroupsTaggingConfig.builder()
+                .enabled(false)
+                .build();
+        ResourceGroupsTaggingConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+    }
+
 }

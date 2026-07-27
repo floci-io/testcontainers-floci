@@ -53,4 +53,16 @@ class AcmConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_ACM_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        AcmConfig config = AcmConfig.builder()
+                .enabled(false)
+                .validationWaitSeconds(5)
+                .build();
+        AcmConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.getValidationWaitSeconds()).isEqualTo(5);
+    }
+
 }

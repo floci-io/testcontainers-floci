@@ -72,4 +72,22 @@ class Route53ConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_ROUTE53_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        Route53Config config = Route53Config.builder()
+                .enabled(false)
+                .defaultNameserver1("ns1.example.com")
+                .defaultNameserver2("ns2.example.com")
+                .defaultNameserver3("ns3.example.com")
+                .defaultNameserver4("ns4.example.com")
+                .build();
+        Route53Config copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.getDefaultNameserver1()).isEqualTo("ns1.example.com");
+        assertThat(copy.getDefaultNameserver2()).isEqualTo("ns2.example.com");
+        assertThat(copy.getDefaultNameserver3()).isEqualTo("ns3.example.com");
+        assertThat(copy.getDefaultNameserver4()).isEqualTo("ns4.example.com");
+    }
+
 }

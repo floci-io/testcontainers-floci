@@ -64,4 +64,18 @@ class AmazonMqConfigTest {
                 .doesNotContainKey("FLOCI_SERVICES_AMAZONMQ_MOCK")
                 .doesNotContainKey("FLOCI_SERVICES_AMAZONMQ_DEFAULT_IMAGE");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        AmazonMqConfig config = AmazonMqConfig.builder()
+                .enabled(false)
+                .mock(true)
+                .defaultImage("test-image")
+                .build();
+        AmazonMqConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.isMock()).isTrue();
+        assertThat(copy.getDefaultImage()).isEqualTo("test-image");
+    }
+
 }

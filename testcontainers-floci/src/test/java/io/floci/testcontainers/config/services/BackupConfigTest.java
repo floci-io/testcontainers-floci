@@ -53,4 +53,16 @@ class BackupConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_BACKUP_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        BackupConfig config = BackupConfig.builder()
+                .enabled(false)
+                .jobCompletionDelaySeconds(5)
+                .build();
+        BackupConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.getJobCompletionDelaySeconds()).isEqualTo(5);
+    }
+
 }

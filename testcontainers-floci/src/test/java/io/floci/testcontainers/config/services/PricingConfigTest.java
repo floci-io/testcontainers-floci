@@ -58,4 +58,16 @@ class PricingConfigTest {
 
         assertThat(container.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_PRICING_SNAPSHOT_PATH");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        PricingConfig config = PricingConfig.builder()
+                .enabled(false)
+                .snapshotPath("test-path")
+                .build();
+        PricingConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.getSnapshotPath()).contains("test-path");
+    }
+
 }

@@ -101,4 +101,22 @@ class IotConfigTest {
 
         assertThat(container.getExposedPorts()).doesNotContain(1883);
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        IotConfig config = IotConfig.builder()
+                .enabled(false)
+                .mqttEnabled(false)
+                .mqttAutoStart(true)
+                .mqttHost("127.0.0.1")
+                .mqttPort(1884)
+                .build();
+        IotConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.isMqttEnabled()).isFalse();
+        assertThat(copy.isMqttAutoStart()).isTrue();
+        assertThat(copy.getMqttHost()).isEqualTo("127.0.0.1");
+        assertThat(copy.getMqttPort()).isEqualTo(1884);
+    }
+
 }

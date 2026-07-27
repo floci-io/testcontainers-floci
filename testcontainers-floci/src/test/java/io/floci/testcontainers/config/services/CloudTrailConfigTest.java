@@ -38,4 +38,14 @@ class CloudTrailConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_CLOUDTRAIL_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        CloudTrailConfig config = CloudTrailConfig.builder()
+                .enabled(false)
+                .build();
+        CloudTrailConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+    }
+
 }

@@ -49,6 +49,16 @@ public class TlsConfig {
     }
 
     /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
+    }
+
+    /**
      * Returns whether TLS/HTTPS is enabled on the server.
      *
      * @return {@code true} if TLS is enabled
@@ -141,6 +151,14 @@ public class TlsConfig {
 
         private Builder() {
             // Allow instantiation only via TlsConfig.builder()
+        }
+
+        private Builder(TlsConfig instance) {
+            this.enabled = instance.enabled;
+            this.certPath = instance.certPath;
+            this.keyPath = instance.keyPath;
+            this.selfSigned = instance.selfSigned;
+            this.awsHttpsPort = instance.awsHttpsPort;
         }
 
         /**

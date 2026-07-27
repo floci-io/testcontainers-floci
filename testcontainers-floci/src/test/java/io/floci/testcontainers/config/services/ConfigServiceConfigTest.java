@@ -38,4 +38,14 @@ class ConfigServiceConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_CONFIGSERVICE_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        ConfigServiceConfig config = ConfigServiceConfig.builder()
+                .enabled(false)
+                .build();
+        ConfigServiceConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+    }
+
 }

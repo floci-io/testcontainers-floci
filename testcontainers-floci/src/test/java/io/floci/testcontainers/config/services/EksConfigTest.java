@@ -119,4 +119,31 @@ class EksConfigTest {
             assertThat(container.getExposedPorts()).doesNotContain(8000);
         }
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        EksConfig config = EksConfig.builder()
+                .enabled(false)
+                .mock(true)
+                .provider("kind")
+                .defaultImage("test-image")
+                .apiServerPortRange(6600, 5)
+                .dockerNetwork("test-network")
+                .endpointMode("container")
+                .iamAuthWebhook(false)
+                .ecrRegistryMirror(false)
+                .build();
+        EksConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.isMock()).isTrue();
+        assertThat(copy.getProvider()).isEqualTo("kind");
+        assertThat(copy.getDefaultImage()).isEqualTo("test-image");
+        assertThat(copy.getApiServerBasePort()).isEqualTo(6600);
+        assertThat(copy.getApiServerPortsCount()).isEqualTo(5);
+        assertThat(copy.getDockerNetwork()).isEqualTo("test-network");
+        assertThat(copy.getEndpointMode()).isEqualTo("container");
+        assertThat(copy.isIamAuthWebhook()).isFalse();
+        assertThat(copy.isEcrRegistryMirror()).isFalse();
+    }
+
 }

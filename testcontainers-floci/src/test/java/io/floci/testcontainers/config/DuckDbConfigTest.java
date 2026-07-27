@@ -48,4 +48,17 @@ class DuckDbConfigTest {
                 .containsEntry("FLOCI_SERVICES_DUCK_DEFAULT_IMAGE", "floci/floci-duck:1.5.18")
                 .containsEntry("FLOCI_SERVICES_DUCK_URL", "http://custom-duckdb:8080");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        DuckDbConfig config = DuckDbConfig.builder()
+                .url("http://custom-duckdb:8080")
+                .defaultImage("floci/floci-duck:1.5.18")
+                .build();
+
+        DuckDbConfig copy = config.toBuilder().build();
+
+        assertThat(copy.getUrl()).isEqualTo("http://custom-duckdb:8080");
+        assertThat(copy.getDefaultImage()).isEqualTo("floci/floci-duck:1.5.18");
+    }
 }

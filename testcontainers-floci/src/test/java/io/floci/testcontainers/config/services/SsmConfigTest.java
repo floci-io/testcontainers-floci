@@ -53,4 +53,16 @@ class SsmConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_SSM_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        SsmConfig config = SsmConfig.builder()
+                .enabled(false)
+                .maxParameterHistory(10)
+                .build();
+        SsmConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.getMaxParameterHistory()).isEqualTo(10);
+    }
+
 }

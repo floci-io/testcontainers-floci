@@ -37,4 +37,14 @@ class CodePipelineConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_CODEPIPELINE_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        CodePipelineConfig config = CodePipelineConfig.builder()
+                .enabled(false)
+                .build();
+        CodePipelineConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+    }
+
 }

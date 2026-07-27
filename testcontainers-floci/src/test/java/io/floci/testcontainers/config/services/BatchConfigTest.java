@@ -64,4 +64,18 @@ class BatchConfigTest {
                 .doesNotContainKey("FLOCI_SERVICES_BATCH_RUNNER_MODE")
                 .doesNotContainKey("FLOCI_SERVICES_BATCH_DOCKER_NETWORK");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        BatchConfig config = BatchConfig.builder()
+                .enabled(false)
+                .runnerMode("deferred")
+                .dockerNetwork("test-network")
+                .build();
+        BatchConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.getRunnerMode()).isEqualTo("deferred");
+        assertThat(copy.getDockerNetwork()).isEqualTo("test-network");
+    }
+
 }

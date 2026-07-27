@@ -221,4 +221,39 @@ class LambdaConfigTest {
 
         assertThat(container.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_LAMBDA_AWS_CONFIG_PATH");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        LambdaConfig config = LambdaConfig.builder()
+                .enabled(false)
+                .ephemeral(true)
+                .exposeRuntimePorts(true)
+                .defaultMemoryMb(256)
+                .defaultTimeoutSeconds(10)
+                .dockerNetwork("test-network")
+                .runtimeApiPortRange(9300, 5)
+                .pollIntervalMs(500)
+                .containerIdleTimeoutSeconds(60)
+                .regionConcurrencyLimit(500)
+                .unreservedConcurrencyMin(50)
+                .hotReload(true)
+                .awsConfigPath("/test/aws-config")
+                .build();
+        LambdaConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.isEphemeral()).isTrue();
+        assertThat(copy.isExposeRuntimePorts()).isTrue();
+        assertThat(copy.getDefaultMemoryMb()).isEqualTo(256);
+        assertThat(copy.getDefaultTimeoutSeconds()).isEqualTo(10);
+        assertThat(copy.getDockerNetwork()).isEqualTo("test-network");
+        assertThat(copy.getRuntimeApiBasePort()).isEqualTo(9300);
+        assertThat(copy.getRuntimeApiPortsCount()).isEqualTo(5);
+        assertThat(copy.getPollIntervalMs()).isEqualTo(500);
+        assertThat(copy.getContainerIdleTimeoutSeconds()).isEqualTo(60);
+        assertThat(copy.getRegionConcurrencyLimit()).isEqualTo(500);
+        assertThat(copy.getUnreservedConcurrencyMin()).isEqualTo(50);
+        assertThat(copy.getHotReload().enabled()).isTrue();
+        assertThat(copy.getAwsConfigPath()).isEqualTo("/test/aws-config");
+    }
+
 }

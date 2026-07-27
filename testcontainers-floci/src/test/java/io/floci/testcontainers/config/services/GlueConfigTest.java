@@ -37,4 +37,14 @@ class GlueConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_GLUE_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        GlueConfig config = GlueConfig.builder()
+                .enabled(false)
+                .build();
+        GlueConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+    }
+
 }

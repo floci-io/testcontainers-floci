@@ -37,4 +37,14 @@ class ElasticBeanstalkConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_ELASTICBEANSTALK_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        ElasticBeanstalkConfig config = ElasticBeanstalkConfig.builder()
+                .enabled(false)
+                .build();
+        ElasticBeanstalkConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+    }
+
 }

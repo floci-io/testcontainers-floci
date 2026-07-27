@@ -56,4 +56,16 @@ class RdsDataConfigTest {
                 .containsEntry("FLOCI_SERVICES_RDS_DATA_ENABLED", "false")
                 .doesNotContainKey("FLOCI_SERVICES_RDS_DATA_TRANSACTION_TTL_SECONDS");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        RdsDataConfig config = RdsDataConfig.builder()
+                .enabled(false)
+                .transactionTtlSeconds(60L)
+                .build();
+        RdsDataConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.getTransactionTtlSeconds()).isEqualTo(60L);
+    }
+
 }

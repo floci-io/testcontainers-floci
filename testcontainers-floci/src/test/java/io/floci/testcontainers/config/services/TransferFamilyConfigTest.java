@@ -37,4 +37,14 @@ class TransferFamilyConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_TRANSFER_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        TransferFamilyConfig config = TransferFamilyConfig.builder()
+                .enabled(false)
+                .build();
+        TransferFamilyConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+    }
+
 }

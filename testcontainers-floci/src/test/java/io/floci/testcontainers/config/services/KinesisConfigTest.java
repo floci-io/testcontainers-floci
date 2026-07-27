@@ -37,4 +37,14 @@ class KinesisConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_KINESIS_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        KinesisConfig config = KinesisConfig.builder()
+                .enabled(false)
+                .build();
+        KinesisConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+    }
+
 }

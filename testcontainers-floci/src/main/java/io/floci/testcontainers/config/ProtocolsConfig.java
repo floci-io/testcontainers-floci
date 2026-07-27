@@ -32,6 +32,16 @@ public class ProtocolsConfig {
     }
 
     /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
+    }
+
+    /**
      * Returns whether strict RPC protocol claiming is enabled.
      *
      * <p>When enabled, requests carrying an RPC protocol signal that no supported wire
@@ -65,6 +75,10 @@ public class ProtocolsConfig {
 
         private Builder() {
             // Allow instantiation only via ProtocolsConfig.builder()
+        }
+
+        private Builder(ProtocolsConfig instance) {
+            this.strictClaiming = instance.strictClaiming;
         }
 
         /**

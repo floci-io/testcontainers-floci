@@ -98,4 +98,25 @@ class NeptuneConfigTest {
             assertThat(container.getExposedPorts()).doesNotContain(9000);
         }
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        NeptuneConfig config = NeptuneConfig.builder()
+                .enabled(false)
+                .proxyPortRange(9182, 5)
+                .dbType("opencypher")
+                .defaultImage("test-image")
+                .defaultNeo4jImage("test-neo4j")
+                .dockerNetwork("test-network")
+                .build();
+        NeptuneConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.getProxyBasePort()).isEqualTo(9182);
+        assertThat(copy.getProxyPortsCount()).isEqualTo(5);
+        assertThat(copy.getDbType()).isEqualTo("opencypher");
+        assertThat(copy.getDefaultImage()).isEqualTo("test-image");
+        assertThat(copy.getDefaultNeo4jImage()).isEqualTo("test-neo4j");
+        assertThat(copy.getDockerNetwork()).isEqualTo("test-network");
+    }
+
 }

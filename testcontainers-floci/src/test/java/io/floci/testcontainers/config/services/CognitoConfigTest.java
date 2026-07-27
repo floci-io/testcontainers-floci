@@ -37,4 +37,14 @@ class CognitoConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_COGNITO_ENABLED", "false");
     }
+
+    @Test
+    void shouldPreserveValuesOnToBuilder() {
+        CognitoConfig config = CognitoConfig.builder()
+                .enabled(false)
+                .build();
+        CognitoConfig copy = config.toBuilder().build();
+        assertThat(copy.isEnabled()).isFalse();
+    }
+
 }

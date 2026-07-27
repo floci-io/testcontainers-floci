@@ -35,6 +35,16 @@ public class DuckDbConfig {
     }
 
     /**
+     * Returns a new {@link Builder} for this configuration, initialized with the current
+     * values of this instance.
+     *
+     * @return a new builder pre-populated with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder(this);
+    }
+
+    /**
      * Returns the custom DuckDB URL, or {@code null} if Floci manages the container itself.
      *
      * @return the DuckDB URL, or {@code null}
@@ -75,6 +85,11 @@ public class DuckDbConfig {
 
         private Builder() {
             // Allow instantiation only via DuckDbConfig.builder()
+        }
+
+        private Builder(DuckDbConfig instance) {
+            this.url = instance.url;
+            this.defaultImage = instance.defaultImage;
         }
 
         /**
