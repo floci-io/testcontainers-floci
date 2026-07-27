@@ -1,11 +1,14 @@
 package io.floci.testcontainers;
 
+import io.floci.testcontainers.config.services.AbstractServiceConfig;
+
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
-import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.images.builder.Transferable;
+import org.testcontainers.utility.DockerImageName;
 
 import java.nio.file.Path;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -132,10 +135,10 @@ class FlociContainerTest {
             assertThat(network1).isNotEqualTo(network2);
         }
     }
-    
+
     @Test
     void shouldWaitForStartScriptsToComplete() throws Exception {
-        try (FlociContainer container = new FlociContainer()) {
+        try (FlociContainer container = new FlociContainer().disableAllServices()) {
             container.withCopyToContainer(Transferable.of("""
                     #!/bin/sh
                     set -eu
@@ -152,18 +155,96 @@ class FlociContainerTest {
 
     @Test
     void shouldDeleteContainerOwnedPersistentStorage() throws Exception {
-        FlociContainer container = new FlociContainer()
-                .withStorageConfig(config -> config.randomHostPersistentPath());
-        Path persistentStorage = container.getStorageConfig().getHostPersistentPath().orElseThrow();
-        try {
-            container.start();
-            var result = container.execInContainer(
-                    "sh", "-c", "mkdir -p /app/data/restricted && touch /app/data/restricted/file && chmod 000 /app/data/restricted");
-            assertThat(result.getExitCode()).isZero();
-        } finally {
-            container.stop();
+        try (FlociContainer container = new FlociContainer().disableAllServices()
+                .withStorageConfig(c -> c.randomHostPersistentPath())) {
+            Path persistentStorage = container.getStorageConfig().getHostPersistentPath().orElseThrow();
+            try {
+                container.start();
+                var result = container.execInContainer(
+                        "sh", "-c", "mkdir -p /app/data/restricted && touch /app/data/restricted/file && chmod 000 /app/data/restricted");
+                assertThat(result.getExitCode()).isZero();
+            } finally {
+                container.stop();
+            }
+            assertThat(persistentStorage).doesNotExist();
         }
-
-        assertThat(persistentStorage).doesNotExist();
     }
+
+    @Test
+    void shouldDisableAllServices() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.disableAllServices();
+
+            assertThat(List.of(
+                    container.getAcmConfig(),
+                    container.getApiGatewayConfig(),
+                    container.getApiGatewayV2Config(),
+                    container.getAppConfigConfig(),
+                    container.getAppConfigDataConfig(),
+                    container.getAppSyncConfig(),
+                    container.getCloudFormationConfig(),
+                    container.getCloudMapConfig(),
+                    container.getCloudWatchLogsConfig(),
+                    container.getCloudWatchMetricsConfig(),
+                    container.getCognitoConfig(),
+                    container.getDynamoDbConfig(),
+                    container.getEc2Config(),
+                    container.getEcrConfig(),
+                    container.getEcsConfig(),
+                    container.getElastiCacheConfig(),
+                    container.getEventBridgeConfig(),
+                    container.getIamConfig(),
+                    container.getKinesisConfig(),
+                    container.getKmsConfig(),
+                    container.getLambdaConfig(),
+                    container.getOpenSearchConfig(),
+                    container.getRdsConfig(),
+                    container.getS3Config(),
+                    container.getSchedulerConfig(),
+                    container.getSecretsManagerConfig(),
+                    container.getSesConfig(),
+                    container.getSnsConfig(),
+                    container.getSqsConfig(),
+                    container.getSsmConfig(),
+                    container.getStepFunctionsConfig(),
+                    container.getMskConfig(),
+                    container.getFirehoseConfig(),
+                    container.getAthenaConfig(),
+                    container.getGlueConfig(),
+                    container.getResourceGroupsTaggingConfig(),
+                    container.getBedrockRuntimeConfig(),
+                    container.getPipesConfig(),
+                    container.getEksConfig(),
+                    container.getCodeBuildConfig(),
+                    container.getCodeDeployConfig(),
+                    container.getElbV2Config(),
+                    container.getBackupConfig(),
+                    container.getTransferFamilyConfig(),
+                    container.getRoute53Config(),
+                    container.getTextractConfig(),
+                    container.getPricingConfig(),
+                    container.getNeptuneConfig(),
+                    container.getCostExplorerConfig(),
+                    container.getCurConfig(),
+                    container.getBcmDataExportsConfig(),
+                    container.getCloudTrailConfig(),
+                    container.getBatchConfig(),
+                    container.getRdsDataConfig(),
+                    container.getDocumentDbConfig(),
+                    container.getEmrConfig(),
+                    container.getWafV2Config(),
+                    container.getIotConfig(),
+                    container.getIotDataConfig(),
+                    container.getLightsailConfig(),
+                    container.getCloudControlConfig(),
+                    container.getS3VectorsConfig(),
+                    container.getElasticBeanstalkConfig(),
+                    container.getCodePipelineConfig(),
+                    container.getAmazonMqConfig(),
+                    container.getMemoryDbConfig()
+            )).noneMatch(AbstractServiceConfig::isEnabled);
+        }
+    }
+
+
 }

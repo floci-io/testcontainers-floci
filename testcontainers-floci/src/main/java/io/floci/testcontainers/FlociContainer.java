@@ -1,10 +1,6 @@
 package io.floci.testcontainers;
 
-import io.floci.testcontainers.config.DuckDbConfig;
-import io.floci.testcontainers.config.ProtocolsConfig;
-import io.floci.testcontainers.config.SecurityConfig;
-import io.floci.testcontainers.config.StorageConfig;
-import io.floci.testcontainers.config.TlsConfig;
+import io.floci.testcontainers.config.*;
 import io.floci.testcontainers.config.services.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,8 +19,10 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
+import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * Testcontainers module for <a href="https://github.com/floci-io/floci">Floci</a> — a
@@ -142,6 +140,75 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private AmazonMqConfig amazonMqConfig = AmazonMqConfig.builder().build();
     private MemoryDbConfig memoryDbConfig = MemoryDbConfig.builder().build();
 
+    private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
+            new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
+            new ServiceConfigAccessor<>(() -> apiGatewayConfig, c -> apiGatewayConfig = c),
+            new ServiceConfigAccessor<>(() -> apiGatewayV2Config, c -> apiGatewayV2Config = c),
+            new ServiceConfigAccessor<>(() -> appConfigConfig, c -> appConfigConfig = c),
+            new ServiceConfigAccessor<>(() -> appConfigDataConfig, c -> appConfigDataConfig = c),
+            new ServiceConfigAccessor<>(() -> appSyncConfig, c -> appSyncConfig = c),
+            new ServiceConfigAccessor<>(() -> cloudFormationConfig, c -> cloudFormationConfig = c),
+            new ServiceConfigAccessor<>(() -> cloudMapConfig, c -> cloudMapConfig = c),
+            new ServiceConfigAccessor<>(() -> cloudWatchLogsConfig, c -> cloudWatchLogsConfig = c),
+            new ServiceConfigAccessor<>(() -> cloudWatchMetricsConfig, c -> cloudWatchMetricsConfig = c),
+            new ServiceConfigAccessor<>(() -> cognitoConfig, c -> cognitoConfig = c),
+            new ServiceConfigAccessor<>(() -> dynamoDbConfig, c -> dynamoDbConfig = c),
+            new ServiceConfigAccessor<>(() -> ec2Config, c -> ec2Config = c),
+            new ServiceConfigAccessor<>(() -> ecrConfig, c -> ecrConfig = c),
+            new ServiceConfigAccessor<>(() -> ecsConfig, c -> ecsConfig = c),
+            new ServiceConfigAccessor<>(() -> elastiCacheConfig, c -> elastiCacheConfig = c),
+            new ServiceConfigAccessor<>(() -> eventBridgeConfig, c -> eventBridgeConfig = c),
+            new ServiceConfigAccessor<>(() -> iamConfig, c -> iamConfig = c),
+            new ServiceConfigAccessor<>(() -> kinesisConfig, c -> kinesisConfig = c),
+            new ServiceConfigAccessor<>(() -> kmsConfig, c -> kmsConfig = c),
+            new ServiceConfigAccessor<>(() -> lambdaConfig, c -> lambdaConfig = c),
+            new ServiceConfigAccessor<>(() -> openSearchConfig, c -> openSearchConfig = c),
+            new ServiceConfigAccessor<>(() -> rdsConfig, c -> rdsConfig = c),
+            new ServiceConfigAccessor<>(() -> s3Config, c -> s3Config = c),
+            new ServiceConfigAccessor<>(() -> schedulerConfig, c -> schedulerConfig = c),
+            new ServiceConfigAccessor<>(() -> secretsManagerConfig, c -> secretsManagerConfig = c),
+            new ServiceConfigAccessor<>(() -> sesConfig, c -> sesConfig = c),
+            new ServiceConfigAccessor<>(() -> snsConfig, c -> snsConfig = c),
+            new ServiceConfigAccessor<>(() -> sqsConfig, c -> sqsConfig = c),
+            new ServiceConfigAccessor<>(() -> ssmConfig, c -> ssmConfig = c),
+            new ServiceConfigAccessor<>(() -> stepFunctionsConfig, c -> stepFunctionsConfig = c),
+            new ServiceConfigAccessor<>(() -> mskConfig, c -> mskConfig = c),
+            new ServiceConfigAccessor<>(() -> firehoseConfig, c -> firehoseConfig = c),
+            new ServiceConfigAccessor<>(() -> athenaConfig, c -> athenaConfig = c),
+            new ServiceConfigAccessor<>(() -> glueConfig, c -> glueConfig = c),
+            new ServiceConfigAccessor<>(() -> resourceGroupsTaggingConfig, c -> resourceGroupsTaggingConfig = c),
+            new ServiceConfigAccessor<>(() -> bedrockRuntimeConfig, c -> bedrockRuntimeConfig = c),
+            new ServiceConfigAccessor<>(() -> pipesConfig, c -> pipesConfig = c),
+            new ServiceConfigAccessor<>(() -> eksConfig, c -> eksConfig = c),
+            new ServiceConfigAccessor<>(() -> codeBuildConfig, c -> codeBuildConfig = c),
+            new ServiceConfigAccessor<>(() -> codeDeployConfig, c -> codeDeployConfig = c),
+            new ServiceConfigAccessor<>(() -> elbV2Config, c -> elbV2Config = c),
+            new ServiceConfigAccessor<>(() -> backupConfig, c -> backupConfig = c),
+            new ServiceConfigAccessor<>(() -> transferFamilyConfig, c -> transferFamilyConfig = c),
+            new ServiceConfigAccessor<>(() -> route53Config, c -> route53Config = c),
+            new ServiceConfigAccessor<>(() -> textractConfig, c -> textractConfig = c),
+            new ServiceConfigAccessor<>(() -> pricingConfig, c -> pricingConfig = c),
+            new ServiceConfigAccessor<>(() -> neptuneConfig, c -> neptuneConfig = c),
+            new ServiceConfigAccessor<>(() -> costExplorerConfig, c -> costExplorerConfig = c),
+            new ServiceConfigAccessor<>(() -> curConfig, c -> curConfig = c),
+            new ServiceConfigAccessor<>(() -> bcmDataExportsConfig, c -> bcmDataExportsConfig = c),
+            new ServiceConfigAccessor<>(() -> cloudTrailConfig, c -> cloudTrailConfig = c),
+            new ServiceConfigAccessor<>(() -> batchConfig, c -> batchConfig = c),
+            new ServiceConfigAccessor<>(() -> rdsDataConfig, c -> rdsDataConfig = c),
+            new ServiceConfigAccessor<>(() -> documentDbConfig, c -> documentDbConfig = c),
+            new ServiceConfigAccessor<>(() -> emrConfig, c -> emrConfig = c),
+            new ServiceConfigAccessor<>(() -> wafV2Config, c -> wafV2Config = c),
+            new ServiceConfigAccessor<>(() -> iotConfig, c -> iotConfig = c),
+            new ServiceConfigAccessor<>(() -> iotDataConfig, c -> iotDataConfig = c),
+            new ServiceConfigAccessor<>(() -> lightsailConfig, c -> lightsailConfig = c),
+            new ServiceConfigAccessor<>(() -> cloudControlConfig, c -> cloudControlConfig = c),
+            new ServiceConfigAccessor<>(() -> s3VectorsConfig, c -> s3VectorsConfig = c),
+            new ServiceConfigAccessor<>(() -> elasticBeanstalkConfig, c -> elasticBeanstalkConfig = c),
+            new ServiceConfigAccessor<>(() -> codePipelineConfig, c -> codePipelineConfig = c),
+            new ServiceConfigAccessor<>(() -> amazonMqConfig, c -> amazonMqConfig = c),
+            new ServiceConfigAccessor<>(() -> memoryDbConfig, c -> memoryDbConfig = c)
+    );
+
     /**
      * Creates a new Floci container with the default image ({@code floci/floci:latest}).
      */
@@ -188,64 +255,6 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         preparePersistentStorageForCleanup();
         super.stop();
         deletePersistentStorage();
-    }
-
-    private void preparePersistentStorageForCleanup() {
-        if (storageConfig.getHostPersistentPath().isEmpty() || !isRunning()) {
-            return;
-        }
-
-        // Child containers can create root-owned files in Floci's bind-mounted data directory.
-        try {
-            ExecResult result = execInContainer("chmod", "-R", "a+rwX", "/app/data");
-            if (result.getExitCode() != 0) {
-                logger.warn("Failed to make Floci persistent storage deletable: {}", result.getStderr());
-            }
-        } catch (IOException e) {
-            logger.warn("Failed to make Floci persistent storage deletable", e);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            logger.warn("Interrupted while making Floci persistent storage deletable", e);
-        }
-    }
-
-    private void deletePersistentStorage() {
-        storageConfig.getHostPersistentPath().ifPresent(path -> {
-            try {
-                Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
-                    @Override
-                    public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) {
-                        deletePath(file);
-                        return FileVisitResult.CONTINUE;
-                    }
-
-                    @Override
-                    public FileVisitResult visitFileFailed(Path file, IOException failure) {
-                        logger.warn("Failed to visit Floci persistent storage path {}", file, failure);
-                        return FileVisitResult.CONTINUE;
-                    }
-
-                    @Override
-                    public FileVisitResult postVisitDirectory(Path directory, IOException failure) {
-                        if (failure != null) {
-                            logger.warn("Failed to visit Floci persistent storage directory {}", directory, failure);
-                        }
-                        deletePath(directory);
-                        return FileVisitResult.CONTINUE;
-                    }
-                });
-            } catch (IOException e) {
-                logger.warn("Failed to delete Floci persistent storage at {}", path, e);
-            }
-        });
-    }
-
-    private static void deletePath(Path path) {
-        try {
-            Files.deleteIfExists(path);
-        } catch (IOException e) {
-            logger.warn("Failed to delete Floci persistent storage path {}", path, e);
-        }
     }
 
     /**
@@ -381,6 +390,20 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         return getEnvMap().get("FLOCI_SERVICES_DOCKER_NETWORK");
     }
 
+
+    /**
+     * Disables all services in this Floci container. This is useful for testing scenarios where you want to start the
+     * container without any services running and without any ports being exposed (e.g. to improve startup performance)
+     *
+     * @return this container instance
+     */
+    public FlociContainer disableAllServices() {
+        serviceConfigAccessors.forEach(ServiceConfigAccessor::disable);
+        configureExposedPorts();
+        configureEnvVars();
+        return this;
+    }
+
     /**
      * Returns the TLS configuration.
      *
@@ -446,6 +469,94 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         storageConfig.getHostPersistentPath().ifPresent(path ->
                 withFileSystemBind(path.toString(), "/app/data", BindMode.READ_WRITE));
         storageConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Returns the current DuckDB configuration. Defaults to the default image and no custom URL.
+     *
+     * @return the DuckDB configuration
+     */
+    public DuckDbConfig getDuckDbConfig() {
+        return duckDbConfig;
+    }
+
+    /**
+     * Configures DuckDB-specific settings such as custom URL or default image.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withDuckDbConfig(c -> c
+     *         .url("http://duckdb:8080")
+     *         .defaultImage("floci/floci-duck:1.5.18"));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link DuckDbConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withDuckDbConfig(Consumer<DuckDbConfig.Builder> configurer) {
+        DuckDbConfig.Builder builder = DuckDbConfig.builder();
+        configurer.accept(builder);
+        this.duckDbConfig = builder.build();
+        duckDbConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Returns the current security configuration. Defaults to CORS headers enabled and no extra CORS lists.
+     *
+     * @return the security configuration
+     */
+    public SecurityConfig getSecurityConfig() {
+        return securityConfig;
+    }
+
+    /**
+     * Configures security settings such as CORS allowed origins, headers, and expose headers.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withSecurityConfig(c -> c
+     *         .extraCorsAllowedOrigins(List.of("https://example.com"))
+     *         .disableCorsHeaders(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link SecurityConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withSecurityConfig(Consumer<SecurityConfig.Builder> configurer) {
+        SecurityConfig.Builder builder = SecurityConfig.builder();
+        configurer.accept(builder);
+        this.securityConfig = builder.build();
+        securityConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Returns the current protocols configuration.
+     *
+     * @return the protocols configuration
+     */
+    public ProtocolsConfig getProtocolsConfig() {
+        return protocolsConfig;
+    }
+
+    /**
+     * Configures protocol-related settings such as strict RPC protocol claiming.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withProtocolsConfig(c -> c.strictClaiming(true));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link ProtocolsConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withProtocolsConfig(Consumer<ProtocolsConfig.Builder> configurer) {
+        ProtocolsConfig.Builder builder = ProtocolsConfig.builder();
+        configurer.accept(builder);
+        this.protocolsConfig = builder.build();
+        protocolsConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
@@ -2390,92 +2501,62 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         return this;
     }
 
-    /**
-     * Returns the current DuckDB configuration. Defaults to the default image and no custom URL.
-     *
-     * @return the DuckDB configuration
-     */
-    public DuckDbConfig getDuckDbConfig() {
-        return duckDbConfig;
+    private void preparePersistentStorageForCleanup() {
+        if (storageConfig.getHostPersistentPath().isEmpty() || !isRunning()) {
+            return;
+        }
+
+        // Child containers can create root-owned files in Floci's bind-mounted data directory.
+        try {
+            ExecResult result = execInContainer("chmod", "-R", "a+rwX", "/app/data");
+            if (result.getExitCode() != 0) {
+                logger.warn("Failed to make Floci persistent storage deletable: {}", result.getStderr());
+            }
+        } catch (IOException e) {
+            logger.warn("Failed to make Floci persistent storage deletable", e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            logger.warn("Interrupted while making Floci persistent storage deletable", e);
+        }
     }
 
-    /**
-     * Configures DuckDB-specific settings such as custom URL or default image.
-     *
-     * <pre>{@code
-     * new FlociContainer()
-     *     .withDuckDbConfig(c -> c
-     *         .url("http://duckdb:8080")
-     *         .defaultImage("floci/floci-duck:1.5.18"));
-     * }</pre>
-     *
-     * @param configurer a consumer that receives a {@link DuckDbConfig.Builder} to modify
-     * @return this container instance
-     */
-    public FlociContainer withDuckDbConfig(Consumer<DuckDbConfig.Builder> configurer) {
-        DuckDbConfig.Builder builder = DuckDbConfig.builder();
-        configurer.accept(builder);
-        this.duckDbConfig = builder.build();
-        duckDbConfig.applyEnvVarsToContainer(this);
-        return this;
+    private void deletePersistentStorage() {
+        storageConfig.getHostPersistentPath().ifPresent(path -> {
+            try {
+                Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) {
+                        deletePath(file);
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult visitFileFailed(Path file, IOException failure) {
+                        logger.warn("Failed to visit Floci persistent storage path {}", file, failure);
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult postVisitDirectory(Path directory, IOException failure) {
+                        if (failure != null) {
+                            logger.warn("Failed to visit Floci persistent storage directory {}", directory, failure);
+                        }
+                        deletePath(directory);
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
+            } catch (IOException e) {
+                logger.warn("Failed to delete Floci persistent storage at {}", path, e);
+            }
+        });
     }
 
-    /**
-     * Returns the current security configuration. Defaults to CORS headers enabled and no extra CORS lists.
-     *
-     * @return the security configuration
-     */
-    public SecurityConfig getSecurityConfig() {
-        return securityConfig;
-    }
-
-    /**
-     * Configures security settings such as CORS allowed origins, headers, and expose headers.
-     *
-     * <pre>{@code
-     * new FlociContainer()
-     *     .withSecurityConfig(c -> c
-     *         .extraCorsAllowedOrigins(List.of("https://example.com"))
-     *         .disableCorsHeaders(false));
-     * }</pre>
-     *
-     * @param configurer a consumer that receives a {@link SecurityConfig.Builder} to modify
-     * @return this container instance
-     */
-    public FlociContainer withSecurityConfig(Consumer<SecurityConfig.Builder> configurer) {
-        SecurityConfig.Builder builder = SecurityConfig.builder();
-        configurer.accept(builder);
-        this.securityConfig = builder.build();
-        securityConfig.applyEnvVarsToContainer(this);
-        return this;
-    }
-
-    /**
-     * Returns the current protocols configuration.
-     *
-     * @return the protocols configuration
-     */
-    public ProtocolsConfig getProtocolsConfig() {
-        return protocolsConfig;
-    }
-
-    /**
-     * Configures protocol-related settings such as strict RPC protocol claiming.
-     *
-     * <pre>{@code
-     * new FlociContainer()
-     *     .withProtocolsConfig(c -> c.strictClaiming(true));
-     * }</pre>
-     *
-     * @param configurer a consumer that receives a {@link ProtocolsConfig.Builder} to modify
-     * @return this container instance
-     */
-    public FlociContainer withProtocolsConfig(Consumer<ProtocolsConfig.Builder> configurer) {
-        ProtocolsConfig.Builder builder = ProtocolsConfig.builder();
-        configurer.accept(builder);
-        this.protocolsConfig = builder.build();
-        protocolsConfig.applyEnvVarsToContainer(this);
-        return this;
+    private static void deletePath(Path path) {
+        try {
+            Files.deleteIfExists(path);
+        } catch (IOException e) {
+            logger.warn("Failed to delete Floci persistent storage path {}", path, e);
+        }
     }
 
     /**
@@ -2484,18 +2565,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private void configureExposedPorts() {
         withExposedPorts(PORT);
 
-        // Services config
-        lambdaConfig.applyExposedPortsToContainer(this);
-        rdsConfig.applyExposedPortsToContainer(this);
-        elastiCacheConfig.applyExposedPortsToContainer(this);
-        ecrConfig.applyExposedPortsToContainer(this);
-        eksConfig.applyExposedPortsToContainer(this);
-        ec2Config.applyExposedPortsToContainer(this);
-        elbV2Config.applyExposedPortsToContainer(this);
-        neptuneConfig.applyExposedPortsToContainer(this);
-        iotConfig.applyExposedPortsToContainer(this);
-        memoryDbConfig.applyExposedPortsToContainer(this);
-        mskConfig.applyExposedPortsToContainer(this);
+        serviceConfigAccessors.forEach(accessor -> accessor.get().applyExposedPortsToContainer(this));
     }
 
     /**
@@ -2509,75 +2579,30 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         protocolsConfig.applyEnvVarsToContainer(this);
 
         // Services config
-        acmConfig.applyEnvVarsToContainer(this);
-        apiGatewayConfig.applyEnvVarsToContainer(this);
-        apiGatewayV2Config.applyEnvVarsToContainer(this);
-        appConfigConfig.applyEnvVarsToContainer(this);
-        appConfigDataConfig.applyEnvVarsToContainer(this);
-        appSyncConfig.applyEnvVarsToContainer(this);
-        cloudFormationConfig.applyEnvVarsToContainer(this);
-        cloudMapConfig.applyEnvVarsToContainer(this);
-        cloudWatchLogsConfig.applyEnvVarsToContainer(this);
-        cloudWatchMetricsConfig.applyEnvVarsToContainer(this);
-        cognitoConfig.applyEnvVarsToContainer(this);
-        dynamoDbConfig.applyEnvVarsToContainer(this);
-        ec2Config.applyEnvVarsToContainer(this);
-        ecrConfig.applyEnvVarsToContainer(this);
-        ecsConfig.applyEnvVarsToContainer(this);
-        elastiCacheConfig.applyEnvVarsToContainer(this);
-        eventBridgeConfig.applyEnvVarsToContainer(this);
-        iamConfig.applyEnvVarsToContainer(this);
-        kinesisConfig.applyEnvVarsToContainer(this);
-        kmsConfig.applyEnvVarsToContainer(this);
-        lambdaConfig.applyEnvVarsToContainer(this);
-        openSearchConfig.applyEnvVarsToContainer(this);
-        rdsConfig.applyEnvVarsToContainer(this);
-        s3Config.applyEnvVarsToContainer(this);
-        schedulerConfig.applyEnvVarsToContainer(this);
-        secretsManagerConfig.applyEnvVarsToContainer(this);
-        sesConfig.applyEnvVarsToContainer(this);
-        snsConfig.applyEnvVarsToContainer(this);
-        sqsConfig.applyEnvVarsToContainer(this);
-        ssmConfig.applyEnvVarsToContainer(this);
-        stepFunctionsConfig.applyEnvVarsToContainer(this);
-        mskConfig.applyEnvVarsToContainer(this);
-        firehoseConfig.applyEnvVarsToContainer(this);
-        athenaConfig.applyEnvVarsToContainer(this);
-        glueConfig.applyEnvVarsToContainer(this);
-        resourceGroupsTaggingConfig.applyEnvVarsToContainer(this);
-        bedrockRuntimeConfig.applyEnvVarsToContainer(this);
-        pipesConfig.applyEnvVarsToContainer(this);
-        eksConfig.applyEnvVarsToContainer(this);
-        codeBuildConfig.applyEnvVarsToContainer(this);
-        codeDeployConfig.applyEnvVarsToContainer(this);
-        elbV2Config.applyEnvVarsToContainer(this);
-        backupConfig.applyEnvVarsToContainer(this);
-        transferFamilyConfig.applyEnvVarsToContainer(this);
-        route53Config.applyEnvVarsToContainer(this);
-        textractConfig.applyEnvVarsToContainer(this);
-        pricingConfig.applyEnvVarsToContainer(this);
-        neptuneConfig.applyEnvVarsToContainer(this);
-        costExplorerConfig.applyEnvVarsToContainer(this);
-        curConfig.applyEnvVarsToContainer(this);
-        bcmDataExportsConfig.applyEnvVarsToContainer(this);
-        cloudTrailConfig.applyEnvVarsToContainer(this);
-        batchConfig.applyEnvVarsToContainer(this);
-        rdsDataConfig.applyEnvVarsToContainer(this);
-        documentDbConfig.applyEnvVarsToContainer(this);
-        emrConfig.applyEnvVarsToContainer(this);
-        wafV2Config.applyEnvVarsToContainer(this);
-        iotConfig.applyEnvVarsToContainer(this);
-        iotDataConfig.applyEnvVarsToContainer(this);
-        lightsailConfig.applyEnvVarsToContainer(this);
-        cloudControlConfig.applyEnvVarsToContainer(this);
-        s3VectorsConfig.applyEnvVarsToContainer(this);
-        elasticBeanstalkConfig.applyEnvVarsToContainer(this);
-        codePipelineConfig.applyEnvVarsToContainer(this);
-        amazonMqConfig.applyEnvVarsToContainer(this);
-        memoryDbConfig.applyEnvVarsToContainer(this);
+        serviceConfigAccessors.forEach(accessor -> accessor.get().applyEnvVarsToContainer(this));
     }
 
     private static String uniqueShortId() {
         return UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+    }
+
+    /**
+     * A getter/setter pair for one of the AWS service configuration fields, allowing the
+     * immutable configuration instance held by that field to be read and replaced generically
+     * (e.g. to disable every service via {@link #disableAllServices()}).
+     *
+     * @param getter reads the current configuration value of the field
+     * @param setter replaces the field with a new configuration value
+     */
+    private record ServiceConfigAccessor<T extends AbstractServiceConfig<?>>(Supplier<T> getter, Consumer<T> setter) {
+
+        @SuppressWarnings("unchecked")
+        void disable() {
+            setter.accept((T) get().toBuilder().enabled(false).build());
+        }
+
+        public T get() {
+            return getter.get();
+        }
     }
 }
