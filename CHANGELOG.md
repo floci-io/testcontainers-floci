@@ -1,3 +1,17 @@
+# [2.13.0](https://github.com/floci-io/testcontainers-floci/compare/v2.12.0...v2.13.0) (2026-07-27)
+
+
+### Bug Fixes
+
+* **services:** Ensure multiple calls configuring the same service do not override each other. ([77cc40c](https://github.com/floci-io/testcontainers-floci/commit/77cc40c35403f3f7830adcf96e5c6b9b93c39c4e))
+
+
+### Features
+
+* **services:** Add method to disableAllServices() ([0b0c09b](https://github.com/floci-io/testcontainers-floci/commit/0b0c09b742d41d41a32ad2267209721eb86a8302))
+
+
+
 # [2.12.0](https://github.com/floci-io/testcontainers-floci/compare/v2.11.0...v2.12.0) (2026-07-24)
 
 
@@ -62,17 +76,6 @@
 * **opensearch:** make defaultImage property optional and use Floci's default instead ([3df2df6](https://github.com/floci-io/testcontainers-floci/commit/3df2df64fdd550275a11613a47e5aab2a8c79a21))
 * **services:** added support for AWS AppSync ([da5f7de](https://github.com/floci-io/testcontainers-floci/commit/da5f7de51379310ba1634421d583eaba93984a20))
 * **seurity:** added support for Browser CORS security config ([ecb2c4e](https://github.com/floci-io/testcontainers-floci/commit/ecb2c4edbcd7ebb2f406f0f4fd17be49e853e603))
-
-
-
-# [2.8.0](https://github.com/floci-io/testcontainers-floci/compare/v2.7.0...v2.8.0) (2026-05-22)
-
-
-### Features
-
-* add config support for all services available in Floci 1.5.18 ([5205b0c](https://github.com/floci-io/testcontainers-floci/commit/5205b0cf365d8c98969a27dbe2549e0532c83bc7))
-* add support for default Memcached image in ElastiCache configuration ([10aedfc](https://github.com/floci-io/testcontainers-floci/commit/10aedfc14f2aa7492cb9ffc712a1282b6e328a4c))
-* moved config from AthenaConfig to a dedicated DuckDB config ([358c696](https://github.com/floci-io/testcontainers-floci/commit/358c696ce71c98cfbb093e12ee1fe4798b2f81be))
 
 
 
