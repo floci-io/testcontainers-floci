@@ -57,6 +57,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     public static final int PORT = 4566;
 
     private static final String DOCKER_SOCKET_PATH = "/var/run/docker.sock";
+    private static final int STOP_TIMEOUT_SECONDS = 30;
 
     private static final String DEFAULT_REGION = "us-east-1";
     private static final String DEFAULT_AVAILABILITY_ZONE = "us-east-1a";
@@ -253,8 +254,23 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     @Override
     public void stop() {
         preparePersistentStorageForCleanup();
+        stopGracefully();
         super.stop();
         deletePersistentStorage();
+    }
+
+    private void stopGracefully() {
+        if (!isRunning()) {
+            return;
+        }
+
+        try {
+            dockerClient.stopContainerCmd(getContainerId())
+                    .withTimeout(STOP_TIMEOUT_SECONDS)
+                    .exec();
+        } catch (RuntimeException e) {
+            logger.warn("Failed to stop Floci gracefully; forcing container removal", e);
+        }
     }
 
     /**
