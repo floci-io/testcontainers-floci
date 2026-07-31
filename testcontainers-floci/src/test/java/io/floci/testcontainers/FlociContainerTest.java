@@ -89,6 +89,14 @@ class FlociContainerTest {
     }
 
     @Test
+    void shouldConfigureRdsEndpointHost() {
+        try (FlociContainer container = new FlociContainer()) {
+            assertThat(container.getEnvMap())
+                    .containsEntry("FLOCI_SERVICES_RDS_ENDPOINT_HOST", container.getHost());
+        }
+    }
+
+    @Test
     void shouldReturnDefaultLogLevel() {
         try (FlociContainer container = new FlociContainer()) {
             assertThat(container.getLogLevel()).isEqualTo(Level.WARN);
