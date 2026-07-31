@@ -63,14 +63,18 @@ class RdsServiceTest extends AbstractServiceTest {
 
         DBInstance instance = rds.describeDBInstances(b -> b.dbInstanceIdentifier(dbId)).dbInstances().get(0);
         assertThat(instance.endpoint()).isNotNull();
+        assertThat(instance.endpoint().address()).isEqualTo(floci.getHost());
+        assertThat(instance.endpoint().port())
+                .isEqualTo(floci.getMappedPort(floci.getRdsConfig().getProxyBasePort()));
         assertThat(instance.engine()).isEqualTo("postgres");
     }
 
     @Test
     @Order(4)
     void shouldConnectViaJdbc() throws Exception {
-        int pgProxyPort = floci.getMappedPort(floci.getRdsConfig().getProxyBasePort());
-        String jdbcUrl = String.format("jdbc:postgresql://%s:%d/%s?sslmode=disable", floci.getHost(), pgProxyPort, DB_NAME);
+        DBInstance instance = rds.describeDBInstances(b -> b.dbInstanceIdentifier(dbId)).dbInstances().get(0);
+        String jdbcUrl = String.format("jdbc:postgresql://%s:%d/%s?sslmode=disable",
+                instance.endpoint().address(), instance.endpoint().port(), DB_NAME);
 
         // Wait for the database to be reachable
         await().atMost(Duration.ofSeconds(10))

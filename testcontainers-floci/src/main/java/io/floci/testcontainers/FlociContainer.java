@@ -3026,6 +3026,9 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
 
         // Services config
         serviceConfigAccessors.forEach(accessor -> accessor.get().applyEnvVarsToContainer(this));
+        if (rdsConfig.getEndpointHost() == null) {
+            withEnv("FLOCI_SERVICES_RDS_ENDPOINT_HOST", getHost());
+        }
     }
 
     private static String uniqueShortId() {
