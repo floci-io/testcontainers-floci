@@ -724,6 +724,18 @@ class FlociContainerServicesConfigTest {
     }
 
     @Test
+    void shouldStoreSwfConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withSwfConfig(c -> c
+                    .timeoutSweepEnabled(false)
+                    .timeoutSweepIntervalSeconds(5));
+
+            assertThat(container.getSwfConfig().isTimeoutSweepEnabled()).isFalse();
+            assertThat(container.getSwfConfig().getTimeoutSweepIntervalSeconds()).isEqualTo(5);
+        }
+    }
+
+    @Test
     void shouldStoreDuckDbConfigOnContainer() {
         try (FlociContainer container = new FlociContainer()) {
             container.withDuckDbConfig(c -> c
