@@ -23,6 +23,7 @@ class EksConfigTest {
         assertThat(config.getEndpointMode()).isEqualTo("host");
         assertThat(config.isIamAuthWebhook()).isTrue();
         assertThat(config.isEcrRegistryMirror()).isTrue();
+        assertThat(config.isDisableCni()).isFalse();
     }
 
     @Test
@@ -37,6 +38,7 @@ class EksConfigTest {
                 .endpointMode("network")
                 .iamAuthWebhook(false)
                 .ecrRegistryMirror(false)
+                .disableCni(true)
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.isMock()).isTrue();
@@ -49,6 +51,7 @@ class EksConfigTest {
         assertThat(config.getEndpointMode()).isEqualTo("network");
         assertThat(config.isIamAuthWebhook()).isFalse();
         assertThat(config.isEcrRegistryMirror()).isFalse();
+        assertThat(config.isDisableCni()).isTrue();
     }
 
     @Test
@@ -66,6 +69,7 @@ class EksConfigTest {
                 .containsEntry("FLOCI_SERVICES_EKS_ENDPOINT_MODE", "host")
                 .containsEntry("FLOCI_SERVICES_EKS_IAM_AUTH_WEBHOOK", "true")
                 .containsEntry("FLOCI_SERVICES_EKS_ECR_REGISTRY_MIRROR", "true")
+                .containsEntry("FLOCI_SERVICES_EKS_DISABLE_CNI", "false")
                 .doesNotContainKey("FLOCI_SERVICES_EKS_DOCKER_NETWORK");
     }
 
@@ -82,6 +86,7 @@ class EksConfigTest {
                 .endpointMode("network")
                 .iamAuthWebhook(false)
                 .ecrRegistryMirror(false)
+                .disableCni(true)
                 .build()
                 .applyEnvVarsToContainer(container);
 
@@ -95,7 +100,8 @@ class EksConfigTest {
                 .containsEntry("FLOCI_SERVICES_EKS_DOCKER_NETWORK", "my-eks-network")
                 .containsEntry("FLOCI_SERVICES_EKS_ENDPOINT_MODE", "network")
                 .containsEntry("FLOCI_SERVICES_EKS_IAM_AUTH_WEBHOOK", "false")
-                .containsEntry("FLOCI_SERVICES_EKS_ECR_REGISTRY_MIRROR", "false");
+                .containsEntry("FLOCI_SERVICES_EKS_ECR_REGISTRY_MIRROR", "false")
+                .containsEntry("FLOCI_SERVICES_EKS_DISABLE_CNI", "true");
     }
 
     @Test
@@ -106,7 +112,8 @@ class EksConfigTest {
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_SERVICES_EKS_ENABLED", "false")
                 .doesNotContainKey("FLOCI_SERVICES_EKS_MOCK")
-                .doesNotContainKey("FLOCI_SERVICES_EKS_PROVIDER");
+                .doesNotContainKey("FLOCI_SERVICES_EKS_PROVIDER")
+                .doesNotContainKey("FLOCI_SERVICES_EKS_DISABLE_CNI");
     }
 
     @Test
@@ -132,6 +139,7 @@ class EksConfigTest {
                 .endpointMode("container")
                 .iamAuthWebhook(false)
                 .ecrRegistryMirror(false)
+                .disableCni(true)
                 .build();
         EksConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
@@ -144,6 +152,7 @@ class EksConfigTest {
         assertThat(copy.getEndpointMode()).isEqualTo("container");
         assertThat(copy.isIamAuthWebhook()).isFalse();
         assertThat(copy.isEcrRegistryMirror()).isFalse();
+        assertThat(copy.isDisableCni()).isTrue();
     }
 
 }
