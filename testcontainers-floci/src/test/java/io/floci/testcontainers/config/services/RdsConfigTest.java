@@ -17,10 +17,11 @@ class RdsConfigTest {
         assertThat(config.getProxyBasePort()).isEqualTo(7000);
         assertThat(config.getProxyMaxPort()).isEqualTo(7009);
         assertThat(config.getProxyPortsCount()).isEqualTo(10);
-        assertThat(config.getDefaultPostgresImage()).isEqualTo("postgres:16-alpine");
-        assertThat(config.getDefaultMysqlImage()).isEqualTo("mysql:8.0");
-        assertThat(config.getDefaultMariadbImage()).isEqualTo("mariadb:11");
+        assertThat(config.getDefaultPostgresImage()).isNull();
+        assertThat(config.getDefaultMysqlImage()).isNull();
+        assertThat(config.getDefaultMariadbImage()).isNull();
         assertThat(config.getDockerNetwork()).isNull();
+        assertThat(config.getEndpointHost()).isNull();
     }
 
     @Test
@@ -33,6 +34,7 @@ class RdsConfigTest {
                 .defaultMysqlImage("mysql:9.0")
                 .defaultMariadbImage("mariadb:10")
                 .dockerNetwork("my-rds-network")
+                .endpointHost("rds.example.com")
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.isMock()).isTrue();
@@ -43,6 +45,7 @@ class RdsConfigTest {
         assertThat(config.getDefaultMysqlImage()).isEqualTo("mysql:9.0");
         assertThat(config.getDefaultMariadbImage()).isEqualTo("mariadb:10");
         assertThat(config.getDockerNetwork()).isEqualTo("my-rds-network");
+        assertThat(config.getEndpointHost()).isEqualTo("rds.example.com");
     }
 
     @Test
@@ -55,10 +58,11 @@ class RdsConfigTest {
                 .containsEntry("FLOCI_SERVICES_RDS_MOCK", "false")
                 .containsEntry("FLOCI_SERVICES_RDS_PROXY_BASE_PORT", "7000")
                 .containsEntry("FLOCI_SERVICES_RDS_PROXY_MAX_PORT", "7009")
-                .containsEntry("FLOCI_SERVICES_RDS_DEFAULT_POSTGRES_IMAGE", "postgres:16-alpine")
-                .containsEntry("FLOCI_SERVICES_RDS_DEFAULT_MYSQL_IMAGE", "mysql:8.0")
-                .containsEntry("FLOCI_SERVICES_RDS_DEFAULT_MARIADB_IMAGE", "mariadb:11")
-                .doesNotContainKey("FLOCI_SERVICES_RDS_DOCKER_NETWORK");
+                .doesNotContainKey("FLOCI_SERVICES_RDS_DEFAULT_POSTGRES_IMAGE")
+                .doesNotContainKey("FLOCI_SERVICES_RDS_DEFAULT_MYSQL_IMAGE")
+                .doesNotContainKey("FLOCI_SERVICES_RDS_DEFAULT_MARIADB_IMAGE")
+                .doesNotContainKey("FLOCI_SERVICES_RDS_DOCKER_NETWORK")
+                .doesNotContainKey("FLOCI_SERVICES_RDS_ENDPOINT_HOST");
     }
 
     @Test
@@ -72,6 +76,7 @@ class RdsConfigTest {
                 .defaultMysqlImage("mysql:9.0")
                 .defaultMariadbImage("mariadb:10")
                 .dockerNetwork("my-rds-network")
+                .endpointHost("rds.example.com")
                 .build()
                 .applyEnvVarsToContainer(container);
 
@@ -83,7 +88,8 @@ class RdsConfigTest {
                 .containsEntry("FLOCI_SERVICES_RDS_DEFAULT_POSTGRES_IMAGE", "postgres:15")
                 .containsEntry("FLOCI_SERVICES_RDS_DEFAULT_MYSQL_IMAGE", "mysql:9.0")
                 .containsEntry("FLOCI_SERVICES_RDS_DEFAULT_MARIADB_IMAGE", "mariadb:10")
-                .containsEntry("FLOCI_SERVICES_RDS_DOCKER_NETWORK", "my-rds-network");
+                .containsEntry("FLOCI_SERVICES_RDS_DOCKER_NETWORK", "my-rds-network")
+                .containsEntry("FLOCI_SERVICES_RDS_ENDPOINT_HOST", "rds.example.com");
     }
 
     @Test
@@ -107,6 +113,7 @@ class RdsConfigTest {
                 .defaultMysqlImage("test-mysql")
                 .defaultMariadbImage("test-mariadb")
                 .dockerNetwork("test-network")
+                .endpointHost("test-host")
                 .build();
         RdsConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
@@ -117,6 +124,7 @@ class RdsConfigTest {
         assertThat(copy.getDefaultMysqlImage()).isEqualTo("test-mysql");
         assertThat(copy.getDefaultMariadbImage()).isEqualTo("test-mariadb");
         assertThat(copy.getDockerNetwork()).isEqualTo("test-network");
+        assertThat(copy.getEndpointHost()).isEqualTo("test-host");
     }
 
 }
