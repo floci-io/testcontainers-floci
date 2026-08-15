@@ -2,6 +2,8 @@ package io.floci.testcontainers.config.services;
 
 import org.testcontainers.containers.Container;
 
+import java.util.Optional;
+
 /**
  * Configuration for IAM-specific container settings.
  *
@@ -19,11 +21,13 @@ public class IamConfig extends AbstractServiceConfig<IamConfig.Builder> {
 
     private final boolean enforcementEnabled;
     private final boolean seedDeployerPrincipal;
+    private final String accountAlias;
 
     private IamConfig(Builder builder) {
         super(builder.enabled);
         this.enforcementEnabled = builder.enforcementEnabled;
         this.seedDeployerPrincipal = builder.seedDeployerPrincipal;
+        this.accountAlias = builder.accountAlias;
     }
 
     /**
@@ -63,6 +67,16 @@ public class IamConfig extends AbstractServiceConfig<IamConfig.Builder> {
         return seedDeployerPrincipal;
     }
 
+    /**
+     * Returns the alias to seed for the default account at startup, so callers that read the
+     * account alias find one without creating it first.
+     *
+     * @return the account alias, or {@link Optional#empty()} if the account has no alias
+     */
+    public Optional<String> getAccountAlias() {
+        return Optional.ofNullable(accountAlias);
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_IAM_ENABLED", String.valueOf(isEnabled()));
@@ -70,6 +84,10 @@ public class IamConfig extends AbstractServiceConfig<IamConfig.Builder> {
         if (isEnabled()) {
             container.withEnv("FLOCI_SERVICES_IAM_ENFORCEMENT_ENABLED", String.valueOf(enforcementEnabled));
             container.withEnv("FLOCI_SERVICES_IAM_SEED_DEPLOYER_PRINCIPAL", String.valueOf(seedDeployerPrincipal));
+
+            if (accountAlias != null) {
+                container.withEnv("FLOCI_SERVICES_IAM_ACCOUNT_ALIAS", accountAlias);
+            }
         }
     }
 
@@ -80,6 +98,7 @@ public class IamConfig extends AbstractServiceConfig<IamConfig.Builder> {
 
         private boolean enforcementEnabled = DEFAULT_ENFORCEMENT_ENABLED;
         private boolean seedDeployerPrincipal = DEFAULT_SEED_DEPLOYER_PRINCIPAL;
+        private String accountAlias;
 
         private Builder() {
             // Allow instantiation only via IamConfig.builder()
@@ -94,6 +113,7 @@ public class IamConfig extends AbstractServiceConfig<IamConfig.Builder> {
             super(instance);
             this.enforcementEnabled = instance.isEnforcementEnabled();
             this.seedDeployerPrincipal = instance.isSeedDeployerPrincipal();
+            this.accountAlias = instance.getAccountAlias().orElse(null);
         }
 
         /**
@@ -115,6 +135,18 @@ public class IamConfig extends AbstractServiceConfig<IamConfig.Builder> {
          */
         public Builder seedDeployerPrincipal(boolean seedDeployerPrincipal) {
             this.seedDeployerPrincipal = seedDeployerPrincipal;
+            return this;
+        }
+
+        /**
+         * Sets the alias to seed for the default account at startup, so callers that read the
+         * account alias find one without creating it first.
+         *
+         * @param accountAlias the account alias, or {@code null} for no alias (the AWS default)
+         * @return this builder
+         */
+        public Builder accountAlias(String accountAlias) {
+            this.accountAlias = accountAlias;
             return this;
         }
 
