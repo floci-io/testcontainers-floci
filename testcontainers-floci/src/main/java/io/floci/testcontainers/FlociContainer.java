@@ -140,6 +140,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private CodePipelineConfig codePipelineConfig = CodePipelineConfig.builder().build();
     private AmazonMqConfig amazonMqConfig = AmazonMqConfig.builder().build();
     private MemoryDbConfig memoryDbConfig = MemoryDbConfig.builder().build();
+    private RumConfig rumConfig = RumConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -207,7 +208,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> elasticBeanstalkConfig, c -> elasticBeanstalkConfig = c),
             new ServiceConfigAccessor<>(() -> codePipelineConfig, c -> codePipelineConfig = c),
             new ServiceConfigAccessor<>(() -> amazonMqConfig, c -> amazonMqConfig = c),
-            new ServiceConfigAccessor<>(() -> memoryDbConfig, c -> memoryDbConfig = c)
+            new ServiceConfigAccessor<>(() -> memoryDbConfig, c -> memoryDbConfig = c),
+            new ServiceConfigAccessor<>(() -> rumConfig, c -> rumConfig = c)
     );
 
     /**
@@ -2514,6 +2516,34 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         this.memoryDbConfig = builder.build();
         configureExposedPorts();
         memoryDbConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * CloudWatch RUM (Real User Monitoring)-specific settings.
+     *
+     * @return the RUM configuration
+     */
+    public RumConfig getRumConfig() {
+        return rumConfig;
+    }
+
+    /**
+     * Configures CloudWatch RUM (Real User Monitoring)-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withRumConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link RumConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withRumConfig(Consumer<RumConfig.Builder> configurer) {
+        RumConfig.Builder builder = rumConfig.toBuilder();
+        configurer.accept(builder);
+        this.rumConfig = builder.build();
+        rumConfig.applyEnvVarsToContainer(this);
         return this;
     }
 

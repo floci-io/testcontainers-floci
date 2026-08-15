@@ -697,6 +697,15 @@ class FlociContainerServicesConfigTest {
     }
 
     @Test
+    void shouldStoreRumConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withRumConfig(c -> c.enabled(false));
+
+            assertThat(container.getRumConfig().isEnabled()).isFalse();
+        }
+    }
+
+    @Test
     void shouldStoreDuckDbConfigOnContainer() {
         try (FlociContainer container = new FlociContainer()) {
             container.withDuckDbConfig(c -> c
