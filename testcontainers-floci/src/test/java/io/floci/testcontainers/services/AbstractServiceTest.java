@@ -38,6 +38,11 @@ abstract class AbstractServiceTest {
                 // start; mock mode exercises the full API surface without that, per its own
                 // "useful for tests... without a Docker daemon" contract.
                 .withKinesisAnalyticsConfig(c -> c.mock(true))
+                // Real environments spin up dedicated Postgres + Airflow containers per
+                // environment; mock mode exercises the full API surface without that, per its
+                // own "environments go straight to AVAILABLE without starting real Docker
+                // containers" contract.
+                .withMwaaConfig(c -> c.mock(true))
                 .start();
 
         // Floci speaks JSON 1.1 — disable CBOR which is used by some service clients (e.g. Kinesis SDK) as default

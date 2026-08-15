@@ -145,6 +145,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private ApplicationAutoScalingConfig applicationAutoScalingConfig = ApplicationAutoScalingConfig.builder().build();
     private SwfConfig swfConfig = SwfConfig.builder().build();
     private KinesisAnalyticsConfig kinesisAnalyticsConfig = KinesisAnalyticsConfig.builder().build();
+    private MwaaConfig mwaaConfig = MwaaConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -217,7 +218,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> s3TablesConfig, c -> s3TablesConfig = c),
             new ServiceConfigAccessor<>(() -> applicationAutoScalingConfig, c -> applicationAutoScalingConfig = c),
             new ServiceConfigAccessor<>(() -> swfConfig, c -> swfConfig = c),
-            new ServiceConfigAccessor<>(() -> kinesisAnalyticsConfig, c -> kinesisAnalyticsConfig = c)
+            new ServiceConfigAccessor<>(() -> kinesisAnalyticsConfig, c -> kinesisAnalyticsConfig = c),
+            new ServiceConfigAccessor<>(() -> mwaaConfig, c -> mwaaConfig = c)
     );
 
     /**
@@ -2668,6 +2670,40 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.kinesisAnalyticsConfig = builder.build();
         kinesisAnalyticsConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * MWAA (Managed Workflows for Apache Airflow)-specific settings such as mock mode, proxy
+     * port range and supported Airflow versions.
+     *
+     * @return the MWAA configuration
+     */
+    public MwaaConfig getMwaaConfig() {
+        return mwaaConfig;
+    }
+
+    /**
+     * Configures MWAA (Managed Workflows for Apache Airflow)-specific settings such as mock
+     * mode, proxy port range and supported Airflow versions.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withMwaaConfig(c -> c
+     *         .mock(true)
+     *         .proxyPortRange(8700, 50)
+     *         .defaultVersion("2.10.5"));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link MwaaConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withMwaaConfig(Consumer<MwaaConfig.Builder> configurer) {
+        MwaaConfig.Builder builder = mwaaConfig.toBuilder();
+        configurer.accept(builder);
+        this.mwaaConfig = builder.build();
+        configureExposedPorts();
+        mwaaConfig.applyEnvVarsToContainer(this);
         return this;
     }
 

@@ -748,6 +748,22 @@ class FlociContainerServicesConfigTest {
     }
 
     @Test
+    void shouldStoreMwaaConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withMwaaConfig(c -> c
+                    .mock(true)
+                    .proxyPortRange(9000, 100)
+                    .defaultVersion("2.10.5"));
+
+            assertThat(container.getMwaaConfig().isMock()).isTrue();
+            assertThat(container.getMwaaConfig().getProxyBasePort()).isEqualTo(9000);
+            assertThat(container.getMwaaConfig().getProxyMaxPort()).isEqualTo(9099);
+            assertThat(container.getMwaaConfig().getProxyPortsCount()).isEqualTo(100);
+            assertThat(container.getMwaaConfig().getDefaultVersion()).isEqualTo("2.10.5");
+        }
+    }
+
+    @Test
     void shouldStoreDuckDbConfigOnContainer() {
         try (FlociContainer container = new FlociContainer()) {
             container.withDuckDbConfig(c -> c
