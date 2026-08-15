@@ -34,6 +34,10 @@ abstract class AbstractServiceTest {
         }
 
         floci.withElbV2Config(c -> c.listenerPort(LB_LISTENER_PORT))
+                // Real Flink JobManager containers require an application JAR staged in S3 to
+                // start; mock mode exercises the full API surface without that, per its own
+                // "useful for tests... without a Docker daemon" contract.
+                .withKinesisAnalyticsConfig(c -> c.mock(true))
                 .start();
 
         // Floci speaks JSON 1.1 — disable CBOR which is used by some service clients (e.g. Kinesis SDK) as default

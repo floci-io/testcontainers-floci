@@ -144,6 +144,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private S3TablesConfig s3TablesConfig = S3TablesConfig.builder().build();
     private ApplicationAutoScalingConfig applicationAutoScalingConfig = ApplicationAutoScalingConfig.builder().build();
     private SwfConfig swfConfig = SwfConfig.builder().build();
+    private KinesisAnalyticsConfig kinesisAnalyticsConfig = KinesisAnalyticsConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -215,7 +216,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> rumConfig, c -> rumConfig = c),
             new ServiceConfigAccessor<>(() -> s3TablesConfig, c -> s3TablesConfig = c),
             new ServiceConfigAccessor<>(() -> applicationAutoScalingConfig, c -> applicationAutoScalingConfig = c),
-            new ServiceConfigAccessor<>(() -> swfConfig, c -> swfConfig = c)
+            new ServiceConfigAccessor<>(() -> swfConfig, c -> swfConfig = c),
+            new ServiceConfigAccessor<>(() -> kinesisAnalyticsConfig, c -> kinesisAnalyticsConfig = c)
     );
 
     /**
@@ -2635,6 +2637,37 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.swfConfig = builder.build();
         swfConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Kinesis Analytics (Managed Service for Apache Flink)-specific settings such as mock mode
+     * and default image.
+     *
+     * @return the Kinesis Analytics configuration
+     */
+    public KinesisAnalyticsConfig getKinesisAnalyticsConfig() {
+        return kinesisAnalyticsConfig;
+    }
+
+    /**
+     * Configures Kinesis Analytics (Managed Service for Apache Flink)-specific settings such as
+     * mock mode and default image.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withKinesisAnalyticsConfig(c -> c
+     *         .mock(true));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link KinesisAnalyticsConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withKinesisAnalyticsConfig(Consumer<KinesisAnalyticsConfig.Builder> configurer) {
+        KinesisAnalyticsConfig.Builder builder = kinesisAnalyticsConfig.toBuilder();
+        configurer.accept(builder);
+        this.kinesisAnalyticsConfig = builder.build();
+        kinesisAnalyticsConfig.applyEnvVarsToContainer(this);
         return this;
     }
 

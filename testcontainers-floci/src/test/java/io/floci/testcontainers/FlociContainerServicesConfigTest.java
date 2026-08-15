@@ -736,6 +736,18 @@ class FlociContainerServicesConfigTest {
     }
 
     @Test
+    void shouldStoreKinesisAnalyticsConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withKinesisAnalyticsConfig(c -> c
+                    .mock(true)
+                    .defaultImage("apache/flink:1.20"));
+
+            assertThat(container.getKinesisAnalyticsConfig().isMock()).isTrue();
+            assertThat(container.getKinesisAnalyticsConfig().getDefaultImage()).contains("apache/flink:1.20");
+        }
+    }
+
+    @Test
     void shouldStoreDuckDbConfigOnContainer() {
         try (FlociContainer container = new FlociContainer()) {
             container.withDuckDbConfig(c -> c
