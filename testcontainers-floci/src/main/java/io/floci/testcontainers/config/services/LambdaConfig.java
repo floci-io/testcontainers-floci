@@ -42,6 +42,7 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
     private final int unreservedConcurrencyMin;
     private final HotReload hotReload;
     private final String awsConfigPath;
+    private final List<String> extraHosts;
 
     private LambdaConfig(Builder builder) {
         super(builder.enabled);
@@ -58,6 +59,7 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
         this.unreservedConcurrencyMin = builder.unreservedConcurrencyMin;
         this.hotReload = builder.hotReload;
         this.awsConfigPath = builder.awsConfigPath;
+        this.extraHosts = builder.extraHosts;
     }
 
     /**
@@ -212,6 +214,19 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
         return awsConfigPath;
     }
 
+    /**
+     * Returns the extra {@code /etc/hosts} entries added to every Lambda container, as
+     * "hostname:ip" pairs, or {@link Optional#empty()} if none are configured.
+     *
+     * <p>The ip may be the literal {@code host-gateway} to map to the Docker host,
+     * mirroring {@code docker run --add-host hostname:host-gateway}.
+     *
+     * @return the extra hosts entries, or {@link Optional#empty()} if none are configured
+     */
+    public Optional<List<String>> getExtraHosts() {
+        return Optional.ofNullable(extraHosts);
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_LAMBDA_ENABLED", String.valueOf(isEnabled()));
@@ -238,6 +253,10 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
 
             if (awsConfigPath != null && !awsConfigPath.isBlank()) {
                 container.withEnv("FLOCI_SERVICES_LAMBDA_AWS_CONFIG_PATH", awsConfigPath);
+            }
+
+            if (extraHosts != null && !extraHosts.isEmpty()) {
+                container.withEnv("FLOCI_SERVICES_LAMBDA_EXTRA_HOSTS", String.join(",", extraHosts));
             }
         }
     }
@@ -294,6 +313,7 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
         private int unreservedConcurrencyMin = DEFAULT_UNRESERVED_CONCURRENCY_MIN;
         private HotReload hotReload = new DefaultHotReload(false, null);
         private String awsConfigPath;
+        private List<String> extraHosts;
 
         private Builder() {
             // Allow instantiation only via LambdaConfig.builder()
@@ -319,6 +339,7 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
             this.unreservedConcurrencyMin = instance.getUnreservedConcurrencyMin();
             this.hotReload = instance.getHotReload();
             this.awsConfigPath = instance.getAwsConfigPath();
+            this.extraHosts = instance.getExtraHosts().orElse(null);
         }
 
         /**
@@ -469,6 +490,19 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
          */
         public Builder awsConfigPath(String awsConfigPath) {
             this.awsConfigPath = awsConfigPath;
+            return this;
+        }
+
+        /**
+         * Sets extra {@code /etc/hosts} entries added to every Lambda container.
+         *
+         * @param extraHosts "hostname:ip" pairs, where ip may be the literal
+         *                   {@code host-gateway} to map to the Docker host, or {@code null}
+         *                   to unset (default: none)
+         * @return this builder
+         */
+        public Builder extraHosts(List<String> extraHosts) {
+            this.extraHosts = extraHosts == null ? null : List.copyOf(extraHosts);
             return this;
         }
 
