@@ -15,11 +15,14 @@ import org.testcontainers.containers.Container;
 public class ProtocolsConfig {
 
     private static final boolean DEFAULT_STRICT_CLAIMING = false;
+    private static final boolean DEFAULT_REJECT_UNKNOWN_SERVICE_SCOPE = true;
 
     private final boolean strictClaiming;
+    private final boolean rejectUnknownServiceScope;
 
     private ProtocolsConfig(Builder builder) {
         this.strictClaiming = builder.strictClaiming;
+        this.rejectUnknownServiceScope = builder.rejectUnknownServiceScope;
     }
 
     /**
@@ -57,6 +60,24 @@ public class ProtocolsConfig {
     }
 
     /**
+     * Returns whether requests carrying an unrecognized SigV4 credential scope are rejected.
+     *
+     * <p>When enabled, a REST request whose SigV4 credential scope names a service absent
+     * from the catalog is rejected with {@code UnknownOperationException} instead of falling
+     * through JAX-RS matching into S3's path-style routes, where it surfaces as a misleading
+     * {@code NoSuchBucket} (issue #1754).
+     *
+     * <p>On by default. Turn it off if Floci serves a route whose signing scope is not yet
+     * enumerated in the catalog: the request then falls through as it did before, rather than
+     * failing with a 404 that has no workaround.
+     *
+     * @return {@code true} if requests with an unknown SigV4 service scope are rejected
+     */
+    public boolean isRejectUnknownServiceScope() {
+        return rejectUnknownServiceScope;
+    }
+
+    /**
      * Applies this protocols configuration to the given container by setting
      * the appropriate environment variables.
      *
@@ -64,6 +85,7 @@ public class ProtocolsConfig {
      */
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_PROTOCOLS_STRICT_CLAIMING", String.valueOf(strictClaiming));
+        container.withEnv("FLOCI_PROTOCOLS_REJECT_UNKNOWN_SERVICE_SCOPE", String.valueOf(rejectUnknownServiceScope));
     }
 
     /**
@@ -72,6 +94,7 @@ public class ProtocolsConfig {
     public static class Builder {
 
         private boolean strictClaiming = DEFAULT_STRICT_CLAIMING;
+        private boolean rejectUnknownServiceScope = DEFAULT_REJECT_UNKNOWN_SERVICE_SCOPE;
 
         private Builder() {
             // Allow instantiation only via ProtocolsConfig.builder()
@@ -79,6 +102,7 @@ public class ProtocolsConfig {
 
         private Builder(ProtocolsConfig instance) {
             this.strictClaiming = instance.strictClaiming;
+            this.rejectUnknownServiceScope = instance.rejectUnknownServiceScope;
         }
 
         /**
@@ -90,6 +114,21 @@ public class ProtocolsConfig {
          */
         public Builder strictClaiming(boolean strictClaiming) {
             this.strictClaiming = strictClaiming;
+            return this;
+        }
+
+        /**
+         * Sets whether requests carrying an unrecognized SigV4 credential scope are rejected.
+         *
+         * @param rejectUnknownServiceScope {@code true} to reject a REST request whose SigV4
+         *                                  credential scope names a service absent from the
+         *                                  catalog with {@code UnknownOperationException}
+         *                                  instead of letting it fall through to S3's
+         *                                  path-style routes (default {@value DEFAULT_REJECT_UNKNOWN_SERVICE_SCOPE})
+         * @return this builder
+         */
+        public Builder rejectUnknownServiceScope(boolean rejectUnknownServiceScope) {
+            this.rejectUnknownServiceScope = rejectUnknownServiceScope;
             return this;
         }
 
