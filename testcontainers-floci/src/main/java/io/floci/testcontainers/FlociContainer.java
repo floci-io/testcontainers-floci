@@ -142,6 +142,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private MemoryDbConfig memoryDbConfig = MemoryDbConfig.builder().build();
     private RumConfig rumConfig = RumConfig.builder().build();
     private S3TablesConfig s3TablesConfig = S3TablesConfig.builder().build();
+    private ApplicationAutoScalingConfig applicationAutoScalingConfig = ApplicationAutoScalingConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -211,7 +212,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> amazonMqConfig, c -> amazonMqConfig = c),
             new ServiceConfigAccessor<>(() -> memoryDbConfig, c -> memoryDbConfig = c),
             new ServiceConfigAccessor<>(() -> rumConfig, c -> rumConfig = c),
-            new ServiceConfigAccessor<>(() -> s3TablesConfig, c -> s3TablesConfig = c)
+            new ServiceConfigAccessor<>(() -> s3TablesConfig, c -> s3TablesConfig = c),
+            new ServiceConfigAccessor<>(() -> applicationAutoScalingConfig, c -> applicationAutoScalingConfig = c)
     );
 
     /**
@@ -2574,6 +2576,34 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.s3TablesConfig = builder.build();
         s3TablesConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Application Auto Scaling-specific settings.
+     *
+     * @return the Application Auto Scaling configuration
+     */
+    public ApplicationAutoScalingConfig getApplicationAutoScalingConfig() {
+        return applicationAutoScalingConfig;
+    }
+
+    /**
+     * Configures Application Auto Scaling-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withApplicationAutoScalingConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link ApplicationAutoScalingConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withApplicationAutoScalingConfig(Consumer<ApplicationAutoScalingConfig.Builder> configurer) {
+        ApplicationAutoScalingConfig.Builder builder = applicationAutoScalingConfig.toBuilder();
+        configurer.accept(builder);
+        this.applicationAutoScalingConfig = builder.build();
+        applicationAutoScalingConfig.applyEnvVarsToContainer(this);
         return this;
     }
 

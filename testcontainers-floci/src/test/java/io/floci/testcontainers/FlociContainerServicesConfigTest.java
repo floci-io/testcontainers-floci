@@ -715,6 +715,15 @@ class FlociContainerServicesConfigTest {
     }
 
     @Test
+    void shouldStoreApplicationAutoScalingConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withApplicationAutoScalingConfig(c -> c.enabled(false));
+
+            assertThat(container.getApplicationAutoScalingConfig().isEnabled()).isFalse();
+        }
+    }
+
+    @Test
     void shouldStoreDuckDbConfigOnContainer() {
         try (FlociContainer container = new FlociContainer()) {
             container.withDuckDbConfig(c -> c
