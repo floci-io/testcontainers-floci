@@ -104,9 +104,15 @@ class KinesisAnalyticsServiceTest extends AbstractServiceTest {
     @Test
     @Order(7)
     void shouldDeleteApplicationSnapshot() {
+        var snapshotCreationTimestamp = kinesisAnalytics.describeApplicationSnapshot(b -> b
+                        .applicationName(APPLICATION_NAME)
+                        .snapshotName(SNAPSHOT_NAME))
+                .snapshotDetails().snapshotCreationTimestamp();
+
         kinesisAnalytics.deleteApplicationSnapshot(b -> b
                 .applicationName(APPLICATION_NAME)
-                .snapshotName(SNAPSHOT_NAME));
+                .snapshotName(SNAPSHOT_NAME)
+                .snapshotCreationTimestamp(snapshotCreationTimestamp));
 
         var summaries = kinesisAnalytics.listApplicationSnapshots(b -> b.applicationName(APPLICATION_NAME))
                 .snapshotSummaries();
