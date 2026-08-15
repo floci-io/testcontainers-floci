@@ -297,6 +297,24 @@ class FlociContainerServicesConfigTest {
     }
 
     @Test
+    void shouldStoreBedrockAgentCoreConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withBedrockAgentCoreConfig(c -> c.validateRuntimeExists(true));
+
+            assertThat(container.getBedrockAgentCoreConfig().isValidateRuntimeExists()).isTrue();
+        }
+    }
+
+    @Test
+    void shouldStoreBedrockAgentCoreControlConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withBedrockAgentCoreControlConfig(c -> c.enabled(false));
+
+            assertThat(container.getBedrockAgentCoreControlConfig().isEnabled()).isFalse();
+        }
+    }
+
+    @Test
     void shouldStoreBedrockRuntimeConfigOnContainer() {
         try (FlociContainer container = new FlociContainer()) {
             container.withBedrockRuntimeConfig(c -> c.enabled(false));
