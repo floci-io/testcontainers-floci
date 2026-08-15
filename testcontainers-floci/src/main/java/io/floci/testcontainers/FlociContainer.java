@@ -111,6 +111,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private AthenaConfig athenaConfig = AthenaConfig.builder().build();
     private GlueConfig glueConfig = GlueConfig.builder().build();
     private ResourceGroupsTaggingConfig resourceGroupsTaggingConfig = ResourceGroupsTaggingConfig.builder().build();
+    private BedrockAgentCoreConfig bedrockAgentCoreConfig = BedrockAgentCoreConfig.builder().build();
+    private BedrockAgentCoreControlConfig bedrockAgentCoreControlConfig = BedrockAgentCoreControlConfig.builder().build();
     private BedrockRuntimeConfig bedrockRuntimeConfig = BedrockRuntimeConfig.builder().build();
     private PipesConfig pipesConfig = PipesConfig.builder().build();
     private EksConfig eksConfig = EksConfig.builder().build();
@@ -184,6 +186,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> athenaConfig, c -> athenaConfig = c),
             new ServiceConfigAccessor<>(() -> glueConfig, c -> glueConfig = c),
             new ServiceConfigAccessor<>(() -> resourceGroupsTaggingConfig, c -> resourceGroupsTaggingConfig = c),
+            new ServiceConfigAccessor<>(() -> bedrockAgentCoreConfig, c -> bedrockAgentCoreConfig = c),
+            new ServiceConfigAccessor<>(() -> bedrockAgentCoreControlConfig, c -> bedrockAgentCoreControlConfig = c),
             new ServiceConfigAccessor<>(() -> bedrockRuntimeConfig, c -> bedrockRuntimeConfig = c),
             new ServiceConfigAccessor<>(() -> pipesConfig, c -> pipesConfig = c),
             new ServiceConfigAccessor<>(() -> eksConfig, c -> eksConfig = c),
@@ -1668,6 +1672,62 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.resourceGroupsTaggingConfig = builder.build();
         resourceGroupsTaggingConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Bedrock AgentCore-specific settings.
+     *
+     * @return the Bedrock AgentCore configuration
+     */
+    public BedrockAgentCoreConfig getBedrockAgentCoreConfig() {
+        return bedrockAgentCoreConfig;
+    }
+
+    /**
+     * Configures Bedrock AgentCore-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withBedrockAgentCoreConfig(c -> c.validateRuntimeExists(true));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link BedrockAgentCoreConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withBedrockAgentCoreConfig(Consumer<BedrockAgentCoreConfig.Builder> configurer) {
+        BedrockAgentCoreConfig.Builder builder = bedrockAgentCoreConfig.toBuilder();
+        configurer.accept(builder);
+        this.bedrockAgentCoreConfig = builder.build();
+        bedrockAgentCoreConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Bedrock AgentCore Control-specific settings.
+     *
+     * @return the Bedrock AgentCore Control configuration
+     */
+    public BedrockAgentCoreControlConfig getBedrockAgentCoreControlConfig() {
+        return bedrockAgentCoreControlConfig;
+    }
+
+    /**
+     * Configures Bedrock AgentCore Control-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withBedrockAgentCoreControlConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link BedrockAgentCoreControlConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withBedrockAgentCoreControlConfig(Consumer<BedrockAgentCoreControlConfig.Builder> configurer) {
+        BedrockAgentCoreControlConfig.Builder builder = bedrockAgentCoreControlConfig.toBuilder();
+        configurer.accept(builder);
+        this.bedrockAgentCoreControlConfig = builder.build();
+        bedrockAgentCoreControlConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
