@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import software.amazon.awssdk.services.swf.SwfClient;
+import software.amazon.awssdk.services.swf.model.ChildPolicy;
 import software.amazon.awssdk.services.swf.model.CloseStatus;
 import software.amazon.awssdk.services.swf.model.Decision;
 import software.amazon.awssdk.services.swf.model.DecisionType;
@@ -61,7 +62,8 @@ class SwfServiceTest extends AbstractServiceTest {
                 .version(WORKFLOW_TYPE_VERSION)
                 .defaultTaskList(tl -> tl.name(TASK_LIST))
                 .defaultTaskStartToCloseTimeout("30")
-                .defaultExecutionStartToCloseTimeout("60"));
+                .defaultExecutionStartToCloseTimeout("60")
+                .defaultChildPolicy(ChildPolicy.TERMINATE));
 
         swf.registerActivityType(b -> b
                 .domain(DOMAIN)

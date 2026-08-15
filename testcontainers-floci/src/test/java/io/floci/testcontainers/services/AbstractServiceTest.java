@@ -7,6 +7,7 @@ import org.testcontainers.containers.output.Slf4jLogConsumer;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.awscore.client.builder.AwsClientBuilder;
+import software.amazon.awssdk.core.client.config.SdkAdvancedClientOption;
 import software.amazon.awssdk.regions.Region;
 
 import java.net.URI;
@@ -21,15 +22,21 @@ abstract class AbstractServiceTest {
 
     private static final boolean DEBUG_LOGGING = false;
 
+    // TODO: switch back to the default image (drop this constant and the constructor arg below)
+    // once floci 1.6.1 — which adds AAS, SWF, Kinesis Analytics and MWAA support — reaches the
+    // `floci/floci:latest` tag on Docker Hub. `latest` is still 1.6.0 as of this writing, which
+    // doesn't implement these services' operations at all.
+    private static final String FLOCI_IMAGE = "floci/floci:nightly";
+
     protected static final FlociContainer floci;
 
     static {
         if (DEBUG_LOGGING) {
-            floci = new FlociContainer()
+            floci = new FlociContainer(FLOCI_IMAGE)
                     .withLogLevel(Level.DEBUG)
                     .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger("DOCKER")));
         } else {
-            floci = new FlociContainer()
+            floci = new FlociContainer(FLOCI_IMAGE)
                     .withLogLevel(Level.INFO);
         }
 
@@ -55,6 +62,10 @@ abstract class AbstractServiceTest {
                 .region(Region.of(floci.getRegion()))
                 .credentialsProvider(StaticCredentialsProvider.create(
                         AwsBasicCredentials.create(floci.getAccessKey(), floci.getSecretKey())))
+                // Some services (e.g. MWAA) inject a per-operation host prefix (e.g. "api.")
+                // even when a custom endpoint is set, which breaks routing to a single local
+                // container. It's meaningless against a local endpoint, so disable it.
+                .overrideConfiguration(o -> o.putAdvancedOption(SdkAdvancedClientOption.DISABLE_HOST_PREFIX_INJECTION, true))
                 .build();
     }
 
