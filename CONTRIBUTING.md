@@ -129,10 +129,14 @@ A commit linter runs on every pull request and will flag messages that do not fo
 
 ## Releases
 
-Releases are managed by the maintainers and triggered manually via the `Release` GitHub Actions workflow. The workflow:
+Releases are automated by [release-please](https://github.com/googleapis/release-please), running independently on
+`main` and `releases/1.x`. On every push it:
 
-1. Calculates the next version from the git tags and conventional commit history.
-2. Updates the POM versions, tags the commit, and creates a GitHub Release with a generated changelog.
-3. Publishes the artifacts to Maven Central (GPG-signed).
+1. Parses the conventional commit history since the last release tag to determine the next version and changelog.
+2. Opens (and keeps up to date) a release pull request with the generated changelog and the corresponding POM version
+   bump for all modules.
+3. Once a maintainer merges that pull request, tags the release, creates the GitHub Release, and triggers a follow-up
+   job that builds and publishes the artifacts to Maven Central (GPG-signed).
 
-Contributors do not need to manage versions or tags.
+Contributors do not need to manage versions or tags — just follow the [commit message conventions](#commit-messages)
+above and release-please takes care of the rest.
