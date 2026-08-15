@@ -31,3 +31,5 @@ Requires Docker running for integration tests.
 - Spring Boot auto-config registered in `spring.factories` and `AutoConfiguration.imports`
 - CONTRIBUTING.md gives some details about contribution guidelines that should be followed when contributing 
   to the project.
+- Do not add a "Co-Authored-By" (or similar) line to commit messages attributing the commit to an
+  agent/AI tool. Agents working in this repo should omit that trailer entirely.
