@@ -8,13 +8,19 @@ import org.testcontainers.containers.Container;
  * <p>Instances are created via {@link Builder}:
  * <pre>{@code
  * StepFunctionsConfig config = StepFunctionsConfig.builder()
+ *     .allowPlaintextHttp(false)
  *     .build();
  * }</pre>
  */
 public class StepFunctionsConfig extends AbstractServiceConfig<StepFunctionsConfig.Builder> {
 
+    private static final boolean DEFAULT_ALLOW_PLAINTEXT_HTTP = true;
+
+    private final boolean allowPlaintextHttp;
+
     private StepFunctionsConfig(Builder builder) {
         super(builder.enabled);
+        this.allowPlaintextHttp = builder.allowPlaintextHttp;
     }
 
     /**
@@ -36,9 +42,23 @@ public class StepFunctionsConfig extends AbstractServiceConfig<StepFunctionsConf
         return new Builder(this);
     }
 
+    /**
+     * Returns whether plain HTTP endpoints may be invoked by Step Functions state machines. By
+     * default, AWS only allows HTTPS.
+     *
+     * @return {@code true} if plain HTTP endpoints are allowed
+     */
+    public boolean isAllowPlaintextHttp() {
+        return allowPlaintextHttp;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_STEPFUNCTIONS_ENABLED", String.valueOf(isEnabled()));
+
+        if (isEnabled()) {
+            container.withEnv("FLOCI_SERVICES_STEPFUNCTIONS_ALLOW_PLAINTEXT_HTTP", String.valueOf(allowPlaintextHttp));
+        }
     }
 
     /**
@@ -46,6 +66,7 @@ public class StepFunctionsConfig extends AbstractServiceConfig<StepFunctionsConf
      */
     public static class Builder extends AbstractServiceConfigBuilder<Builder, StepFunctionsConfig> {
 
+        private boolean allowPlaintextHttp = DEFAULT_ALLOW_PLAINTEXT_HTTP;
 
         private Builder() {
             // Allow instantiation only via StepFunctionsConfig.builder()
@@ -58,6 +79,19 @@ public class StepFunctionsConfig extends AbstractServiceConfig<StepFunctionsConf
          */
         private Builder(StepFunctionsConfig instance) {
             super(instance);
+            this.allowPlaintextHttp = instance.isAllowPlaintextHttp();
+        }
+
+        /**
+         * Sets whether plain HTTP endpoints may be invoked by Step Functions state machines. By
+         * default, AWS only allows HTTPS.
+         *
+         * @param allowPlaintextHttp {@code true} to allow plain HTTP endpoints (default {@value DEFAULT_ALLOW_PLAINTEXT_HTTP})
+         * @return this builder
+         */
+        public Builder allowPlaintextHttp(boolean allowPlaintextHttp) {
+            this.allowPlaintextHttp = allowPlaintextHttp;
+            return this;
         }
 
         /**
