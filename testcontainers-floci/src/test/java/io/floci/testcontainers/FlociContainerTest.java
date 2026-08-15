@@ -3,7 +3,9 @@ package io.floci.testcontainers;
 import io.floci.testcontainers.config.services.AbstractServiceConfig;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.event.Level;
+import org.testcontainers.containers.BindMode;
 import org.testcontainers.images.builder.Transferable;
 import org.testcontainers.utility.DockerImageName;
 
@@ -151,6 +153,23 @@ class FlociContainerTest {
             assertThat(container.execInContainer("test", "-f", "/tmp/floci-start-script-completed")
                     .getExitCode()).isZero();
         }
+    }
+
+    @Test
+    void shouldRunShutdownHooksWhenStopped(@TempDir Path temporaryDirectory) {
+        Path shutdownMarker = temporaryDirectory.resolve("completed");
+        try (FlociContainer container = new FlociContainer().disableAllServices()
+                .withFileSystemBind(temporaryDirectory.toString(), "/tmp/floci-shutdown", BindMode.READ_WRITE)) {
+            container.withCopyToContainer(Transferable.of("""
+                    #!/bin/sh
+                    set -eu
+                    touch /tmp/floci-shutdown/completed
+                    """, 0777), "/etc/floci/init/shutdown.d/01-mark-shutdown.sh");
+
+            container.start();
+        }
+
+        assertThat(shutdownMarker).exists();
     }
 
     @Test
