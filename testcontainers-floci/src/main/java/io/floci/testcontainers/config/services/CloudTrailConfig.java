@@ -9,13 +9,19 @@ import org.testcontainers.containers.Container;
  * <pre>{@code
  * CloudTrailConfig config = CloudTrailConfig.builder()
  *     .enabled(true)
+ *     .flushIntervalSeconds(60)
  *     .build();
  * }</pre>
  */
 public class CloudTrailConfig extends AbstractServiceConfig<CloudTrailConfig.Builder> {
 
+    private static final int DEFAULT_FLUSH_INTERVAL_SECONDS = 60;
+
+    private final int flushIntervalSeconds;
+
     private CloudTrailConfig(Builder builder) {
         super(builder.enabled);
+        this.flushIntervalSeconds = builder.flushIntervalSeconds;
     }
 
     /**
@@ -37,9 +43,24 @@ public class CloudTrailConfig extends AbstractServiceConfig<CloudTrailConfig.Bui
         return new Builder(this);
     }
 
+    /**
+     * Returns how often, in seconds, the writer flushes pending records into the destination
+     * bucket. Real AWS delivers data events with ~5-minute lag; the default here is 60s so
+     * dev/CI feedback loops stay fast.
+     *
+     * @return the flush interval in seconds
+     */
+    public int getFlushIntervalSeconds() {
+        return flushIntervalSeconds;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_CLOUDTRAIL_ENABLED", String.valueOf(isEnabled()));
+
+        if (isEnabled()) {
+            container.withEnv("FLOCI_SERVICES_CLOUDTRAIL_FLUSH_INTERVAL_SECONDS", String.valueOf(flushIntervalSeconds));
+        }
     }
 
     /**
@@ -47,6 +68,7 @@ public class CloudTrailConfig extends AbstractServiceConfig<CloudTrailConfig.Bui
      */
     public static class Builder extends AbstractServiceConfigBuilder<Builder, CloudTrailConfig> {
 
+        private int flushIntervalSeconds = DEFAULT_FLUSH_INTERVAL_SECONDS;
 
         private Builder() {
             // Allow instantiation only via CloudTrailConfig.builder()
@@ -59,6 +81,19 @@ public class CloudTrailConfig extends AbstractServiceConfig<CloudTrailConfig.Bui
          */
         private Builder(CloudTrailConfig instance) {
             super(instance);
+            this.flushIntervalSeconds = instance.getFlushIntervalSeconds();
+        }
+
+        /**
+         * Sets how often, in seconds, the writer flushes pending records into the destination
+         * bucket.
+         *
+         * @param flushIntervalSeconds the flush interval in seconds (default {@value DEFAULT_FLUSH_INTERVAL_SECONDS})
+         * @return this builder
+         */
+        public Builder flushIntervalSeconds(int flushIntervalSeconds) {
+            this.flushIntervalSeconds = flushIntervalSeconds;
+            return this;
         }
 
         /**
