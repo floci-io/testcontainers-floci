@@ -706,6 +706,15 @@ class FlociContainerServicesConfigTest {
     }
 
     @Test
+    void shouldStoreS3TablesConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withS3TablesConfig(c -> c.enabled(false));
+
+            assertThat(container.getS3TablesConfig().isEnabled()).isFalse();
+        }
+    }
+
+    @Test
     void shouldStoreDuckDbConfigOnContainer() {
         try (FlociContainer container = new FlociContainer()) {
             container.withDuckDbConfig(c -> c
