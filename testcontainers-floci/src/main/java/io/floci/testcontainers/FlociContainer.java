@@ -141,6 +141,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private AmazonMqConfig amazonMqConfig = AmazonMqConfig.builder().build();
     private MemoryDbConfig memoryDbConfig = MemoryDbConfig.builder().build();
     private RumConfig rumConfig = RumConfig.builder().build();
+    private S3TablesConfig s3TablesConfig = S3TablesConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -209,7 +210,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> codePipelineConfig, c -> codePipelineConfig = c),
             new ServiceConfigAccessor<>(() -> amazonMqConfig, c -> amazonMqConfig = c),
             new ServiceConfigAccessor<>(() -> memoryDbConfig, c -> memoryDbConfig = c),
-            new ServiceConfigAccessor<>(() -> rumConfig, c -> rumConfig = c)
+            new ServiceConfigAccessor<>(() -> rumConfig, c -> rumConfig = c),
+            new ServiceConfigAccessor<>(() -> s3TablesConfig, c -> s3TablesConfig = c)
     );
 
     /**
@@ -2544,6 +2546,34 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.rumConfig = builder.build();
         rumConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * S3 Tables-specific settings.
+     *
+     * @return the S3 Tables configuration
+     */
+    public S3TablesConfig getS3TablesConfig() {
+        return s3TablesConfig;
+    }
+
+    /**
+     * Configures S3 Tables-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withS3TablesConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link S3TablesConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withS3TablesConfig(Consumer<S3TablesConfig.Builder> configurer) {
+        S3TablesConfig.Builder builder = s3TablesConfig.toBuilder();
+        configurer.accept(builder);
+        this.s3TablesConfig = builder.build();
+        s3TablesConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
