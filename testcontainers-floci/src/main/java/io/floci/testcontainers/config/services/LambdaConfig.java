@@ -80,6 +80,7 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -539,6 +540,7 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
          *
          * @return the Lambda configuration
          */
+        @Override
         public LambdaConfig build() {
             return new LambdaConfig(this);
         }

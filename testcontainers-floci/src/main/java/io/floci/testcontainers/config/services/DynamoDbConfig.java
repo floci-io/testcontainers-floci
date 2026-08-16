@@ -33,6 +33,7 @@ public class DynamoDbConfig extends AbstractServiceConfig<DynamoDbConfig.Builder
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -66,6 +67,7 @@ public class DynamoDbConfig extends AbstractServiceConfig<DynamoDbConfig.Builder
          *
          * @return the DynamoDB configuration
          */
+        @Override
         public DynamoDbConfig build() {
             return new DynamoDbConfig(this);
         }

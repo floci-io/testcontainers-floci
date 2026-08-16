@@ -32,6 +32,7 @@ public class S3TablesConfig extends AbstractServiceConfig<S3TablesConfig.Builder
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -64,6 +65,7 @@ public class S3TablesConfig extends AbstractServiceConfig<S3TablesConfig.Builder
          *
          * @return the S3 Tables configuration
          */
+        @Override
         public S3TablesConfig build() {
             return new S3TablesConfig(this);
         }

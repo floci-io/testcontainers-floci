@@ -33,6 +33,7 @@ public class AppConfigDataConfig extends AbstractServiceConfig<AppConfigDataConf
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -66,6 +67,7 @@ public class AppConfigDataConfig extends AbstractServiceConfig<AppConfigDataConf
          *
          * @return the AppConfig Data configuration
          */
+        @Override
         public AppConfigDataConfig build() {
             return new AppConfigDataConfig(this);
         }

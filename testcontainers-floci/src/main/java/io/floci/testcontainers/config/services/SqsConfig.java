@@ -46,6 +46,7 @@ public class SqsConfig extends AbstractServiceConfig<SqsConfig.Builder> {
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -151,6 +152,7 @@ public class SqsConfig extends AbstractServiceConfig<SqsConfig.Builder> {
          *
          * @return the SQS configuration
          */
+        @Override
         public SqsConfig build() {
             return new SqsConfig(this);
         }

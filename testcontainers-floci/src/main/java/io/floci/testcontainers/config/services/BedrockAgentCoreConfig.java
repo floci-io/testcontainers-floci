@@ -41,6 +41,7 @@ public class BedrockAgentCoreConfig extends AbstractServiceConfig<BedrockAgentCo
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -125,6 +126,7 @@ public class BedrockAgentCoreConfig extends AbstractServiceConfig<BedrockAgentCo
          *
          * @return the Bedrock AgentCore configuration
          */
+        @Override
         public BedrockAgentCoreConfig build() {
             return new BedrockAgentCoreConfig(this);
         }

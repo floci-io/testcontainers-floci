@@ -32,6 +32,7 @@ public class ApplicationAutoScalingConfig extends AbstractServiceConfig<Applicat
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -64,6 +65,7 @@ public class ApplicationAutoScalingConfig extends AbstractServiceConfig<Applicat
          *
          * @return the Application Auto Scaling configuration
          */
+        @Override
         public ApplicationAutoScalingConfig build() {
             return new ApplicationAutoScalingConfig(this);
         }

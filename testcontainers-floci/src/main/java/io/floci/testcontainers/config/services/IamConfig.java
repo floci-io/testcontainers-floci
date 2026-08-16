@@ -45,6 +45,7 @@ public class IamConfig extends AbstractServiceConfig<IamConfig.Builder> {
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -155,6 +156,7 @@ public class IamConfig extends AbstractServiceConfig<IamConfig.Builder> {
          *
          * @return the IAM configuration
          */
+        @Override
         public IamConfig build() {
             return new IamConfig(this);
         }

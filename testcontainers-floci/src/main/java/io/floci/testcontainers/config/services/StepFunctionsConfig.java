@@ -38,6 +38,7 @@ public class StepFunctionsConfig extends AbstractServiceConfig<StepFunctionsConf
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -99,6 +100,7 @@ public class StepFunctionsConfig extends AbstractServiceConfig<StepFunctionsConf
          *
          * @return the Step Functions configuration
          */
+        @Override
         public StepFunctionsConfig build() {
             return new StepFunctionsConfig(this);
         }

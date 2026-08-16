@@ -46,6 +46,7 @@ public class DocumentDbConfig extends AbstractServiceConfig<DocumentDbConfig.Bui
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -154,6 +155,7 @@ public class DocumentDbConfig extends AbstractServiceConfig<DocumentDbConfig.Bui
          *
          * @return the DocumentDB configuration
          */
+        @Override
         public DocumentDbConfig build() {
             return new DocumentDbConfig(this);
         }

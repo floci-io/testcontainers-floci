@@ -32,6 +32,7 @@ public class RumConfig extends AbstractServiceConfig<RumConfig.Builder> {
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -64,6 +65,7 @@ public class RumConfig extends AbstractServiceConfig<RumConfig.Builder> {
          *
          * @return the RUM configuration
          */
+        @Override
         public RumConfig build() {
             return new RumConfig(this);
         }

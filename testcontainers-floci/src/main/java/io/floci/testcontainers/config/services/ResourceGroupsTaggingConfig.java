@@ -33,6 +33,7 @@ public class ResourceGroupsTaggingConfig extends AbstractServiceConfig<ResourceG
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -66,6 +67,7 @@ public class ResourceGroupsTaggingConfig extends AbstractServiceConfig<ResourceG
          *
          * @return the Resource Groups Tagging configuration
          */
+        @Override
         public ResourceGroupsTaggingConfig build() {
             return new ResourceGroupsTaggingConfig(this);
         }

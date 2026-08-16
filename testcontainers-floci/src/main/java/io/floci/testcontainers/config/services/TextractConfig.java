@@ -32,6 +32,7 @@ public class TextractConfig extends AbstractServiceConfig<TextractConfig.Builder
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -65,6 +66,7 @@ public class TextractConfig extends AbstractServiceConfig<TextractConfig.Builder
          *
          * @return the Textract configuration
          */
+        @Override
         public TextractConfig build() {
             return new TextractConfig(this);
         }

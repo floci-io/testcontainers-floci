@@ -33,6 +33,7 @@ public class EventBridgeConfig extends AbstractServiceConfig<EventBridgeConfig.B
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -66,6 +67,7 @@ public class EventBridgeConfig extends AbstractServiceConfig<EventBridgeConfig.B
          *
          * @return the EventBridge configuration
          */
+        @Override
         public EventBridgeConfig build() {
             return new EventBridgeConfig(this);
         }

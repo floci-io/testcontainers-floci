@@ -50,6 +50,7 @@ public class MskConfig extends AbstractServiceConfig<MskConfig.Builder> {
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -188,6 +189,7 @@ public class MskConfig extends AbstractServiceConfig<MskConfig.Builder> {
          *
          * @return the MSK configuration
          */
+        @Override
         public MskConfig build() {
             return new MskConfig(this);
         }

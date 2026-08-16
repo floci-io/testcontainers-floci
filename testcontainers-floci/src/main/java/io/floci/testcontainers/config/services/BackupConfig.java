@@ -38,6 +38,7 @@ public class BackupConfig extends AbstractServiceConfig<BackupConfig.Builder> {
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -97,6 +98,7 @@ public class BackupConfig extends AbstractServiceConfig<BackupConfig.Builder> {
          *
          * @return the Backup configuration
          */
+        @Override
         public BackupConfig build() {
             return new BackupConfig(this);
         }

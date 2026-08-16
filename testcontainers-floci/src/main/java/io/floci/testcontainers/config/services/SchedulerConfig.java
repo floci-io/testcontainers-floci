@@ -42,6 +42,7 @@ public class SchedulerConfig extends AbstractServiceConfig<SchedulerConfig.Build
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -126,6 +127,7 @@ public class SchedulerConfig extends AbstractServiceConfig<SchedulerConfig.Build
          *
          * @return the Scheduler configuration
          */
+        @Override
         public SchedulerConfig build() {
             return new SchedulerConfig(this);
         }

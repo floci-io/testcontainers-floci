@@ -32,6 +32,7 @@ public class TransferFamilyConfig extends AbstractServiceConfig<TransferFamilyCo
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -65,6 +66,7 @@ public class TransferFamilyConfig extends AbstractServiceConfig<TransferFamilyCo
          *
          * @return the Transfer Family configuration
          */
+        @Override
         public TransferFamilyConfig build() {
             return new TransferFamilyConfig(this);
         }

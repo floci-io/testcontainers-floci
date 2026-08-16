@@ -38,6 +38,7 @@ public class CloudMapConfig extends AbstractServiceConfig<CloudMapConfig.Builder
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -99,6 +100,7 @@ public class CloudMapConfig extends AbstractServiceConfig<CloudMapConfig.Builder
          *
          * @return the CloudMap configuration
          */
+        @Override
         public CloudMapConfig build() {
             return new CloudMapConfig(this);
         }

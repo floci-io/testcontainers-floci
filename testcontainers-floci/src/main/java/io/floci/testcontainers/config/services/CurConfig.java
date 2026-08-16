@@ -42,6 +42,7 @@ public class CurConfig extends AbstractServiceConfig<CurConfig.Builder> {
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -133,6 +134,7 @@ public class CurConfig extends AbstractServiceConfig<CurConfig.Builder> {
          *
          * @return the CUR configuration
          */
+        @Override
         public CurConfig build() {
             return new CurConfig(this);
         }

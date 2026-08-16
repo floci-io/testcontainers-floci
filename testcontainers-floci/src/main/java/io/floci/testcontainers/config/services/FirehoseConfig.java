@@ -33,6 +33,7 @@ public class FirehoseConfig extends AbstractServiceConfig<FirehoseConfig.Builder
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -66,6 +67,7 @@ public class FirehoseConfig extends AbstractServiceConfig<FirehoseConfig.Builder
          *
          * @return the Firehose configuration
          */
+        @Override
         public FirehoseConfig build() {
             return new FirehoseConfig(this);
         }

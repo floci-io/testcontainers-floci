@@ -32,6 +32,7 @@ public class KinesisConfig extends AbstractServiceConfig<KinesisConfig.Builder> 
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -65,6 +66,7 @@ public class KinesisConfig extends AbstractServiceConfig<KinesisConfig.Builder> 
          *
          * @return the Kinesis configuration
          */
+        @Override
         public KinesisConfig build() {
             return new KinesisConfig(this);
         }
