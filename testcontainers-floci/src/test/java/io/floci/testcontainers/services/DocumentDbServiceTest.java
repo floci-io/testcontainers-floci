@@ -1,15 +1,19 @@
 package io.floci.testcontainers.services;
 
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import software.amazon.awssdk.services.rds.RdsClient;
 import software.amazon.awssdk.services.rds.model.DBCluster;
+import software.amazon.awssdk.services.rds.model.DbClusterNotFoundException;
 
 import java.time.Duration;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @TestMethodOrder(OrderAnnotation.class)
 class DocumentDbServiceTest extends AbstractServiceTest {
@@ -28,9 +32,9 @@ class DocumentDbServiceTest extends AbstractServiceTest {
     @Test
     @Order(1)
     void shouldDescribeDbClusters() {
-        List<DBCluster> clusters = rds.describeDBClusters(b -> b.dbClusterIdentifier(CLUSTER_ID)).dbClusters();
-
-        assertThat(clusters).isNotNull();
+        assertThrows(DbClusterNotFoundException.class, () -> {
+            rds.describeDBClusters(b -> b.dbClusterIdentifier(CLUSTER_ID));
+        });
     }
 
     @Test
@@ -66,7 +70,8 @@ class DocumentDbServiceTest extends AbstractServiceTest {
                 .dbClusterIdentifier(CLUSTER_ID)
                 .skipFinalSnapshot(true));
 
-        List<DBCluster> clusters = rds.describeDBClusters(b -> b.dbClusterIdentifier(CLUSTER_ID)).dbClusters();
-        assertThat(clusters).noneMatch(c -> c.dbClusterIdentifier().equals(CLUSTER_ID));
+        assertThrows(DbClusterNotFoundException.class, () -> {
+            rds.describeDBClusters(b -> b.dbClusterIdentifier(CLUSTER_ID));
+        });
     }
 }
