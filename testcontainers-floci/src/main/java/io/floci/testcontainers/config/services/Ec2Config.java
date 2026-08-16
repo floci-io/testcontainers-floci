@@ -23,6 +23,7 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
     private static final int DEFAULT_APP_PORTS_COUNT = 10;
     private static final int DEFAULT_MAX_PUBLISHED_PORTS_PER_INSTANCE = 2;
     private static final String DEFAULT_SOCAT_IMAGE = "alpine/socat";
+    private static final boolean DEFAULT_AWS_FAITHFUL_PRIVATE_IP = false;
 
     private final boolean mock;
     private final int imdsPort;
@@ -33,6 +34,7 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
     private final int appPortsCount;
     private final int maxPublishedPortsPerInstance;
     private final String socatImage;
+    private final boolean awsFaithfulPrivateIp;
     private final AutoScaling autoScaling;
 
     private Ec2Config(Builder builder) {
@@ -46,6 +48,7 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
         this.appPortsCount = builder.appPortsCount;
         this.maxPublishedPortsPerInstance = builder.maxPublishedPortsPerInstance;
         this.socatImage = builder.socatImage;
+        this.awsFaithfulPrivateIp = builder.awsFaithfulPrivateIp;
         this.autoScaling = builder.autoScaling;
     }
 
@@ -165,6 +168,20 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
     }
 
     /**
+     * Returns whether DescribeInstances and IMDS report each instance's CFN- and subnet-allocated
+     * private IP (AWS-faithful) instead of the Docker container's bridge IP (#1983). Default
+     * {@code false} keeps the bridge IP as the reported private address, which lets instances
+     * reach each other at that address on the shared Docker network. Routing/IMDS always use the
+     * container bridge IP regardless of this flag; only the reported {@code PrivateIpAddress}
+     * changes.
+     *
+     * @return {@code true} if the AWS-faithful private IP is reported
+     */
+    public boolean isAwsFaithfulPrivateIp() {
+        return awsFaithfulPrivateIp;
+    }
+
+    /**
      * Returns the Auto Scaling configuration.
      *
      * @return the Auto Scaling configuration
@@ -188,6 +205,7 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
             container.withEnv("FLOCI_SERVICES_EC2_APP_PORT_RANGE_END", String.valueOf(getAppPortRangeEnd()));
             container.withEnv("FLOCI_SERVICES_EC2_MAX_PUBLISHED_PORTS_PER_INSTANCE", String.valueOf(maxPublishedPortsPerInstance));
             container.withEnv("FLOCI_SERVICES_EC2_SOCAT_IMAGE", socatImage);
+            container.withEnv("FLOCI_SERVICES_EC2_AWS_FAITHFUL_PRIVATE_IP", String.valueOf(awsFaithfulPrivateIp));
         }
     }
 
@@ -218,6 +236,7 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
         private int appPortsCount = DEFAULT_APP_PORTS_COUNT;
         private int maxPublishedPortsPerInstance = DEFAULT_MAX_PUBLISHED_PORTS_PER_INSTANCE;
         private String socatImage = DEFAULT_SOCAT_IMAGE;
+        private boolean awsFaithfulPrivateIp = DEFAULT_AWS_FAITHFUL_PRIVATE_IP;
         private AutoScaling autoScaling = new DefaultAutoScaling(true);
 
         private Builder() {
@@ -240,6 +259,7 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
             this.appPortsCount = instance.getAppPortsCount();
             this.maxPublishedPortsPerInstance = instance.getMaxPublishedPortsPerInstance();
             this.socatImage = instance.getSocatImage();
+            this.awsFaithfulPrivateIp = instance.isAwsFaithfulPrivateIp();
             this.autoScaling = instance.getAutoScaling();
         }
 
@@ -327,6 +347,21 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
          */
         public Builder socatImage(String socatImage) {
             this.socatImage = socatImage;
+            return this;
+        }
+
+        /**
+         * Sets whether DescribeInstances and IMDS report each instance's CFN- and
+         * subnet-allocated private IP (AWS-faithful) instead of the Docker container's bridge IP
+         * (#1983). Routing/IMDS always use the container bridge IP regardless of this flag; only
+         * the reported {@code PrivateIpAddress} changes.
+         *
+         * @param awsFaithfulPrivateIp {@code true} to report the AWS-faithful private IP
+         *                              (default {@value DEFAULT_AWS_FAITHFUL_PRIVATE_IP})
+         * @return this builder
+         */
+        public Builder awsFaithfulPrivateIp(boolean awsFaithfulPrivateIp) {
+            this.awsFaithfulPrivateIp = awsFaithfulPrivateIp;
             return this;
         }
 
