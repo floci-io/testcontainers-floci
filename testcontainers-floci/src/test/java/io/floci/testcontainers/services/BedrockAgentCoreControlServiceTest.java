@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.services.bedrockagentcorecontrol.BedrockAgentCoreControlClient;
 import software.amazon.awssdk.services.bedrockagentcorecontrol.model.AgentRuntime;
 import software.amazon.awssdk.services.bedrockagentcorecontrol.model.CreateAgentRuntimeResponse;
+import software.amazon.awssdk.services.bedrockagentcorecontrol.model.NetworkMode;
 
 import java.util.List;
 
@@ -34,6 +35,7 @@ class BedrockAgentCoreControlServiceTest extends AbstractServiceTest {
                 .agentRuntimeName(runtimeName)
                 .agentRuntimeArtifact(a -> a.containerConfiguration(c -> c
                         .containerUri("000000000000.dkr.ecr.us-east-1.amazonaws.com/test-runtime:latest")))
+                .networkConfiguration(n -> n.networkMode(NetworkMode.PUBLIC))
                 .roleArn("arn:aws:iam::000000000000:role/test-role"));
 
         var response = bedrockAgentCoreControl.getAgentRuntime(b -> b.agentRuntimeId(created.agentRuntimeId()));
