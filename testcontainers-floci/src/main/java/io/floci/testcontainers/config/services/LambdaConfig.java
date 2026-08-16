@@ -28,6 +28,7 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
     private static final int DEFAULT_CONTAINER_IDLE_TIMEOUT_SECONDS = 300;
     private static final int DEFAULT_REGION_CONCURRENCY_LIMIT = 1000;
     private static final int DEFAULT_UNRESERVED_CONCURRENCY_MIN = 100;
+    private static final String DEFAULT_ECR_BASE_URI = "public.ecr.aws";
 
     private final boolean ephemeral;
     private final boolean exposeRuntimePorts;
@@ -43,6 +44,7 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
     private final HotReload hotReload;
     private final String awsConfigPath;
     private final List<String> extraHosts;
+    private final String ecrBaseUri;
 
     private LambdaConfig(Builder builder) {
         super(builder.enabled);
@@ -60,6 +62,7 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
         this.hotReload = builder.hotReload;
         this.awsConfigPath = builder.awsConfigPath;
         this.extraHosts = builder.extraHosts;
+        this.ecrBaseUri = builder.ecrBaseUri;
     }
 
     /**
@@ -227,6 +230,16 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
         return Optional.ofNullable(extraHosts);
     }
 
+    /**
+     * Returns the base URI used to resolve ECR image references pulled by Lambda functions
+     * (e.g. for public Lambda base images).
+     *
+     * @return the ECR base URI (default {@value DEFAULT_ECR_BASE_URI})
+     */
+    public String getEcrBaseUri() {
+        return ecrBaseUri;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_LAMBDA_ENABLED", String.valueOf(isEnabled()));
@@ -241,6 +254,7 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
             container.withEnv("FLOCI_SERVICES_LAMBDA_CONTAINER_IDLE_TIMEOUT_SECONDS", String.valueOf(containerIdleTimeoutSeconds));
             container.withEnv("FLOCI_SERVICES_LAMBDA_REGION_CONCURRENCY_LIMIT", String.valueOf(regionConcurrencyLimit));
             container.withEnv("FLOCI_SERVICES_LAMBDA_UNRESERVED_CONCURRENCY_MIN", String.valueOf(unreservedConcurrencyMin));
+            container.withEnv("FLOCI_ECR_BASE_URI", ecrBaseUri);
 
             container.withEnv("FLOCI_SERVICES_LAMBDA_HOT_RELOAD_ENABLED", String.valueOf(hotReload.enabled()));
             if (hotReload.allowedPaths().isPresent() && !hotReload.allowedPaths().get().isEmpty()) {
@@ -314,6 +328,7 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
         private HotReload hotReload = new DefaultHotReload(false, null);
         private String awsConfigPath;
         private List<String> extraHosts;
+        private String ecrBaseUri = DEFAULT_ECR_BASE_URI;
 
         private Builder() {
             // Allow instantiation only via LambdaConfig.builder()
@@ -340,6 +355,7 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
             this.hotReload = instance.getHotReload();
             this.awsConfigPath = instance.getAwsConfigPath();
             this.extraHosts = instance.getExtraHosts().orElse(null);
+            this.ecrBaseUri = instance.getEcrBaseUri();
         }
 
         /**
@@ -503,6 +519,18 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
          */
         public Builder extraHosts(List<String> extraHosts) {
             this.extraHosts = extraHosts == null ? null : List.copyOf(extraHosts);
+            return this;
+        }
+
+        /**
+         * Sets the base URI used to resolve ECR image references pulled by Lambda functions
+         * (e.g. for public Lambda base images).
+         *
+         * @param ecrBaseUri the ECR base URI (default {@value DEFAULT_ECR_BASE_URI})
+         * @return this builder
+         */
+        public Builder ecrBaseUri(String ecrBaseUri) {
+            this.ecrBaseUri = ecrBaseUri;
             return this;
         }
 
