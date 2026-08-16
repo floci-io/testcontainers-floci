@@ -16,13 +16,16 @@ public class ProtocolsConfig {
 
     private static final boolean DEFAULT_STRICT_CLAIMING = false;
     private static final boolean DEFAULT_REJECT_UNKNOWN_SERVICE_SCOPE = true;
+    private static final int DEFAULT_MAX_REQUEST_SIZE = 2048;
 
     private final boolean strictClaiming;
     private final boolean rejectUnknownServiceScope;
+    private final int maxRequestSize;
 
     private ProtocolsConfig(Builder builder) {
         this.strictClaiming = builder.strictClaiming;
         this.rejectUnknownServiceScope = builder.rejectUnknownServiceScope;
+        this.maxRequestSize = builder.maxRequestSize;
     }
 
     /**
@@ -78,6 +81,15 @@ public class ProtocolsConfig {
     }
 
     /**
+     * Returns the maximum accepted request size, in bytes.
+     *
+     * @return the maximum request size in bytes
+     */
+    public int getMaxRequestSize() {
+        return maxRequestSize;
+    }
+
+    /**
      * Applies this protocols configuration to the given container by setting
      * the appropriate environment variables.
      *
@@ -86,6 +98,7 @@ public class ProtocolsConfig {
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_PROTOCOLS_STRICT_CLAIMING", String.valueOf(strictClaiming));
         container.withEnv("FLOCI_PROTOCOLS_REJECT_UNKNOWN_SERVICE_SCOPE", String.valueOf(rejectUnknownServiceScope));
+        container.withEnv("FLOCI_MAX_REQUEST_SIZE", String.valueOf(maxRequestSize)); // Env var is correct as the config is structured differently in Floci
     }
 
     /**
@@ -95,6 +108,7 @@ public class ProtocolsConfig {
 
         private boolean strictClaiming = DEFAULT_STRICT_CLAIMING;
         private boolean rejectUnknownServiceScope = DEFAULT_REJECT_UNKNOWN_SERVICE_SCOPE;
+        private int maxRequestSize = DEFAULT_MAX_REQUEST_SIZE;
 
         private Builder() {
             // Allow instantiation only via ProtocolsConfig.builder()
@@ -103,6 +117,7 @@ public class ProtocolsConfig {
         private Builder(ProtocolsConfig instance) {
             this.strictClaiming = instance.strictClaiming;
             this.rejectUnknownServiceScope = instance.rejectUnknownServiceScope;
+            this.maxRequestSize = instance.maxRequestSize;
         }
 
         /**
@@ -129,6 +144,17 @@ public class ProtocolsConfig {
          */
         public Builder rejectUnknownServiceScope(boolean rejectUnknownServiceScope) {
             this.rejectUnknownServiceScope = rejectUnknownServiceScope;
+            return this;
+        }
+
+        /**
+         * Sets the maximum accepted request size, in bytes.
+         *
+         * @param maxRequestSize the maximum request size in bytes (default {@value DEFAULT_MAX_REQUEST_SIZE})
+         * @return this builder
+         */
+        public Builder maxRequestSize(int maxRequestSize) {
+            this.maxRequestSize = maxRequestSize;
             return this;
         }
 
