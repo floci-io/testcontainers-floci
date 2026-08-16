@@ -160,6 +160,8 @@ class S3IntegrationTest {
 | `withStorageConfig(...)`              | Configures persistent storage and volume behaviour                                                             |
 | `withSecurityConfig(...)`             | Configures CORS-related security settings                                                                      |
 | `withProtocolsConfig(...)`            | Configures RPC wire-protocol handling (e.g. strict protocol claiming)                                          |
+| `withAuthConfig(...)`                 | Configures authentication settings (e.g. SigV4 signature validation, presign secret)                           |
+| `withInitHooksConfig(...)`            | Configures lifecycle init hook execution (shell, timeouts)                                                     |
 | `with*Config(...)`                    | Configures service-specific settings                                                                           |
 
 Each AWS service emulated by Floci can be individually configured via a `with*Config(...)` method on
@@ -190,6 +192,8 @@ FlociContainer floci = new FlociContainer()
 | `getStorageConfig()`          | Current storage configuration                                     | —                |
 | `getSecurityConfig()`         | Current security configuration                                    | —                |
 | `getProtocolsConfig()`        | Current protocols configuration                                   | —                |
+| `getAuthConfig()`             | Current auth configuration                                        | —                |
+| `getInitHooksConfig()`        | Current init hooks configuration                                  | —                |
 | `get*Config()`                | Current configuration of a service                                | —                |
 
 

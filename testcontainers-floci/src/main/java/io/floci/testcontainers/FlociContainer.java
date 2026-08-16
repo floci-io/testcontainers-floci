@@ -70,6 +70,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private DuckDbConfig duckDbConfig = DuckDbConfig.builder().build();
     private SecurityConfig securityConfig = SecurityConfig.builder().build();
     private ProtocolsConfig protocolsConfig = ProtocolsConfig.builder().build();
+    private AuthConfig authConfig = AuthConfig.builder().build();
+    private InitHooksConfig initHooksConfig = InitHooksConfig.builder().build();
 
     // Services config
     private AcmConfig acmConfig = AcmConfig.builder().build();
@@ -589,6 +591,62 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.protocolsConfig = builder.build();
         protocolsConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Returns the current auth configuration.
+     *
+     * @return the auth configuration
+     */
+    public AuthConfig getAuthConfig() {
+        return authConfig;
+    }
+
+    /**
+     * Configures authentication-related settings such as SigV4 signature validation.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withAuthConfig(c -> c.validateSignatures(true));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives an {@link AuthConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withAuthConfig(Consumer<AuthConfig.Builder> configurer) {
+        AuthConfig.Builder builder = authConfig.toBuilder();
+        configurer.accept(builder);
+        this.authConfig = builder.build();
+        authConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Returns the current init hooks configuration.
+     *
+     * @return the init hooks configuration
+     */
+    public InitHooksConfig getInitHooksConfig() {
+        return initHooksConfig;
+    }
+
+    /**
+     * Configures lifecycle init hook settings such as the shell executable and timeouts.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withInitHooksConfig(c -> c.timeoutSeconds(60));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives an {@link InitHooksConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withInitHooksConfig(Consumer<InitHooksConfig.Builder> configurer) {
+        InitHooksConfig.Builder builder = initHooksConfig.toBuilder();
+        configurer.accept(builder);
+        this.initHooksConfig = builder.build();
+        initHooksConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
@@ -2843,6 +2901,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         duckDbConfig.applyEnvVarsToContainer(this);
         securityConfig.applyEnvVarsToContainer(this);
         protocolsConfig.applyEnvVarsToContainer(this);
+        authConfig.applyEnvVarsToContainer(this);
+        initHooksConfig.applyEnvVarsToContainer(this);
 
         // Services config
         serviceConfigAccessors.forEach(accessor -> accessor.get().applyEnvVarsToContainer(this));
