@@ -2,6 +2,8 @@ package io.floci.testcontainers.config.services;
 
 import org.testcontainers.containers.Container;
 
+import java.util.Optional;
+
 /**
  * Configuration for MemoryDB-specific container settings.
  *
@@ -26,6 +28,7 @@ public class MemoryDbConfig extends AbstractServiceConfig<MemoryDbConfig.Builder
     private final int proxyBasePort;
     private final int proxyPortsCount;
     private final String defaultImage;
+    private final String dockerNetwork;
 
     private MemoryDbConfig(Builder builder) {
         super(builder.enabled);
@@ -33,6 +36,7 @@ public class MemoryDbConfig extends AbstractServiceConfig<MemoryDbConfig.Builder
         this.proxyBasePort = builder.proxyBasePort;
         this.proxyPortsCount = builder.proxyPortsCount;
         this.defaultImage = builder.defaultImage;
+        this.dockerNetwork = builder.dockerNetwork;
     }
 
     /**
@@ -99,6 +103,16 @@ public class MemoryDbConfig extends AbstractServiceConfig<MemoryDbConfig.Builder
         return defaultImage;
     }
 
+    /**
+     * Returns the Docker network to attach MemoryDB containers to, or {@link Optional#empty()}
+     * if the default bridge network is used.
+     *
+     * @return the Docker network, or {@link Optional#empty()} if not configured
+     */
+    public Optional<String> getDockerNetwork() {
+        return Optional.ofNullable(dockerNetwork);
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_MEMORYDB_ENABLED", String.valueOf(isEnabled()));
@@ -108,6 +122,9 @@ public class MemoryDbConfig extends AbstractServiceConfig<MemoryDbConfig.Builder
             container.withEnv("FLOCI_SERVICES_MEMORYDB_PROXY_BASE_PORT", String.valueOf(proxyBasePort));
             container.withEnv("FLOCI_SERVICES_MEMORYDB_PROXY_MAX_PORT", String.valueOf(getProxyMaxPort()));
             container.withEnv("FLOCI_SERVICES_MEMORYDB_DEFAULT_IMAGE", defaultImage);
+            if (dockerNetwork != null) {
+                container.withEnv("FLOCI_SERVICES_MEMORYDB_DOCKER_NETWORK", dockerNetwork);
+            }
         }
     }
 
@@ -130,6 +147,7 @@ public class MemoryDbConfig extends AbstractServiceConfig<MemoryDbConfig.Builder
         private int proxyBasePort = DEFAULT_PROXY_BASE_PORT;
         private int proxyPortsCount = DEFAULT_PROXY_PORTS_COUNT;
         private String defaultImage = DEFAULT_IMAGE;
+        private String dockerNetwork = null;
 
         private Builder() {
             // Allow instantiation only via MemoryDbConfig.builder()
@@ -146,6 +164,7 @@ public class MemoryDbConfig extends AbstractServiceConfig<MemoryDbConfig.Builder
             this.proxyBasePort = instance.getProxyBasePort();
             this.proxyPortsCount = instance.getProxyPortsCount();
             this.defaultImage = instance.getDefaultImage();
+            this.dockerNetwork = instance.getDockerNetwork().orElse(null);
         }
 
         /**
@@ -180,6 +199,17 @@ public class MemoryDbConfig extends AbstractServiceConfig<MemoryDbConfig.Builder
          */
         public Builder defaultImage(String defaultImage) {
             this.defaultImage = defaultImage;
+            return this;
+        }
+
+        /**
+         * Sets the Docker network to attach MemoryDB containers to.
+         *
+         * @param dockerNetwork the Docker network name, or {@code null} to use the default bridge network
+         * @return this builder
+         */
+        public Builder dockerNetwork(String dockerNetwork) {
+            this.dockerNetwork = dockerNetwork;
             return this;
         }
 

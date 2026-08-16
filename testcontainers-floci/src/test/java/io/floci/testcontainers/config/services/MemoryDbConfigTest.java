@@ -18,6 +18,7 @@ class MemoryDbConfigTest {
         assertThat(config.getProxyMaxPort()).isEqualTo(6409);
         assertThat(config.getProxyPortsCount()).isEqualTo(10);
         assertThat(config.getDefaultImage()).isEqualTo("valkey/valkey:8");
+        assertThat(config.getDockerNetwork()).isEmpty();
     }
 
     @Test
@@ -27,6 +28,7 @@ class MemoryDbConfigTest {
                 .mock(true)
                 .proxyPortRange(7000, 20)
                 .defaultImage("valkey/valkey:9")
+                .dockerNetwork("custom-network")
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.isMock()).isTrue();
@@ -34,6 +36,7 @@ class MemoryDbConfigTest {
         assertThat(config.getProxyMaxPort()).isEqualTo(7019);
         assertThat(config.getProxyPortsCount()).isEqualTo(20);
         assertThat(config.getDefaultImage()).isEqualTo("valkey/valkey:9");
+        assertThat(config.getDockerNetwork()).contains("custom-network");
     }
 
     @Test
@@ -56,6 +59,7 @@ class MemoryDbConfigTest {
                 .mock(true)
                 .proxyPortRange(7000, 20)
                 .defaultImage("valkey/valkey:9")
+                .dockerNetwork("custom-network")
                 .build()
                 .applyEnvVarsToContainer(container);
 
@@ -64,7 +68,8 @@ class MemoryDbConfigTest {
                 .containsEntry("FLOCI_SERVICES_MEMORYDB_MOCK", "true")
                 .containsEntry("FLOCI_SERVICES_MEMORYDB_PROXY_BASE_PORT", "7000")
                 .containsEntry("FLOCI_SERVICES_MEMORYDB_PROXY_MAX_PORT", "7019")
-                .containsEntry("FLOCI_SERVICES_MEMORYDB_DEFAULT_IMAGE", "valkey/valkey:9");
+                .containsEntry("FLOCI_SERVICES_MEMORYDB_DEFAULT_IMAGE", "valkey/valkey:9")
+                .containsEntry("FLOCI_SERVICES_MEMORYDB_DOCKER_NETWORK", "custom-network");
     }
 
     @Test
@@ -75,7 +80,16 @@ class MemoryDbConfigTest {
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_SERVICES_MEMORYDB_ENABLED", "false")
                 .doesNotContainKey("FLOCI_SERVICES_MEMORYDB_MOCK")
-                .doesNotContainKey("FLOCI_SERVICES_MEMORYDB_PROXY_BASE_PORT");
+                .doesNotContainKey("FLOCI_SERVICES_MEMORYDB_PROXY_BASE_PORT")
+                .doesNotContainKey("FLOCI_SERVICES_MEMORYDB_DOCKER_NETWORK");
+    }
+
+    @Test
+    void shouldNotApplyDockerNetworkEnvVarWhenNotSet() {
+        GenericContainer<?> container = genericContainer();
+        MemoryDbConfig.builder().dockerNetwork(null).build().applyEnvVarsToContainer(container);
+
+        assertThat(container.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_MEMORYDB_DOCKER_NETWORK");
     }
 
     @Test
@@ -96,6 +110,7 @@ class MemoryDbConfigTest {
                 .mock(true)
                 .proxyPortRange(6500, 5)
                 .defaultImage("test-image")
+                .dockerNetwork("test-network")
                 .build();
         MemoryDbConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
@@ -103,6 +118,7 @@ class MemoryDbConfigTest {
         assertThat(copy.getProxyBasePort()).isEqualTo(6500);
         assertThat(copy.getProxyPortsCount()).isEqualTo(5);
         assertThat(copy.getDefaultImage()).isEqualTo("test-image");
+        assertThat(copy.getDockerNetwork()).contains("test-network");
     }
 
 }
