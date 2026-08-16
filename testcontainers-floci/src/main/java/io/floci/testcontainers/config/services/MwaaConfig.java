@@ -26,7 +26,6 @@ public class MwaaConfig extends AbstractServiceConfig<MwaaConfig.Builder> {
     private static final int DEFAULT_PROXY_BASE_PORT = 8700;
     private static final int DEFAULT_PROXY_PORTS_COUNT = 10;
     private static final String DEFAULT_DATA_PATH = "./data/mwaa";
-    private static final boolean DEFAULT_KEEP_RUNNING_ON_SHUTDOWN = false;
     private static final int DEFAULT_DAG_SYNC_INTERVAL_SECONDS = 30;
     private static final boolean DEFAULT_INSTALL_REQUIREMENTS = true;
 
@@ -38,7 +37,6 @@ public class MwaaConfig extends AbstractServiceConfig<MwaaConfig.Builder> {
     private final int proxyPortsCount;
     private final String dataPath;
     private final String dockerNetwork;
-    private final boolean keepRunningOnShutdown;
     private final int dagSyncIntervalSeconds;
     private final boolean installRequirements;
 
@@ -52,7 +50,6 @@ public class MwaaConfig extends AbstractServiceConfig<MwaaConfig.Builder> {
         this.proxyPortsCount = builder.proxyPortsCount;
         this.dataPath = builder.dataPath;
         this.dockerNetwork = builder.dockerNetwork;
-        this.keepRunningOnShutdown = builder.keepRunningOnShutdown;
         this.dagSyncIntervalSeconds = builder.dagSyncIntervalSeconds;
         this.installRequirements = builder.installRequirements;
     }
@@ -161,15 +158,6 @@ public class MwaaConfig extends AbstractServiceConfig<MwaaConfig.Builder> {
     }
 
     /**
-     * Returns whether environment containers are left running when Floci shuts down.
-     *
-     * @return {@code true} if environment containers are kept running on shutdown
-     */
-    public boolean isKeepRunningOnShutdown() {
-        return keepRunningOnShutdown;
-    }
-
-    /**
      * Returns the poll interval, in seconds, for syncing DAGs (and optionally requirements) from
      * an environment's S3 {@code DagS3Path} into its Airflow container.
      *
@@ -201,7 +189,6 @@ public class MwaaConfig extends AbstractServiceConfig<MwaaConfig.Builder> {
             container.withEnv("FLOCI_SERVICES_MWAA_PROXY_BASE_PORT", String.valueOf(proxyBasePort));
             container.withEnv("FLOCI_SERVICES_MWAA_PROXY_MAX_PORT", String.valueOf(getProxyMaxPort()));
             container.withEnv("FLOCI_SERVICES_MWAA_DATA_PATH", dataPath);
-            container.withEnv("FLOCI_SERVICES_MWAA_KEEP_RUNNING_ON_SHUTDOWN", String.valueOf(keepRunningOnShutdown));
             container.withEnv("FLOCI_SERVICES_MWAA_DAG_SYNC_INTERVAL_SECONDS", String.valueOf(dagSyncIntervalSeconds));
             container.withEnv("FLOCI_SERVICES_MWAA_INSTALL_REQUIREMENTS", String.valueOf(installRequirements));
 
@@ -233,7 +220,6 @@ public class MwaaConfig extends AbstractServiceConfig<MwaaConfig.Builder> {
         private int proxyPortsCount = DEFAULT_PROXY_PORTS_COUNT;
         private String dataPath = DEFAULT_DATA_PATH;
         private String dockerNetwork;
-        private boolean keepRunningOnShutdown = DEFAULT_KEEP_RUNNING_ON_SHUTDOWN;
         private int dagSyncIntervalSeconds = DEFAULT_DAG_SYNC_INTERVAL_SECONDS;
         private boolean installRequirements = DEFAULT_INSTALL_REQUIREMENTS;
 
@@ -256,7 +242,6 @@ public class MwaaConfig extends AbstractServiceConfig<MwaaConfig.Builder> {
             this.proxyPortsCount = instance.getProxyPortsCount();
             this.dataPath = instance.getDataPath();
             this.dockerNetwork = instance.getDockerNetwork().orElse(null);
-            this.keepRunningOnShutdown = instance.isKeepRunningOnShutdown();
             this.dagSyncIntervalSeconds = instance.getDagSyncIntervalSeconds();
             this.installRequirements = instance.isInstallRequirements();
         }
@@ -338,17 +323,6 @@ public class MwaaConfig extends AbstractServiceConfig<MwaaConfig.Builder> {
          */
         public Builder dockerNetwork(String dockerNetwork) {
             this.dockerNetwork = dockerNetwork;
-            return this;
-        }
-
-        /**
-         * Sets whether environment containers are left running when Floci shuts down.
-         *
-         * @param keepRunningOnShutdown {@code true} to keep environment containers running (default {@value DEFAULT_KEEP_RUNNING_ON_SHUTDOWN})
-         * @return this builder
-         */
-        public Builder keepRunningOnShutdown(boolean keepRunningOnShutdown) {
-            this.keepRunningOnShutdown = keepRunningOnShutdown;
             return this;
         }
 
