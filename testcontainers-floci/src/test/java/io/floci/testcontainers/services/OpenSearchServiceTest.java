@@ -10,6 +10,7 @@ import org.opensearch.client.opensearch.core.SearchResponse;
 import org.opensearch.client.opensearch.core.search.Hit;
 import org.opensearch.client.transport.httpclient5.ApacheHttpClient5Transport;
 import org.opensearch.client.transport.httpclient5.ApacheHttpClient5TransportBuilder;
+import software.amazon.awssdk.http.apache5.Apache5HttpClient;
 import software.amazon.awssdk.services.opensearch.OpenSearchClient;
 import software.amazon.awssdk.services.opensearch.model.DomainInfo;
 import software.amazon.awssdk.services.opensearch.model.DomainStatus;
@@ -29,7 +30,11 @@ class OpenSearchServiceTest extends AbstractServiceTest {
     @BeforeAll
     static void setUp() {
         domainName = "test-" + System.currentTimeMillis();
-        openSearch = client(OpenSearchClient.builder());
+        // CreateDomain synchronously pulls and starts a real OpenSearch container, which can take
+        // several minutes on a cold image cache - comfortably longer than the SDK's default ~30s
+        // socket read timeout, so extend it here.
+        openSearch = client(OpenSearchClient.builder()
+                .httpClientBuilder(Apache5HttpClient.builder().socketTimeout(Duration.ofMinutes(5))));
     }
 
     @Test
@@ -57,7 +62,6 @@ class OpenSearchServiceTest extends AbstractServiceTest {
 
     @Test
     @Order(3)
-    @Disabled
     void shouldWaitForOpenSearchReady() {
         await().atMost(Duration.ofSeconds(60))
                 .pollInterval(Duration.ofSeconds(2))
@@ -75,7 +79,6 @@ class OpenSearchServiceTest extends AbstractServiceTest {
 
     @Test
     @Order(4)
-    @Disabled
     void shouldIndexDocument() throws Exception {
         try (var dataTransport = createTransport()) {
             var dataClient = new org.opensearch.client.opensearch.OpenSearchClient(dataTransport);
@@ -90,7 +93,6 @@ class OpenSearchServiceTest extends AbstractServiceTest {
 
     @Test
     @Order(5)
-    @Disabled
     void shouldSearchDocument() throws Exception {
         try (var dataTransport = createTransport()) {
             var dataClient = new org.opensearch.client.opensearch.OpenSearchClient(dataTransport);
