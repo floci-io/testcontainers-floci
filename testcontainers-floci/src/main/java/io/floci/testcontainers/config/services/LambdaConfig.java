@@ -210,7 +210,11 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
      *
      * <p>When present, no AWS credential env vars are injected; instead
      * {@code AWS_SHARED_CREDENTIALS_FILE} and {@code AWS_CONFIG_FILE} are set to point
-     * at the mounted files. Blank values are treated as absent.
+     * at the mounted files, ensuring SDK discovery works regardless of container HOME.
+     * When absent, a function whose execution role exists in Floci receives temporary
+     * credentials for that role. Functions with an unknown role retain the compatibility
+     * fallback to Floci's own AWS credential environment or {@code test/test/test}.
+     * Blank values are treated as absent.
      *
      * @return the AWS config path, or {@code null} if not configured
      */
@@ -500,7 +504,11 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
          * Sets the host path to bind-mount (read-only) into Lambda containers at
          * {@code /opt/aws-config}. When set, no AWS credential env vars are injected;
          * instead {@code AWS_SHARED_CREDENTIALS_FILE} and {@code AWS_CONFIG_FILE} are
-         * pointed at the mounted files. Blank values are treated as absent.
+         * pointed at the mounted files, ensuring SDK discovery works regardless of
+         * container HOME. When absent, a function whose execution role exists in Floci
+         * receives temporary credentials for that role. Functions with an unknown role
+         * retain the compatibility fallback to Floci's own AWS credential environment
+         * or {@code test/test/test}. Blank values are treated as absent.
          *
          * @param awsConfigPath the host path, or {@code null} / blank to unset
          * @return this builder
