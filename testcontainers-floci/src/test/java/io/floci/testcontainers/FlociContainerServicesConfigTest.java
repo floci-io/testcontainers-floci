@@ -810,4 +810,28 @@ class FlociContainerServicesConfigTest {
             assertThat(container.getProtocolsConfig().isStrictClaiming()).isTrue();
         }
     }
+
+    @Test
+    void shouldStoreAuthConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withAuthConfig(c -> c.validateSignatures(true).presignSecret("custom-secret"));
+
+            assertThat(container.getAuthConfig().isValidateSignatures()).isTrue();
+            assertThat(container.getAuthConfig().getPresignSecret()).isEqualTo("custom-secret");
+        }
+    }
+
+    @Test
+    void shouldStoreInitHooksConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withInitHooksConfig(c -> c
+                    .shellExecutable("/bin/bash")
+                    .shutdownGracePeriodSeconds(5)
+                    .timeoutSeconds(60));
+
+            assertThat(container.getInitHooksConfig().getShellExecutable()).isEqualTo("/bin/bash");
+            assertThat(container.getInitHooksConfig().getShutdownGracePeriodSeconds()).isEqualTo(5);
+            assertThat(container.getInitHooksConfig().getTimeoutSeconds()).isEqualTo(60);
+        }
+    }
 }
