@@ -23,7 +23,6 @@ class MwaaConfigTest {
         assertThat(config.getProxyPortsCount()).isEqualTo(10);
         assertThat(config.getDataPath()).isEqualTo("./data/mwaa");
         assertThat(config.getDockerNetwork()).isEmpty();
-        assertThat(config.isKeepRunningOnShutdown()).isFalse();
         assertThat(config.getDagSyncIntervalSeconds()).isEqualTo(30);
         assertThat(config.isInstallRequirements()).isTrue();
     }
@@ -39,7 +38,6 @@ class MwaaConfigTest {
                 .proxyPortRange(9000, 100)
                 .dataPath("/tmp/mwaa")
                 .dockerNetwork("my-mwaa-network")
-                .keepRunningOnShutdown(true)
                 .dagSyncIntervalSeconds(10)
                 .installRequirements(false)
                 .build();
@@ -53,7 +51,6 @@ class MwaaConfigTest {
         assertThat(config.getProxyPortsCount()).isEqualTo(100);
         assertThat(config.getDataPath()).isEqualTo("/tmp/mwaa");
         assertThat(config.getDockerNetwork()).contains("my-mwaa-network");
-        assertThat(config.isKeepRunningOnShutdown()).isTrue();
         assertThat(config.getDagSyncIntervalSeconds()).isEqualTo(10);
         assertThat(config.isInstallRequirements()).isFalse();
     }
@@ -72,7 +69,6 @@ class MwaaConfigTest {
                 .containsEntry("FLOCI_SERVICES_MWAA_PROXY_BASE_PORT", "8700")
                 .containsEntry("FLOCI_SERVICES_MWAA_PROXY_MAX_PORT", "8709")
                 .containsEntry("FLOCI_SERVICES_MWAA_DATA_PATH", "./data/mwaa")
-                .containsEntry("FLOCI_SERVICES_MWAA_KEEP_RUNNING_ON_SHUTDOWN", "false")
                 .containsEntry("FLOCI_SERVICES_MWAA_DAG_SYNC_INTERVAL_SECONDS", "30")
                 .containsEntry("FLOCI_SERVICES_MWAA_INSTALL_REQUIREMENTS", "true")
                 .doesNotContainKey("FLOCI_SERVICES_MWAA_DOCKER_NETWORK");
