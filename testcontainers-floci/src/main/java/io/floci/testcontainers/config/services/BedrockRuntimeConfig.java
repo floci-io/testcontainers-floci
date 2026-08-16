@@ -54,6 +54,7 @@ public class BedrockRuntimeConfig extends AbstractServiceConfig<BedrockRuntimeCo
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -282,6 +283,7 @@ public class BedrockRuntimeConfig extends AbstractServiceConfig<BedrockRuntimeCo
          *
          * @return the Bedrock Runtime configuration
          */
+        @Override
         public BedrockRuntimeConfig build() {
             return new BedrockRuntimeConfig(this);
         }

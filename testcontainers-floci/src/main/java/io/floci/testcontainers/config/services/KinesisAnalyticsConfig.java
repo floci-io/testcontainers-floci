@@ -42,6 +42,7 @@ public class KinesisAnalyticsConfig extends AbstractServiceConfig<KinesisAnalyti
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -132,6 +133,7 @@ public class KinesisAnalyticsConfig extends AbstractServiceConfig<KinesisAnalyti
          *
          * @return the Kinesis Analytics configuration
          */
+        @Override
         public KinesisAnalyticsConfig build() {
             return new KinesisAnalyticsConfig(this);
         }

@@ -33,6 +33,7 @@ public class GlueConfig extends AbstractServiceConfig<GlueConfig.Builder> {
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -66,6 +67,7 @@ public class GlueConfig extends AbstractServiceConfig<GlueConfig.Builder> {
          *
          * @return the Glue configuration
          */
+        @Override
         public GlueConfig build() {
             return new GlueConfig(this);
         }

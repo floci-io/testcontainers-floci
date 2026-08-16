@@ -33,6 +33,7 @@ public class CloudWatchMetricsConfig extends AbstractServiceConfig<CloudWatchMet
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -66,6 +67,7 @@ public class CloudWatchMetricsConfig extends AbstractServiceConfig<CloudWatchMet
          *
          * @return the CloudWatch Metrics configuration
          */
+        @Override
         public CloudWatchMetricsConfig build() {
             return new CloudWatchMetricsConfig(this);
         }

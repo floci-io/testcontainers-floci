@@ -42,6 +42,7 @@ public class CloudFrontConfig extends AbstractServiceConfig<CloudFrontConfig.Bui
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -134,6 +135,7 @@ public class CloudFrontConfig extends AbstractServiceConfig<CloudFrontConfig.Bui
          *
          * @return the CloudFront configuration
          */
+        @Override
         public CloudFrontConfig build() {
             return new CloudFrontConfig(this);
         }

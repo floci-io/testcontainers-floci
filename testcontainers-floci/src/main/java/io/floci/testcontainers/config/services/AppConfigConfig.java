@@ -33,6 +33,7 @@ public class AppConfigConfig extends AbstractServiceConfig<AppConfigConfig.Build
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -66,6 +67,7 @@ public class AppConfigConfig extends AbstractServiceConfig<AppConfigConfig.Build
          *
          * @return the AppConfig configuration
          */
+        @Override
         public AppConfigConfig build() {
             return new AppConfigConfig(this);
         }

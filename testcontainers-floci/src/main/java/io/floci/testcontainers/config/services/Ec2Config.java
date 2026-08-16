@@ -64,6 +64,7 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -345,6 +346,7 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
          *
          * @return the EC2 configuration
          */
+        @Override
         public Ec2Config build() {
             return new Ec2Config(this);
         }

@@ -68,6 +68,7 @@ public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -385,6 +386,7 @@ public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
          *
          * @return the EKS configuration
          */
+        @Override
         public EksConfig build() {
             return new EksConfig(this);
         }

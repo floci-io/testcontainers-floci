@@ -38,6 +38,7 @@ public class CloudFormationConfig extends AbstractServiceConfig<CloudFormationCo
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -97,6 +98,7 @@ public class CloudFormationConfig extends AbstractServiceConfig<CloudFormationCo
          *
          * @return the CloudFormation configuration
          */
+        @Override
         public CloudFormationConfig build() {
             return new CloudFormationConfig(this);
         }

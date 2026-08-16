@@ -38,6 +38,7 @@ public class BcmDataExportsConfig extends AbstractServiceConfig<BcmDataExportsCo
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -105,6 +106,7 @@ public class BcmDataExportsConfig extends AbstractServiceConfig<BcmDataExportsCo
          *
          * @return the BCM Data Exports configuration
          */
+        @Override
         public BcmDataExportsConfig build() {
             return new BcmDataExportsConfig(this);
         }

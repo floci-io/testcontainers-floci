@@ -72,6 +72,7 @@ public class MwaaConfig extends AbstractServiceConfig<MwaaConfig.Builder> {
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -380,6 +381,7 @@ public class MwaaConfig extends AbstractServiceConfig<MwaaConfig.Builder> {
          *
          * @return the MWAA configuration
          */
+        @Override
         public MwaaConfig build() {
             return new MwaaConfig(this);
         }

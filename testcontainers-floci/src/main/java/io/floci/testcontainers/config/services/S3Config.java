@@ -42,6 +42,7 @@ public class S3Config extends AbstractServiceConfig<S3Config.Builder> {
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -124,6 +125,7 @@ public class S3Config extends AbstractServiceConfig<S3Config.Builder> {
          *
          * @return the S3 configuration
          */
+        @Override
         public S3Config build() {
             return new S3Config(this);
         }

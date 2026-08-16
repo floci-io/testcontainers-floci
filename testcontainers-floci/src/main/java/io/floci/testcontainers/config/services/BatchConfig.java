@@ -42,6 +42,7 @@ public class BatchConfig extends AbstractServiceConfig<BatchConfig.Builder> {
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -127,6 +128,7 @@ public class BatchConfig extends AbstractServiceConfig<BatchConfig.Builder> {
          *
          * @return the Batch configuration
          */
+        @Override
         public BatchConfig build() {
             return new BatchConfig(this);
         }

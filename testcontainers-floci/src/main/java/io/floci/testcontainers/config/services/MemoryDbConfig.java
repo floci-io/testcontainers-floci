@@ -54,6 +54,7 @@ public class MemoryDbConfig extends AbstractServiceConfig<MemoryDbConfig.Builder
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -218,6 +219,7 @@ public class MemoryDbConfig extends AbstractServiceConfig<MemoryDbConfig.Builder
          *
          * @return the MemoryDB configuration
          */
+        @Override
         public MemoryDbConfig build() {
             return new MemoryDbConfig(this);
         }

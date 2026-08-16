@@ -38,6 +38,7 @@ public class AthenaConfig extends AbstractServiceConfig<AthenaConfig.Builder> {
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -97,6 +98,7 @@ public class AthenaConfig extends AbstractServiceConfig<AthenaConfig.Builder> {
          *
          * @return the Athena configuration
          */
+        @Override
         public AthenaConfig build() {
             return new AthenaConfig(this);
         }

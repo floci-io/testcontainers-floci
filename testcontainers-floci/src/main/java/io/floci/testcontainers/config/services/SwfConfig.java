@@ -42,6 +42,7 @@ public class SwfConfig extends AbstractServiceConfig<SwfConfig.Builder> {
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -128,6 +129,7 @@ public class SwfConfig extends AbstractServiceConfig<SwfConfig.Builder> {
          *
          * @return the SWF configuration
          */
+        @Override
         public SwfConfig build() {
             return new SwfConfig(this);
         }

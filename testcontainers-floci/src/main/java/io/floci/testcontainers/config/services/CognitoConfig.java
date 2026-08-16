@@ -33,6 +33,7 @@ public class CognitoConfig extends AbstractServiceConfig<CognitoConfig.Builder> 
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -66,6 +67,7 @@ public class CognitoConfig extends AbstractServiceConfig<CognitoConfig.Builder> 
          *
          * @return the Cognito configuration
          */
+        @Override
         public CognitoConfig build() {
             return new CognitoConfig(this);
         }

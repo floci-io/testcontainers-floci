@@ -48,6 +48,7 @@ public class EcsConfig extends AbstractServiceConfig<EcsConfig.Builder> {
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -179,6 +180,7 @@ public class EcsConfig extends AbstractServiceConfig<EcsConfig.Builder> {
          *
          * @return the ECS configuration
          */
+        @Override
         public EcsConfig build() {
             return new EcsConfig(this);
         }

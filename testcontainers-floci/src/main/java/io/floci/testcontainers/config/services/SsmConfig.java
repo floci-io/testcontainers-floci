@@ -38,6 +38,7 @@ public class SsmConfig extends AbstractServiceConfig<SsmConfig.Builder> {
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -97,6 +98,7 @@ public class SsmConfig extends AbstractServiceConfig<SsmConfig.Builder> {
          *
          * @return the SSM configuration
          */
+        @Override
         public SsmConfig build() {
             return new SsmConfig(this);
         }

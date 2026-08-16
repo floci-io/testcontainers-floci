@@ -38,6 +38,7 @@ public class AcmConfig extends AbstractServiceConfig<AcmConfig.Builder> {
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -97,6 +98,7 @@ public class AcmConfig extends AbstractServiceConfig<AcmConfig.Builder> {
          *
          * @return the ACM configuration
          */
+        @Override
         public AcmConfig build() {
             return new AcmConfig(this);
         }
