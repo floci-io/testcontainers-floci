@@ -35,10 +35,6 @@ abstract class AbstractServiceTest {
         }
 
         floci.withElbV2Config(c -> c.listenerPort(LB_LISTENER_PORT))
-                // Real Flink JobManager containers require an application JAR staged in S3 to
-                // start; mock mode exercises the full API surface without that, per its own
-                // "useful for tests... without a Docker daemon" contract.
-                .withKinesisAnalyticsConfig(c -> c.mock(true))
                 // Real environments spin up dedicated Postgres + Airflow containers per
                 // environment; mock mode exercises the full API surface without that, per its
                 // own "environments go straight to AVAILABLE without starting real Docker
