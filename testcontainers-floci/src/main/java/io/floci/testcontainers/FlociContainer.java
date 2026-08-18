@@ -150,6 +150,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private SwfConfig swfConfig = SwfConfig.builder().build();
     private KinesisAnalyticsConfig kinesisAnalyticsConfig = KinesisAnalyticsConfig.builder().build();
     private MwaaConfig mwaaConfig = MwaaConfig.builder().build();
+    private GuardDutyConfig guardDutyConfig = GuardDutyConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -225,7 +226,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> applicationAutoScalingConfig, c -> applicationAutoScalingConfig = c),
             new ServiceConfigAccessor<>(() -> swfConfig, c -> swfConfig = c),
             new ServiceConfigAccessor<>(() -> kinesisAnalyticsConfig, c -> kinesisAnalyticsConfig = c),
-            new ServiceConfigAccessor<>(() -> mwaaConfig, c -> mwaaConfig = c)
+            new ServiceConfigAccessor<>(() -> mwaaConfig, c -> mwaaConfig = c),
+            new ServiceConfigAccessor<>(() -> guardDutyConfig, c -> guardDutyConfig = c)
     );
 
     /**
@@ -2822,6 +2824,34 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         this.mwaaConfig = builder.build();
         configureExposedPorts();
         mwaaConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * GuardDuty-specific settings.
+     *
+     * @return the GuardDuty configuration
+     */
+    public GuardDutyConfig getGuardDutyConfig() {
+        return guardDutyConfig;
+    }
+
+    /**
+     * Configures GuardDuty-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withGuardDutyConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link GuardDutyConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withGuardDutyConfig(Consumer<GuardDutyConfig.Builder> configurer) {
+        GuardDutyConfig.Builder builder = guardDutyConfig.toBuilder();
+        configurer.accept(builder);
+        this.guardDutyConfig = builder.build();
+        guardDutyConfig.applyEnvVarsToContainer(this);
         return this;
     }
 

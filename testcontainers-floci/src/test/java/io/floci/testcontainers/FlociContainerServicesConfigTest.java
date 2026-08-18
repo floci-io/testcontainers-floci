@@ -782,6 +782,15 @@ class FlociContainerServicesConfigTest {
     }
 
     @Test
+    void shouldStoreGuardDutyConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withGuardDutyConfig(c -> c.enabled(false));
+
+            assertThat(container.getGuardDutyConfig().isEnabled()).isFalse();
+        }
+    }
+
+    @Test
     void shouldStoreDuckDbConfigOnContainer() {
         try (FlociContainer container = new FlociContainer()) {
             container.withDuckDbConfig(c -> c
