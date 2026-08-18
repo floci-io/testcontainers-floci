@@ -791,6 +791,15 @@ class FlociContainerServicesConfigTest {
     }
 
     @Test
+    void shouldStoreCloudHsmV2ConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withCloudHsmV2Config(c -> c.enabled(false));
+
+            assertThat(container.getCloudHsmV2Config().isEnabled()).isFalse();
+        }
+    }
+
+    @Test
     void shouldStoreDuckDbConfigOnContainer() {
         try (FlociContainer container = new FlociContainer()) {
             container.withDuckDbConfig(c -> c
