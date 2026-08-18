@@ -151,6 +151,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private KinesisAnalyticsConfig kinesisAnalyticsConfig = KinesisAnalyticsConfig.builder().build();
     private MwaaConfig mwaaConfig = MwaaConfig.builder().build();
     private GuardDutyConfig guardDutyConfig = GuardDutyConfig.builder().build();
+    private CloudHsmV2Config cloudHsmV2Config = CloudHsmV2Config.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -227,7 +228,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> swfConfig, c -> swfConfig = c),
             new ServiceConfigAccessor<>(() -> kinesisAnalyticsConfig, c -> kinesisAnalyticsConfig = c),
             new ServiceConfigAccessor<>(() -> mwaaConfig, c -> mwaaConfig = c),
-            new ServiceConfigAccessor<>(() -> guardDutyConfig, c -> guardDutyConfig = c)
+            new ServiceConfigAccessor<>(() -> guardDutyConfig, c -> guardDutyConfig = c),
+            new ServiceConfigAccessor<>(() -> cloudHsmV2Config, c -> cloudHsmV2Config = c)
     );
 
     /**
@@ -2852,6 +2854,34 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.guardDutyConfig = builder.build();
         guardDutyConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * CloudHSM v2-specific settings.
+     *
+     * @return the CloudHSM v2 configuration
+     */
+    public CloudHsmV2Config getCloudHsmV2Config() {
+        return cloudHsmV2Config;
+    }
+
+    /**
+     * Configures CloudHSM v2-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withCloudHsmV2Config(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link CloudHsmV2Config.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withCloudHsmV2Config(Consumer<CloudHsmV2Config.Builder> configurer) {
+        CloudHsmV2Config.Builder builder = cloudHsmV2Config.toBuilder();
+        configurer.accept(builder);
+        this.cloudHsmV2Config = builder.build();
+        cloudHsmV2Config.applyEnvVarsToContainer(this);
         return this;
     }
 
