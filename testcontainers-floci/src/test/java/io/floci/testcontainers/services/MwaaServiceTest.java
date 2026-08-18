@@ -7,21 +7,30 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import software.amazon.awssdk.services.mwaa.MwaaClient;
 import software.amazon.awssdk.services.mwaa.model.EnvironmentStatus;
+import software.amazon.awssdk.services.s3.S3Client;
 
+import java.time.Duration;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 @TestMethodOrder(OrderAnnotation.class)
 class MwaaServiceTest extends AbstractServiceTest {
 
     static MwaaClient mwaa;
 
+    private static final String SOURCE_BUCKET = "mwaa-bucket";
     private static final String ENVIRONMENT_NAME = "test-environment-" + System.currentTimeMillis();
 
     @BeforeAll
     static void setUp() {
         mwaa = client(MwaaClient.builder());
+
+        // Real (non-mock) mode doesn't validate the bucket up front, but it does poll
+        // DagS3Path from it once the environment is up - create the bucket for realism.
+        S3Client s3 = client(S3Client.builder().forcePathStyle(true));
+        s3.createBucket(b -> b.bucket(SOURCE_BUCKET));
     }
 
     @Test
@@ -30,7 +39,7 @@ class MwaaServiceTest extends AbstractServiceTest {
         var response = mwaa.createEnvironment(b -> b
                 .name(ENVIRONMENT_NAME)
                 .executionRoleArn("arn:aws:iam::000000000000:role/mwaa-role")
-                .sourceBucketArn("arn:aws:s3:::mwaa-bucket")
+                .sourceBucketArn("arn:aws:s3:::" + SOURCE_BUCKET)
                 .dagS3Path("dags"));
 
         assertThat(response.arn()).isNotBlank();
@@ -39,10 +48,18 @@ class MwaaServiceTest extends AbstractServiceTest {
     @Test
     @Order(2)
     void shouldGetEnvironment() {
-        var response = mwaa.getEnvironment(b -> b.name(ENVIRONMENT_NAME));
+        // Real mode boots dedicated Postgres + Airflow containers and only reaches AVAILABLE
+        // once Airflow's own /health endpoint reports the metadatabase and scheduler healthy,
+        // so this happens asynchronously rather than immediately.
+        await().atMost(Duration.ofSeconds(300))
+                .pollInterval(Duration.ofSeconds(5))
+                .untilAsserted(() -> {
+                    var response = mwaa.getEnvironment(b -> b.name(ENVIRONMENT_NAME));
+                    assertThat(response.environment().status()).isEqualTo(EnvironmentStatus.AVAILABLE);
+                });
 
+        var response = mwaa.getEnvironment(b -> b.name(ENVIRONMENT_NAME));
         assertThat(response.environment().name()).isEqualTo(ENVIRONMENT_NAME);
-        assertThat(response.environment().status()).isEqualTo(EnvironmentStatus.AVAILABLE);
         assertThat(response.environment().airflowVersion()).isEqualTo("2.10.5");
     }
 

@@ -35,11 +35,6 @@ abstract class AbstractServiceTest {
         }
 
         floci.withElbV2Config(c -> c.listenerPort(LB_LISTENER_PORT))
-                // Real environments spin up dedicated Postgres + Airflow containers per
-                // environment; mock mode exercises the full API surface without that, per its
-                // own "environments go straight to AVAILABLE without starting real Docker
-                // containers" contract.
-                .withMwaaConfig(c -> c.mock(true))
                 .start();
 
         // Floci speaks JSON 1.1 — disable CBOR which is used by some service clients (e.g. Kinesis SDK) as default
