@@ -22,21 +22,15 @@ abstract class AbstractServiceTest {
 
     private static final boolean DEBUG_LOGGING = false;
 
-    // TODO: switch back to the default image (drop this constant and the constructor arg below)
-    // once floci 1.6.1 — which adds AAS, SWF, Kinesis Analytics and MWAA support — reaches the
-    // `floci/floci:latest` tag on Docker Hub. `latest` is still 1.6.0 as of this writing, which
-    // doesn't implement these services' operations at all.
-    private static final String FLOCI_IMAGE = "floci/floci:nightly";
-
     protected static final FlociContainer floci;
 
     static {
         if (DEBUG_LOGGING) {
-            floci = new FlociContainer(FLOCI_IMAGE)
+            floci = new FlociContainer()
                     .withLogLevel(Level.DEBUG)
                     .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger("DOCKER")));
         } else {
-            floci = new FlociContainer(FLOCI_IMAGE)
+            floci = new FlociContainer()
                     .withLogLevel(Level.INFO);
         }
 
