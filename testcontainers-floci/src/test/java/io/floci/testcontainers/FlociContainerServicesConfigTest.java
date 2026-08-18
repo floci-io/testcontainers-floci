@@ -297,6 +297,24 @@ class FlociContainerServicesConfigTest {
     }
 
     @Test
+    void shouldStoreBedrockAgentCoreConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withBedrockAgentCoreConfig(c -> c.validateRuntimeExists(true));
+
+            assertThat(container.getBedrockAgentCoreConfig().isValidateRuntimeExists()).isTrue();
+        }
+    }
+
+    @Test
+    void shouldStoreBedrockAgentCoreControlConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withBedrockAgentCoreControlConfig(c -> c.enabled(false));
+
+            assertThat(container.getBedrockAgentCoreControlConfig().isEnabled()).isFalse();
+        }
+    }
+
+    @Test
     void shouldStoreBedrockRuntimeConfigOnContainer() {
         try (FlociContainer container = new FlociContainer()) {
             container.withBedrockRuntimeConfig(c -> c.enabled(false));
@@ -697,6 +715,91 @@ class FlociContainerServicesConfigTest {
     }
 
     @Test
+    void shouldStoreRumConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withRumConfig(c -> c.enabled(false));
+
+            assertThat(container.getRumConfig().isEnabled()).isFalse();
+        }
+    }
+
+    @Test
+    void shouldStoreS3TablesConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withS3TablesConfig(c -> c.enabled(false));
+
+            assertThat(container.getS3TablesConfig().isEnabled()).isFalse();
+        }
+    }
+
+    @Test
+    void shouldStoreApplicationAutoScalingConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withApplicationAutoScalingConfig(c -> c.enabled(false));
+
+            assertThat(container.getApplicationAutoScalingConfig().isEnabled()).isFalse();
+        }
+    }
+
+    @Test
+    void shouldStoreSwfConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withSwfConfig(c -> c
+                    .timeoutSweepEnabled(false)
+                    .timeoutSweepIntervalSeconds(5));
+
+            assertThat(container.getSwfConfig().isTimeoutSweepEnabled()).isFalse();
+            assertThat(container.getSwfConfig().getTimeoutSweepIntervalSeconds()).isEqualTo(5);
+        }
+    }
+
+    @Test
+    void shouldStoreKinesisAnalyticsConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withKinesisAnalyticsConfig(c -> c
+                    .mock(true)
+                    .defaultImage("apache/flink:1.20"));
+
+            assertThat(container.getKinesisAnalyticsConfig().isMock()).isTrue();
+            assertThat(container.getKinesisAnalyticsConfig().getDefaultImage()).contains("apache/flink:1.20");
+        }
+    }
+
+    @Test
+    void shouldStoreMwaaConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withMwaaConfig(c -> c
+                    .mock(true)
+                    .proxyPortRange(9000, 100)
+                    .defaultVersion("2.10.5"));
+
+            assertThat(container.getMwaaConfig().isMock()).isTrue();
+            assertThat(container.getMwaaConfig().getProxyBasePort()).isEqualTo(9000);
+            assertThat(container.getMwaaConfig().getProxyMaxPort()).isEqualTo(9099);
+            assertThat(container.getMwaaConfig().getProxyPortsCount()).isEqualTo(100);
+            assertThat(container.getMwaaConfig().getDefaultVersion()).isEqualTo("2.10.5");
+        }
+    }
+
+    @Test
+    void shouldStoreGuardDutyConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withGuardDutyConfig(c -> c.enabled(false));
+
+            assertThat(container.getGuardDutyConfig().isEnabled()).isFalse();
+        }
+    }
+
+    @Test
+    void shouldStoreCloudHsmV2ConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withCloudHsmV2Config(c -> c.enabled(false));
+
+            assertThat(container.getCloudHsmV2Config().isEnabled()).isFalse();
+        }
+    }
+
+    @Test
     void shouldStoreDuckDbConfigOnContainer() {
         try (FlociContainer container = new FlociContainer()) {
             container.withDuckDbConfig(c -> c
@@ -723,6 +826,30 @@ class FlociContainerServicesConfigTest {
             container.withProtocolsConfig(c -> c.strictClaiming(true));
 
             assertThat(container.getProtocolsConfig().isStrictClaiming()).isTrue();
+        }
+    }
+
+    @Test
+    void shouldStoreAuthConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withAuthConfig(c -> c.validateSignatures(true).presignSecret("custom-secret"));
+
+            assertThat(container.getAuthConfig().isValidateSignatures()).isTrue();
+            assertThat(container.getAuthConfig().getPresignSecret()).isEqualTo("custom-secret");
+        }
+    }
+
+    @Test
+    void shouldStoreInitHooksConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withInitHooksConfig(c -> c
+                    .shellExecutable("/bin/bash")
+                    .shutdownGracePeriodSeconds(5)
+                    .timeoutSeconds(60));
+
+            assertThat(container.getInitHooksConfig().getShellExecutable()).isEqualTo("/bin/bash");
+            assertThat(container.getInitHooksConfig().getShutdownGracePeriodSeconds()).isEqualTo(5);
+            assertThat(container.getInitHooksConfig().getTimeoutSeconds()).isEqualTo(60);
         }
     }
 }

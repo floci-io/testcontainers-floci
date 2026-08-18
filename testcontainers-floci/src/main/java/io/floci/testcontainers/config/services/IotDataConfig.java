@@ -32,6 +32,7 @@ public class IotDataConfig extends AbstractServiceConfig<IotDataConfig.Builder> 
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -65,6 +66,7 @@ public class IotDataConfig extends AbstractServiceConfig<IotDataConfig.Builder> 
          *
          * @return the IoT Data Plane configuration
          */
+        @Override
         public IotDataConfig build() {
             return new IotDataConfig(this);
         }

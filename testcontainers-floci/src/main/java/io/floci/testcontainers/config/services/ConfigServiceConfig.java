@@ -33,6 +33,7 @@ public class ConfigServiceConfig extends AbstractServiceConfig<ConfigServiceConf
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -66,6 +67,7 @@ public class ConfigServiceConfig extends AbstractServiceConfig<ConfigServiceConf
          *
          * @return the AWS Config configuration
          */
+        @Override
         public ConfigServiceConfig build() {
             return new ConfigServiceConfig(this);
         }

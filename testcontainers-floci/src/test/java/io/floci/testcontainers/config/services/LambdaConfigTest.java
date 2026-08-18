@@ -26,6 +26,8 @@ class LambdaConfigTest {
         assertThat(config.getRegionConcurrencyLimit()).isEqualTo(1000);
         assertThat(config.getUnreservedConcurrencyMin()).isEqualTo(100);
         assertThat(config.getAwsConfigPath()).isNull();
+        assertThat(config.getExtraHosts()).isEmpty();
+        assertThat(config.getEcrBaseUri()).isEqualTo("public.ecr.aws");
     }
 
     @Test
@@ -43,6 +45,8 @@ class LambdaConfigTest {
                 .regionConcurrencyLimit(500)
                 .unreservedConcurrencyMin(50)
                 .awsConfigPath("/home/user/.aws")
+                .extraHosts(java.util.List.of("host.docker.internal:host-gateway", "my-service:172.17.0.1"))
+                .ecrBaseUri("123456789012.dkr.ecr.us-east-1.amazonaws.com")
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.isEphemeral()).isTrue();
@@ -58,6 +62,10 @@ class LambdaConfigTest {
         assertThat(config.getRegionConcurrencyLimit()).isEqualTo(500);
         assertThat(config.getUnreservedConcurrencyMin()).isEqualTo(50);
         assertThat(config.getAwsConfigPath()).isEqualTo("/home/user/.aws");
+        assertThat(config.getExtraHosts()).isPresent();
+        assertThat(config.getExtraHosts().get())
+                .containsExactly("host.docker.internal:host-gateway", "my-service:172.17.0.1");
+        assertThat(config.getEcrBaseUri()).isEqualTo("123456789012.dkr.ecr.us-east-1.amazonaws.com");
     }
 
     @Test
@@ -76,8 +84,10 @@ class LambdaConfigTest {
                 .containsEntry("FLOCI_SERVICES_LAMBDA_CONTAINER_IDLE_TIMEOUT_SECONDS", "300")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_REGION_CONCURRENCY_LIMIT", "1000")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_UNRESERVED_CONCURRENCY_MIN", "100")
+                .containsEntry("FLOCI_ECR_BASE_URI", "public.ecr.aws")
                 .doesNotContainKey("FLOCI_SERVICES_LAMBDA_DOCKER_NETWORK")
-                .doesNotContainKey("FLOCI_SERVICES_LAMBDA_AWS_CONFIG_PATH");
+                .doesNotContainKey("FLOCI_SERVICES_LAMBDA_AWS_CONFIG_PATH")
+                .doesNotContainKey("FLOCI_SERVICES_LAMBDA_EXTRA_HOSTS");
     }
 
     @Test
@@ -95,6 +105,8 @@ class LambdaConfigTest {
                 .unreservedConcurrencyMin(50)
                 .dockerNetwork("my-network")
                 .awsConfigPath("/home/user/.aws")
+                .extraHosts(java.util.List.of("host.docker.internal:host-gateway", "my-service:172.17.0.1"))
+                .ecrBaseUri("123456789012.dkr.ecr.us-east-1.amazonaws.com")
                 .build()
                 .applyEnvVarsToContainer(container);
 
@@ -110,7 +122,9 @@ class LambdaConfigTest {
                 .containsEntry("FLOCI_SERVICES_LAMBDA_REGION_CONCURRENCY_LIMIT", "500")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_UNRESERVED_CONCURRENCY_MIN", "50")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_DOCKER_NETWORK", "my-network")
-                .containsEntry("FLOCI_SERVICES_LAMBDA_AWS_CONFIG_PATH", "/home/user/.aws");
+                .containsEntry("FLOCI_SERVICES_LAMBDA_AWS_CONFIG_PATH", "/home/user/.aws")
+                .containsEntry("FLOCI_SERVICES_LAMBDA_EXTRA_HOSTS", "host.docker.internal:host-gateway,my-service:172.17.0.1")
+                .containsEntry("FLOCI_ECR_BASE_URI", "123456789012.dkr.ecr.us-east-1.amazonaws.com");
     }
 
     @Test
@@ -223,6 +237,17 @@ class LambdaConfigTest {
     }
 
     @Test
+    void shouldNotApplyEmptyExtraHostsEnvVarToContainer() {
+        GenericContainer<?> container = genericContainer();
+        LambdaConfig.builder()
+                .extraHosts(java.util.List.of())
+                .build()
+                .applyEnvVarsToContainer(container);
+
+        assertThat(container.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_LAMBDA_EXTRA_HOSTS");
+    }
+
+    @Test
     void shouldPreserveValuesOnToBuilder() {
         LambdaConfig config = LambdaConfig.builder()
                 .enabled(false)
@@ -238,6 +263,8 @@ class LambdaConfigTest {
                 .unreservedConcurrencyMin(50)
                 .hotReload(true)
                 .awsConfigPath("/test/aws-config")
+                .extraHosts(java.util.List.of("host.docker.internal:host-gateway"))
+                .ecrBaseUri("123456789012.dkr.ecr.us-east-1.amazonaws.com")
                 .build();
         LambdaConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
@@ -254,6 +281,9 @@ class LambdaConfigTest {
         assertThat(copy.getUnreservedConcurrencyMin()).isEqualTo(50);
         assertThat(copy.getHotReload().enabled()).isTrue();
         assertThat(copy.getAwsConfigPath()).isEqualTo("/test/aws-config");
+        assertThat(copy.getExtraHosts()).isPresent();
+        assertThat(copy.getExtraHosts().get()).containsExactly("host.docker.internal:host-gateway");
+        assertThat(copy.getEcrBaseUri()).isEqualTo("123456789012.dkr.ecr.us-east-1.amazonaws.com");
     }
 
 }

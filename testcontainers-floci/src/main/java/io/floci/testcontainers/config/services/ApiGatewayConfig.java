@@ -33,6 +33,7 @@ public class ApiGatewayConfig extends AbstractServiceConfig<ApiGatewayConfig.Bui
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -66,6 +67,7 @@ public class ApiGatewayConfig extends AbstractServiceConfig<ApiGatewayConfig.Bui
          *
          * @return the API Gateway configuration
          */
+        @Override
         public ApiGatewayConfig build() {
             return new ApiGatewayConfig(this);
         }

@@ -41,6 +41,7 @@ public class CloudWatchLogsConfig extends AbstractServiceConfig<CloudWatchLogsCo
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -126,6 +127,7 @@ public class CloudWatchLogsConfig extends AbstractServiceConfig<CloudWatchLogsCo
          *
          * @return the CloudWatch Logs configuration
          */
+        @Override
         public CloudWatchLogsConfig build() {
             return new CloudWatchLogsConfig(this);
         }

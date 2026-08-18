@@ -39,6 +39,7 @@ public class RdsDataConfig extends AbstractServiceConfig<RdsDataConfig.Builder> 
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -98,6 +99,7 @@ public class RdsDataConfig extends AbstractServiceConfig<RdsDataConfig.Builder> 
          *
          * @return the RDS Data configuration
          */
+        @Override
         public RdsDataConfig build() {
             return new RdsDataConfig(this);
         }

@@ -43,6 +43,7 @@ public class EmrConfig extends AbstractServiceConfig<EmrConfig.Builder> {
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -127,6 +128,7 @@ public class EmrConfig extends AbstractServiceConfig<EmrConfig.Builder> {
          *
          * @return the EMR configuration
          */
+        @Override
         public EmrConfig build() {
             return new EmrConfig(this);
         }

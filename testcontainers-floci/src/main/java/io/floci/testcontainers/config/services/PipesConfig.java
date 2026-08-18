@@ -33,6 +33,7 @@ public class PipesConfig extends AbstractServiceConfig<PipesConfig.Builder> {
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -66,6 +67,7 @@ public class PipesConfig extends AbstractServiceConfig<PipesConfig.Builder> {
          *
          * @return the Pipes configuration
          */
+        @Override
         public PipesConfig build() {
             return new PipesConfig(this);
         }

@@ -32,6 +32,7 @@ public class S3VectorsConfig extends AbstractServiceConfig<S3VectorsConfig.Build
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -65,6 +66,7 @@ public class S3VectorsConfig extends AbstractServiceConfig<S3VectorsConfig.Build
          *
          * @return the S3 Vectors configuration
          */
+        @Override
         public S3VectorsConfig build() {
             return new S3VectorsConfig(this);
         }

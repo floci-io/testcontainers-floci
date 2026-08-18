@@ -37,6 +37,7 @@ public class PricingConfig extends AbstractServiceConfig<PricingConfig.Builder> 
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -106,6 +107,7 @@ public class PricingConfig extends AbstractServiceConfig<PricingConfig.Builder> 
          *
          * @return the Pricing configuration
          */
+        @Override
         public PricingConfig build() {
             return new PricingConfig(this);
         }

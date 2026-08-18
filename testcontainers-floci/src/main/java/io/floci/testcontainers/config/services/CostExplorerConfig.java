@@ -38,6 +38,7 @@ public class CostExplorerConfig extends AbstractServiceConfig<CostExplorerConfig
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -100,6 +101,7 @@ public class CostExplorerConfig extends AbstractServiceConfig<CostExplorerConfig
          *
          * @return the Cost Explorer configuration
          */
+        @Override
         public CostExplorerConfig build() {
             return new CostExplorerConfig(this);
         }

@@ -32,6 +32,7 @@ public class KmsConfig extends AbstractServiceConfig<KmsConfig.Builder> {
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -65,6 +66,7 @@ public class KmsConfig extends AbstractServiceConfig<KmsConfig.Builder> {
          *
          * @return the KMS configuration
          */
+        @Override
         public KmsConfig build() {
             return new KmsConfig(this);
         }

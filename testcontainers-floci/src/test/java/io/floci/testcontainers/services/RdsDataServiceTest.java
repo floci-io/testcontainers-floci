@@ -2,6 +2,7 @@ package io.floci.testcontainers.services;
 
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import software.amazon.awssdk.http.apache5.Apache5HttpClient;
 import software.amazon.awssdk.services.rds.RdsClient;
 import software.amazon.awssdk.services.rds.model.DBCluster;
 import software.amazon.awssdk.services.rdsdata.RdsDataClient;
@@ -28,7 +29,10 @@ class RdsDataServiceTest extends AbstractServiceTest {
 
     @BeforeAll
     static void setUp() {
-        rds = client(RdsClient.builder());
+        // CreateDBCluster synchronously pulls and starts a real MySQL container, which can take
+        // longer than the SDK's default ~30s socket read timeout, so extend it here.
+        rds = client(RdsClient.builder()
+                .httpClientBuilder(Apache5HttpClient.builder().socketTimeout(Duration.ofMinutes(3))));
         rdsData = client(RdsDataClient.builder());
     }
 
@@ -54,21 +58,27 @@ class RdsDataServiceTest extends AbstractServiceTest {
 
     @Test
     @Order(2)
-    @Disabled
     void shouldExecuteStatement() {
-        ExecuteStatementResponse response = rdsData.executeStatement(b -> b
-                .resourceArn(clusterArn)
-                .secretArn("arn:aws:secretsmanager:us-east-1:000000000000:secret:rds-secret")
-                .database(DB_NAME)
-                .sql("SELECT 1 AS value"));
+        // The cluster reports as available as soon as its backing MySQL container has started,
+        // but MySQL itself can take a bit longer after that to accept connections - retry until
+        // it's actually ready instead of failing on the first "communications link failure".
+        await().atMost(Duration.ofSeconds(30))
+                .pollInterval(Duration.ofSeconds(2))
+                .ignoreExceptions()
+                .untilAsserted(() -> {
+                    ExecuteStatementResponse response = rdsData.executeStatement(b -> b
+                            .resourceArn(clusterArn)
+                            .secretArn("arn:aws:secretsmanager:us-east-1:000000000000:secret:rds-secret")
+                            .database(DB_NAME)
+                            .sql("SELECT 1 AS value"));
 
-        List<List<Field>> records = response.records();
-        assertThat(records).isNotNull();
+                    List<List<Field>> records = response.records();
+                    assertThat(records).isNotNull();
+                });
     }
 
     @Test
     @Order(3)
-    @Disabled
     void shouldExecuteDdlStatement() {
         rdsData.executeStatement(b -> b
                 .resourceArn(clusterArn)

@@ -1,5 +1,7 @@
 package io.floci.testcontainers.config.services;
 
+import java.util.List;
+import java.util.Optional;
 import org.testcontainers.containers.Container;
 
 /**
@@ -17,10 +19,12 @@ public class CloudFrontConfig extends AbstractServiceConfig<CloudFrontConfig.Bui
     private static final String DEFAULT_DOMAIN_SUFFIX = "cloudfront.net";
 
     private final String domainSuffix;
+    private final List<String> allowedPrivateOriginHosts;
 
     private CloudFrontConfig(Builder builder) {
         super(builder.enabled);
         this.domainSuffix = builder.domainSuffix;
+        this.allowedPrivateOriginHosts = builder.allowedPrivateOriginHosts;
     }
 
     /**
@@ -38,6 +42,7 @@ public class CloudFrontConfig extends AbstractServiceConfig<CloudFrontConfig.Bui
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -51,12 +56,29 @@ public class CloudFrontConfig extends AbstractServiceConfig<CloudFrontConfig.Bui
         return domainSuffix;
     }
 
+    /**
+     * Returns the exact custom-origin hostnames allowed to resolve to private or otherwise
+     * non-routable addresses, or {@link Optional#empty()} if none are configured.
+     *
+     * <p>Empty by default to match CloudFront's public custom-origin boundary.
+     *
+     * @return the allowed private custom-origin hostnames, or {@link Optional#empty()} if none are configured
+     */
+    public Optional<List<String>> getAllowedPrivateOriginHosts() {
+        return Optional.ofNullable(allowedPrivateOriginHosts);
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_CLOUDFRONT_ENABLED", String.valueOf(isEnabled()));
 
         if (isEnabled()) {
             container.withEnv("FLOCI_SERVICES_CLOUDFRONT_DOMAIN_SUFFIX", domainSuffix);
+
+            if (allowedPrivateOriginHosts != null && !allowedPrivateOriginHosts.isEmpty()) {
+                container.withEnv("FLOCI_SERVICES_CLOUDFRONT_ALLOWED_PRIVATE_ORIGIN_HOSTS",
+                        String.join(",", allowedPrivateOriginHosts));
+            }
         }
     }
 
@@ -66,6 +88,7 @@ public class CloudFrontConfig extends AbstractServiceConfig<CloudFrontConfig.Bui
     public static class Builder extends AbstractServiceConfigBuilder<Builder, CloudFrontConfig> {
 
         private String domainSuffix = DEFAULT_DOMAIN_SUFFIX;
+        private List<String> allowedPrivateOriginHosts = null;
 
         private Builder() {
             // Allow instantiation only via CloudFrontConfig.builder()
@@ -79,6 +102,7 @@ public class CloudFrontConfig extends AbstractServiceConfig<CloudFrontConfig.Bui
         private Builder(CloudFrontConfig instance) {
             super(instance);
             this.domainSuffix = instance.getDomainSuffix();
+            this.allowedPrivateOriginHosts = instance.getAllowedPrivateOriginHosts().orElse(null);
         }
 
         /**
@@ -93,10 +117,25 @@ public class CloudFrontConfig extends AbstractServiceConfig<CloudFrontConfig.Bui
         }
 
         /**
+         * Sets the exact custom-origin hostnames allowed to resolve to private or otherwise
+         * non-routable addresses.
+         *
+         * @param allowedPrivateOriginHosts the allowed private custom-origin hostnames, or
+         *                                  {@code null} to unset (default: empty, matching
+         *                                  CloudFront's public custom-origin boundary)
+         * @return this builder
+         */
+        public Builder allowedPrivateOriginHosts(List<String> allowedPrivateOriginHosts) {
+            this.allowedPrivateOriginHosts = allowedPrivateOriginHosts == null ? null : List.copyOf(allowedPrivateOriginHosts);
+            return this;
+        }
+
+        /**
          * Creates an immutable {@link CloudFrontConfig} from this builder.
          *
          * @return the CloudFront configuration
          */
+        @Override
         public CloudFrontConfig build() {
             return new CloudFrontConfig(this);
         }

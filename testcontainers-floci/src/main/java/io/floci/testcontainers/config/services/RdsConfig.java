@@ -20,9 +20,6 @@ public class RdsConfig extends AbstractServiceConfig<RdsConfig.Builder> {
     private static final boolean DEFAULT_MOCK = false;
     private static final int DEFAULT_PROXY_BASE_PORT = 7000;
     private static final int DEFAULT_PROXY_PORTS_COUNT = 10;
-    private static final String DEFAULT_POSTGRES_IMAGE = "postgres:16-alpine";
-    private static final String DEFAULT_MYSQL_IMAGE = "mysql:8.0";
-    private static final String DEFAULT_MARIADB_IMAGE = "mariadb:11";
 
     private final boolean mock;
     private final int proxyBasePort;
@@ -31,6 +28,7 @@ public class RdsConfig extends AbstractServiceConfig<RdsConfig.Builder> {
     private final String defaultMysqlImage;
     private final String defaultMariadbImage;
     private final String dockerNetwork;
+    private final String endpointHost;
 
     private RdsConfig(Builder builder) {
         super(builder.enabled);
@@ -41,6 +39,7 @@ public class RdsConfig extends AbstractServiceConfig<RdsConfig.Builder> {
         this.defaultMysqlImage = builder.defaultMysqlImage;
         this.defaultMariadbImage = builder.defaultMariadbImage;
         this.dockerNetwork = builder.dockerNetwork;
+        this.endpointHost = builder.endpointHost;
     }
 
     /**
@@ -58,6 +57,7 @@ public class RdsConfig extends AbstractServiceConfig<RdsConfig.Builder> {
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -101,27 +101,30 @@ public class RdsConfig extends AbstractServiceConfig<RdsConfig.Builder> {
     }
 
     /**
-     * Returns the default Docker image used for PostgreSQL RDS instances.
+     * Returns the default Docker image used for PostgreSQL RDS instances, or {@code null} if not
+     * set, in which case Floci uses its own configured default image.
      *
-     * @return the PostgreSQL image name
+     * @return the PostgreSQL image name, or {@code null}
      */
     public String getDefaultPostgresImage() {
         return defaultPostgresImage;
     }
 
     /**
-     * Returns the default Docker image used for MySQL RDS instances.
+     * Returns the default Docker image used for MySQL RDS instances, or {@code null} if not set,
+     * in which case Floci uses its own configured default image.
      *
-     * @return the MySQL image name
+     * @return the MySQL image name, or {@code null}
      */
     public String getDefaultMysqlImage() {
         return defaultMysqlImage;
     }
 
     /**
-     * Returns the default Docker image used for MariaDB RDS instances.
+     * Returns the default Docker image used for MariaDB RDS instances, or {@code null} if not
+     * set, in which case Floci uses its own configured default image.
      *
-     * @return the MariaDB image name
+     * @return the MariaDB image name, or {@code null}
      */
     public String getDefaultMariadbImage() {
         return defaultMariadbImage;
@@ -136,6 +139,16 @@ public class RdsConfig extends AbstractServiceConfig<RdsConfig.Builder> {
         return dockerNetwork;
     }
 
+    /**
+     * Returns the hostname advertised for RDS endpoints, or {@code null} if not set. Uses
+     * published Docker ports when configured.
+     *
+     * @return the endpoint host, or {@code null}
+     */
+    public String getEndpointHost() {
+        return endpointHost;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_RDS_ENABLED", String.valueOf(isEnabled()));
@@ -144,12 +157,21 @@ public class RdsConfig extends AbstractServiceConfig<RdsConfig.Builder> {
             container.withEnv("FLOCI_SERVICES_RDS_MOCK", String.valueOf(mock));
             container.withEnv("FLOCI_SERVICES_RDS_PROXY_BASE_PORT", String.valueOf(proxyBasePort));
             container.withEnv("FLOCI_SERVICES_RDS_PROXY_MAX_PORT", String.valueOf(getProxyMaxPort()));
-            container.withEnv("FLOCI_SERVICES_RDS_DEFAULT_POSTGRES_IMAGE", defaultPostgresImage);
-            container.withEnv("FLOCI_SERVICES_RDS_DEFAULT_MYSQL_IMAGE", defaultMysqlImage);
-            container.withEnv("FLOCI_SERVICES_RDS_DEFAULT_MARIADB_IMAGE", defaultMariadbImage);
 
+            if (defaultPostgresImage != null) {
+                container.withEnv("FLOCI_SERVICES_RDS_DEFAULT_POSTGRES_IMAGE", defaultPostgresImage);
+            }
+            if (defaultMysqlImage != null) {
+                container.withEnv("FLOCI_SERVICES_RDS_DEFAULT_MYSQL_IMAGE", defaultMysqlImage);
+            }
+            if (defaultMariadbImage != null) {
+                container.withEnv("FLOCI_SERVICES_RDS_DEFAULT_MARIADB_IMAGE", defaultMariadbImage);
+            }
             if (dockerNetwork != null) {
                 container.withEnv("FLOCI_SERVICES_RDS_DOCKER_NETWORK", dockerNetwork);
+            }
+            if (endpointHost != null) {
+                container.withEnv("FLOCI_SERVICES_RDS_ENDPOINT_HOST", endpointHost);
             }
         }
     }
@@ -172,10 +194,11 @@ public class RdsConfig extends AbstractServiceConfig<RdsConfig.Builder> {
         private boolean mock = DEFAULT_MOCK;
         private int proxyBasePort = DEFAULT_PROXY_BASE_PORT;
         private int proxyPortsCount = DEFAULT_PROXY_PORTS_COUNT;
-        private String defaultPostgresImage = DEFAULT_POSTGRES_IMAGE;
-        private String defaultMysqlImage = DEFAULT_MYSQL_IMAGE;
-        private String defaultMariadbImage = DEFAULT_MARIADB_IMAGE;
+        private String defaultPostgresImage;
+        private String defaultMysqlImage;
+        private String defaultMariadbImage;
         private String dockerNetwork;
+        private String endpointHost;
 
         private Builder() {
             // Allow instantiation only via RdsConfig.builder()
@@ -195,6 +218,7 @@ public class RdsConfig extends AbstractServiceConfig<RdsConfig.Builder> {
             this.defaultMysqlImage = instance.getDefaultMysqlImage();
             this.defaultMariadbImage = instance.getDefaultMariadbImage();
             this.dockerNetwork = instance.getDockerNetwork();
+            this.endpointHost = instance.getEndpointHost();
         }
 
         /**
@@ -226,7 +250,8 @@ public class RdsConfig extends AbstractServiceConfig<RdsConfig.Builder> {
         /**
          * Sets the default Docker image for PostgreSQL RDS instances.
          *
-         * @param defaultPostgresImage the image name (default {@value DEFAULT_POSTGRES_IMAGE})
+         * @param defaultPostgresImage the image name, or {@code null} (the default) to use
+         *                             Floci's own configured default image
          * @return this builder
          */
         public Builder defaultPostgresImage(String defaultPostgresImage) {
@@ -237,7 +262,8 @@ public class RdsConfig extends AbstractServiceConfig<RdsConfig.Builder> {
         /**
          * Sets the default Docker image for MySQL RDS instances.
          *
-         * @param defaultMysqlImage the image name (default {@value DEFAULT_MYSQL_IMAGE})
+         * @param defaultMysqlImage the image name, or {@code null} (the default) to use
+         *                          Floci's own configured default image
          * @return this builder
          */
         public Builder defaultMysqlImage(String defaultMysqlImage) {
@@ -248,7 +274,8 @@ public class RdsConfig extends AbstractServiceConfig<RdsConfig.Builder> {
         /**
          * Sets the default Docker image for MariaDB RDS instances.
          *
-         * @param defaultMariadbImage the image name (default {@value DEFAULT_MARIADB_IMAGE})
+         * @param defaultMariadbImage the image name, or {@code null} (the default) to use
+         *                            Floci's own configured default image
          * @return this builder
          */
         public Builder defaultMariadbImage(String defaultMariadbImage) {
@@ -268,10 +295,23 @@ public class RdsConfig extends AbstractServiceConfig<RdsConfig.Builder> {
         }
 
         /**
+         * Sets the hostname advertised for RDS endpoints. Uses published Docker ports when
+         * configured.
+         *
+         * @param endpointHost the endpoint host, or {@code null} to use Floci's default
+         * @return this builder
+         */
+        public Builder endpointHost(String endpointHost) {
+            this.endpointHost = endpointHost;
+            return this;
+        }
+
+        /**
          * Creates an immutable {@link RdsConfig} from this builder.
          *
          * @return the RDS configuration
          */
+        @Override
         public RdsConfig build() {
             return new RdsConfig(this);
         }

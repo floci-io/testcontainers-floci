@@ -38,6 +38,7 @@ public class SecretsManagerConfig extends AbstractServiceConfig<SecretsManagerCo
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -97,6 +98,7 @@ public class SecretsManagerConfig extends AbstractServiceConfig<SecretsManagerCo
          *
          * @return the Secrets Manager configuration
          */
+        @Override
         public SecretsManagerConfig build() {
             return new SecretsManagerConfig(this);
         }

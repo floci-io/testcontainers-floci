@@ -51,6 +51,7 @@ public class SesConfig extends AbstractServiceConfig<SesConfig.Builder> {
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -208,6 +209,7 @@ public class SesConfig extends AbstractServiceConfig<SesConfig.Builder> {
          *
          * @return the SES configuration
          */
+        @Override
         public SesConfig build() {
             return new SesConfig(this);
         }

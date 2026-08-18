@@ -47,6 +47,7 @@ public class Route53Config extends AbstractServiceConfig<Route53Config.Builder> 
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -175,6 +176,7 @@ public class Route53Config extends AbstractServiceConfig<Route53Config.Builder> 
          *
          * @return the Route 53 configuration
          */
+        @Override
         public Route53Config build() {
             return new Route53Config(this);
         }

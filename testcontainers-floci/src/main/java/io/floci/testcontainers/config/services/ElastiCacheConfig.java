@@ -51,6 +51,7 @@ public class ElastiCacheConfig extends AbstractServiceConfig<ElastiCacheConfig.B
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -214,6 +215,7 @@ public class ElastiCacheConfig extends AbstractServiceConfig<ElastiCacheConfig.B
          *
          * @return the ElastiCache configuration
          */
+        @Override
         public ElastiCacheConfig build() {
             return new ElastiCacheConfig(this);
         }

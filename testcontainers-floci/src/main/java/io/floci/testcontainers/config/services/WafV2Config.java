@@ -33,6 +33,7 @@ public class WafV2Config extends AbstractServiceConfig<WafV2Config.Builder> {
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -66,6 +67,7 @@ public class WafV2Config extends AbstractServiceConfig<WafV2Config.Builder> {
          *
          * @return the WAF V2 configuration
          */
+        @Override
         public WafV2Config build() {
             return new WafV2Config(this);
         }

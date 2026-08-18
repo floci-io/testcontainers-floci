@@ -33,6 +33,7 @@ public class CodeDeployConfig extends AbstractServiceConfig<CodeDeployConfig.Bui
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -66,6 +67,7 @@ public class CodeDeployConfig extends AbstractServiceConfig<CodeDeployConfig.Bui
          *
          * @return the CodeDeploy configuration
          */
+        @Override
         public CodeDeployConfig build() {
             return new CodeDeployConfig(this);
         }

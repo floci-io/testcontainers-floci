@@ -57,6 +57,7 @@ public class EcrConfig extends AbstractServiceConfig<EcrConfig.Builder> {
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -267,6 +268,7 @@ public class EcrConfig extends AbstractServiceConfig<EcrConfig.Builder> {
          *
          * @return the ECR configuration
          */
+        @Override
         public EcrConfig build() {
             return new EcrConfig(this);
         }

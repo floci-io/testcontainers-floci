@@ -43,6 +43,7 @@ public class ElbV2Config extends AbstractServiceConfig<ElbV2Config.Builder> {
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -134,6 +135,7 @@ public class ElbV2Config extends AbstractServiceConfig<ElbV2Config.Builder> {
          *
          * @return the ELBv2 configuration
          */
+        @Override
         public ElbV2Config build() {
             return new ElbV2Config(this);
         }

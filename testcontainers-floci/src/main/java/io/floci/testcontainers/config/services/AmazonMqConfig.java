@@ -43,6 +43,7 @@ public class AmazonMqConfig extends AbstractServiceConfig<AmazonMqConfig.Builder
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -125,6 +126,7 @@ public class AmazonMqConfig extends AbstractServiceConfig<AmazonMqConfig.Builder
          *
          * @return the Amazon MQ configuration
          */
+        @Override
         public AmazonMqConfig build() {
             return new AmazonMqConfig(this);
         }

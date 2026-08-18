@@ -23,6 +23,7 @@ class Ec2ConfigTest {
         assertThat(config.getAppPortRangeEnd()).isEqualTo(30009);
         assertThat(config.getMaxPublishedPortsPerInstance()).isEqualTo(2);
         assertThat(config.getSocatImage()).isEqualTo("alpine/socat");
+        assertThat(config.isAwsFaithfulPrivateIp()).isFalse();
         assertThat(config.getAutoScaling().enabled()).isTrue();
     }
 
@@ -37,6 +38,7 @@ class Ec2ConfigTest {
                 .appPortRange(40000, 500)
                 .maxPublishedPortsPerInstance(50)
                 .socatImage("alpine/socat:1.8.0.0")
+                .awsFaithfulPrivateIp(true)
                 .autoScaling(false)
                 .build();
         assertThat(config.isEnabled()).isFalse();
@@ -50,6 +52,7 @@ class Ec2ConfigTest {
         assertThat(config.getAppPortRangeEnd()).isEqualTo(40499);
         assertThat(config.getMaxPublishedPortsPerInstance()).isEqualTo(50);
         assertThat(config.getSocatImage()).isEqualTo("alpine/socat:1.8.0.0");
+        assertThat(config.isAwsFaithfulPrivateIp()).isTrue();
         assertThat(config.getAutoScaling().enabled()).isFalse();
     }
 
@@ -69,6 +72,7 @@ class Ec2ConfigTest {
                 .containsEntry("FLOCI_SERVICES_EC2_APP_PORT_RANGE_END", "30009")
                 .containsEntry("FLOCI_SERVICES_EC2_MAX_PUBLISHED_PORTS_PER_INSTANCE", "2")
                 .containsEntry("FLOCI_SERVICES_EC2_SOCAT_IMAGE", "alpine/socat")
+                .containsEntry("FLOCI_SERVICES_EC2_AWS_FAITHFUL_PRIVATE_IP", "false")
                 .containsEntry("FLOCI_SERVICES_AUTOSCALING_ENABLED", "true");
     }
 
@@ -84,6 +88,7 @@ class Ec2ConfigTest {
                 .appPortRange(40000, 500)
                 .maxPublishedPortsPerInstance(50)
                 .socatImage("alpine/socat:1.8.0.0")
+                .awsFaithfulPrivateIp(true)
                 .autoScaling(false)
                 .build()
                 .applyEnvVarsToContainer(container);
@@ -99,6 +104,7 @@ class Ec2ConfigTest {
                 .containsEntry("FLOCI_SERVICES_EC2_APP_PORT_RANGE_END", "40499")
                 .containsEntry("FLOCI_SERVICES_EC2_MAX_PUBLISHED_PORTS_PER_INSTANCE", "50")
                 .containsEntry("FLOCI_SERVICES_EC2_SOCAT_IMAGE", "alpine/socat:1.8.0.0")
+                .containsEntry("FLOCI_SERVICES_EC2_AWS_FAITHFUL_PRIVATE_IP", "true")
                 .containsEntry("FLOCI_SERVICES_AUTOSCALING_ENABLED", "false");
     }
 
@@ -158,6 +164,7 @@ class Ec2ConfigTest {
                 .appPortRange(31000, 5)
                 .maxPublishedPortsPerInstance(3)
                 .socatImage("test/socat")
+                .awsFaithfulPrivateIp(true)
                 .autoScaling(false)
                 .build();
         Ec2Config copy = config.toBuilder().build();
@@ -171,6 +178,7 @@ class Ec2ConfigTest {
         assertThat(copy.getAppPortsCount()).isEqualTo(5);
         assertThat(copy.getMaxPublishedPortsPerInstance()).isEqualTo(3);
         assertThat(copy.getSocatImage()).isEqualTo("test/socat");
+        assertThat(copy.isAwsFaithfulPrivateIp()).isTrue();
         assertThat(copy.getAutoScaling().enabled()).isFalse();
     }
 

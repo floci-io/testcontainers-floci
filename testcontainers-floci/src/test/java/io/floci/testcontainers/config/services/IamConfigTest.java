@@ -14,6 +14,7 @@ class IamConfigTest {
         assertThat(config.isEnabled()).isTrue();
         assertThat(config.isEnforcementEnabled()).isFalse();
         assertThat(config.isSeedDeployerPrincipal()).isFalse();
+        assertThat(config.getAccountAlias()).isEmpty();
     }
 
     @Test
@@ -22,10 +23,12 @@ class IamConfigTest {
                 .enabled(false)
                 .enforcementEnabled(true)
                 .seedDeployerPrincipal(true)
+                .accountAlias("my-account-alias")
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.isEnforcementEnabled()).isTrue();
         assertThat(config.isSeedDeployerPrincipal()).isTrue();
+        assertThat(config.getAccountAlias()).contains("my-account-alias");
     }
 
     @Test
@@ -36,16 +39,22 @@ class IamConfigTest {
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_SERVICES_IAM_ENABLED", "true")
                 .containsEntry("FLOCI_SERVICES_IAM_ENFORCEMENT_ENABLED", "false")
-                .containsEntry("FLOCI_SERVICES_IAM_SEED_DEPLOYER_PRINCIPAL", "false");
+                .containsEntry("FLOCI_SERVICES_IAM_SEED_DEPLOYER_PRINCIPAL", "false")
+                .doesNotContainKey("FLOCI_SERVICES_IAM_ACCOUNT_ALIAS");
     }
 
     @Test
     void shouldApplyCustomEnvVarsToContainer() {
         GenericContainer<?> container = genericContainer();
-        IamConfig.builder().seedDeployerPrincipal(true).build().applyEnvVarsToContainer(container);
+        IamConfig.builder()
+                .seedDeployerPrincipal(true)
+                .accountAlias("my-account-alias")
+                .build()
+                .applyEnvVarsToContainer(container);
 
         assertThat(container.getEnvMap())
-                .containsEntry("FLOCI_SERVICES_IAM_SEED_DEPLOYER_PRINCIPAL", "true");
+                .containsEntry("FLOCI_SERVICES_IAM_SEED_DEPLOYER_PRINCIPAL", "true")
+                .containsEntry("FLOCI_SERVICES_IAM_ACCOUNT_ALIAS", "my-account-alias");
     }
 
     @Test
@@ -57,16 +66,26 @@ class IamConfigTest {
     }
 
     @Test
+    void shouldNotApplyAccountAliasEnvVarWhenDisabled() {
+        GenericContainer<?> container = genericContainer();
+        IamConfig.builder().enabled(false).accountAlias("my-account-alias").build().applyEnvVarsToContainer(container);
+
+        assertThat(container.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_IAM_ACCOUNT_ALIAS");
+    }
+
+    @Test
     void shouldPreserveValuesOnToBuilder() {
         IamConfig config = IamConfig.builder()
                 .enabled(false)
                 .enforcementEnabled(true)
                 .seedDeployerPrincipal(true)
+                .accountAlias("my-account-alias")
                 .build();
         IamConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
         assertThat(copy.isEnforcementEnabled()).isTrue();
         assertThat(copy.isSeedDeployerPrincipal()).isTrue();
+        assertThat(copy.getAccountAlias()).contains("my-account-alias");
     }
 
 }

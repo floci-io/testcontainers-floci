@@ -15,7 +15,48 @@ Testcontainers module for [Floci](https://github.com/floci-io/floci) — a local
 mvn verify
 ```
 
-Requires Docker running for integration tests.
+Requires Docker running — `mvn test`/`mvn verify` run both plain unit tests (config classes, no Docker) and the
+Docker-backed `*ServiceTest` integration tests in the same surefire phase; there is no separate failsafe/`verify`-only
+split. Run a single test class or module with:
+
+```
+mvn -pl testcontainers-floci test -Dtest=IamConfigTest
+mvn -pl testcontainers-floci test -Dtest=IamServiceTest
+```
+
+## Architecture
+
+`FlociContainer` (`testcontainers-floci/src/main/java/io/floci/testcontainers/FlociContainer.java`) is the single
+entry point; everything else hangs off it:
+
+- **Cross-cutting config** (`config/`: `TlsConfig`, `StorageConfig`, `DuckDbConfig`, `SecurityConfig`,
+  `ProtocolsConfig`) and **per-service config** (`config/services/`, one class per AWS service, e.g. `IamConfig`,
+  `S3Config`) are immutable value classes built via a nested `Builder`, each extending `AbstractServiceConfig`/
+  `AbstractServiceConfigBuilder` for the shared `enabled` flag and `toBuilder()` round-trip.
+- Each service config's `applyEnvVarsToContainer(Container<?>)` sets its own `FLOCI_SERVICES_<SERVICE>_<PROPERTY>`
+  env vars (only when enabled); some also override `applyExposedPortsToContainer(...)` for services that need extra
+  ports (RDS, Lambda, ElastiCache, EC2, ECR).
+- `FlociContainer` holds one field + a `with<Service>Config(Consumer<Builder>)`/`get<Service>Config()` pair per
+  service, and registers every service field in `serviceConfigAccessors` (a `List<ServiceConfigAccessor<?>>`, a
+  generic getter/setter pair) so operations like `disableAllServices()` and the env-var/port wiring
+  (`configureEnvVars()`/`configureExposedPorts()`, called from the constructor and after every `with*Config` call)
+  can iterate all services generically without a big switch. Adding a new service means touching all of these — see
+  "Adding support for a new Floci service" in CONTRIBUTING.md for the exact steps and file locations.
+- `spring-boot-testcontainers-floci` wires `FlociContainer` into Spring via a `ContainerConnectionDetailsFactory`
+  (`FlociAwsContainerConnectionDetailsFactory`) producing Spring Cloud AWS's `AwsConnectionDetails`, plus an
+  `@AutoConfiguration` (`FlociAwsAutoConfiguration`) that force-enables S3 path-style access. Registered the old way
+  in `META-INF/spring.factories` *and* the new way in `META-INF/spring/…AutoConfiguration.imports` — keep both in
+  sync when adding auto-configurations.
+
+## Testing
+
+- `services/*ServiceTest` (Docker required) all extend package-private `AbstractServiceTest`
+  (`testcontainers-floci/src/test/java/io/floci/testcontainers/services/AbstractServiceTest.java`), which starts one
+  `FlociContainer` singleton per JVM in a static initializer and exposes a `client(builder)` helper that wires
+  endpoint/region/credentials onto an AWS SDK client builder.
+- `config/services/*ConfigTest` (no Docker) test each config class's builder/env-var logic in isolation.
+- `FlociContainerServicesConfigTest` unit-tests the container-level wiring (env vars/ports) for every registered
+  service.
 
 ## Key Tech
 
@@ -27,7 +68,7 @@ Requires Docker running for integration tests.
 ## Conventions
 
 - Use conventional commits (`feat:`, `fix:`, `chore:`, etc.)
-- Tests use a shared singleton `FlociContainer` via `AbstractFlociContainerServiceTest`
-- Spring Boot auto-config registered in `spring.factories` and `AutoConfiguration.imports`
 - CONTRIBUTING.md gives some details about contribution guidelines that should be followed when contributing 
   to the project.
+- Do not add a "Co-Authored-By" (or similar) line to commit messages attributing the commit to an
+  agent/AI tool. Agents working in this repo should omit that trailer entirely.

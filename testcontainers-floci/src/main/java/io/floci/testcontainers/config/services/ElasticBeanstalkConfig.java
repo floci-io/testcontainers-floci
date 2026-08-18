@@ -32,6 +32,7 @@ public class ElasticBeanstalkConfig extends AbstractServiceConfig<ElasticBeansta
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -65,6 +66,7 @@ public class ElasticBeanstalkConfig extends AbstractServiceConfig<ElasticBeansta
          *
          * @return the Elastic Beanstalk configuration
          */
+        @Override
         public ElasticBeanstalkConfig build() {
             return new ElasticBeanstalkConfig(this);
         }

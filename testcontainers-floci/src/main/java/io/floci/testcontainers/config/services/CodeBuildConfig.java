@@ -35,6 +35,7 @@ public class CodeBuildConfig extends AbstractServiceConfig<CodeBuildConfig.Build
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -94,6 +95,7 @@ public class CodeBuildConfig extends AbstractServiceConfig<CodeBuildConfig.Build
          *
          * @return the CodeBuild configuration
          */
+        @Override
         public CodeBuildConfig build() {
             return new CodeBuildConfig(this);
         }

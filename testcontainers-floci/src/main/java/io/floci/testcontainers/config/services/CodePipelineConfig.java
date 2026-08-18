@@ -32,6 +32,7 @@ public class CodePipelineConfig extends AbstractServiceConfig<CodePipelineConfig
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -65,6 +66,7 @@ public class CodePipelineConfig extends AbstractServiceConfig<CodePipelineConfig
          *
          * @return the CodePipeline configuration
          */
+        @Override
         public CodePipelineConfig build() {
             return new CodePipelineConfig(this);
         }

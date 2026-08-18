@@ -70,6 +70,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private DuckDbConfig duckDbConfig = DuckDbConfig.builder().build();
     private SecurityConfig securityConfig = SecurityConfig.builder().build();
     private ProtocolsConfig protocolsConfig = ProtocolsConfig.builder().build();
+    private AuthConfig authConfig = AuthConfig.builder().build();
+    private InitHooksConfig initHooksConfig = InitHooksConfig.builder().build();
 
     // Services config
     private AcmConfig acmConfig = AcmConfig.builder().build();
@@ -111,6 +113,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private AthenaConfig athenaConfig = AthenaConfig.builder().build();
     private GlueConfig glueConfig = GlueConfig.builder().build();
     private ResourceGroupsTaggingConfig resourceGroupsTaggingConfig = ResourceGroupsTaggingConfig.builder().build();
+    private BedrockAgentCoreConfig bedrockAgentCoreConfig = BedrockAgentCoreConfig.builder().build();
+    private BedrockAgentCoreControlConfig bedrockAgentCoreControlConfig = BedrockAgentCoreControlConfig.builder().build();
     private BedrockRuntimeConfig bedrockRuntimeConfig = BedrockRuntimeConfig.builder().build();
     private PipesConfig pipesConfig = PipesConfig.builder().build();
     private EksConfig eksConfig = EksConfig.builder().build();
@@ -140,6 +144,14 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private CodePipelineConfig codePipelineConfig = CodePipelineConfig.builder().build();
     private AmazonMqConfig amazonMqConfig = AmazonMqConfig.builder().build();
     private MemoryDbConfig memoryDbConfig = MemoryDbConfig.builder().build();
+    private RumConfig rumConfig = RumConfig.builder().build();
+    private S3TablesConfig s3TablesConfig = S3TablesConfig.builder().build();
+    private ApplicationAutoScalingConfig applicationAutoScalingConfig = ApplicationAutoScalingConfig.builder().build();
+    private SwfConfig swfConfig = SwfConfig.builder().build();
+    private KinesisAnalyticsConfig kinesisAnalyticsConfig = KinesisAnalyticsConfig.builder().build();
+    private MwaaConfig mwaaConfig = MwaaConfig.builder().build();
+    private GuardDutyConfig guardDutyConfig = GuardDutyConfig.builder().build();
+    private CloudHsmV2Config cloudHsmV2Config = CloudHsmV2Config.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -178,6 +190,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> athenaConfig, c -> athenaConfig = c),
             new ServiceConfigAccessor<>(() -> glueConfig, c -> glueConfig = c),
             new ServiceConfigAccessor<>(() -> resourceGroupsTaggingConfig, c -> resourceGroupsTaggingConfig = c),
+            new ServiceConfigAccessor<>(() -> bedrockAgentCoreConfig, c -> bedrockAgentCoreConfig = c),
+            new ServiceConfigAccessor<>(() -> bedrockAgentCoreControlConfig, c -> bedrockAgentCoreControlConfig = c),
             new ServiceConfigAccessor<>(() -> bedrockRuntimeConfig, c -> bedrockRuntimeConfig = c),
             new ServiceConfigAccessor<>(() -> pipesConfig, c -> pipesConfig = c),
             new ServiceConfigAccessor<>(() -> eksConfig, c -> eksConfig = c),
@@ -207,7 +221,15 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> elasticBeanstalkConfig, c -> elasticBeanstalkConfig = c),
             new ServiceConfigAccessor<>(() -> codePipelineConfig, c -> codePipelineConfig = c),
             new ServiceConfigAccessor<>(() -> amazonMqConfig, c -> amazonMqConfig = c),
-            new ServiceConfigAccessor<>(() -> memoryDbConfig, c -> memoryDbConfig = c)
+            new ServiceConfigAccessor<>(() -> memoryDbConfig, c -> memoryDbConfig = c),
+            new ServiceConfigAccessor<>(() -> rumConfig, c -> rumConfig = c),
+            new ServiceConfigAccessor<>(() -> s3TablesConfig, c -> s3TablesConfig = c),
+            new ServiceConfigAccessor<>(() -> applicationAutoScalingConfig, c -> applicationAutoScalingConfig = c),
+            new ServiceConfigAccessor<>(() -> swfConfig, c -> swfConfig = c),
+            new ServiceConfigAccessor<>(() -> kinesisAnalyticsConfig, c -> kinesisAnalyticsConfig = c),
+            new ServiceConfigAccessor<>(() -> mwaaConfig, c -> mwaaConfig = c),
+            new ServiceConfigAccessor<>(() -> guardDutyConfig, c -> guardDutyConfig = c),
+            new ServiceConfigAccessor<>(() -> cloudHsmV2Config, c -> cloudHsmV2Config = c)
     );
 
     /**
@@ -573,6 +595,62 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.protocolsConfig = builder.build();
         protocolsConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Returns the current auth configuration.
+     *
+     * @return the auth configuration
+     */
+    public AuthConfig getAuthConfig() {
+        return authConfig;
+    }
+
+    /**
+     * Configures authentication-related settings such as SigV4 signature validation.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withAuthConfig(c -> c.validateSignatures(true));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives an {@link AuthConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withAuthConfig(Consumer<AuthConfig.Builder> configurer) {
+        AuthConfig.Builder builder = authConfig.toBuilder();
+        configurer.accept(builder);
+        this.authConfig = builder.build();
+        authConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Returns the current init hooks configuration.
+     *
+     * @return the init hooks configuration
+     */
+    public InitHooksConfig getInitHooksConfig() {
+        return initHooksConfig;
+    }
+
+    /**
+     * Configures lifecycle init hook settings such as the shell executable and timeouts.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withInitHooksConfig(c -> c.timeoutSeconds(60));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives an {@link InitHooksConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withInitHooksConfig(Consumer<InitHooksConfig.Builder> configurer) {
+        InitHooksConfig.Builder builder = initHooksConfig.toBuilder();
+        configurer.accept(builder);
+        this.initHooksConfig = builder.build();
+        initHooksConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
@@ -1660,6 +1738,62 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     }
 
     /**
+     * Bedrock AgentCore-specific settings.
+     *
+     * @return the Bedrock AgentCore configuration
+     */
+    public BedrockAgentCoreConfig getBedrockAgentCoreConfig() {
+        return bedrockAgentCoreConfig;
+    }
+
+    /**
+     * Configures Bedrock AgentCore-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withBedrockAgentCoreConfig(c -> c.validateRuntimeExists(true));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link BedrockAgentCoreConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withBedrockAgentCoreConfig(Consumer<BedrockAgentCoreConfig.Builder> configurer) {
+        BedrockAgentCoreConfig.Builder builder = bedrockAgentCoreConfig.toBuilder();
+        configurer.accept(builder);
+        this.bedrockAgentCoreConfig = builder.build();
+        bedrockAgentCoreConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Bedrock AgentCore Control-specific settings.
+     *
+     * @return the Bedrock AgentCore Control configuration
+     */
+    public BedrockAgentCoreControlConfig getBedrockAgentCoreControlConfig() {
+        return bedrockAgentCoreControlConfig;
+    }
+
+    /**
+     * Configures Bedrock AgentCore Control-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withBedrockAgentCoreControlConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link BedrockAgentCoreControlConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withBedrockAgentCoreControlConfig(Consumer<BedrockAgentCoreControlConfig.Builder> configurer) {
+        BedrockAgentCoreControlConfig.Builder builder = bedrockAgentCoreControlConfig.toBuilder();
+        configurer.accept(builder);
+        this.bedrockAgentCoreControlConfig = builder.build();
+        bedrockAgentCoreControlConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
      * Bedrock Runtime-specific settings.
      *
      * @return the Bedrock Runtime configuration
@@ -2517,6 +2651,240 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         return this;
     }
 
+    /**
+     * CloudWatch RUM (Real User Monitoring)-specific settings.
+     *
+     * @return the RUM configuration
+     */
+    public RumConfig getRumConfig() {
+        return rumConfig;
+    }
+
+    /**
+     * Configures CloudWatch RUM (Real User Monitoring)-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withRumConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link RumConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withRumConfig(Consumer<RumConfig.Builder> configurer) {
+        RumConfig.Builder builder = rumConfig.toBuilder();
+        configurer.accept(builder);
+        this.rumConfig = builder.build();
+        rumConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * S3 Tables-specific settings.
+     *
+     * @return the S3 Tables configuration
+     */
+    public S3TablesConfig getS3TablesConfig() {
+        return s3TablesConfig;
+    }
+
+    /**
+     * Configures S3 Tables-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withS3TablesConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link S3TablesConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withS3TablesConfig(Consumer<S3TablesConfig.Builder> configurer) {
+        S3TablesConfig.Builder builder = s3TablesConfig.toBuilder();
+        configurer.accept(builder);
+        this.s3TablesConfig = builder.build();
+        s3TablesConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Application Auto Scaling-specific settings.
+     *
+     * @return the Application Auto Scaling configuration
+     */
+    public ApplicationAutoScalingConfig getApplicationAutoScalingConfig() {
+        return applicationAutoScalingConfig;
+    }
+
+    /**
+     * Configures Application Auto Scaling-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withApplicationAutoScalingConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link ApplicationAutoScalingConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withApplicationAutoScalingConfig(Consumer<ApplicationAutoScalingConfig.Builder> configurer) {
+        ApplicationAutoScalingConfig.Builder builder = applicationAutoScalingConfig.toBuilder();
+        configurer.accept(builder);
+        this.applicationAutoScalingConfig = builder.build();
+        applicationAutoScalingConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * SWF (Simple Workflow Service)-specific settings such as the timeout sweep.
+     *
+     * @return the SWF configuration
+     */
+    public SwfConfig getSwfConfig() {
+        return swfConfig;
+    }
+
+    /**
+     * Configures SWF (Simple Workflow Service)-specific settings such as the timeout sweep.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withSwfConfig(c -> c
+     *         .timeoutSweepEnabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link SwfConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withSwfConfig(Consumer<SwfConfig.Builder> configurer) {
+        SwfConfig.Builder builder = swfConfig.toBuilder();
+        configurer.accept(builder);
+        this.swfConfig = builder.build();
+        swfConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Kinesis Analytics (Managed Service for Apache Flink)-specific settings such as mock mode
+     * and default image.
+     *
+     * @return the Kinesis Analytics configuration
+     */
+    public KinesisAnalyticsConfig getKinesisAnalyticsConfig() {
+        return kinesisAnalyticsConfig;
+    }
+
+    /**
+     * Configures Kinesis Analytics (Managed Service for Apache Flink)-specific settings such as
+     * mock mode and default image.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withKinesisAnalyticsConfig(c -> c
+     *         .mock(true));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link KinesisAnalyticsConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withKinesisAnalyticsConfig(Consumer<KinesisAnalyticsConfig.Builder> configurer) {
+        KinesisAnalyticsConfig.Builder builder = kinesisAnalyticsConfig.toBuilder();
+        configurer.accept(builder);
+        this.kinesisAnalyticsConfig = builder.build();
+        kinesisAnalyticsConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * MWAA (Managed Workflows for Apache Airflow)-specific settings such as mock mode, proxy
+     * port range and supported Airflow versions.
+     *
+     * @return the MWAA configuration
+     */
+    public MwaaConfig getMwaaConfig() {
+        return mwaaConfig;
+    }
+
+    /**
+     * Configures MWAA (Managed Workflows for Apache Airflow)-specific settings such as mock
+     * mode, proxy port range and supported Airflow versions.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withMwaaConfig(c -> c
+     *         .mock(true)
+     *         .proxyPortRange(8700, 50)
+     *         .defaultVersion("2.10.5"));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link MwaaConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withMwaaConfig(Consumer<MwaaConfig.Builder> configurer) {
+        MwaaConfig.Builder builder = mwaaConfig.toBuilder();
+        configurer.accept(builder);
+        this.mwaaConfig = builder.build();
+        configureExposedPorts();
+        mwaaConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * GuardDuty-specific settings.
+     *
+     * @return the GuardDuty configuration
+     */
+    public GuardDutyConfig getGuardDutyConfig() {
+        return guardDutyConfig;
+    }
+
+    /**
+     * Configures GuardDuty-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withGuardDutyConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link GuardDutyConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withGuardDutyConfig(Consumer<GuardDutyConfig.Builder> configurer) {
+        GuardDutyConfig.Builder builder = guardDutyConfig.toBuilder();
+        configurer.accept(builder);
+        this.guardDutyConfig = builder.build();
+        guardDutyConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * CloudHSM v2-specific settings.
+     *
+     * @return the CloudHSM v2 configuration
+     */
+    public CloudHsmV2Config getCloudHsmV2Config() {
+        return cloudHsmV2Config;
+    }
+
+    /**
+     * Configures CloudHSM v2-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withCloudHsmV2Config(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link CloudHsmV2Config.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withCloudHsmV2Config(Consumer<CloudHsmV2Config.Builder> configurer) {
+        CloudHsmV2Config.Builder builder = cloudHsmV2Config.toBuilder();
+        configurer.accept(builder);
+        this.cloudHsmV2Config = builder.build();
+        cloudHsmV2Config.applyEnvVarsToContainer(this);
+        return this;
+    }
+
     private void preparePersistentStorageForCleanup() {
         if (storageConfig.getHostPersistentPath().isEmpty() || !isRunning()) {
             return;
@@ -2593,6 +2961,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         duckDbConfig.applyEnvVarsToContainer(this);
         securityConfig.applyEnvVarsToContainer(this);
         protocolsConfig.applyEnvVarsToContainer(this);
+        authConfig.applyEnvVarsToContainer(this);
+        initHooksConfig.applyEnvVarsToContainer(this);
 
         // Services config
         serviceConfigAccessors.forEach(accessor -> accessor.get().applyEnvVarsToContainer(this));

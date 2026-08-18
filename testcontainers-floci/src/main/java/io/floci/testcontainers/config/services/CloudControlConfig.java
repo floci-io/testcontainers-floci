@@ -32,6 +32,7 @@ public class CloudControlConfig extends AbstractServiceConfig<CloudControlConfig
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -65,6 +66,7 @@ public class CloudControlConfig extends AbstractServiceConfig<CloudControlConfig
          *
          * @return the Cloud Control API configuration
          */
+        @Override
         public CloudControlConfig build() {
             return new CloudControlConfig(this);
         }

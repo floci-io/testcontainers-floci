@@ -54,6 +54,7 @@ public class NeptuneConfig extends AbstractServiceConfig<NeptuneConfig.Builder> 
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -247,6 +248,7 @@ public class NeptuneConfig extends AbstractServiceConfig<NeptuneConfig.Builder> 
          *
          * @return the Neptune configuration
          */
+        @Override
         public NeptuneConfig build() {
             return new NeptuneConfig(this);
         }

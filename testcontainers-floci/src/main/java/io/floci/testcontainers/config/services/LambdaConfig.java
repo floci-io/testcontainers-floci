@@ -28,6 +28,7 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
     private static final int DEFAULT_CONTAINER_IDLE_TIMEOUT_SECONDS = 300;
     private static final int DEFAULT_REGION_CONCURRENCY_LIMIT = 1000;
     private static final int DEFAULT_UNRESERVED_CONCURRENCY_MIN = 100;
+    private static final String DEFAULT_ECR_BASE_URI = "public.ecr.aws";
 
     private final boolean ephemeral;
     private final boolean exposeRuntimePorts;
@@ -42,6 +43,8 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
     private final int unreservedConcurrencyMin;
     private final HotReload hotReload;
     private final String awsConfigPath;
+    private final List<String> extraHosts;
+    private final String ecrBaseUri;
 
     private LambdaConfig(Builder builder) {
         super(builder.enabled);
@@ -58,6 +61,8 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
         this.unreservedConcurrencyMin = builder.unreservedConcurrencyMin;
         this.hotReload = builder.hotReload;
         this.awsConfigPath = builder.awsConfigPath;
+        this.extraHosts = builder.extraHosts;
+        this.ecrBaseUri = builder.ecrBaseUri;
     }
 
     /**
@@ -75,6 +80,7 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -204,12 +210,39 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
      *
      * <p>When present, no AWS credential env vars are injected; instead
      * {@code AWS_SHARED_CREDENTIALS_FILE} and {@code AWS_CONFIG_FILE} are set to point
-     * at the mounted files. Blank values are treated as absent.
+     * at the mounted files, ensuring SDK discovery works regardless of container HOME.
+     * When absent, a function whose execution role exists in Floci receives temporary
+     * credentials for that role. Functions with an unknown role retain the compatibility
+     * fallback to Floci's own AWS credential environment or {@code test/test/test}.
+     * Blank values are treated as absent.
      *
      * @return the AWS config path, or {@code null} if not configured
      */
     public String getAwsConfigPath() {
         return awsConfigPath;
+    }
+
+    /**
+     * Returns the extra {@code /etc/hosts} entries added to every Lambda container, as
+     * "hostname:ip" pairs, or {@link Optional#empty()} if none are configured.
+     *
+     * <p>The ip may be the literal {@code host-gateway} to map to the Docker host,
+     * mirroring {@code docker run --add-host hostname:host-gateway}.
+     *
+     * @return the extra hosts entries, or {@link Optional#empty()} if none are configured
+     */
+    public Optional<List<String>> getExtraHosts() {
+        return Optional.ofNullable(extraHosts);
+    }
+
+    /**
+     * Returns the base URI used to resolve ECR image references pulled by Lambda functions
+     * (e.g. for public Lambda base images).
+     *
+     * @return the ECR base URI (default {@value DEFAULT_ECR_BASE_URI})
+     */
+    public String getEcrBaseUri() {
+        return ecrBaseUri;
     }
 
     @Override
@@ -226,6 +259,7 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
             container.withEnv("FLOCI_SERVICES_LAMBDA_CONTAINER_IDLE_TIMEOUT_SECONDS", String.valueOf(containerIdleTimeoutSeconds));
             container.withEnv("FLOCI_SERVICES_LAMBDA_REGION_CONCURRENCY_LIMIT", String.valueOf(regionConcurrencyLimit));
             container.withEnv("FLOCI_SERVICES_LAMBDA_UNRESERVED_CONCURRENCY_MIN", String.valueOf(unreservedConcurrencyMin));
+            container.withEnv("FLOCI_ECR_BASE_URI", ecrBaseUri);
 
             container.withEnv("FLOCI_SERVICES_LAMBDA_HOT_RELOAD_ENABLED", String.valueOf(hotReload.enabled()));
             if (hotReload.allowedPaths().isPresent() && !hotReload.allowedPaths().get().isEmpty()) {
@@ -238,6 +272,10 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
 
             if (awsConfigPath != null && !awsConfigPath.isBlank()) {
                 container.withEnv("FLOCI_SERVICES_LAMBDA_AWS_CONFIG_PATH", awsConfigPath);
+            }
+
+            if (extraHosts != null && !extraHosts.isEmpty()) {
+                container.withEnv("FLOCI_SERVICES_LAMBDA_EXTRA_HOSTS", String.join(",", extraHosts));
             }
         }
     }
@@ -294,6 +332,8 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
         private int unreservedConcurrencyMin = DEFAULT_UNRESERVED_CONCURRENCY_MIN;
         private HotReload hotReload = new DefaultHotReload(false, null);
         private String awsConfigPath;
+        private List<String> extraHosts;
+        private String ecrBaseUri = DEFAULT_ECR_BASE_URI;
 
         private Builder() {
             // Allow instantiation only via LambdaConfig.builder()
@@ -319,6 +359,8 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
             this.unreservedConcurrencyMin = instance.getUnreservedConcurrencyMin();
             this.hotReload = instance.getHotReload();
             this.awsConfigPath = instance.getAwsConfigPath();
+            this.extraHosts = instance.getExtraHosts().orElse(null);
+            this.ecrBaseUri = instance.getEcrBaseUri();
         }
 
         /**
@@ -462,7 +504,11 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
          * Sets the host path to bind-mount (read-only) into Lambda containers at
          * {@code /opt/aws-config}. When set, no AWS credential env vars are injected;
          * instead {@code AWS_SHARED_CREDENTIALS_FILE} and {@code AWS_CONFIG_FILE} are
-         * pointed at the mounted files. Blank values are treated as absent.
+         * pointed at the mounted files, ensuring SDK discovery works regardless of
+         * container HOME. When absent, a function whose execution role exists in Floci
+         * receives temporary credentials for that role. Functions with an unknown role
+         * retain the compatibility fallback to Floci's own AWS credential environment
+         * or {@code test/test/test}. Blank values are treated as absent.
          *
          * @param awsConfigPath the host path, or {@code null} / blank to unset
          * @return this builder
@@ -473,10 +519,36 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
         }
 
         /**
+         * Sets extra {@code /etc/hosts} entries added to every Lambda container.
+         *
+         * @param extraHosts "hostname:ip" pairs, where ip may be the literal
+         *                   {@code host-gateway} to map to the Docker host, or {@code null}
+         *                   to unset (default: none)
+         * @return this builder
+         */
+        public Builder extraHosts(List<String> extraHosts) {
+            this.extraHosts = extraHosts == null ? null : List.copyOf(extraHosts);
+            return this;
+        }
+
+        /**
+         * Sets the base URI used to resolve ECR image references pulled by Lambda functions
+         * (e.g. for public Lambda base images).
+         *
+         * @param ecrBaseUri the ECR base URI (default {@value DEFAULT_ECR_BASE_URI})
+         * @return this builder
+         */
+        public Builder ecrBaseUri(String ecrBaseUri) {
+            this.ecrBaseUri = ecrBaseUri;
+            return this;
+        }
+
+        /**
          * Creates an immutable {@link LambdaConfig} from this builder.
          *
          * @return the Lambda configuration
          */
+        @Override
         public LambdaConfig build() {
             return new LambdaConfig(this);
         }

@@ -48,6 +48,7 @@ public class IotConfig extends AbstractServiceConfig<IotConfig.Builder> {
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -185,6 +186,7 @@ public class IotConfig extends AbstractServiceConfig<IotConfig.Builder> {
          *
          * @return the IoT Core configuration
          */
+        @Override
         public IotConfig build() {
             return new IotConfig(this);
         }

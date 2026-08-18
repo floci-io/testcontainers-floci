@@ -12,6 +12,7 @@ import org.testcontainers.containers.Container;
  *     .mock(false)
  *     .provider("k3s")
  *     .apiServerPortRange(6500, 100)
+ *     .disableCni(false)
  *     .build();
  * }</pre>
  */
@@ -25,6 +26,7 @@ public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
     private static final String DEFAULT_ENDPOINT_MODE = "host";
     private static final boolean DEFAULT_IAM_AUTH_WEBHOOK = true;
     private static final boolean DEFAULT_ECR_REGISTRY_MIRROR = true;
+    private static final boolean DEFAULT_DISABLE_CNI = false;
 
     private final boolean mock;
     private final String provider;
@@ -35,6 +37,7 @@ public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
     private final String endpointMode;
     private final boolean iamAuthWebhook;
     private final boolean ecrRegistryMirror;
+    private final boolean disableCni;
 
     private EksConfig(Builder builder) {
         super(builder.enabled);
@@ -47,6 +50,7 @@ public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
         this.endpointMode = builder.endpointMode;
         this.iamAuthWebhook = builder.iamAuthWebhook;
         this.ecrRegistryMirror = builder.ecrRegistryMirror;
+        this.disableCni = builder.disableCni;
     }
 
     /**
@@ -64,6 +68,7 @@ public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -171,6 +176,22 @@ public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
         return ecrRegistryMirror;
     }
 
+    /**
+     * Returns whether k3s starts with {@code --flannel-backend=none --disable-network-policy
+     * --disable-kube-proxy} instead of its bundled networking stack.
+     *
+     * <p>k3s's default flannel CNI and kube-proxy run embedded in the k3s server process itself
+     * (not separate, killable DaemonSets), so a real CNI (e.g. Cilium) can only cleanly take over
+     * if k3s never starts its own in the first place — there is no way to evict them after the
+     * fact. CoreDNS, local-path-provisioner, and metrics-server are unaffected; they don't depend
+     * on which CNI is in place.
+     *
+     * @return {@code true} if k3s's bundled CNI, network policy, and kube-proxy are disabled
+     */
+    public boolean isDisableCni() {
+        return disableCni;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_EKS_ENABLED", String.valueOf(isEnabled()));
@@ -184,6 +205,7 @@ public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
             container.withEnv("FLOCI_SERVICES_EKS_ENDPOINT_MODE", endpointMode);
             container.withEnv("FLOCI_SERVICES_EKS_IAM_AUTH_WEBHOOK", String.valueOf(iamAuthWebhook));
             container.withEnv("FLOCI_SERVICES_EKS_ECR_REGISTRY_MIRROR", String.valueOf(ecrRegistryMirror));
+            container.withEnv("FLOCI_SERVICES_EKS_DISABLE_CNI", String.valueOf(disableCni));
 
             if (dockerNetwork != null) {
                 container.withEnv("FLOCI_SERVICES_EKS_DOCKER_NETWORK", dockerNetwork);
@@ -214,6 +236,7 @@ public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
         private String endpointMode = DEFAULT_ENDPOINT_MODE;
         private boolean iamAuthWebhook = DEFAULT_IAM_AUTH_WEBHOOK;
         private boolean ecrRegistryMirror = DEFAULT_ECR_REGISTRY_MIRROR;
+        private boolean disableCni = DEFAULT_DISABLE_CNI;
 
         private Builder() {
             // Allow instantiation only via EksConfig.builder()
@@ -235,6 +258,7 @@ public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
             this.endpointMode = instance.getEndpointMode();
             this.iamAuthWebhook = instance.isIamAuthWebhook();
             this.ecrRegistryMirror = instance.isEcrRegistryMirror();
+            this.disableCni = instance.isDisableCni();
         }
 
         /**
@@ -339,10 +363,30 @@ public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
         }
 
         /**
+         * Controls whether k3s starts with {@code --flannel-backend=none --disable-network-policy
+         * --disable-kube-proxy} instead of its bundled networking stack.
+         *
+         * <p>k3s's default flannel CNI and kube-proxy run embedded in the k3s server process
+         * itself (not separate, killable DaemonSets), so a real CNI (e.g. Cilium) can only cleanly
+         * take over if k3s never starts its own in the first place — there is no way to evict them
+         * after the fact. CoreDNS, local-path-provisioner, and metrics-server are unaffected; they
+         * don't depend on which CNI is in place.
+         *
+         * @param disableCni {@code true} to disable k3s's bundled CNI, network policy, and
+         *                   kube-proxy (default {@value DEFAULT_DISABLE_CNI})
+         * @return this builder
+         */
+        public Builder disableCni(boolean disableCni) {
+            this.disableCni = disableCni;
+            return this;
+        }
+
+        /**
          * Creates an immutable {@link EksConfig} from this builder.
          *
          * @return the EKS configuration
          */
+        @Override
         public EksConfig build() {
             return new EksConfig(this);
         }

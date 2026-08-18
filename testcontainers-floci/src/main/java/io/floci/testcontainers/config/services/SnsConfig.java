@@ -32,6 +32,7 @@ public class SnsConfig extends AbstractServiceConfig<SnsConfig.Builder> {
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -65,6 +66,7 @@ public class SnsConfig extends AbstractServiceConfig<SnsConfig.Builder> {
          *
          * @return the SNS configuration
          */
+        @Override
         public SnsConfig build() {
             return new SnsConfig(this);
         }
