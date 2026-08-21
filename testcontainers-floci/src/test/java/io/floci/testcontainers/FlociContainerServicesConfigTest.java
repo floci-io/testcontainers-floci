@@ -809,6 +809,15 @@ class FlociContainerServicesConfigTest {
     }
 
     @Test
+    void shouldStoreFisConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withFisConfig(c -> c.enabled(false));
+
+            assertThat(container.getFisConfig().isEnabled()).isFalse();
+        }
+    }
+
+    @Test
     void shouldStoreDuckDbConfigOnContainer() {
         try (FlociContainer container = new FlociContainer()) {
             container.withDuckDbConfig(c -> c
