@@ -28,6 +28,7 @@ class LambdaConfigTest {
         assertThat(config.getAwsConfigPath()).isNull();
         assertThat(config.getExtraHosts()).isEmpty();
         assertThat(config.getEcrBaseUri()).isEqualTo("public.ecr.aws");
+        assertThat(config.getContainerNamePrefix()).isEmpty();
     }
 
     @Test
@@ -47,6 +48,7 @@ class LambdaConfigTest {
                 .awsConfigPath("/home/user/.aws")
                 .extraHosts(java.util.List.of("host.docker.internal:host-gateway", "my-service:172.17.0.1"))
                 .ecrBaseUri("123456789012.dkr.ecr.us-east-1.amazonaws.com")
+                .containerNamePrefix("acme")
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.isEphemeral()).isTrue();
@@ -66,6 +68,7 @@ class LambdaConfigTest {
         assertThat(config.getExtraHosts().get())
                 .containsExactly("host.docker.internal:host-gateway", "my-service:172.17.0.1");
         assertThat(config.getEcrBaseUri()).isEqualTo("123456789012.dkr.ecr.us-east-1.amazonaws.com");
+        assertThat(config.getContainerNamePrefix()).contains("acme");
     }
 
     @Test
@@ -87,7 +90,8 @@ class LambdaConfigTest {
                 .containsEntry("FLOCI_ECR_BASE_URI", "public.ecr.aws")
                 .doesNotContainKey("FLOCI_SERVICES_LAMBDA_DOCKER_NETWORK")
                 .doesNotContainKey("FLOCI_SERVICES_LAMBDA_AWS_CONFIG_PATH")
-                .doesNotContainKey("FLOCI_SERVICES_LAMBDA_EXTRA_HOSTS");
+                .doesNotContainKey("FLOCI_SERVICES_LAMBDA_EXTRA_HOSTS")
+                .doesNotContainKey("FLOCI_SERVICES_LAMBDA_CONTAINER_NAME_PREFIX");
     }
 
     @Test
@@ -107,6 +111,7 @@ class LambdaConfigTest {
                 .awsConfigPath("/home/user/.aws")
                 .extraHosts(java.util.List.of("host.docker.internal:host-gateway", "my-service:172.17.0.1"))
                 .ecrBaseUri("123456789012.dkr.ecr.us-east-1.amazonaws.com")
+                .containerNamePrefix("acme")
                 .build()
                 .applyEnvVarsToContainer(container);
 
@@ -124,7 +129,8 @@ class LambdaConfigTest {
                 .containsEntry("FLOCI_SERVICES_LAMBDA_DOCKER_NETWORK", "my-network")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_AWS_CONFIG_PATH", "/home/user/.aws")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_EXTRA_HOSTS", "host.docker.internal:host-gateway,my-service:172.17.0.1")
-                .containsEntry("FLOCI_ECR_BASE_URI", "123456789012.dkr.ecr.us-east-1.amazonaws.com");
+                .containsEntry("FLOCI_ECR_BASE_URI", "123456789012.dkr.ecr.us-east-1.amazonaws.com")
+                .containsEntry("FLOCI_SERVICES_LAMBDA_CONTAINER_NAME_PREFIX", "acme");
     }
 
     @Test
@@ -237,6 +243,17 @@ class LambdaConfigTest {
     }
 
     @Test
+    void shouldNotApplyContainerNamePrefixEnvVarWhenBlank() {
+        GenericContainer<?> container = genericContainer();
+        LambdaConfig.builder()
+                .containerNamePrefix("   ")
+                .build()
+                .applyEnvVarsToContainer(container);
+
+        assertThat(container.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_LAMBDA_CONTAINER_NAME_PREFIX");
+    }
+
+    @Test
     void shouldNotApplyEmptyExtraHostsEnvVarToContainer() {
         GenericContainer<?> container = genericContainer();
         LambdaConfig.builder()
@@ -265,6 +282,7 @@ class LambdaConfigTest {
                 .awsConfigPath("/test/aws-config")
                 .extraHosts(java.util.List.of("host.docker.internal:host-gateway"))
                 .ecrBaseUri("123456789012.dkr.ecr.us-east-1.amazonaws.com")
+                .containerNamePrefix("acme-prefix")
                 .build();
         LambdaConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
@@ -284,6 +302,7 @@ class LambdaConfigTest {
         assertThat(copy.getExtraHosts()).isPresent();
         assertThat(copy.getExtraHosts().get()).containsExactly("host.docker.internal:host-gateway");
         assertThat(copy.getEcrBaseUri()).isEqualTo("123456789012.dkr.ecr.us-east-1.amazonaws.com");
+        assertThat(copy.getContainerNamePrefix()).contains("acme-prefix");
     }
 
 }
