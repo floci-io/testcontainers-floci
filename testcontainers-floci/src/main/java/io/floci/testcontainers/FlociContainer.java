@@ -153,6 +153,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private GuardDutyConfig guardDutyConfig = GuardDutyConfig.builder().build();
     private CloudHsmV2Config cloudHsmV2Config = CloudHsmV2Config.builder().build();
     private EmrServerlessConfig emrServerlessConfig = EmrServerlessConfig.builder().build();
+    private FisConfig fisConfig = FisConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -231,7 +232,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> mwaaConfig, c -> mwaaConfig = c),
             new ServiceConfigAccessor<>(() -> guardDutyConfig, c -> guardDutyConfig = c),
             new ServiceConfigAccessor<>(() -> cloudHsmV2Config, c -> cloudHsmV2Config = c),
-            new ServiceConfigAccessor<>(() -> emrServerlessConfig, c -> emrServerlessConfig = c)
+            new ServiceConfigAccessor<>(() -> emrServerlessConfig, c -> emrServerlessConfig = c),
+            new ServiceConfigAccessor<>(() -> fisConfig, c -> fisConfig = c)
     );
 
     /**
@@ -2912,6 +2914,34 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.emrServerlessConfig = builder.build();
         emrServerlessConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * FIS (Fault Injection Simulator)-specific settings.
+     *
+     * @return the FIS configuration
+     */
+    public FisConfig getFisConfig() {
+        return fisConfig;
+    }
+
+    /**
+     * Configures FIS (Fault Injection Simulator)-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withFisConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link FisConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withFisConfig(Consumer<FisConfig.Builder> configurer) {
+        FisConfig.Builder builder = fisConfig.toBuilder();
+        configurer.accept(builder);
+        this.fisConfig = builder.build();
+        fisConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
