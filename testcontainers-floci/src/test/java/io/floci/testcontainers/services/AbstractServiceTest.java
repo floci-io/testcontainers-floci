@@ -20,17 +20,21 @@ abstract class AbstractServiceTest {
 
     protected static final int LB_LISTENER_PORT = 8780;
 
+    // Integration tests run against the nightly build so newly added services are covered
+    // before they land in a versioned release.
+    private static final String NIGHTLY_IMAGE = "floci/floci:nightly";
+
     private static final boolean DEBUG_LOGGING = false;
 
     protected static final FlociContainer floci;
 
     static {
         if (DEBUG_LOGGING) {
-            floci = new FlociContainer()
+            floci = new FlociContainer(NIGHTLY_IMAGE)
                     .withLogLevel(Level.DEBUG)
                     .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger("DOCKER")));
         } else {
-            floci = new FlociContainer()
+            floci = new FlociContainer(NIGHTLY_IMAGE)
                     .withLogLevel(Level.INFO);
         }
 
