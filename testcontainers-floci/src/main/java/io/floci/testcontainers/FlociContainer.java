@@ -152,6 +152,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private MwaaConfig mwaaConfig = MwaaConfig.builder().build();
     private GuardDutyConfig guardDutyConfig = GuardDutyConfig.builder().build();
     private CloudHsmV2Config cloudHsmV2Config = CloudHsmV2Config.builder().build();
+    private EmrServerlessConfig emrServerlessConfig = EmrServerlessConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -229,7 +230,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> kinesisAnalyticsConfig, c -> kinesisAnalyticsConfig = c),
             new ServiceConfigAccessor<>(() -> mwaaConfig, c -> mwaaConfig = c),
             new ServiceConfigAccessor<>(() -> guardDutyConfig, c -> guardDutyConfig = c),
-            new ServiceConfigAccessor<>(() -> cloudHsmV2Config, c -> cloudHsmV2Config = c)
+            new ServiceConfigAccessor<>(() -> cloudHsmV2Config, c -> cloudHsmV2Config = c),
+            new ServiceConfigAccessor<>(() -> emrServerlessConfig, c -> emrServerlessConfig = c)
     );
 
     /**
@@ -2882,6 +2884,34 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.cloudHsmV2Config = builder.build();
         cloudHsmV2Config.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * EMR Serverless-specific settings.
+     *
+     * @return the EMR Serverless configuration
+     */
+    public EmrServerlessConfig getEmrServerlessConfig() {
+        return emrServerlessConfig;
+    }
+
+    /**
+     * Configures EMR Serverless-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withEmrServerlessConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives an {@link EmrServerlessConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withEmrServerlessConfig(Consumer<EmrServerlessConfig.Builder> configurer) {
+        EmrServerlessConfig.Builder builder = emrServerlessConfig.toBuilder();
+        configurer.accept(builder);
+        this.emrServerlessConfig = builder.build();
+        emrServerlessConfig.applyEnvVarsToContainer(this);
         return this;
     }
 

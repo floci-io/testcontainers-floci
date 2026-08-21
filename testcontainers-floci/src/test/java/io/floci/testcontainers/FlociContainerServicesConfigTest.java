@@ -800,6 +800,15 @@ class FlociContainerServicesConfigTest {
     }
 
     @Test
+    void shouldStoreEmrServerlessConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withEmrServerlessConfig(c -> c.enabled(false));
+
+            assertThat(container.getEmrServerlessConfig().isEnabled()).isFalse();
+        }
+    }
+
+    @Test
     void shouldStoreDuckDbConfigOnContainer() {
         try (FlociContainer container = new FlociContainer()) {
             container.withDuckDbConfig(c -> c
