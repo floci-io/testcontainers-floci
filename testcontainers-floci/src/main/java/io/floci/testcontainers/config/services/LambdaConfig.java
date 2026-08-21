@@ -45,6 +45,7 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
     private final String awsConfigPath;
     private final List<String> extraHosts;
     private final String ecrBaseUri;
+    private final String containerNamePrefix;
 
     private LambdaConfig(Builder builder) {
         super(builder.enabled);
@@ -63,6 +64,7 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
         this.awsConfigPath = builder.awsConfigPath;
         this.extraHosts = builder.extraHosts;
         this.ecrBaseUri = builder.ecrBaseUri;
+        this.containerNamePrefix = builder.containerNamePrefix;
     }
 
     /**
@@ -245,6 +247,19 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
         return ecrBaseUri;
     }
 
+    /**
+     * Base name prefix for the containers and code volumes Lambda spawns, replacing the
+     * default {@code floci} (e.g. prefix {@code acme} names containers
+     * {@code acme-<function>-<id>} and code volumes {@code acme-code-<function>-<hash>}).
+     * Must be a valid Docker name segment ({@code [A-Za-z0-9][A-Za-z0-9_.-]*}); invalid
+     * values are ignored with a warning. Unset or blank falls back to {@code floci}.
+     *
+     * @return the container name prefix, or {@link Optional#empty()} if not configured
+     */
+    public Optional<String> getContainerNamePrefix() {
+        return Optional.ofNullable(containerNamePrefix);
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_LAMBDA_ENABLED", String.valueOf(isEnabled()));
@@ -276,6 +291,10 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
 
             if (extraHosts != null && !extraHosts.isEmpty()) {
                 container.withEnv("FLOCI_SERVICES_LAMBDA_EXTRA_HOSTS", String.join(",", extraHosts));
+            }
+
+            if (containerNamePrefix != null && !containerNamePrefix.isBlank()) {
+                container.withEnv("FLOCI_SERVICES_LAMBDA_CONTAINER_NAME_PREFIX", containerNamePrefix);
             }
         }
     }
@@ -334,6 +353,7 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
         private String awsConfigPath;
         private List<String> extraHosts;
         private String ecrBaseUri = DEFAULT_ECR_BASE_URI;
+        private String containerNamePrefix;
 
         private Builder() {
             // Allow instantiation only via LambdaConfig.builder()
@@ -361,6 +381,7 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
             this.awsConfigPath = instance.getAwsConfigPath();
             this.extraHosts = instance.getExtraHosts().orElse(null);
             this.ecrBaseUri = instance.getEcrBaseUri();
+            this.containerNamePrefix = instance.getContainerNamePrefix().orElse(null);
         }
 
         /**
@@ -540,6 +561,21 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
          */
         public Builder ecrBaseUri(String ecrBaseUri) {
             this.ecrBaseUri = ecrBaseUri;
+            return this;
+        }
+
+        /**
+         * Sets the base name prefix for the containers and code volumes Lambda spawns,
+         * replacing the default {@code floci} (e.g. prefix {@code acme} names containers
+         * {@code acme-<function>-<id>} and code volumes {@code acme-code-<function>-<hash>}).
+         * Must be a valid Docker name segment ({@code [A-Za-z0-9][A-Za-z0-9_.-]*}); invalid
+         * values are ignored with a warning. Unset or blank falls back to {@code floci}.
+         *
+         * @param containerNamePrefix the container name prefix, or {@code null} / blank to unset
+         * @return this builder
+         */
+        public Builder containerNamePrefix(String containerNamePrefix) {
+            this.containerNamePrefix = containerNamePrefix;
             return this;
         }
 
