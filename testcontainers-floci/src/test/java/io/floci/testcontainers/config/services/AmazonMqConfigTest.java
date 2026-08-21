@@ -78,4 +78,11 @@ class AmazonMqConfigTest {
         assertThat(copy.getDefaultImage()).isEqualTo("test-image");
     }
 
+    @Test
+    void shouldRequireDockerSocketOnlyWhenEnabledAndNotMocked() {
+        assertThat(AmazonMqConfig.builder().build().requiresDockerSocket()).isTrue();
+        assertThat(AmazonMqConfig.builder().enabled(false).build().requiresDockerSocket()).isFalse();
+        assertThat(AmazonMqConfig.builder().mock(true).build().requiresDockerSocket()).isFalse();
+    }
+
 }

@@ -265,5 +265,119 @@ class FlociContainerTest {
         }
     }
 
+    @Test
+    void shouldRequireDockerSocketByDefault() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.configure();
 
+            assertThat(container.getBinds())
+                    .anyMatch(b -> "/var/run/docker.sock".equals(b.getVolume().getPath()));
+        }
+    }
+
+    @Test
+    void shouldNotBindDockerSocketWhenNoDockerBackedServiceIsEnabled() {
+        try (FlociContainer container = new FlociContainer().disableAllServices()) {
+            container.configure();
+            assertThat(container.getBinds())
+                    .noneMatch(b -> "/var/run/docker.sock".equals(b.getVolume().getPath()));
+        }
+    }
+
+    @Test
+    void shouldBindDockerSocketOnlyOnceWhenConfiguredRepeatedly() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.configure();
+            container.configure();
+
+            assertThat(container.getBinds())
+                    .filteredOn(b -> "/var/run/docker.sock".equals(b.getVolume().getPath()))
+                    .hasSize(1);
+        }
+    }
+
+    @Test
+    void shouldNotRequireDockerSocketWhenNoDockerBackedServiceIsEnabled() {
+        try (FlociContainer container = new FlociContainer().disableAllServices()) {
+            container.withS3Config(c -> c.enabled(true))
+                    .configure();
+
+            assertThat(container.getBinds())
+                    .noneMatch(b -> "/var/run/docker.sock".equals(b.getVolume().getPath()));
+        }
+    }
+
+    @Test
+    void shouldNotRequireDockerSocketWhenDockerBackedServiceIsMocked() {
+        try (FlociContainer container = new FlociContainer().disableAllServices()) {
+            container.withRdsConfig(c -> c.enabled(true).mock(true))
+                    .configure();
+
+            assertThat(container.getBinds())
+                    .noneMatch(b -> "/var/run/docker.sock".equals(b.getVolume().getPath()));
+        }
+    }
+
+    @Test
+    void shouldRequireDockerSocketWhenDockerBackedServiceIsEnabledAndNotMocked() {
+        try (FlociContainer container = new FlociContainer().disableAllServices()) {
+            container.withRdsConfig(c -> c.enabled(true).mock(false))
+                    .configure();
+
+            assertThat(container.getBinds())
+                    .anyMatch(b -> "/var/run/docker.sock".equals(b.getVolume().getPath()));
+        }
+    }
+
+    @Test
+    void shouldOverrideAutoDetectionWhenDockerSocketExplicitlyEnabled() {
+        try (FlociContainer container = new FlociContainer().disableAllServices()) {
+            container.withDockerSocket(true)
+                    .configure();
+
+            assertThat(container.getBinds())
+                    .anyMatch(b -> "/var/run/docker.sock".equals(b.getVolume().getPath()));
+        }
+    }
+
+    @Test
+    void shouldOverrideAutoDetectionWhenDockerSocketExplicitlyDisabled() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withDockerSocket(false)
+                    .configure();
+
+            assertThat(container.getBinds())
+                    .noneMatch(b -> "/var/run/docker.sock".equals(b.getVolume().getPath()));
+        }
+    }
+
+    @Test
+    void shouldUnbindDockerSocketWhenConfigChangesAfterRestart() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.configure();
+
+            assertThat(container.getBinds())
+                    .anyMatch(b -> "/var/run/docker.sock".equals(b.getVolume().getPath()));
+
+            container.disableAllServices().configure();
+
+            assertThat(container.getBinds())
+                    .noneMatch(b -> "/var/run/docker.sock".equals(b.getVolume().getPath()));
+        }
+    }
+
+    @Test
+    void shouldBindDockerSocketWhenConfigChangesAfterRestart() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.disableAllServices().configure();
+
+            assertThat(container.getBinds())
+                    .noneMatch(b -> "/var/run/docker.sock".equals(b.getVolume().getPath()));
+
+            container.withDockerSocket(true).configure();
+
+            assertThat(container.getBinds())
+                    .anyMatch(b -> "/var/run/docker.sock".equals(b.getVolume().getPath()));
+        }
+    }
 }

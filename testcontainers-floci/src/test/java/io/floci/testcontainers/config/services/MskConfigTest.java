@@ -108,4 +108,11 @@ class MskConfigTest {
         assertThat(copy.getKafkaHostPortsCount()).isEqualTo(5);
     }
 
+    @Test
+    void shouldRequireDockerSocketOnlyWhenEnabledAndNotMocked() {
+        assertThat(MskConfig.builder().build().requiresDockerSocket()).isTrue();
+        assertThat(MskConfig.builder().enabled(false).build().requiresDockerSocket()).isFalse();
+        assertThat(MskConfig.builder().mock(true).build().requiresDockerSocket()).isFalse();
+    }
+
 }

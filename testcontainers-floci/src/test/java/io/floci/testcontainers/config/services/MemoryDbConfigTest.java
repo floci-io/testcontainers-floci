@@ -121,4 +121,11 @@ class MemoryDbConfigTest {
         assertThat(copy.getDockerNetwork()).contains("test-network");
     }
 
+    @Test
+    void shouldRequireDockerSocketOnlyWhenEnabledAndNotMocked() {
+        assertThat(MemoryDbConfig.builder().build().requiresDockerSocket()).isTrue();
+        assertThat(MemoryDbConfig.builder().enabled(false).build().requiresDockerSocket()).isFalse();
+        assertThat(MemoryDbConfig.builder().mock(true).build().requiresDockerSocket()).isFalse();
+    }
+
 }

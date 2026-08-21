@@ -182,4 +182,11 @@ class Ec2ConfigTest {
         assertThat(copy.getAutoScaling().enabled()).isFalse();
     }
 
+    @Test
+    void shouldRequireDockerSocketOnlyWhenEnabledAndNotMocked() {
+        assertThat(Ec2Config.builder().build().requiresDockerSocket()).isTrue();
+        assertThat(Ec2Config.builder().enabled(false).build().requiresDockerSocket()).isFalse();
+        assertThat(Ec2Config.builder().mock(true).build().requiresDockerSocket()).isFalse();
+    }
+
 }

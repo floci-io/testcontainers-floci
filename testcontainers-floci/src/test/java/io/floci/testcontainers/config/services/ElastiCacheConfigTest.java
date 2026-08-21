@@ -111,4 +111,10 @@ class ElastiCacheConfigTest {
         assertThat(copy.getDockerNetwork()).isEqualTo("test-network");
     }
 
+    @Test
+    void shouldRequireDockerSocketWhenEnabled() {
+        assertThat(ElastiCacheConfig.builder().build().requiresDockerSocket()).isTrue();
+        assertThat(ElastiCacheConfig.builder().enabled(false).build().requiresDockerSocket()).isFalse();
+    }
+
 }

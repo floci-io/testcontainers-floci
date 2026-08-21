@@ -135,6 +135,11 @@ public class ElastiCacheConfig extends AbstractServiceConfig<ElastiCacheConfig.B
         }
     }
 
+    @Override
+    public boolean requiresDockerSocket() {
+        return isEnabled();
+    }
+
     /**
      * Builder for {@link ElastiCacheConfig}.
      */

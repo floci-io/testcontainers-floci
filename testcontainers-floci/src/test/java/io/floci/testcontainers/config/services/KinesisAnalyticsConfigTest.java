@@ -77,4 +77,11 @@ class KinesisAnalyticsConfigTest {
         assertThat(copy.getDefaultImage()).contains("apache/flink:1.20");
     }
 
+    @Test
+    void shouldRequireDockerSocketOnlyWhenEnabledAndNotMocked() {
+        assertThat(KinesisAnalyticsConfig.builder().build().requiresDockerSocket()).isTrue();
+        assertThat(KinesisAnalyticsConfig.builder().enabled(false).build().requiresDockerSocket()).isFalse();
+        assertThat(KinesisAnalyticsConfig.builder().mock(true).build().requiresDockerSocket()).isFalse();
+    }
+
 }

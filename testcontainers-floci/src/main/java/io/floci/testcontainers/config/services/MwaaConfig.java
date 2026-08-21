@@ -207,6 +207,11 @@ public class MwaaConfig extends AbstractServiceConfig<MwaaConfig.Builder> {
         }
     }
 
+    @Override
+    public boolean requiresDockerSocket() {
+        return isEnabled() && !mock;
+    }
+
     /**
      * Builder for {@link MwaaConfig}.
      */

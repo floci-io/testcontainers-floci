@@ -99,4 +99,11 @@ class OpenSearchConfigTest {
         assertThat(copy.getDockerNetwork()).isEqualTo("test-network");
     }
 
+    @Test
+    void shouldRequireDockerSocketOnlyWhenEnabledAndNotMocked() {
+        assertThat(OpenSearchConfig.builder().build().requiresDockerSocket()).isTrue();
+        assertThat(OpenSearchConfig.builder().enabled(false).build().requiresDockerSocket()).isFalse();
+        assertThat(OpenSearchConfig.builder().mock(true).build().requiresDockerSocket()).isFalse();
+    }
+
 }

@@ -1,5 +1,6 @@
 package io.floci.testcontainers;
 
+import com.github.dockerjava.api.model.Bind;
 import io.floci.testcontainers.config.*;
 import io.floci.testcontainers.config.services.*;
 import org.slf4j.Logger;
@@ -20,6 +21,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -31,10 +33,12 @@ import java.util.function.Supplier;
  * <p>Starts a Floci container that exposes all emulated AWS services on a single HTTP
  * endpoint. Use {@link #getEndpoint()} to obtain the URL for configuring AWS SDK clients.
  *
- * <p>Container-based services (RDS, ElastiCache, Lambda, ECS) require access to the Docker
- * daemon. This module automatically mounts the Docker socket and runs as root to enable
- * these services. Sibling containers created by Floci (e.g. PostgreSQL for RDS) are
- * accessible on the Docker host via their mapped ports.
+ * <p>Container-based services (RDS, ElastiCache, Lambda, ECS, and others) require access to the
+ * Docker daemon. This module automatically mounts the Docker socket only when at least one
+ * currently enabled service actually needs it.
+ * Sibling containers created by Floci (e.g. PostgreSQL for RDS) are accessible on the Docker
+ * host via their mapped ports. Use {@link #withDockerSocket(boolean)} to override this
+ * auto-detection, e.g. to opt out entirely regardless of which services are enabled.
  *
  * <pre>{@code
  * try (FlociContainer floci = new FlociContainer()) {
@@ -64,6 +68,9 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private static final String DEFAULT_ACCOUNT_ID = "000000000000";
     private static final String DEFAULT_ACCESS_KEY = "test";
     private static final String DEFAULT_SECRET_KEY = "test";
+
+    // explicit override from withDockerSocket(), which takes full precedence of auto-detection mode
+    private Boolean dockerSocketOverride;
 
     private TlsConfig tlsConfig = TlsConfig.builder().build();
     private StorageConfig storageConfig = StorageConfig.builder().build();
@@ -261,9 +268,6 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         super(dockerImageName);
         dockerImageName.assertCompatibleWith(DEFAULT_IMAGE_NAME);
 
-        // Allow creation of child container instances (e.g. for ECS or RDS service)
-        withFileSystemBind(DockerClientFactory.instance().getRemoteDockerUnixSocketPath(), DOCKER_SOCKET_PATH);
-
         // Configure observability and healthcheck
         withLogLevel(Level.WARN);
         waitingFor(Wait.forHttp("/_floci/init")
@@ -275,6 +279,31 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         // Configure ports and env vars
         configureExposedPorts();
         configureEnvVars();
+    }
+
+    /**
+     * Finalizes container configuration right before creation, once every {@code with*Config(...)} call
+     * the caller is going to make has already happened. Used to conditionally mount the Docker socket
+     * (see {@link #shouldBindDockerSocket()}), since that decision depends on the final state of all
+     * service configurations rather than any single one of them.
+     */
+    @Override
+    protected void configure() {
+        super.configure();
+
+        Optional<Bind> dockerSocketBinding = findDockerSocketBinding();
+        if (shouldBindDockerSocket()) {
+            if (dockerSocketBinding.isEmpty()) {
+                // Allow creation of child container instances (e.g. for ECS or RDS service)
+                withFileSystemBind(DockerClientFactory.instance().getRemoteDockerUnixSocketPath(), DOCKER_SOCKET_PATH);
+            }
+        } else {
+            dockerSocketBinding.ifPresent(bind -> getBinds().remove(bind));
+
+            if (isDockerSocketRequiredByServices()) {
+                logger().warn("There are services requiring a Docker socket, but the FlociContainer is configured to not mount it. This may cause failures in those services.");
+            }
+        }
     }
 
     @Override
@@ -443,6 +472,32 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         serviceConfigAccessors.forEach(ServiceConfigAccessor::disable);
         configureExposedPorts();
         configureEnvVars();
+        return this;
+    }
+
+    /**
+     * Overrides whether the host Docker socket is mounted into the container, bypassing auto-detection.
+     *
+     * <p>By default (this method never called), the socket is mounted only if at least one currently
+     * enabled service actually needs it (e.g. RDS, Lambda, ElastiCache — see
+     * {@link io.floci.testcontainers.config.services.AbstractServiceConfig#requiresDockerSocket()}).
+     * Calling this method overrides that auto-detection entirely, regardless of which services are
+     * enabled:
+     *
+     * <ul>
+     *     <li>{@code withDockerSocket(false)} — never mount the socket. Useful on hosts where mounting
+     *     it is broken or undesired (e.g. rootless Podman with SELinux, see
+     *     <a href="https://github.com/floci-io/testcontainers-floci/issues/223">#223</a>) and no
+     *     Docker-backed service is actually required.</li>
+     *     <li>{@code withDockerSocket(true)} — always mount the socket, even if no currently enabled
+     *     service is detected as needing it.</li>
+     * </ul>
+     *
+     * @param enabled {@code true} to always mount the Docker socket, {@code false} to never mount it
+     * @return this container instance
+     */
+    public FlociContainer withDockerSocket(boolean enabled) {
+        this.dockerSocketOverride = enabled;
         return this;
     }
 
@@ -3026,6 +3081,35 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
 
         // Services config
         serviceConfigAccessors.forEach(accessor -> accessor.get().applyEnvVarsToContainer(this));
+    }
+
+    /**
+     * Determines whether the Docker socket should be mounted: an explicit {@link #withDockerSocket(boolean)}
+     * override always wins; otherwise falls back to {@link #isDockerSocketRequiredByServices()}.
+     *
+     * @return {@code true} if the Docker socket should be mounted
+     */
+    private boolean shouldBindDockerSocket() {
+        return dockerSocketOverride != null ? dockerSocketOverride : isDockerSocketRequiredByServices();
+    }
+
+    /**
+     * Returns whether any currently enabled service configuration needs access to the Docker socket
+     * (see {@link io.floci.testcontainers.config.services.AbstractServiceConfig#requiresDockerSocket()}).
+     *
+     * @return {@code true} if at least one enabled service requires the Docker socket
+     */
+    private boolean isDockerSocketRequiredByServices() {
+        return serviceConfigAccessors.stream().anyMatch(accessor -> accessor.get().requiresDockerSocket());
+    }
+
+    /**
+     * Returns the binding configuration for the Docker socket, if it is mounted into the container.
+     *
+     * @return an {@link Optional} containing the binding configuration, or {@link Optional#empty()} if not mounted
+     */
+    private Optional<Bind> findDockerSocketBinding() {
+        return getBinds().stream().filter(b -> DOCKER_SOCKET_PATH.equals(b.getVolume().getPath())).findFirst();
     }
 
     private static String uniqueShortId() {

@@ -139,6 +139,11 @@ public class MemoryDbConfig extends AbstractServiceConfig<MemoryDbConfig.Builder
         }
     }
 
+    @Override
+    public boolean requiresDockerSocket() {
+        return isEnabled() && !mock;
+    }
+
     /**
      * Builder for {@link MemoryDbConfig}.
      */

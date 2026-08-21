@@ -119,4 +119,10 @@ class NeptuneConfigTest {
         assertThat(copy.getDockerNetwork()).isEqualTo("test-network");
     }
 
+    @Test
+    void shouldRequireDockerSocketWhenEnabled() {
+        assertThat(NeptuneConfig.builder().build().requiresDockerSocket()).isTrue();
+        assertThat(NeptuneConfig.builder().enabled(false).build().requiresDockerSocket()).isFalse();
+    }
+
 }
