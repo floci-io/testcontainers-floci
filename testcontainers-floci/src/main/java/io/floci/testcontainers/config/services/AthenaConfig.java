@@ -61,6 +61,11 @@ public class AthenaConfig extends AbstractServiceConfig<AthenaConfig.Builder> {
         }
     }
 
+    @Override
+    public boolean requiresDockerSocket() {
+        return isEnabled() && !mock;
+    }
+
     /**
      * Builder for {@link AthenaConfig}.
      */

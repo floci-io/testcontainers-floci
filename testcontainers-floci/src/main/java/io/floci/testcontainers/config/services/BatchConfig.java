@@ -78,6 +78,11 @@ public class BatchConfig extends AbstractServiceConfig<BatchConfig.Builder> {
         }
     }
 
+    @Override
+    public boolean requiresDockerSocket() {
+        return isEnabled();
+    }
+
     /**
      * Builder for {@link BatchConfig}.
      */

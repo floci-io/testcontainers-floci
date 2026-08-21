@@ -130,4 +130,11 @@ class MwaaConfigTest {
         assertThat(copy.getDockerNetwork()).contains("my-mwaa-network");
     }
 
+    @Test
+    void shouldRequireDockerSocketOnlyWhenEnabledAndNotMocked() {
+        assertThat(MwaaConfig.builder().build().requiresDockerSocket()).isTrue();
+        assertThat(MwaaConfig.builder().enabled(false).build().requiresDockerSocket()).isFalse();
+        assertThat(MwaaConfig.builder().mock(true).build().requiresDockerSocket()).isFalse();
+    }
+
 }

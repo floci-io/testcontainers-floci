@@ -151,6 +151,11 @@ public class NeptuneConfig extends AbstractServiceConfig<NeptuneConfig.Builder> 
         }
     }
 
+    @Override
+    public boolean requiresDockerSocket() {
+        return isEnabled();
+    }
+
     /**
      * Builder for {@link NeptuneConfig}.
      */

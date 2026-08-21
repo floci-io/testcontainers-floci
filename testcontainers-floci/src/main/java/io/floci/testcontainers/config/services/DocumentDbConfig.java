@@ -92,6 +92,11 @@ public class DocumentDbConfig extends AbstractServiceConfig<DocumentDbConfig.Bui
         }
     }
 
+    @Override
+    public boolean requiresDockerSocket() {
+        return isEnabled() && !mock;
+    }
+
     /**
      * Builder for {@link DocumentDbConfig}.
      */

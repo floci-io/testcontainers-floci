@@ -78,4 +78,10 @@ class BatchConfigTest {
         assertThat(copy.getDockerNetwork()).isEqualTo("test-network");
     }
 
+    @Test
+    void shouldRequireDockerSocketWhenEnabled() {
+        assertThat(BatchConfig.builder().build().requiresDockerSocket()).isTrue();
+        assertThat(BatchConfig.builder().enabled(false).build().requiresDockerSocket()).isFalse();
+    }
+
 }

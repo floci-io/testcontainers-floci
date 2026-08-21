@@ -63,4 +63,19 @@ public abstract class AbstractServiceConfig<B extends AbstractServiceConfigBuild
      */
     public void applyExposedPortsToContainer(Container<?> container) {
     }
+
+    /**
+     * Returns whether this service, as currently configured, needs access to the host Docker socket to
+     * create sibling containers (e.g. RDS spinning up a PostgreSQL container, Lambda invoking functions
+     * in child containers).
+     *
+     * <p>Defaults to {@code false}. Docker-backed services override this to return {@code true} while
+     * {@linkplain #isEnabled() enabled} (and, for services that support a docker-less {@code mock} mode,
+     * only while not running in that mode).
+     *
+     * @return {@code true} if this service requires the Docker socket to be mounted
+     */
+    public boolean requiresDockerSocket() {
+        return false;
+    }
 }

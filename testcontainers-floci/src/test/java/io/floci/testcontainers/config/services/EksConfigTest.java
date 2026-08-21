@@ -155,4 +155,11 @@ class EksConfigTest {
         assertThat(copy.isDisableCni()).isTrue();
     }
 
+    @Test
+    void shouldRequireDockerSocketOnlyWhenEnabledAndNotMocked() {
+        assertThat(EksConfig.builder().build().requiresDockerSocket()).isTrue();
+        assertThat(EksConfig.builder().enabled(false).build().requiresDockerSocket()).isFalse();
+        assertThat(EksConfig.builder().mock(true).build().requiresDockerSocket()).isFalse();
+    }
+
 }

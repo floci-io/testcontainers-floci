@@ -222,6 +222,11 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
         }
     }
 
+    @Override
+    public boolean requiresDockerSocket() {
+        return isEnabled() && !mock;
+    }
+
     /**
      * Builder for {@link Ec2Config}.
      */

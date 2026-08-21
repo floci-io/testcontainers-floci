@@ -92,4 +92,11 @@ class EcsConfigTest {
         assertThat(copy.getDefaultCpuUnits()).isEqualTo(512);
     }
 
+    @Test
+    void shouldRequireDockerSocketOnlyWhenEnabledAndNotMocked() {
+        assertThat(EcsConfig.builder().build().requiresDockerSocket()).isTrue();
+        assertThat(EcsConfig.builder().enabled(false).build().requiresDockerSocket()).isFalse();
+        assertThat(EcsConfig.builder().mock(true).build().requiresDockerSocket()).isFalse();
+    }
+
 }

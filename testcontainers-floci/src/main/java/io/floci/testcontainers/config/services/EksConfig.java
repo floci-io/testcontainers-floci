@@ -222,6 +222,11 @@ public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
         }
     }
 
+    @Override
+    public boolean requiresDockerSocket() {
+        return isEnabled() && !mock;
+    }
+
     /**
      * Builder for {@link EksConfig}.
      */

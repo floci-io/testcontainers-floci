@@ -127,4 +127,11 @@ class RdsConfigTest {
         assertThat(copy.getEndpointHost()).isEqualTo("test-host");
     }
 
+    @Test
+    void shouldRequireDockerSocketOnlyWhenEnabledAndNotMocked() {
+        assertThat(RdsConfig.builder().build().requiresDockerSocket()).isTrue();
+        assertThat(RdsConfig.builder().enabled(false).build().requiresDockerSocket()).isFalse();
+        assertThat(RdsConfig.builder().mock(true).build().requiresDockerSocket()).isFalse();
+    }
+
 }

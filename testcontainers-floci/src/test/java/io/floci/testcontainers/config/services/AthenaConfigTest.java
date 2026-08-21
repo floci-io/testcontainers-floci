@@ -68,4 +68,11 @@ class AthenaConfigTest {
         assertThat(copy.isMock()).isTrue();
     }
 
+    @Test
+    void shouldRequireDockerSocketOnlyWhenEnabledAndNotMocked() {
+        assertThat(AthenaConfig.builder().build().requiresDockerSocket()).isTrue();
+        assertThat(AthenaConfig.builder().enabled(false).build().requiresDockerSocket()).isFalse();
+        assertThat(AthenaConfig.builder().mock(true).build().requiresDockerSocket()).isFalse();
+    }
+
 }

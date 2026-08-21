@@ -186,6 +186,11 @@ public class RdsConfig extends AbstractServiceConfig<RdsConfig.Builder> {
         }
     }
 
+    @Override
+    public boolean requiresDockerSocket() {
+        return isEnabled() && !mock;
+    }
+
     /**
      * Builder for {@link RdsConfig}.
      */

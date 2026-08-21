@@ -58,6 +58,11 @@ public class CodeBuildConfig extends AbstractServiceConfig<CodeBuildConfig.Build
         }
     }
 
+    @Override
+    public boolean requiresDockerSocket() {
+        return isEnabled();
+    }
+
     /**
      * Builder for {@link CodeBuildConfig}.
      */

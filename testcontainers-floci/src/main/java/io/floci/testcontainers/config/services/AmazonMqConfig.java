@@ -76,6 +76,11 @@ public class AmazonMqConfig extends AbstractServiceConfig<AmazonMqConfig.Builder
         }
     }
 
+    @Override
+    public boolean requiresDockerSocket() {
+        return isEnabled() && !mock;
+    }
+
     /**
      * Builder for {@link AmazonMqConfig}.
      */
