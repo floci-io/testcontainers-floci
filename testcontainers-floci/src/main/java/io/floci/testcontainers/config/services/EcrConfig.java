@@ -162,6 +162,11 @@ public class EcrConfig extends AbstractServiceConfig<EcrConfig.Builder> {
         }
     }
 
+    @Override
+    public boolean requiresDockerSocket() {
+        return isEnabled();
+    }
+
     /**
      * Builder for {@link EcrConfig}.
      */

@@ -129,6 +129,11 @@ public class OpenSearchConfig extends AbstractServiceConfig<OpenSearchConfig.Bui
         }
     }
 
+    @Override
+    public boolean requiresDockerSocket() {
+        return isEnabled() && !mock;
+    }
+
     /**
      * Builder for {@link OpenSearchConfig}.
      */

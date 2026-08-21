@@ -305,4 +305,10 @@ class LambdaConfigTest {
         assertThat(copy.getContainerNamePrefix()).contains("acme-prefix");
     }
 
+    @Test
+    void shouldRequireDockerSocketWhenEnabled() {
+        assertThat(LambdaConfig.builder().build().requiresDockerSocket()).isTrue();
+        assertThat(LambdaConfig.builder().enabled(false).build().requiresDockerSocket()).isFalse();
+    }
+
 }

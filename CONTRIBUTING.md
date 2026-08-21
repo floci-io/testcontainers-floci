@@ -93,7 +93,9 @@ When Floci adds a new service, the typical steps are:
 
 1. Create `testcontainers-floci/src/main/java/io/floci/testcontainers/config/services/<Service>Config.java`
    following the pattern of existing config classes (extend `AbstractServiceConfig`, inner `Builder`, env var naming
-   `FLOCI_SERVICES_<SERVICE>_<PROPERTY>`).
+   `FLOCI_SERVICES_<SERVICE>_<PROPERTY>`). If the service creates sibling Docker containers (like RDS or Lambda),
+   override `requiresDockerSocket()` to return `true` while enabled (and, for services with a docker-less `mock`
+   mode, only while not mocked) — this drives whether `FlociContainer` mounts the host Docker socket.
 2. Wire the config into `FlociContainer`: add a field, a `get<Service>Config()` getter, a `with<Service>Config(...)`
    method, and register in `configureEnvVars()` (and `configureExposedPorts()` if the service exposes extra ports).
 3. Add a config unit test in `testcontainers-floci/src/test/java/io/floci/testcontainers/config/services/`.

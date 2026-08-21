@@ -86,4 +86,11 @@ class DocumentDbConfigTest {
         assertThat(copy.getDockerNetwork()).isEqualTo("test-network");
     }
 
+    @Test
+    void shouldRequireDockerSocketOnlyWhenEnabledAndNotMocked() {
+        assertThat(DocumentDbConfig.builder().build().requiresDockerSocket()).isTrue();
+        assertThat(DocumentDbConfig.builder().enabled(false).build().requiresDockerSocket()).isFalse();
+        assertThat(DocumentDbConfig.builder().mock(true).build().requiresDockerSocket()).isFalse();
+    }
+
 }

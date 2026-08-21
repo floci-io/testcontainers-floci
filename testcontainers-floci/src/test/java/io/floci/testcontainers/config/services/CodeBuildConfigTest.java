@@ -68,4 +68,10 @@ class CodeBuildConfigTest {
         assertThat(copy.getDockerNetwork()).isEqualTo("test-network");
     }
 
+    @Test
+    void shouldRequireDockerSocketWhenEnabled() {
+        assertThat(CodeBuildConfig.builder().build().requiresDockerSocket()).isTrue();
+        assertThat(CodeBuildConfig.builder().enabled(false).build().requiresDockerSocket()).isFalse();
+    }
+
 }

@@ -80,6 +80,11 @@ public class KinesisAnalyticsConfig extends AbstractServiceConfig<KinesisAnalyti
         }
     }
 
+    @Override
+    public boolean requiresDockerSocket() {
+        return isEnabled() && !mock;
+    }
+
     /**
      * Builder for {@link KinesisAnalyticsConfig}.
      */

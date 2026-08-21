@@ -333,6 +333,11 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
         Optional<List<String>> allowedPaths();
     }
 
+    @Override
+    public boolean requiresDockerSocket() {
+        return isEnabled();
+    }
+
     /**
      * Builder for {@link LambdaConfig}.
      */

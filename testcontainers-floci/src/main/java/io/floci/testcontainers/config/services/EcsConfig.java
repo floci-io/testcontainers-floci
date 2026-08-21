@@ -104,6 +104,11 @@ public class EcsConfig extends AbstractServiceConfig<EcsConfig.Builder> {
         }
     }
 
+    @Override
+    public boolean requiresDockerSocket() {
+        return isEnabled() && !mock;
+    }
+
     /**
      * Builder for {@link EcsConfig}.
      */

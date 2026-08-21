@@ -156,6 +156,7 @@ class S3IntegrationTest {
 | `withDefaultAccountId(String)`        | Sets the default AWS account ID (default: `000000000000`)                                                      |
 | `withLogLevel(Level)`                 | Sets the Floci log level (`TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`)                                           |
 | `withDedicatedNetwork()`              | Creates a dedicated Docker network shared by Floci and its sibling containers (RDS, Lambda, ElastiCache, etc.) |
+| `withDockerSocket(boolean)`           | Overrides whether the host Docker socket is mounted, bypassing auto-detection (see below)                      |
 | `withTlsConfig(...)`                  | Configures TLS/HTTPS (self-signed by default; optionally provide cert/key paths)                               |
 | `withStorageConfig(...)`              | Configures persistent storage and volume behaviour                                                             |
 | `withSecurityConfig(...)`             | Configures CORS-related security settings                                                                      |
@@ -174,6 +175,25 @@ Example — disable a service and customize another:
 FlociContainer floci = new FlociContainer()
     .withSqsConfig(c -> c.defaultVisibilityTimeout(60).maxMessageSize(131072))
     .withDynamoDbConfig(c -> c.enabled(false));
+```
+
+#### Docker socket
+
+Some services (RDS, Lambda, ElastiCache, ECS, and others) spin up sibling Docker containers and need
+access to the host Docker socket. `FlociContainer` mounts the socket automatically, but only when at
+least one currently enabled service actually needs it — e.g. a container that only uses S3/SQS/DynamoDB
+never gets the socket mounted once the Docker-backed services are disabled (all services are enabled by default).
+
+Use `withDockerSocket(boolean)` to override this auto-detection entirely, regardless of which services
+are enabled:
+
+```java
+// Never mount the socket, e.g. on hosts where mounting it doesn't work
+// (such as rootless Podman with SELinux) and no Docker-backed service is needed
+FlociContainer floci = new FlociContainer().withDockerSocket(false);
+
+// Always mount the socket, even if no currently enabled service is detected as needing it
+FlociContainer floci = new FlociContainer().withDockerSocket(true);
 ```
 
 ### Container Properties

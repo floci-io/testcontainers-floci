@@ -122,6 +122,11 @@ public class MskConfig extends AbstractServiceConfig<MskConfig.Builder> {
         }
     }
 
+    @Override
+    public boolean requiresDockerSocket() {
+        return isEnabled() && !mock;
+    }
+
     /**
      * Builder for {@link MskConfig}.
      */

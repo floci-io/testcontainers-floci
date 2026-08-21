@@ -129,4 +129,10 @@ class EcrConfigTest {
         assertThat(copy.getDockerNetwork()).isEqualTo("test-network");
     }
 
+    @Test
+    void shouldRequireDockerSocketWhenEnabled() {
+        assertThat(EcrConfig.builder().build().requiresDockerSocket()).isTrue();
+        assertThat(EcrConfig.builder().enabled(false).build().requiresDockerSocket()).isFalse();
+    }
+
 }
