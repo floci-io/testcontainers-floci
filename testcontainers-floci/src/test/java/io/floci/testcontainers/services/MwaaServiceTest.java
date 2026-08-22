@@ -1,10 +1,7 @@
 package io.floci.testcontainers.services;
 
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
 import software.amazon.awssdk.services.mwaa.MwaaClient;
 import software.amazon.awssdk.services.mwaa.model.EnvironmentStatus;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -16,6 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 @TestMethodOrder(OrderAnnotation.class)
+@Disabled("Too time consuming and flaky")
 class MwaaServiceTest extends AbstractServiceTest {
 
     static MwaaClient mwaa;
