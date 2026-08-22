@@ -15,5 +15,5 @@
 /spring-boot-testcontainers-floci/  @hectorvent @cfranzen
 
 # CI, release automation, workflow hygiene
-/.github/                           @hectorvent
-/pom.xml                            @hectorvent
+/.github/                           @hectorvent @cfranzen
+/pom.xml                            @hectorvent @cfranzen
