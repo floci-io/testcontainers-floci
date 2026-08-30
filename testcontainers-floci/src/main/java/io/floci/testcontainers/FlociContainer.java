@@ -161,6 +161,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private CloudHsmV2Config cloudHsmV2Config = CloudHsmV2Config.builder().build();
     private EmrServerlessConfig emrServerlessConfig = EmrServerlessConfig.builder().build();
     private FisConfig fisConfig = FisConfig.builder().build();
+    private ConnectConfig connectConfig = ConnectConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -242,7 +243,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> guardDutyConfig, c -> guardDutyConfig = c),
             new ServiceConfigAccessor<>(() -> cloudHsmV2Config, c -> cloudHsmV2Config = c),
             new ServiceConfigAccessor<>(() -> emrServerlessConfig, c -> emrServerlessConfig = c),
-            new ServiceConfigAccessor<>(() -> fisConfig, c -> fisConfig = c)
+            new ServiceConfigAccessor<>(() -> fisConfig, c -> fisConfig = c),
+            new ServiceConfigAccessor<>(() -> connectConfig, c -> connectConfig = c)
     );
 
     /**
@@ -2999,6 +3001,35 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.fisConfig = builder.build();
         fisConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+
+    /**
+     * Connect-specific settings.
+     *
+     * @return the Connect configuration
+     */
+    public ConnectConfig getConnectConfig() {
+        return connectConfig;
+    }
+
+    /**
+     * Configures Connect-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withConnectConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link ConnectConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withConnectConfig(Consumer<ConnectConfig.Builder> configurer) {
+        ConnectConfig.Builder builder = connectConfig.toBuilder();
+        configurer.accept(builder);
+        this.connectConfig = builder.build();
+        connectConfig.applyEnvVarsToContainer(this);
         return this;
     }
 

@@ -870,4 +870,14 @@ class FlociContainerServicesConfigTest {
             assertThat(container.getInitHooksConfig().getTimeoutSeconds()).isEqualTo(60);
         }
     }
+
+    @Test
+    void shouldStoreConnectConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withConnectConfig(c -> c.enabled(false));
+
+            assertThat(container.getConnectConfig().isEnabled()).isFalse();
+        }
+    }
+
 }
