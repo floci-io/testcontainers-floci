@@ -166,6 +166,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private ApsConfig apsConfig = ApsConfig.builder().build();
     private CodeGuruReviewerConfig codeGuruReviewerConfig = CodeGuruReviewerConfig.builder().build();
     private ControlTowerConfig controlTowerConfig = ControlTowerConfig.builder().build();
+    private Route53ResolverConfig route53ResolverConfig = Route53ResolverConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -252,7 +253,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> ssoAdminConfig, c -> ssoAdminConfig = c),
             new ServiceConfigAccessor<>(() -> apsConfig, c -> apsConfig = c),
             new ServiceConfigAccessor<>(() -> codeGuruReviewerConfig, c -> codeGuruReviewerConfig = c),
-            new ServiceConfigAccessor<>(() -> controlTowerConfig, c -> controlTowerConfig = c)
+            new ServiceConfigAccessor<>(() -> controlTowerConfig, c -> controlTowerConfig = c),
+            new ServiceConfigAccessor<>(() -> route53ResolverConfig, c -> route53ResolverConfig = c)
     );
 
     /**
@@ -3154,6 +3156,35 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.controlTowerConfig = builder.build();
         controlTowerConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+
+    /**
+     * Route 53 Resolver-specific settings.
+     *
+     * @return the Route 53 Resolver configuration
+     */
+    public Route53ResolverConfig getRoute53ResolverConfig() {
+        return route53ResolverConfig;
+    }
+
+    /**
+     * Configures Route 53 Resolver-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withRoute53ResolverConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link Route53ResolverConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withRoute53ResolverConfig(Consumer<Route53ResolverConfig.Builder> configurer) {
+        Route53ResolverConfig.Builder builder = route53ResolverConfig.toBuilder();
+        configurer.accept(builder);
+        this.route53ResolverConfig = builder.build();
+        route53ResolverConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
