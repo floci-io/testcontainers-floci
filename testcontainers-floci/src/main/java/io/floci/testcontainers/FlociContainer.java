@@ -172,6 +172,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private ServiceQuotasConfig serviceQuotasConfig = ServiceQuotasConfig.builder().build();
     private RamConfig ramConfig = RamConfig.builder().build();
     private LakeFormationConfig lakeFormationConfig = LakeFormationConfig.builder().build();
+    private EfsConfig efsConfig = EfsConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -264,7 +265,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> serviceCatalogConfig, c -> serviceCatalogConfig = c),
             new ServiceConfigAccessor<>(() -> serviceQuotasConfig, c -> serviceQuotasConfig = c),
             new ServiceConfigAccessor<>(() -> ramConfig, c -> ramConfig = c),
-            new ServiceConfigAccessor<>(() -> lakeFormationConfig, c -> lakeFormationConfig = c)
+            new ServiceConfigAccessor<>(() -> lakeFormationConfig, c -> lakeFormationConfig = c),
+            new ServiceConfigAccessor<>(() -> efsConfig, c -> efsConfig = c)
     );
 
     /**
@@ -3340,6 +3342,35 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.lakeFormationConfig = builder.build();
         lakeFormationConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+
+    /**
+     * EFS-specific settings.
+     *
+     * @return the EFS configuration
+     */
+    public EfsConfig getEfsConfig() {
+        return efsConfig;
+    }
+
+    /**
+     * Configures EFS-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withEfsConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives an {@link EfsConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withEfsConfig(Consumer<EfsConfig.Builder> configurer) {
+        EfsConfig.Builder builder = efsConfig.toBuilder();
+        configurer.accept(builder);
+        this.efsConfig = builder.build();
+        efsConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
