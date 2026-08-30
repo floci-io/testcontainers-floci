@@ -173,6 +173,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private RamConfig ramConfig = RamConfig.builder().build();
     private LakeFormationConfig lakeFormationConfig = LakeFormationConfig.builder().build();
     private EfsConfig efsConfig = EfsConfig.builder().build();
+    private ResourceExplorer2Config resourceExplorer2Config = ResourceExplorer2Config.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -266,7 +267,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> serviceQuotasConfig, c -> serviceQuotasConfig = c),
             new ServiceConfigAccessor<>(() -> ramConfig, c -> ramConfig = c),
             new ServiceConfigAccessor<>(() -> lakeFormationConfig, c -> lakeFormationConfig = c),
-            new ServiceConfigAccessor<>(() -> efsConfig, c -> efsConfig = c)
+            new ServiceConfigAccessor<>(() -> efsConfig, c -> efsConfig = c),
+            new ServiceConfigAccessor<>(() -> resourceExplorer2Config, c -> resourceExplorer2Config = c)
     );
 
     /**
@@ -3371,6 +3373,35 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.efsConfig = builder.build();
         efsConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+
+    /**
+     * Resource Explorer v2-specific settings.
+     *
+     * @return the Resource Explorer v2 configuration
+     */
+    public ResourceExplorer2Config getResourceExplorer2Config() {
+        return resourceExplorer2Config;
+    }
+
+    /**
+     * Configures Resource Explorer v2-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withResourceExplorer2Config(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link ResourceExplorer2Config.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withResourceExplorer2Config(Consumer<ResourceExplorer2Config.Builder> configurer) {
+        ResourceExplorer2Config.Builder builder = resourceExplorer2Config.toBuilder();
+        configurer.accept(builder);
+        this.resourceExplorer2Config = builder.build();
+        resourceExplorer2Config.applyEnvVarsToContainer(this);
         return this;
     }
 
