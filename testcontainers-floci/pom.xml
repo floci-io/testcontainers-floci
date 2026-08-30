@@ -463,6 +463,11 @@
         </dependency>
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
+            <artifactId>servicecatalog</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
             <artifactId>networkfirewall</artifactId>
             <scope>test</scope>
         </dependency>
