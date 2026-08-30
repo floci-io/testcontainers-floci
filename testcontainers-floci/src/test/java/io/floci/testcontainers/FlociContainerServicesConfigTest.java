@@ -898,4 +898,13 @@ class FlociContainerServicesConfigTest {
         }
     }
 
+    @Test
+    void shouldStoreCodeGuruReviewerConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withCodeGuruReviewerConfig(c -> c.enabled(false));
+
+            assertThat(container.getCodeGuruReviewerConfig().isEnabled()).isFalse();
+        }
+    }
+
 }
