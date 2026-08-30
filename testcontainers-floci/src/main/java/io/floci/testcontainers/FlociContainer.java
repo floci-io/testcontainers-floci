@@ -167,6 +167,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private CodeGuruReviewerConfig codeGuruReviewerConfig = CodeGuruReviewerConfig.builder().build();
     private ControlTowerConfig controlTowerConfig = ControlTowerConfig.builder().build();
     private Route53ResolverConfig route53ResolverConfig = Route53ResolverConfig.builder().build();
+    private NetworkFirewallConfig networkFirewallConfig = NetworkFirewallConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -254,7 +255,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> apsConfig, c -> apsConfig = c),
             new ServiceConfigAccessor<>(() -> codeGuruReviewerConfig, c -> codeGuruReviewerConfig = c),
             new ServiceConfigAccessor<>(() -> controlTowerConfig, c -> controlTowerConfig = c),
-            new ServiceConfigAccessor<>(() -> route53ResolverConfig, c -> route53ResolverConfig = c)
+            new ServiceConfigAccessor<>(() -> route53ResolverConfig, c -> route53ResolverConfig = c),
+            new ServiceConfigAccessor<>(() -> networkFirewallConfig, c -> networkFirewallConfig = c)
     );
 
     /**
@@ -3185,6 +3187,35 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.route53ResolverConfig = builder.build();
         route53ResolverConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+
+    /**
+     * Network Firewall-specific settings.
+     *
+     * @return the Network Firewall configuration
+     */
+    public NetworkFirewallConfig getNetworkFirewallConfig() {
+        return networkFirewallConfig;
+    }
+
+    /**
+     * Configures Network Firewall-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withNetworkFirewallConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link NetworkFirewallConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withNetworkFirewallConfig(Consumer<NetworkFirewallConfig.Builder> configurer) {
+        NetworkFirewallConfig.Builder builder = networkFirewallConfig.toBuilder();
+        configurer.accept(builder);
+        this.networkFirewallConfig = builder.build();
+        networkFirewallConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
