@@ -178,6 +178,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private OrganizationsConfig organizationsConfig = OrganizationsConfig.builder().build();
     private ComprehendConfig comprehendConfig = ComprehendConfig.builder().build();
     private RekognitionConfig rekognitionConfig = RekognitionConfig.builder().build();
+    private TranscribeConfig transcribeConfig = TranscribeConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -276,7 +277,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> redshiftConfig, c -> redshiftConfig = c),
             new ServiceConfigAccessor<>(() -> organizationsConfig, c -> organizationsConfig = c),
             new ServiceConfigAccessor<>(() -> comprehendConfig, c -> comprehendConfig = c),
-            new ServiceConfigAccessor<>(() -> rekognitionConfig, c -> rekognitionConfig = c)
+            new ServiceConfigAccessor<>(() -> rekognitionConfig, c -> rekognitionConfig = c),
+            new ServiceConfigAccessor<>(() -> transcribeConfig, c -> transcribeConfig = c)
     );
 
     /**
@@ -3526,6 +3528,35 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.rekognitionConfig = builder.build();
         rekognitionConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+
+    /**
+     * Transcribe-specific settings.
+     *
+     * @return the Transcribe configuration
+     */
+    public TranscribeConfig getTranscribeConfig() {
+        return transcribeConfig;
+    }
+
+    /**
+     * Configures Transcribe-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withTranscribeConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link TranscribeConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withTranscribeConfig(Consumer<TranscribeConfig.Builder> configurer) {
+        TranscribeConfig.Builder builder = transcribeConfig.toBuilder();
+        configurer.accept(builder);
+        this.transcribeConfig = builder.build();
+        transcribeConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
