@@ -164,6 +164,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private ConnectConfig connectConfig = ConnectConfig.builder().build();
     private SsoAdminConfig ssoAdminConfig = SsoAdminConfig.builder().build();
     private ApsConfig apsConfig = ApsConfig.builder().build();
+    private CodeGuruReviewerConfig codeGuruReviewerConfig = CodeGuruReviewerConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -248,7 +249,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> fisConfig, c -> fisConfig = c),
             new ServiceConfigAccessor<>(() -> connectConfig, c -> connectConfig = c),
             new ServiceConfigAccessor<>(() -> ssoAdminConfig, c -> ssoAdminConfig = c),
-            new ServiceConfigAccessor<>(() -> apsConfig, c -> apsConfig = c)
+            new ServiceConfigAccessor<>(() -> apsConfig, c -> apsConfig = c),
+            new ServiceConfigAccessor<>(() -> codeGuruReviewerConfig, c -> codeGuruReviewerConfig = c)
     );
 
     /**
@@ -3092,6 +3094,35 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.apsConfig = builder.build();
         apsConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+
+    /**
+     * CodeGuru Reviewer-specific settings.
+     *
+     * @return the CodeGuru Reviewer configuration
+     */
+    public CodeGuruReviewerConfig getCodeGuruReviewerConfig() {
+        return codeGuruReviewerConfig;
+    }
+
+    /**
+     * Configures CodeGuru Reviewer-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withCodeGuruReviewerConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link CodeGuruReviewerConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withCodeGuruReviewerConfig(Consumer<CodeGuruReviewerConfig.Builder> configurer) {
+        CodeGuruReviewerConfig.Builder builder = codeGuruReviewerConfig.toBuilder();
+        configurer.accept(builder);
+        this.codeGuruReviewerConfig = builder.build();
+        codeGuruReviewerConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
