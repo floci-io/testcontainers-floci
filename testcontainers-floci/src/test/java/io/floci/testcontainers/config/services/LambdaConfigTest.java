@@ -18,8 +18,8 @@ class LambdaConfigTest {
         assertThat(config.getDefaultMemoryMb()).isEqualTo(128);
         assertThat(config.getDefaultTimeoutSeconds()).isEqualTo(3);
         assertThat(config.getDockerNetwork()).isNull();
-        assertThat(config.getRuntimeApiBasePort()).isEqualTo(9200);
-        assertThat(config.getRuntimeApiMaxPort()).isEqualTo(9209);
+        assertThat(config.getRuntimeApiBasePort()).isEqualTo(12000);
+        assertThat(config.getRuntimeApiMaxPort()).isEqualTo(12009);
         assertThat(config.getRuntimeApiPortsCount()).isEqualTo(10);
         assertThat(config.getPollIntervalMs()).isEqualTo(1000);
         assertThat(config.getContainerIdleTimeoutSeconds()).isEqualTo(300);
@@ -81,8 +81,8 @@ class LambdaConfigTest {
                 .containsEntry("FLOCI_SERVICES_LAMBDA_EPHEMERAL", "false")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_DEFAULT_MEMORY_MB", "128")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_DEFAULT_TIMEOUT_SECONDS", "3")
-                .containsEntry("FLOCI_SERVICES_LAMBDA_RUNTIME_API_BASE_PORT", "9200")
-                .containsEntry("FLOCI_SERVICES_LAMBDA_RUNTIME_API_MAX_PORT", "9209")
+                .containsEntry("FLOCI_SERVICES_LAMBDA_RUNTIME_API_BASE_PORT", "12000")
+                .containsEntry("FLOCI_SERVICES_LAMBDA_RUNTIME_API_MAX_PORT", "12009")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_POLL_INTERVAL_MS", "1000")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_CONTAINER_IDLE_TIMEOUT_SECONDS", "300")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_REGION_CONCURRENCY_LIMIT", "1000")
