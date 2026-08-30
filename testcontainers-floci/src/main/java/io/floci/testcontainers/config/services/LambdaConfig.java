@@ -11,7 +11,7 @@ import org.testcontainers.containers.Container;
  * <pre>{@code
  * LambdaConfig config = LambdaConfig.builder()
  *     .enabled(true)
- *     .runtimeApiPortRange(9300, 10)
+ *     .runtimeApiPortRange(12000, 10)
  *     .defaultMemoryMb(256)
  *     .build();
  * }</pre>
@@ -22,7 +22,7 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
     private static final boolean DEFAULT_EXPOSE_RUNTIME_PORTS = false;
     private static final int DEFAULT_MEMORY_MB = 128;
     private static final int DEFAULT_TIMEOUT_SECONDS = 3;
-    private static final int DEFAULT_RUNTIME_API_BASE_PORT = 9200;
+    private static final int DEFAULT_RUNTIME_API_BASE_PORT = 12000;
     private static final int DEFAULT_RUNTIME_API_PORTS_COUNT = 10;
     private static final int DEFAULT_POLL_INTERVAL_MS = 1000;
     private static final int DEFAULT_CONTAINER_IDLE_TIMEOUT_SECONDS = 300;
@@ -134,6 +134,9 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
 
     /**
      * Returns the base port for the Lambda Runtime API port range.
+     *
+     * <p>Floci reserves 12000-12499 for this pool; the default here only claims the first
+     * {@value DEFAULT_RUNTIME_API_PORTS_COUNT} of those.
      *
      * @return the base port
      */
@@ -446,6 +449,9 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
 
         /**
          * Sets the port range for the Lambda Runtime API.
+         *
+         * <p>Floci reserves 12000-12499 for this pool; stay within that range unless the
+         * Floci image in use has been configured with a different pool.
          *
          * @param basePort the base port (default {@value DEFAULT_RUNTIME_API_BASE_PORT})
          * @param amount   the amount of ports (default {@value DEFAULT_RUNTIME_API_PORTS_COUNT})
