@@ -880,4 +880,13 @@ class FlociContainerServicesConfigTest {
         }
     }
 
+    @Test
+    void shouldStoreSsoAdminConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withSsoAdminConfig(c -> c.enabled(false));
+
+            assertThat(container.getSsoAdminConfig().isEnabled()).isFalse();
+        }
+    }
+
 }

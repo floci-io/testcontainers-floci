@@ -162,6 +162,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private EmrServerlessConfig emrServerlessConfig = EmrServerlessConfig.builder().build();
     private FisConfig fisConfig = FisConfig.builder().build();
     private ConnectConfig connectConfig = ConnectConfig.builder().build();
+    private SsoAdminConfig ssoAdminConfig = SsoAdminConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -244,7 +245,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> cloudHsmV2Config, c -> cloudHsmV2Config = c),
             new ServiceConfigAccessor<>(() -> emrServerlessConfig, c -> emrServerlessConfig = c),
             new ServiceConfigAccessor<>(() -> fisConfig, c -> fisConfig = c),
-            new ServiceConfigAccessor<>(() -> connectConfig, c -> connectConfig = c)
+            new ServiceConfigAccessor<>(() -> connectConfig, c -> connectConfig = c),
+            new ServiceConfigAccessor<>(() -> ssoAdminConfig, c -> ssoAdminConfig = c)
     );
 
     /**
@@ -3030,6 +3032,35 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.connectConfig = builder.build();
         connectConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+
+    /**
+     * SSO Admin-specific settings.
+     *
+     * @return the SSO Admin configuration
+     */
+    public SsoAdminConfig getSsoAdminConfig() {
+        return ssoAdminConfig;
+    }
+
+    /**
+     * Configures SSO Admin-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withSsoAdminConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link SsoAdminConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withSsoAdminConfig(Consumer<SsoAdminConfig.Builder> configurer) {
+        SsoAdminConfig.Builder builder = ssoAdminConfig.toBuilder();
+        configurer.accept(builder);
+        this.ssoAdminConfig = builder.build();
+        ssoAdminConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
