@@ -170,6 +170,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private NetworkFirewallConfig networkFirewallConfig = NetworkFirewallConfig.builder().build();
     private ServiceCatalogConfig serviceCatalogConfig = ServiceCatalogConfig.builder().build();
     private ServiceQuotasConfig serviceQuotasConfig = ServiceQuotasConfig.builder().build();
+    private RamConfig ramConfig = RamConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -260,7 +261,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> route53ResolverConfig, c -> route53ResolverConfig = c),
             new ServiceConfigAccessor<>(() -> networkFirewallConfig, c -> networkFirewallConfig = c),
             new ServiceConfigAccessor<>(() -> serviceCatalogConfig, c -> serviceCatalogConfig = c),
-            new ServiceConfigAccessor<>(() -> serviceQuotasConfig, c -> serviceQuotasConfig = c)
+            new ServiceConfigAccessor<>(() -> serviceQuotasConfig, c -> serviceQuotasConfig = c),
+            new ServiceConfigAccessor<>(() -> ramConfig, c -> ramConfig = c)
     );
 
     /**
@@ -3278,6 +3280,35 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.serviceQuotasConfig = builder.build();
         serviceQuotasConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+
+    /**
+     * RAM-specific settings.
+     *
+     * @return the RAM configuration
+     */
+    public RamConfig getRamConfig() {
+        return ramConfig;
+    }
+
+    /**
+     * Configures RAM-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withRamConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link RamConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withRamConfig(Consumer<RamConfig.Builder> configurer) {
+        RamConfig.Builder builder = ramConfig.toBuilder();
+        configurer.accept(builder);
+        this.ramConfig = builder.build();
+        ramConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
