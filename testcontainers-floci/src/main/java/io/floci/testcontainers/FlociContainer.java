@@ -176,6 +176,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private ResourceExplorer2Config resourceExplorer2Config = ResourceExplorer2Config.builder().build();
     private RedshiftConfig redshiftConfig = RedshiftConfig.builder().build();
     private OrganizationsConfig organizationsConfig = OrganizationsConfig.builder().build();
+    private ComprehendConfig comprehendConfig = ComprehendConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -272,7 +273,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> efsConfig, c -> efsConfig = c),
             new ServiceConfigAccessor<>(() -> resourceExplorer2Config, c -> resourceExplorer2Config = c),
             new ServiceConfigAccessor<>(() -> redshiftConfig, c -> redshiftConfig = c),
-            new ServiceConfigAccessor<>(() -> organizationsConfig, c -> organizationsConfig = c)
+            new ServiceConfigAccessor<>(() -> organizationsConfig, c -> organizationsConfig = c),
+            new ServiceConfigAccessor<>(() -> comprehendConfig, c -> comprehendConfig = c)
     );
 
     /**
@@ -3464,6 +3466,35 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.organizationsConfig = builder.build();
         organizationsConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+
+    /**
+     * Comprehend-specific settings.
+     *
+     * @return the Comprehend configuration
+     */
+    public ComprehendConfig getComprehendConfig() {
+        return comprehendConfig;
+    }
+
+    /**
+     * Configures Comprehend-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withComprehendConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link ComprehendConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withComprehendConfig(Consumer<ComprehendConfig.Builder> configurer) {
+        ComprehendConfig.Builder builder = comprehendConfig.toBuilder();
+        configurer.accept(builder);
+        this.comprehendConfig = builder.build();
+        comprehendConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
