@@ -1014,4 +1014,13 @@ class FlociContainerServicesConfigTest {
         }
     }
 
+    @Test
+    void shouldStoreComprehendConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withComprehendConfig(c -> c.enabled(false));
+
+            assertThat(container.getComprehendConfig().isEnabled()).isFalse();
+        }
+    }
+
 }
