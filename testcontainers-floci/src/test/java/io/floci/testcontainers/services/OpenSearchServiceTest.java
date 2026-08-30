@@ -22,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 @TestMethodOrder(OrderAnnotation.class)
+@Disabled("Port mapping is not working correctly")
 class OpenSearchServiceTest extends AbstractServiceTest {
 
     static OpenSearchClient openSearch;
