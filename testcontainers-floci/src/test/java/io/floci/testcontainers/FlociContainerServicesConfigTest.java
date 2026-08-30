@@ -1032,4 +1032,13 @@ class FlociContainerServicesConfigTest {
         }
     }
 
+    @Test
+    void shouldStoreTranscribeConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withTranscribeConfig(c -> c.enabled(false));
+
+            assertThat(container.getTranscribeConfig().isEnabled()).isFalse();
+        }
+    }
+
 }
