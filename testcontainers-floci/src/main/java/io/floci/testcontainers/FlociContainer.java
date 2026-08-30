@@ -168,6 +168,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private ControlTowerConfig controlTowerConfig = ControlTowerConfig.builder().build();
     private Route53ResolverConfig route53ResolverConfig = Route53ResolverConfig.builder().build();
     private NetworkFirewallConfig networkFirewallConfig = NetworkFirewallConfig.builder().build();
+    private ServiceCatalogConfig serviceCatalogConfig = ServiceCatalogConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -256,7 +257,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> codeGuruReviewerConfig, c -> codeGuruReviewerConfig = c),
             new ServiceConfigAccessor<>(() -> controlTowerConfig, c -> controlTowerConfig = c),
             new ServiceConfigAccessor<>(() -> route53ResolverConfig, c -> route53ResolverConfig = c),
-            new ServiceConfigAccessor<>(() -> networkFirewallConfig, c -> networkFirewallConfig = c)
+            new ServiceConfigAccessor<>(() -> networkFirewallConfig, c -> networkFirewallConfig = c),
+            new ServiceConfigAccessor<>(() -> serviceCatalogConfig, c -> serviceCatalogConfig = c)
     );
 
     /**
@@ -3216,6 +3218,35 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.networkFirewallConfig = builder.build();
         networkFirewallConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+
+    /**
+     * Service Catalog-specific settings.
+     *
+     * @return the Service Catalog configuration
+     */
+    public ServiceCatalogConfig getServiceCatalogConfig() {
+        return serviceCatalogConfig;
+    }
+
+    /**
+     * Configures Service Catalog-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withServiceCatalogConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link ServiceCatalogConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withServiceCatalogConfig(Consumer<ServiceCatalogConfig.Builder> configurer) {
+        ServiceCatalogConfig.Builder builder = serviceCatalogConfig.toBuilder();
+        configurer.accept(builder);
+        this.serviceCatalogConfig = builder.build();
+        serviceCatalogConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
