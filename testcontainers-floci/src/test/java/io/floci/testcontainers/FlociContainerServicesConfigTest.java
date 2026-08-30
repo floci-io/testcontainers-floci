@@ -1023,4 +1023,13 @@ class FlociContainerServicesConfigTest {
         }
     }
 
+    @Test
+    void shouldStoreRekognitionConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withRekognitionConfig(c -> c.enabled(false));
+
+            assertThat(container.getRekognitionConfig().isEnabled()).isFalse();
+        }
+    }
+
 }

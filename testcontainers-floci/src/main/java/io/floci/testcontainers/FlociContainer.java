@@ -177,6 +177,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private RedshiftConfig redshiftConfig = RedshiftConfig.builder().build();
     private OrganizationsConfig organizationsConfig = OrganizationsConfig.builder().build();
     private ComprehendConfig comprehendConfig = ComprehendConfig.builder().build();
+    private RekognitionConfig rekognitionConfig = RekognitionConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -274,7 +275,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> resourceExplorer2Config, c -> resourceExplorer2Config = c),
             new ServiceConfigAccessor<>(() -> redshiftConfig, c -> redshiftConfig = c),
             new ServiceConfigAccessor<>(() -> organizationsConfig, c -> organizationsConfig = c),
-            new ServiceConfigAccessor<>(() -> comprehendConfig, c -> comprehendConfig = c)
+            new ServiceConfigAccessor<>(() -> comprehendConfig, c -> comprehendConfig = c),
+            new ServiceConfigAccessor<>(() -> rekognitionConfig, c -> rekognitionConfig = c)
     );
 
     /**
@@ -3495,6 +3497,35 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.comprehendConfig = builder.build();
         comprehendConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+
+    /**
+     * Rekognition-specific settings.
+     *
+     * @return the Rekognition configuration
+     */
+    public RekognitionConfig getRekognitionConfig() {
+        return rekognitionConfig;
+    }
+
+    /**
+     * Configures Rekognition-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withRekognitionConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link RekognitionConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withRekognitionConfig(Consumer<RekognitionConfig.Builder> configurer) {
+        RekognitionConfig.Builder builder = rekognitionConfig.toBuilder();
+        configurer.accept(builder);
+        this.rekognitionConfig = builder.build();
+        rekognitionConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
