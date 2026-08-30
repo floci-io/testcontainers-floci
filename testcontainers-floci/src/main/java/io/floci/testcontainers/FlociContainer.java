@@ -163,6 +163,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private FisConfig fisConfig = FisConfig.builder().build();
     private ConnectConfig connectConfig = ConnectConfig.builder().build();
     private SsoAdminConfig ssoAdminConfig = SsoAdminConfig.builder().build();
+    private ApsConfig apsConfig = ApsConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -246,7 +247,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> emrServerlessConfig, c -> emrServerlessConfig = c),
             new ServiceConfigAccessor<>(() -> fisConfig, c -> fisConfig = c),
             new ServiceConfigAccessor<>(() -> connectConfig, c -> connectConfig = c),
-            new ServiceConfigAccessor<>(() -> ssoAdminConfig, c -> ssoAdminConfig = c)
+            new ServiceConfigAccessor<>(() -> ssoAdminConfig, c -> ssoAdminConfig = c),
+            new ServiceConfigAccessor<>(() -> apsConfig, c -> apsConfig = c)
     );
 
     /**
@@ -3061,6 +3063,35 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.ssoAdminConfig = builder.build();
         ssoAdminConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+
+    /**
+     * APS (Prometheus)-specific settings.
+     *
+     * @return the APS (Prometheus) configuration
+     */
+    public ApsConfig getApsConfig() {
+        return apsConfig;
+    }
+
+    /**
+     * Configures APS (Prometheus)-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withApsConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives an {@link ApsConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withApsConfig(Consumer<ApsConfig.Builder> configurer) {
+        ApsConfig.Builder builder = apsConfig.toBuilder();
+        configurer.accept(builder);
+        this.apsConfig = builder.build();
+        apsConfig.applyEnvVarsToContainer(this);
         return this;
     }
 

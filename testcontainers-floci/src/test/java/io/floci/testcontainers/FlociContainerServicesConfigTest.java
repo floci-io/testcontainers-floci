@@ -889,4 +889,13 @@ class FlociContainerServicesConfigTest {
         }
     }
 
+    @Test
+    void shouldStoreApsConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withApsConfig(c -> c.enabled(false));
+
+            assertThat(container.getApsConfig().isEnabled()).isFalse();
+        }
+    }
+
 }
