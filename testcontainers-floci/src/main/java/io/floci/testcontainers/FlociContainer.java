@@ -165,6 +165,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private SsoAdminConfig ssoAdminConfig = SsoAdminConfig.builder().build();
     private ApsConfig apsConfig = ApsConfig.builder().build();
     private CodeGuruReviewerConfig codeGuruReviewerConfig = CodeGuruReviewerConfig.builder().build();
+    private ControlTowerConfig controlTowerConfig = ControlTowerConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -250,7 +251,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> connectConfig, c -> connectConfig = c),
             new ServiceConfigAccessor<>(() -> ssoAdminConfig, c -> ssoAdminConfig = c),
             new ServiceConfigAccessor<>(() -> apsConfig, c -> apsConfig = c),
-            new ServiceConfigAccessor<>(() -> codeGuruReviewerConfig, c -> codeGuruReviewerConfig = c)
+            new ServiceConfigAccessor<>(() -> codeGuruReviewerConfig, c -> codeGuruReviewerConfig = c),
+            new ServiceConfigAccessor<>(() -> controlTowerConfig, c -> controlTowerConfig = c)
     );
 
     /**
@@ -3123,6 +3125,35 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.codeGuruReviewerConfig = builder.build();
         codeGuruReviewerConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+
+    /**
+     * Control Tower-specific settings.
+     *
+     * @return the Control Tower configuration
+     */
+    public ControlTowerConfig getControlTowerConfig() {
+        return controlTowerConfig;
+    }
+
+    /**
+     * Configures Control Tower-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withControlTowerConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link ControlTowerConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withControlTowerConfig(Consumer<ControlTowerConfig.Builder> configurer) {
+        ControlTowerConfig.Builder builder = controlTowerConfig.toBuilder();
+        configurer.accept(builder);
+        this.controlTowerConfig = builder.build();
+        controlTowerConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
