@@ -169,6 +169,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private Route53ResolverConfig route53ResolverConfig = Route53ResolverConfig.builder().build();
     private NetworkFirewallConfig networkFirewallConfig = NetworkFirewallConfig.builder().build();
     private ServiceCatalogConfig serviceCatalogConfig = ServiceCatalogConfig.builder().build();
+    private ServiceQuotasConfig serviceQuotasConfig = ServiceQuotasConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -258,7 +259,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> controlTowerConfig, c -> controlTowerConfig = c),
             new ServiceConfigAccessor<>(() -> route53ResolverConfig, c -> route53ResolverConfig = c),
             new ServiceConfigAccessor<>(() -> networkFirewallConfig, c -> networkFirewallConfig = c),
-            new ServiceConfigAccessor<>(() -> serviceCatalogConfig, c -> serviceCatalogConfig = c)
+            new ServiceConfigAccessor<>(() -> serviceCatalogConfig, c -> serviceCatalogConfig = c),
+            new ServiceConfigAccessor<>(() -> serviceQuotasConfig, c -> serviceQuotasConfig = c)
     );
 
     /**
@@ -3247,6 +3249,35 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.serviceCatalogConfig = builder.build();
         serviceCatalogConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+
+    /**
+     * Service Quotas-specific settings.
+     *
+     * @return the Service Quotas configuration
+     */
+    public ServiceQuotasConfig getServiceQuotasConfig() {
+        return serviceQuotasConfig;
+    }
+
+    /**
+     * Configures Service Quotas-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withServiceQuotasConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link ServiceQuotasConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withServiceQuotasConfig(Consumer<ServiceQuotasConfig.Builder> configurer) {
+        ServiceQuotasConfig.Builder builder = serviceQuotasConfig.toBuilder();
+        configurer.accept(builder);
+        this.serviceQuotasConfig = builder.build();
+        serviceQuotasConfig.applyEnvVarsToContainer(this);
         return this;
     }
 

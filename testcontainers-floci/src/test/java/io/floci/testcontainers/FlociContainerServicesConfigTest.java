@@ -943,4 +943,13 @@ class FlociContainerServicesConfigTest {
         }
     }
 
+    @Test
+    void shouldStoreServiceQuotasConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withServiceQuotasConfig(c -> c.enabled(false));
+
+            assertThat(container.getServiceQuotasConfig().isEnabled()).isFalse();
+        }
+    }
+
 }
