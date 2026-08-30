@@ -970,4 +970,13 @@ class FlociContainerServicesConfigTest {
         }
     }
 
+    @Test
+    void shouldStoreEfsConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withEfsConfig(c -> c.enabled(false));
+
+            assertThat(container.getEfsConfig().isEnabled()).isFalse();
+        }
+    }
+
 }
