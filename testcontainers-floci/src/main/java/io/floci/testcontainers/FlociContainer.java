@@ -174,6 +174,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private LakeFormationConfig lakeFormationConfig = LakeFormationConfig.builder().build();
     private EfsConfig efsConfig = EfsConfig.builder().build();
     private ResourceExplorer2Config resourceExplorer2Config = ResourceExplorer2Config.builder().build();
+    private RedshiftConfig redshiftConfig = RedshiftConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -268,7 +269,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> ramConfig, c -> ramConfig = c),
             new ServiceConfigAccessor<>(() -> lakeFormationConfig, c -> lakeFormationConfig = c),
             new ServiceConfigAccessor<>(() -> efsConfig, c -> efsConfig = c),
-            new ServiceConfigAccessor<>(() -> resourceExplorer2Config, c -> resourceExplorer2Config = c)
+            new ServiceConfigAccessor<>(() -> resourceExplorer2Config, c -> resourceExplorer2Config = c),
+            new ServiceConfigAccessor<>(() -> redshiftConfig, c -> redshiftConfig = c)
     );
 
     /**
@@ -3402,6 +3404,35 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.resourceExplorer2Config = builder.build();
         resourceExplorer2Config.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+
+    /**
+     * Redshift-specific settings.
+     *
+     * @return the Redshift configuration
+     */
+    public RedshiftConfig getRedshiftConfig() {
+        return redshiftConfig;
+    }
+
+    /**
+     * Configures Redshift-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withRedshiftConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link RedshiftConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withRedshiftConfig(Consumer<RedshiftConfig.Builder> configurer) {
+        RedshiftConfig.Builder builder = redshiftConfig.toBuilder();
+        configurer.accept(builder);
+        this.redshiftConfig = builder.build();
+        redshiftConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
