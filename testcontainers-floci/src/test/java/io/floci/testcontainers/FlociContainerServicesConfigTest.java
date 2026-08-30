@@ -916,4 +916,13 @@ class FlociContainerServicesConfigTest {
         }
     }
 
+    @Test
+    void shouldStoreRoute53ResolverConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withRoute53ResolverConfig(c -> c.enabled(false));
+
+            assertThat(container.getRoute53ResolverConfig().isEnabled()).isFalse();
+        }
+    }
+
 }
