@@ -979,4 +979,13 @@ class FlociContainerServicesConfigTest {
         }
     }
 
+    @Test
+    void shouldStoreResourceExplorer2ConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withResourceExplorer2Config(c -> c.enabled(false));
+
+            assertThat(container.getResourceExplorer2Config().isEnabled()).isFalse();
+        }
+    }
+
 }
