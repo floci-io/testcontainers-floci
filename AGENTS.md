@@ -57,6 +57,11 @@ entry point; everything else hangs off it:
 - `config/services/*ConfigTest` (no Docker) test each config class's builder/env-var logic in isolation.
 - `FlociContainerServicesConfigTest` unit-tests the container-level wiring (env vars/ports) for every registered
   service.
+- `FlociContainerTest.shouldDisableAllServices()` asserts `disableAllServices()` disables every service, but it
+  enumerates each `container.get<Service>Config()` **explicitly** (not via `serviceConfigAccessors`). Whenever you
+  add a new service config, add its getter to that assertion list too — otherwise the new service is silently
+  unchecked. When adding a service, verify this test lists all config classes under `config/services/` and fill in
+  any gaps.
 
 ## Key Tech
 
