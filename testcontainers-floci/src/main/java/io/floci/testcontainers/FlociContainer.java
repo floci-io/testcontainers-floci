@@ -171,6 +171,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private ServiceCatalogConfig serviceCatalogConfig = ServiceCatalogConfig.builder().build();
     private ServiceQuotasConfig serviceQuotasConfig = ServiceQuotasConfig.builder().build();
     private RamConfig ramConfig = RamConfig.builder().build();
+    private LakeFormationConfig lakeFormationConfig = LakeFormationConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -262,7 +263,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> networkFirewallConfig, c -> networkFirewallConfig = c),
             new ServiceConfigAccessor<>(() -> serviceCatalogConfig, c -> serviceCatalogConfig = c),
             new ServiceConfigAccessor<>(() -> serviceQuotasConfig, c -> serviceQuotasConfig = c),
-            new ServiceConfigAccessor<>(() -> ramConfig, c -> ramConfig = c)
+            new ServiceConfigAccessor<>(() -> ramConfig, c -> ramConfig = c),
+            new ServiceConfigAccessor<>(() -> lakeFormationConfig, c -> lakeFormationConfig = c)
     );
 
     /**
@@ -3309,6 +3311,35 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.ramConfig = builder.build();
         ramConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+
+    /**
+     * Lake Formation-specific settings.
+     *
+     * @return the Lake Formation configuration
+     */
+    public LakeFormationConfig getLakeFormationConfig() {
+        return lakeFormationConfig;
+    }
+
+    /**
+     * Configures Lake Formation-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withLakeFormationConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link LakeFormationConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withLakeFormationConfig(Consumer<LakeFormationConfig.Builder> configurer) {
+        LakeFormationConfig.Builder builder = lakeFormationConfig.toBuilder();
+        configurer.accept(builder);
+        this.lakeFormationConfig = builder.build();
+        lakeFormationConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
