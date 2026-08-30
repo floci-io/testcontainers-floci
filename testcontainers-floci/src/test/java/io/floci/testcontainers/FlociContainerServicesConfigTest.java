@@ -988,4 +988,18 @@ class FlociContainerServicesConfigTest {
         }
     }
 
+    @Test
+    void shouldStoreRedshiftConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withRedshiftConfig(c -> c
+                    .defaultPort(5000)
+                    .imageVersion("postgres:16-alpine")
+                    .dockerNetwork("my-redshift-network"));
+
+            assertThat(container.getRedshiftConfig().getDefaultPort()).isEqualTo(5000);
+            assertThat(container.getRedshiftConfig().getImageVersion()).isEqualTo("postgres:16-alpine");
+            assertThat(container.getRedshiftConfig().getDockerNetwork()).isEqualTo("my-redshift-network");
+        }
+    }
+
 }
