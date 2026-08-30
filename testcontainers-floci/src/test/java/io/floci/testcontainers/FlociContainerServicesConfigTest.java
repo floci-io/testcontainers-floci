@@ -961,4 +961,13 @@ class FlociContainerServicesConfigTest {
         }
     }
 
+    @Test
+    void shouldStoreLakeFormationConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withLakeFormationConfig(c -> c.enabled(false));
+
+            assertThat(container.getLakeFormationConfig().isEnabled()).isFalse();
+        }
+    }
+
 }
