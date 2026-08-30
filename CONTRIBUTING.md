@@ -97,9 +97,13 @@ When Floci adds a new service, the typical steps are:
    override `requiresDockerSocket()` to return `true` while enabled (and, for services with a docker-less `mock`
    mode, only while not mocked) — this drives whether `FlociContainer` mounts the host Docker socket.
 2. Wire the config into `FlociContainer`: add a field, a `get<Service>Config()` getter, a `with<Service>Config(...)`
-   method, and register in `configureEnvVars()` (and `configureExposedPorts()` if the service exposes extra ports).
+   method, and register the field in the `serviceConfigAccessors` list (this drives `configureEnvVars()` /
+   `configureExposedPorts()` / `disableAllServices()`).
 3. Add a config unit test in `testcontainers-floci/src/test/java/io/floci/testcontainers/config/services/`.
-4. Add a test method to `FlociContainerServicesConfigTest` for the container wiring.
+4. Add a test method to `FlociContainerServicesConfigTest` for the container wiring, and add the new
+   `container.get<Service>Config()` to the assertion list in `FlociContainerTest.shouldDisableAllServices()`
+   (that test enumerates every service config explicitly, so a new service must be added there or it goes
+   unchecked).
 5. Add an integration test in `testcontainers-floci/src/test/java/io/floci/testcontainers/services/` extending
    `AbstractServiceTest`.
 
