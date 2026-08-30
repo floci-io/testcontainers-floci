@@ -952,4 +952,13 @@ class FlociContainerServicesConfigTest {
         }
     }
 
+    @Test
+    void shouldStoreRamConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withRamConfig(c -> c.enabled(false));
+
+            assertThat(container.getRamConfig().isEnabled()).isFalse();
+        }
+    }
+
 }
