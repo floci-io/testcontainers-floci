@@ -1002,4 +1002,16 @@ class FlociContainerServicesConfigTest {
         }
     }
 
+    @Test
+    void shouldStoreOrganizationsConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withOrganizationsConfig(c -> c
+                    .scpEnforcementEnabled(true)
+                    .managementAccountEmail("root@example.com"));
+
+            assertThat(container.getOrganizationsConfig().isScpEnforcementEnabled()).isTrue();
+            assertThat(container.getOrganizationsConfig().getManagementAccountEmail()).isEqualTo("root@example.com");
+        }
+    }
+
 }
