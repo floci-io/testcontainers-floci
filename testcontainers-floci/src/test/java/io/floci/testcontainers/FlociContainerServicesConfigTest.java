@@ -907,4 +907,13 @@ class FlociContainerServicesConfigTest {
         }
     }
 
+    @Test
+    void shouldStoreControlTowerConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withControlTowerConfig(c -> c.enabled(false));
+
+            assertThat(container.getControlTowerConfig().isEnabled()).isFalse();
+        }
+    }
+
 }
