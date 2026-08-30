@@ -934,4 +934,13 @@ class FlociContainerServicesConfigTest {
         }
     }
 
+    @Test
+    void shouldStoreServiceCatalogConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withServiceCatalogConfig(c -> c.enabled(false));
+
+            assertThat(container.getServiceCatalogConfig().isEnabled()).isFalse();
+        }
+    }
+
 }
