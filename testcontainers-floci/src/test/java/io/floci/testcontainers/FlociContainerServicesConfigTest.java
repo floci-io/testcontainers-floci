@@ -925,4 +925,13 @@ class FlociContainerServicesConfigTest {
         }
     }
 
+    @Test
+    void shouldStoreNetworkFirewallConfigOnContainer() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withNetworkFirewallConfig(c -> c.enabled(false));
+
+            assertThat(container.getNetworkFirewallConfig().isEnabled()).isFalse();
+        }
+    }
+
 }
