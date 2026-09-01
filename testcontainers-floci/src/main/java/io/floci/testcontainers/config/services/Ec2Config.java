@@ -1,5 +1,7 @@
 package io.floci.testcontainers.config.services;
 
+import java.util.Optional;
+
 import org.testcontainers.containers.Container;
 
 /**
@@ -35,6 +37,7 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
     private final int maxPublishedPortsPerInstance;
     private final String socatImage;
     private final boolean awsFaithfulPrivateIp;
+    private final Boolean containerIpsRoutable;
     private final AutoScaling autoScaling;
 
     private Ec2Config(Builder builder) {
@@ -49,6 +52,7 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
         this.maxPublishedPortsPerInstance = builder.maxPublishedPortsPerInstance;
         this.socatImage = builder.socatImage;
         this.awsFaithfulPrivateIp = builder.awsFaithfulPrivateIp;
+        this.containerIpsRoutable = builder.containerIpsRoutable;
         this.autoScaling = builder.autoScaling;
     }
 
@@ -182,6 +186,28 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
     }
 
     /**
+     * Returns whether an EC2 instance's Docker container IP is routable from the machines that
+     * consume Floci's API responses (Terraform, Terratest, your shell). When {@code true},
+     * DescribeInstances / DescribeAddresses report the container IP, so the address they hand out
+     * accepts connections on the service's real port (22 for SSH, and every other port the guest
+     * listens on) with no port mapping involved. When {@code false}, Floci keeps reporting
+     * {@code 127.0.0.1} and reachability depends on the published high host ports.
+     *
+     * <p>{@link Optional#empty()} (the default) means auto-detect: Floci opens a throwaway TCP
+     * connection towards the container network and treats a refusal as proof of a route. Set it
+     * explicitly when the probe cannot speak for your clients — most notably when Floci itself runs
+     * as a container, where the probe measures container-to-container reachability rather than
+     * host-to-container.
+     *
+     * <p>Env var: {@code FLOCI_SERVICES_EC2_CONTAINER_IPS_ROUTABLE}
+     *
+     * @return whether container IPs are routable, or {@link Optional#empty()} to auto-detect
+     */
+    public Optional<Boolean> getContainerIpsRoutable() {
+        return Optional.ofNullable(containerIpsRoutable);
+    }
+
+    /**
      * Returns the Auto Scaling configuration.
      *
      * @return the Auto Scaling configuration
@@ -206,6 +232,10 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
             container.withEnv("FLOCI_SERVICES_EC2_MAX_PUBLISHED_PORTS_PER_INSTANCE", String.valueOf(maxPublishedPortsPerInstance));
             container.withEnv("FLOCI_SERVICES_EC2_SOCAT_IMAGE", socatImage);
             container.withEnv("FLOCI_SERVICES_EC2_AWS_FAITHFUL_PRIVATE_IP", String.valueOf(awsFaithfulPrivateIp));
+
+            if (containerIpsRoutable != null) {
+                container.withEnv("FLOCI_SERVICES_EC2_CONTAINER_IPS_ROUTABLE", String.valueOf(containerIpsRoutable));
+            }
         }
     }
 
@@ -242,6 +272,7 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
         private int maxPublishedPortsPerInstance = DEFAULT_MAX_PUBLISHED_PORTS_PER_INSTANCE;
         private String socatImage = DEFAULT_SOCAT_IMAGE;
         private boolean awsFaithfulPrivateIp = DEFAULT_AWS_FAITHFUL_PRIVATE_IP;
+        private Boolean containerIpsRoutable;
         private AutoScaling autoScaling = new DefaultAutoScaling(true);
 
         private Builder() {
@@ -265,6 +296,7 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
             this.maxPublishedPortsPerInstance = instance.getMaxPublishedPortsPerInstance();
             this.socatImage = instance.getSocatImage();
             this.awsFaithfulPrivateIp = instance.isAwsFaithfulPrivateIp();
+            this.containerIpsRoutable = instance.getContainerIpsRoutable().orElse(null);
             this.autoScaling = instance.getAutoScaling();
         }
 
@@ -367,6 +399,29 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
          */
         public Builder awsFaithfulPrivateIp(boolean awsFaithfulPrivateIp) {
             this.awsFaithfulPrivateIp = awsFaithfulPrivateIp;
+            return this;
+        }
+
+        /**
+         * Sets whether an EC2 instance's Docker container IP is routable from the machines that
+         * consume Floci's API responses (Terraform, Terratest, your shell). When {@code true},
+         * DescribeInstances / DescribeAddresses report the container IP, so the address they hand
+         * out accepts connections on the service's real port (22 for SSH, and every other port the
+         * guest listens on) with no port mapping involved. When {@code false}, Floci keeps
+         * reporting {@code 127.0.0.1} and reachability depends on the published high host ports.
+         *
+         * <p>Passing {@code null} (the default) means auto-detect: Floci opens a throwaway TCP
+         * connection towards the container network and treats a refusal as proof of a route. Set it
+         * explicitly when the probe cannot speak for your clients — most notably when Floci itself
+         * runs as a container, where the probe measures container-to-container reachability rather
+         * than host-to-container.
+         *
+         * @param containerIpsRoutable whether container IPs are routable, or {@code null} to
+         *                             auto-detect (the default)
+         * @return this builder
+         */
+        public Builder containerIpsRoutable(Boolean containerIpsRoutable) {
+            this.containerIpsRoutable = containerIpsRoutable;
             return this;
         }
 
