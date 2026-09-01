@@ -2,6 +2,8 @@ package io.floci.testcontainers.config.services;
 
 import org.testcontainers.containers.Container;
 
+import java.util.Optional;
+
 /**
  * Configuration for ElastiCache-specific container settings.
  *
@@ -26,6 +28,7 @@ public class ElastiCacheConfig extends AbstractServiceConfig<ElastiCacheConfig.B
     private final String defaultImage;
     private final String defaultMemcachedImage;
     private final String dockerNetwork;
+    private final String clusterAnnounceHostname;
 
     private ElastiCacheConfig(Builder builder) {
         super(builder.enabled);
@@ -34,6 +37,7 @@ public class ElastiCacheConfig extends AbstractServiceConfig<ElastiCacheConfig.B
         this.defaultImage = builder.defaultImage;
         this.defaultMemcachedImage = builder.defaultMemcachedImage;
         this.dockerNetwork = builder.dockerNetwork;
+        this.clusterAnnounceHostname = builder.clusterAnnounceHostname;
     }
 
     /**
@@ -110,6 +114,20 @@ public class ElastiCacheConfig extends AbstractServiceConfig<ElastiCacheConfig.B
         return dockerNetwork;
     }
 
+    /**
+     * Returns the hostname that cluster-mode nodes announce in {@code MOVED}/{@code ASK} redirects
+     * and cluster topology, and that is reported as the {@code ConfigurationEndpoint}.
+     *
+     * <p>Must resolve to Floci from every client location; set it when the main hostname only
+     * resolves inside Floci's Docker network. {@link Optional#empty()} means the main hostname
+     * is used.
+     *
+     * @return the cluster announce hostname, or {@link Optional#empty()} if not configured
+     */
+    public Optional<String> getClusterAnnounceHostname() {
+        return Optional.ofNullable(clusterAnnounceHostname);
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_ELASTICACHE_ENABLED", String.valueOf(isEnabled()));
@@ -122,6 +140,10 @@ public class ElastiCacheConfig extends AbstractServiceConfig<ElastiCacheConfig.B
 
             if (dockerNetwork != null) {
                 container.withEnv("FLOCI_SERVICES_ELASTICACHE_DOCKER_NETWORK", dockerNetwork);
+            }
+
+            if (clusterAnnounceHostname != null) {
+                container.withEnv("FLOCI_SERVICES_ELASTICACHE_CLUSTER_ANNOUNCE_HOSTNAME", clusterAnnounceHostname);
             }
         }
     }
@@ -150,6 +172,7 @@ public class ElastiCacheConfig extends AbstractServiceConfig<ElastiCacheConfig.B
         private String defaultImage = DEFAULT_IMAGE;
         private String defaultMemcachedImage = DEFAULT_MEMCACHED_IMAGE;
         private String dockerNetwork;
+        private String clusterAnnounceHostname;
 
         private Builder() {
             // Allow instantiation only via ElastiCacheConfig.builder()
@@ -167,6 +190,7 @@ public class ElastiCacheConfig extends AbstractServiceConfig<ElastiCacheConfig.B
             this.defaultImage = instance.getDefaultImage();
             this.defaultMemcachedImage = instance.getDefaultMemcachedImage();
             this.dockerNetwork = instance.getDockerNetwork();
+            this.clusterAnnounceHostname = instance.getClusterAnnounceHostname().orElse(null);
         }
 
         /**
@@ -212,6 +236,21 @@ public class ElastiCacheConfig extends AbstractServiceConfig<ElastiCacheConfig.B
          */
         public Builder dockerNetwork(String dockerNetwork) {
             this.dockerNetwork = dockerNetwork;
+            return this;
+        }
+
+        /**
+         * Sets the hostname that cluster-mode nodes announce in {@code MOVED}/{@code ASK} redirects
+         * and cluster topology, and that is reported as the {@code ConfigurationEndpoint}.
+         *
+         * <p>Must resolve to Floci from every client location; set it when the main hostname only
+         * resolves inside Floci's Docker network.
+         *
+         * @param clusterAnnounceHostname the announce hostname, or {@code null} to use the main hostname
+         * @return this builder
+         */
+        public Builder clusterAnnounceHostname(String clusterAnnounceHostname) {
+            this.clusterAnnounceHostname = clusterAnnounceHostname;
             return this;
         }
 
