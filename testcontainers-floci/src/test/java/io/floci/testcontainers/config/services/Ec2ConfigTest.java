@@ -24,6 +24,7 @@ class Ec2ConfigTest {
         assertThat(config.getMaxPublishedPortsPerInstance()).isEqualTo(2);
         assertThat(config.getSocatImage()).isEqualTo("alpine/socat");
         assertThat(config.isAwsFaithfulPrivateIp()).isFalse();
+        assertThat(config.getContainerIpsRoutable()).isEmpty();
         assertThat(config.getAutoScaling().enabled()).isTrue();
     }
 
@@ -39,6 +40,7 @@ class Ec2ConfigTest {
                 .maxPublishedPortsPerInstance(50)
                 .socatImage("alpine/socat:1.8.0.0")
                 .awsFaithfulPrivateIp(true)
+                .containerIpsRoutable(true)
                 .autoScaling(false)
                 .build();
         assertThat(config.isEnabled()).isFalse();
@@ -53,6 +55,7 @@ class Ec2ConfigTest {
         assertThat(config.getMaxPublishedPortsPerInstance()).isEqualTo(50);
         assertThat(config.getSocatImage()).isEqualTo("alpine/socat:1.8.0.0");
         assertThat(config.isAwsFaithfulPrivateIp()).isTrue();
+        assertThat(config.getContainerIpsRoutable()).contains(true);
         assertThat(config.getAutoScaling().enabled()).isFalse();
     }
 
@@ -73,7 +76,8 @@ class Ec2ConfigTest {
                 .containsEntry("FLOCI_SERVICES_EC2_MAX_PUBLISHED_PORTS_PER_INSTANCE", "2")
                 .containsEntry("FLOCI_SERVICES_EC2_SOCAT_IMAGE", "alpine/socat")
                 .containsEntry("FLOCI_SERVICES_EC2_AWS_FAITHFUL_PRIVATE_IP", "false")
-                .containsEntry("FLOCI_SERVICES_AUTOSCALING_ENABLED", "true");
+                .containsEntry("FLOCI_SERVICES_AUTOSCALING_ENABLED", "true")
+                .doesNotContainKey("FLOCI_SERVICES_EC2_CONTAINER_IPS_ROUTABLE");
     }
 
     @Test
@@ -89,6 +93,7 @@ class Ec2ConfigTest {
                 .maxPublishedPortsPerInstance(50)
                 .socatImage("alpine/socat:1.8.0.0")
                 .awsFaithfulPrivateIp(true)
+                .containerIpsRoutable(true)
                 .autoScaling(false)
                 .build()
                 .applyEnvVarsToContainer(container);
@@ -105,7 +110,34 @@ class Ec2ConfigTest {
                 .containsEntry("FLOCI_SERVICES_EC2_MAX_PUBLISHED_PORTS_PER_INSTANCE", "50")
                 .containsEntry("FLOCI_SERVICES_EC2_SOCAT_IMAGE", "alpine/socat:1.8.0.0")
                 .containsEntry("FLOCI_SERVICES_EC2_AWS_FAITHFUL_PRIVATE_IP", "true")
+                .containsEntry("FLOCI_SERVICES_EC2_CONTAINER_IPS_ROUTABLE", "true")
                 .containsEntry("FLOCI_SERVICES_AUTOSCALING_ENABLED", "false");
+    }
+
+    @Test
+    void shouldApplyContainerIpsRoutableFalseEnvVarToContainer() {
+        GenericContainer<?> container = genericContainer();
+        Ec2Config.builder()
+                .enabled(true)
+                .containerIpsRoutable(false)
+                .build()
+                .applyEnvVarsToContainer(container);
+
+        assertThat(container.getEnvMap())
+                .containsEntry("FLOCI_SERVICES_EC2_CONTAINER_IPS_ROUTABLE", "false");
+    }
+
+    @Test
+    void shouldNotApplyContainerIpsRoutableEnvVarWhenServiceDisabled() {
+        GenericContainer<?> container = genericContainer();
+        Ec2Config.builder()
+                .enabled(false)
+                .containerIpsRoutable(true)
+                .build()
+                .applyEnvVarsToContainer(container);
+
+        assertThat(container.getEnvMap())
+                .doesNotContainKey("FLOCI_SERVICES_EC2_CONTAINER_IPS_ROUTABLE");
     }
 
     @Test
@@ -165,6 +197,7 @@ class Ec2ConfigTest {
                 .maxPublishedPortsPerInstance(3)
                 .socatImage("test/socat")
                 .awsFaithfulPrivateIp(true)
+                .containerIpsRoutable(true)
                 .autoScaling(false)
                 .build();
         Ec2Config copy = config.toBuilder().build();
@@ -179,6 +212,7 @@ class Ec2ConfigTest {
         assertThat(copy.getMaxPublishedPortsPerInstance()).isEqualTo(3);
         assertThat(copy.getSocatImage()).isEqualTo("test/socat");
         assertThat(copy.isAwsFaithfulPrivateIp()).isTrue();
+        assertThat(copy.getContainerIpsRoutable()).contains(true);
         assertThat(copy.getAutoScaling().enabled()).isFalse();
     }
 
