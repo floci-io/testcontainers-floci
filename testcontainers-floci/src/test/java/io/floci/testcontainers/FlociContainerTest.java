@@ -85,6 +85,67 @@ class FlociContainerTest {
     }
 
     @Test
+    void shouldNotConfigureAiMockConfigByDefault() {
+        try (FlociContainer container = new FlociContainer()) {
+            assertThat(container.getAiMockConfigFile()).isEmpty();
+            assertThat(container.getAiMockConfig()).isEmpty();
+            assertThat(container.getEnvMap()).doesNotContainKey("FLOCI_AI_MOCK_CONFIG_FILE");
+        }
+    }
+
+    @Test
+    void shouldUseExplicitAiMockConfigFilePath() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withAiMockConfigFile("/etc/floci/AiMockConfig.json");
+
+            assertThat(container.getAiMockConfigFile()).contains("/etc/floci/AiMockConfig.json");
+            assertThat(container.getAiMockConfig()).isEmpty();
+            assertThat(container.getEnvMap())
+                    .containsEntry("FLOCI_AI_MOCK_CONFIG_FILE", "/etc/floci/AiMockConfig.json");
+            assertThat(TransferableCopyInspector.pendingCopies(container)).isEmpty();
+        }
+    }
+
+    @Test
+    void shouldCopyAiMockConfigContentIntoContainer() {
+        String fileContent = "{\"Textract\":{},\"Comprehend\":{},\"Rekognition\":{}}";
+
+        try (FlociContainer container = new FlociContainer()) {
+            container.withAiMockConfig(fileContent);
+
+            String containerPath = container.getAiMockConfigFile().orElseThrow();
+            assertThat(containerPath).startsWith("/tmp/floci-ai-mock-config-").endsWith(".json");
+            assertThat(container.getAiMockConfig()).contains(fileContent);
+            assertThat(container.getEnvMap()).containsEntry("FLOCI_AI_MOCK_CONFIG_FILE", containerPath);
+            assertThat(TransferableCopyInspector.contentCopiedTo(container, containerPath)).contains(fileContent);
+        }
+    }
+
+    @Test
+    void shouldClearAiMockConfigContentWhenExplicitPathIsSet() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withAiMockConfig("{}").withAiMockConfigFile("/etc/floci/AiMockConfig.json");
+
+            assertThat(container.getAiMockConfig()).isEmpty();
+            assertThat(container.getAiMockConfigFile()).contains("/etc/floci/AiMockConfig.json");
+            assertThat(container.getEnvMap())
+                    .containsEntry("FLOCI_AI_MOCK_CONFIG_FILE", "/etc/floci/AiMockConfig.json");
+        }
+    }
+
+    @Test
+    void shouldClearExplicitAiMockConfigPathWhenContentIsSet() {
+        try (FlociContainer container = new FlociContainer()) {
+            container.withAiMockConfigFile("/etc/floci/AiMockConfig.json").withAiMockConfig("{}");
+
+            assertThat(container.getAiMockConfig()).contains("{}");
+            String containerPath = container.getAiMockConfigFile().orElseThrow();
+            assertThat(containerPath).startsWith("/tmp/floci-ai-mock-config-");
+            assertThat(container.getEnvMap()).containsEntry("FLOCI_AI_MOCK_CONFIG_FILE", containerPath);
+        }
+    }
+
+    @Test
     void shouldExposeFlociPort() {
         try (FlociContainer container = new FlociContainer()) {
             assertThat(container.getExposedPorts()).contains(FlociContainer.PORT);
