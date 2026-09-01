@@ -46,6 +46,7 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
     private final List<String> extraHosts;
     private final String ecrBaseUri;
     private final String containerNamePrefix;
+    private final Integer codeVolumePopulateConcurrency;
 
     private LambdaConfig(Builder builder) {
         super(builder.enabled);
@@ -65,6 +66,7 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
         this.extraHosts = builder.extraHosts;
         this.ecrBaseUri = builder.ecrBaseUri;
         this.containerNamePrefix = builder.containerNamePrefix;
+        this.codeVolumePopulateConcurrency = builder.codeVolumePopulateConcurrency;
     }
 
     /**
@@ -263,6 +265,23 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
         return Optional.ofNullable(containerNamePrefix);
     }
 
+    /**
+     * Returns the maximum number of concurrent first-time code-volume populates, or
+     * {@link Optional#empty()} to let Floci derive {@code max(2, availableProcessors() / 2)}.
+     *
+     * <p>Populating streams a large function's unpacked code into a helper container, so a
+     * burst of them can overwhelm the Docker daemon; this caps how many run at once. The
+     * derivation reads the JVM's view of the cgroup CPU quota, so a CPU-constrained Floci
+     * container collapses the cap to 2 and concurrent cold starts of distinct functions
+     * serialize into pairs. Set this to decouple the cap from the CPU allocation. Values
+     * below 1 are ignored by Floci with a warning rather than deadlocking every populate.
+     *
+     * @return the code-volume populate concurrency cap, or {@link Optional#empty()} if not configured
+     */
+    public Optional<Integer> getCodeVolumePopulateConcurrency() {
+        return Optional.ofNullable(codeVolumePopulateConcurrency);
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_LAMBDA_ENABLED", String.valueOf(isEnabled()));
@@ -298,6 +317,11 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
 
             if (containerNamePrefix != null && !containerNamePrefix.isBlank()) {
                 container.withEnv("FLOCI_SERVICES_LAMBDA_CONTAINER_NAME_PREFIX", containerNamePrefix);
+            }
+
+            if (codeVolumePopulateConcurrency != null) {
+                container.withEnv("FLOCI_SERVICES_LAMBDA_CODE_VOLUME_POPULATE_CONCURRENCY",
+                        String.valueOf(codeVolumePopulateConcurrency));
             }
         }
     }
@@ -362,6 +386,7 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
         private List<String> extraHosts;
         private String ecrBaseUri = DEFAULT_ECR_BASE_URI;
         private String containerNamePrefix;
+        private Integer codeVolumePopulateConcurrency;
 
         private Builder() {
             // Allow instantiation only via LambdaConfig.builder()
@@ -390,6 +415,7 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
             this.extraHosts = instance.getExtraHosts().orElse(null);
             this.ecrBaseUri = instance.getEcrBaseUri();
             this.containerNamePrefix = instance.getContainerNamePrefix().orElse(null);
+            this.codeVolumePopulateConcurrency = instance.getCodeVolumePopulateConcurrency().orElse(null);
         }
 
         /**
@@ -587,6 +613,23 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
          */
         public Builder containerNamePrefix(String containerNamePrefix) {
             this.containerNamePrefix = containerNamePrefix;
+            return this;
+        }
+
+        /**
+         * Sets the maximum number of concurrent first-time code-volume populates.
+         *
+         * <p>Populating streams a large function's unpacked code into a helper container, so
+         * a burst of them can overwhelm the Docker daemon; this caps how many run at once.
+         * Unset lets Floci derive {@code max(2, availableProcessors() / 2)} from its view of
+         * the cgroup CPU quota, which collapses the cap to 2 on a CPU-constrained container.
+         * Values below 1 are ignored by Floci with a warning.
+         *
+         * @param codeVolumePopulateConcurrency the concurrency cap, or {@code null} to unset (default: derived)
+         * @return this builder
+         */
+        public Builder codeVolumePopulateConcurrency(Integer codeVolumePopulateConcurrency) {
+            this.codeVolumePopulateConcurrency = codeVolumePopulateConcurrency;
             return this;
         }
 
