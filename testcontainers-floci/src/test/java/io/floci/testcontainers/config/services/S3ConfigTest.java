@@ -14,6 +14,7 @@ class S3ConfigTest {
         assertThat(config.isEnabled()).isTrue();
         assertThat(config.getDefaultPresignExpirySeconds()).isEqualTo(3600);
         assertThat(config.isEnforceAuth()).isFalse();
+        assertThat(config.isGlobalBucketNamespace()).isFalse();
     }
 
     @Test
@@ -22,10 +23,12 @@ class S3ConfigTest {
                 .enabled(false)
                 .defaultPresignExpirySeconds(7200)
                 .enforceAuth(true)
+                .globalBucketNamespace(true)
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.getDefaultPresignExpirySeconds()).isEqualTo(7200);
         assertThat(config.isEnforceAuth()).isTrue();
+        assertThat(config.isGlobalBucketNamespace()).isTrue();
     }
 
     @Test
@@ -36,7 +39,8 @@ class S3ConfigTest {
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_SERVICES_S3_ENABLED", "true")
                 .containsEntry("FLOCI_SERVICES_S3_DEFAULT_PRESIGN_EXPIRY_SECONDS", "3600")
-                .containsEntry("FLOCI_SERVICES_S3_ENFORCE_AUTH", "false");
+                .containsEntry("FLOCI_SERVICES_S3_ENFORCE_AUTH", "false")
+                .containsEntry("FLOCI_SERVICES_S3_GLOBAL_BUCKET_NAMESPACE", "false");
     }
 
     @Test
@@ -45,12 +49,14 @@ class S3ConfigTest {
         S3Config.builder()
                 .defaultPresignExpirySeconds(7200)
                 .enforceAuth(true)
+                .globalBucketNamespace(true)
                 .build()
                 .applyEnvVarsToContainer(container);
 
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_SERVICES_S3_DEFAULT_PRESIGN_EXPIRY_SECONDS", "7200")
-                .containsEntry("FLOCI_SERVICES_S3_ENFORCE_AUTH", "true");
+                .containsEntry("FLOCI_SERVICES_S3_ENFORCE_AUTH", "true")
+                .containsEntry("FLOCI_SERVICES_S3_GLOBAL_BUCKET_NAMESPACE", "true");
     }
 
     @Test
@@ -67,11 +73,13 @@ class S3ConfigTest {
                 .enabled(false)
                 .defaultPresignExpirySeconds(7200)
                 .enforceAuth(true)
+                .globalBucketNamespace(true)
                 .build();
         S3Config copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
         assertThat(copy.getDefaultPresignExpirySeconds()).isEqualTo(7200);
         assertThat(copy.isEnforceAuth()).isTrue();
+        assertThat(copy.isGlobalBucketNamespace()).isTrue();
     }
 
 }
