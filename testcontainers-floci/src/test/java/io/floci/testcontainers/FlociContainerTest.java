@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.event.Level;
 import org.testcontainers.containers.BindMode;
+import org.testcontainers.containers.TransferableCopyInspector;
 import org.testcontainers.images.builder.Transferable;
 import org.testcontainers.utility.DockerImageName;
 
@@ -410,6 +411,26 @@ class FlociContainerTest {
 
             assertThat(container.getBinds())
                     .anyMatch(b -> "/var/run/docker.sock".equals(b.getVolume().getPath()));
+        }
+    }
+
+    @Test
+    void shouldMountFilesIntoContainer() {
+        // A service config can mount a generated file into the container via
+        // applyFileMountsToContainer(); the Step Functions mock config file is used here only as a
+        // concrete example of that mechanism.
+        String fileContent = "{\"StateMachines\":{},\"MockedResponses\":{}}";
+
+        try (FlociContainer container = new FlociContainer()
+                .withStepFunctionsConfig(c -> c.mockConfig(fileContent))) {
+
+            String containerPath = container.getStepFunctionsConfig().getMockConfigFile().orElseThrow();
+
+            assertThat(TransferableCopyInspector.contentCopiedTo(container, containerPath)).contains(fileContent);
+
+            // File mounts survive later, unrelated service-config changes.
+            container.withS3Config(c -> c.enabled(true));
+            assertThat(TransferableCopyInspector.contentCopiedTo(container, containerPath)).contains(fileContent);
         }
     }
 }
