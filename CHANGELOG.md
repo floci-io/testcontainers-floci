@@ -1,5 +1,54 @@
 # Changelog
 
+## [2.16.0](https://github.com/floci-io/testcontainers-floci/compare/v2.15.0...v2.16.0) (2026-09-01)
+
+
+### Features
+
+* add APS (Prometheus) service support ([5a9a4e4](https://github.com/floci-io/testcontainers-floci/commit/5a9a4e48fa8d99449ea5f17d83bab022b967e483))
+* add CodeGuru Reviewer service support ([a636318](https://github.com/floci-io/testcontainers-floci/commit/a636318c4a96b0af88628d483545c53945586151))
+* add Comprehend service support ([943de32](https://github.com/floci-io/testcontainers-floci/commit/943de323e21001e6c713786abf453e4ee2af816c))
+* add Connect service support ([aeff7e6](https://github.com/floci-io/testcontainers-floci/commit/aeff7e67d9be833bf0b802a6c3811560b2fb33bb))
+* add Control Tower service support ([9fbe953](https://github.com/floci-io/testcontainers-floci/commit/9fbe9532a5171a2abd874a3febe97a4db0eb8493))
+* add EFS service support ([97af513](https://github.com/floci-io/testcontainers-floci/commit/97af513f6bd03a5f43b21881ecc17cd7f24e3066))
+* add EMR Serverless service support ([a9de0a3](https://github.com/floci-io/testcontainers-floci/commit/a9de0a3ca7fad15fe055d1e92880da6758f5e5f1))
+* add FIS service support ([6d801fe](https://github.com/floci-io/testcontainers-floci/commit/6d801fe5bec52fc8aabee1e5f6ca0241b9207913))
+* add Lake Formation service support ([b2376ab](https://github.com/floci-io/testcontainers-floci/commit/b2376ab9c201716fdcc15fefcb0c10281e26bae3))
+* add Lambda containerNamePrefix config property ([f72941b](https://github.com/floci-io/testcontainers-floci/commit/f72941bb7becf11b1187eda1282d155dcab22e7b))
+* add Network Firewall service support ([57939ef](https://github.com/floci-io/testcontainers-floci/commit/57939ef663127d24256a06221355495db563dfcc))
+* add Organizations service support ([8ddb862](https://github.com/floci-io/testcontainers-floci/commit/8ddb8628fc88a239e8f1be246528bbec5144891a))
+* add RAM service support ([2ba2d6d](https://github.com/floci-io/testcontainers-floci/commit/2ba2d6d0bdd35903400a3ec0e55989136509d11b))
+* add Redshift service support ([1b1dd87](https://github.com/floci-io/testcontainers-floci/commit/1b1dd87a0d0ef7e05a04e78be0ae7c894902834c))
+* add Rekognition service support ([f33d3e0](https://github.com/floci-io/testcontainers-floci/commit/f33d3e08e8214f33e98796daf0fed1e9a38c72f4))
+* add Resource Explorer v2 service support ([2cf1773](https://github.com/floci-io/testcontainers-floci/commit/2cf177307992f67f12271319a8c3dd715be16adb))
+* add Route 53 Resolver service support ([f51e75a](https://github.com/floci-io/testcontainers-floci/commit/f51e75aa0da7d6430b2b93cce87731466c8944ff))
+* add Service Catalog service support ([a1bc222](https://github.com/floci-io/testcontainers-floci/commit/a1bc222e179c01f173447d23320b91ce352e81b3))
+* add Service Quotas service support ([27431b2](https://github.com/floci-io/testcontainers-floci/commit/27431b273dac6c44e275672a5a893aa5d868eecf))
+* add SSO Admin service support ([1465b7e](https://github.com/floci-io/testcontainers-floci/commit/1465b7e8b2240d8eda8f88eab8cb16441e704a6d))
+* **ai:** add aiMockConfigFile config property to FlociContainer ([caeddc1](https://github.com/floci-io/testcontainers-floci/commit/caeddc10435913f1b6e5f5190086fa94f9975593))
+* **cloudformation:** add allowStubLambdaCode config property ([ebb2d2d](https://github.com/floci-io/testcontainers-floci/commit/ebb2d2d60af3d88c44e79cbf7d4389d0ff81171e))
+* **ec2:** add containerIpsRoutable config property ([18b605b](https://github.com/floci-io/testcontainers-floci/commit/18b605bc339ae1562ce594e89ed94c3faf484e90))
+* **elasticache:** add clusterAnnounceHostname config property ([43454da](https://github.com/floci-io/testcontainers-floci/commit/43454da4abe209a83973e4bc74d816c858cfd9aa))
+* **s3:** add globalBucketNamespace config property ([6faf023](https://github.com/floci-io/testcontainers-floci/commit/6faf023eacc21ea0dbe43c52bf24aef0d044992e))
+* **stepfunctions:** add mockConfig for Step Functions Local mock file ([9989210](https://github.com/floci-io/testcontainers-floci/commit/9989210bb6ef6dd767a61f5b96b4563f9522dc55))
+* wire Transcribe service into FlociContainer ([461986d](https://github.com/floci-io/testcontainers-floci/commit/461986d07bade2a7e8aa5381b57c477bd6a26823))
+
+
+### Bug Fixes
+
+* Added missing service config accessors for CloudFront and ConfigService ([22aac4f](https://github.com/floci-io/testcontainers-floci/commit/22aac4f19fbe5b4e3ab71358b0df07012dc9c65a))
+* **lambda:** move Runtime API default port pool to 12000-12499 ([4f0706f](https://github.com/floci-io/testcontainers-floci/commit/4f0706fde28b51b71e5c3a291b84c067484c9b0f))
+* mount Docker socket only when a service needs it ([02ae923](https://github.com/floci-io/testcontainers-floci/commit/02ae9236464fd2b0f17e8f6088a2c5ea9ada8aa2)), closes [#223](https://github.com/floci-io/testcontainers-floci/issues/223)
+* **rds:** configure reachable endpoints ([c12394c](https://github.com/floci-io/testcontainers-floci/commit/c12394c6b30c8bf6a71b1e47a1534153ea191f2f))
+* **release:** Allow manual dispatch to publish/scan an existing tag ([0381b41](https://github.com/floci-io/testcontainers-floci/commit/0381b41d476440ffc7798e2e5b002e5022fdf2e7))
+* **release:** Allow manual dispatch to publish/scan an existing tag ([aaa1b7a](https://github.com/floci-io/testcontainers-floci/commit/aaa1b7a90e8d0c3659f19def11b15ee63b3ca0d1))
+* update CODEOWNERS to include cfranzen ([135ddb4](https://github.com/floci-io/testcontainers-floci/commit/135ddb4b308d6c46f6ce07ffac495d52a7c8c84c))
+
+
+### Documentation
+
+* add MAINTAINERS.md and CODEOWNERS ([e116c5c](https://github.com/floci-io/testcontainers-floci/commit/e116c5c6ada8613ed82287834cf4348c3cc13436))
+
 ## [2.15.0](https://github.com/floci-io/testcontainers-floci/compare/v2.14.0...v2.15.0) (2026-08-18)
 
 
