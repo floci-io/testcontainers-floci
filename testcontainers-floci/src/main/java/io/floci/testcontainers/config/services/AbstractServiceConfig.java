@@ -65,6 +65,22 @@ public abstract class AbstractServiceConfig<B extends AbstractServiceConfigBuild
     }
 
     /**
+     * Applies this service configuration to the given container by mounting the files it needs
+     * into the container (e.g. copying a generated configuration file to a path the Floci server
+     * reads).
+     *
+     * <p>Called from the same places as {@link #applyEnvVarsToContainer(Container)} — from the
+     * {@link io.floci.testcontainers.FlociContainer} constructor, after every
+     * {@code with<Service>Config(...)} call, and after {@code disableAllServices()} — so
+     * implementations must tolerate being invoked more than once for the same configuration
+     * (re-copying identical content to the same container path is harmless).
+     *
+     * @param container the container to configure
+     */
+    public void applyFileMountsToContainer(Container<?> container) {
+    }
+
+    /**
      * Returns whether this service, as currently configured, needs access to the host Docker socket to
      * create sibling containers (e.g. RDS spinning up a PostgreSQL container, Lambda invoking functions
      * in child containers).
