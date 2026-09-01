@@ -140,8 +140,9 @@ public class RdsConfig extends AbstractServiceConfig<RdsConfig.Builder> {
     }
 
     /**
-     * Returns the hostname advertised for RDS endpoints, or {@code null} if not set. Uses
-     * published Docker ports when configured.
+     * Returns the hostname advertised for RDS endpoints, or {@code null} if not set. When not
+     * set, the container falls back to its Docker host so that clients can reach the mapped
+     * proxy ports.
      *
      * @return the endpoint host, or {@code null}
      */
@@ -170,9 +171,12 @@ public class RdsConfig extends AbstractServiceConfig<RdsConfig.Builder> {
             if (dockerNetwork != null) {
                 container.withEnv("FLOCI_SERVICES_RDS_DOCKER_NETWORK", dockerNetwork);
             }
-            if (endpointHost != null) {
-                container.withEnv("FLOCI_SERVICES_RDS_ENDPOINT_HOST", endpointHost);
-            }
+            // RDS clients connect to the endpoint returned by the AWS API, so it must point at
+            // a host that Testcontainers clients can actually reach. Use the caller-provided
+            // value when set, otherwise fall back to the Docker host that publishes the mapped
+            // proxy ports.
+            container.withEnv("FLOCI_SERVICES_RDS_ENDPOINT_HOST",
+                    endpointHost != null ? endpointHost : container.getHost());
         }
     }
 
@@ -295,10 +299,10 @@ public class RdsConfig extends AbstractServiceConfig<RdsConfig.Builder> {
         }
 
         /**
-         * Sets the hostname advertised for RDS endpoints. Uses published Docker ports when
-         * configured.
+         * Sets the hostname advertised for RDS endpoints. When {@code null}, the container
+         * advertises its Docker host so that clients can reach the mapped proxy ports.
          *
-         * @param endpointHost the endpoint host, or {@code null} to use Floci's default
+         * @param endpointHost the endpoint host, or {@code null} to use the container's Docker host
          * @return this builder
          */
         public Builder endpointHost(String endpointHost) {

@@ -62,7 +62,7 @@ class RdsConfigTest {
                 .doesNotContainKey("FLOCI_SERVICES_RDS_DEFAULT_MYSQL_IMAGE")
                 .doesNotContainKey("FLOCI_SERVICES_RDS_DEFAULT_MARIADB_IMAGE")
                 .doesNotContainKey("FLOCI_SERVICES_RDS_DOCKER_NETWORK")
-                .doesNotContainKey("FLOCI_SERVICES_RDS_ENDPOINT_HOST");
+                .containsEntry("FLOCI_SERVICES_RDS_ENDPOINT_HOST", container.getHost());
     }
 
     @Test
@@ -90,6 +90,25 @@ class RdsConfigTest {
                 .containsEntry("FLOCI_SERVICES_RDS_DEFAULT_MARIADB_IMAGE", "mariadb:10")
                 .containsEntry("FLOCI_SERVICES_RDS_DOCKER_NETWORK", "my-rds-network")
                 .containsEntry("FLOCI_SERVICES_RDS_ENDPOINT_HOST", "rds.example.com");
+    }
+
+    @Test
+    void shouldDefaultEndpointHostToContainerHost() {
+        try (FlociContainer container = new FlociContainer()) {
+            assertThat(container.getEnvMap())
+                    .containsEntry("FLOCI_SERVICES_RDS_ENDPOINT_HOST", container.getHost());
+        }
+    }
+
+    @Test
+    void shouldPreserveConfiguredEndpointHostWhenDisablingAllServices() {
+        try (FlociContainer container = new FlociContainer()
+                .withRdsConfig(c -> c.endpointHost("rds.example.com"))) {
+            container.disableAllServices();
+
+            assertThat(container.getEnvMap())
+                    .containsEntry("FLOCI_SERVICES_RDS_ENDPOINT_HOST", "rds.example.com");
+        }
     }
 
     @Test
