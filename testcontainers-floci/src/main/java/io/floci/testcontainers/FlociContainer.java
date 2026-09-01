@@ -11,6 +11,7 @@ import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.images.builder.Transferable;
 import org.testcontainers.utility.DockerImageName;
 
 import java.io.IOException;
@@ -69,8 +70,16 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private static final String DEFAULT_ACCESS_KEY = "test";
     private static final String DEFAULT_SECRET_KEY = "test";
 
+    private static final String AI_MOCK_CONFIG_FILE_PREFIX = "/tmp/floci-ai-mock-config-";
+    private static final String AI_MOCK_CONFIG_FILE_SUFFIX = ".json";
+
     // explicit override from withDockerSocket(), which takes full precedence of auto-detection mode
     private Boolean dockerSocketOverride;
+
+    // Shared AI mock-response configuration: either an explicit container path (withAiMockConfigFile)
+    // or a generated path pointing at the content copied into the container (withAiMockConfig).
+    private String aiMockConfigFile;
+    private String aiMockConfig;
 
     private TlsConfig tlsConfig = TlsConfig.builder().build();
     private StorageConfig storageConfig = StorageConfig.builder().build();
@@ -474,6 +483,70 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             logger.warn("Invalid log level '{}' in environment variable, defaulting to WARN", logLevelStr);
             return Level.WARN;
         }
+    }
+
+    /**
+     * Returns the path, inside the container, of the shared mock-response configuration file used by the
+     * fixed-stub AI services (Textract, Comprehend, Rekognition) to return a caller-configured response
+     * instead of their default canned stub.
+     *
+     * <p>The path is either the one passed to {@link #withAiMockConfigFile(String)} verbatim, or a
+     * generated path pointing at the file whose content was passed to {@link #withAiMockConfig(String)}.
+     *
+     * @return the container path of the AI mock configuration file, or {@link Optional#empty()} if none is configured
+     */
+    public Optional<String> getAiMockConfigFile() {
+        return Optional.ofNullable(aiMockConfigFile);
+    }
+
+    /**
+     * Returns the raw AI mock configuration file content supplied via {@link #withAiMockConfig(String)},
+     * if any. When present, this content is copied into the container at {@link #getAiMockConfigFile()}.
+     *
+     * @return the AI mock configuration content, or {@link Optional#empty()} if it was not configured by content
+     */
+    public Optional<String> getAiMockConfig() {
+        return Optional.ofNullable(aiMockConfig);
+    }
+
+    /**
+     * Sets the path, inside the container, of a shared mock-response configuration file that already exists
+     * in the container (for example one added through a volume or another {@code withCopy*} call). The
+     * fixed-stub AI services (Textract, Comprehend, Rekognition) use it to return a caller-configured
+     * response instead of their default canned stub.
+     *
+     * <p>Use {@link #withAiMockConfig(String)} instead to hand over just the file content and let
+     * {@link FlociContainer} take care of placing the file into the container.
+     *
+     * <p>Calling this method clears any content previously set via {@link #withAiMockConfig(String)}.
+     *
+     * @param aiMockConfigFile the container path of the AI mock configuration file
+     * @return this container instance
+     */
+    public FlociContainer withAiMockConfigFile(String aiMockConfigFile) {
+        this.aiMockConfigFile = aiMockConfigFile;
+        this.aiMockConfig = null;
+        return withEnv("FLOCI_AI_MOCK_CONFIG_FILE", aiMockConfigFile);
+    }
+
+    /**
+     * Sets the content of the shared mock-response configuration file used by the fixed-stub AI services
+     * (Textract, Comprehend, Rekognition) to return a caller-configured response instead of their default
+     * canned stub.
+     *
+     * <p>The content is copied into the container under a generated, randomized path, which is then used
+     * as {@link #getAiMockConfigFile()}. Callers therefore do not need to manage any files themselves.
+     *
+     * <p>Calling this method clears any path previously set via {@link #withAiMockConfigFile(String)}.
+     *
+     * @param aiMockConfig the AI mock configuration file content
+     * @return this container instance
+     */
+    public FlociContainer withAiMockConfig(String aiMockConfig) {
+        this.aiMockConfig = aiMockConfig;
+        this.aiMockConfigFile = AI_MOCK_CONFIG_FILE_PREFIX + UUID.randomUUID() + AI_MOCK_CONFIG_FILE_SUFFIX;
+        withCopyToContainer(Transferable.of(aiMockConfig), aiMockConfigFile);
+        return withEnv("FLOCI_AI_MOCK_CONFIG_FILE", aiMockConfigFile);
     }
 
     /**

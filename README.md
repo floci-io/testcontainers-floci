@@ -155,6 +155,8 @@ class S3IntegrationTest {
 | `withDefaultAvailabilityZone(String)` | Sets the default availability zone (default: `us-east-1a`)                                                     |
 | `withDefaultAccountId(String)`        | Sets the default AWS account ID (default: `000000000000`)                                                      |
 | `withLogLevel(Level)`                 | Sets the Floci log level (`TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`)                                           |
+| `withAiMockConfigFile(String)`        | Points the fixed-stub AI services (Textract, Comprehend, Rekognition) at a mock-response file in the container |
+| `withAiMockConfig(String)`            | Same, but takes the mock-response file content and copies it into the container for you                        |
 | `withDedicatedNetwork()`              | Creates a dedicated Docker network shared by Floci and its sibling containers (RDS, Lambda, ElastiCache, etc.) |
 | `withDockerSocket(boolean)`           | Overrides whether the host Docker socket is mounted, bypassing auto-detection (see below)                      |
 | `withTlsConfig(...)`                  | Configures TLS/HTTPS (self-signed by default; optionally provide cert/key paths)                               |
