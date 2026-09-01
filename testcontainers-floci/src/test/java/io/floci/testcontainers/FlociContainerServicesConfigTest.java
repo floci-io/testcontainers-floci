@@ -205,10 +205,11 @@ class FlociContainerServicesConfigTest {
     @Test
     void shouldStoreS3ConfigOnContainer() {
         try (FlociContainer container = new FlociContainer()) {
-            container.withS3Config(c -> c.defaultPresignExpirySeconds(7200).enforceAuth(true));
+            container.withS3Config(c -> c.defaultPresignExpirySeconds(7200).enforceAuth(true).globalBucketNamespace(true));
 
             assertThat(container.getS3Config().getDefaultPresignExpirySeconds()).isEqualTo(7200);
             assertThat(container.getS3Config().isEnforceAuth()).isTrue();
+            assertThat(container.getS3Config().isGlobalBucketNamespace()).isTrue();
         }
     }
 

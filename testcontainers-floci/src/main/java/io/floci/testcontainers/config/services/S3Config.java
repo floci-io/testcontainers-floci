@@ -17,14 +17,17 @@ public class S3Config extends AbstractServiceConfig<S3Config.Builder> {
 
     private static final int DEFAULT_PRESIGN_EXPIRY_SECONDS = 3600;
     private static final boolean DEFAULT_ENFORCE_AUTH = false;
+    private static final boolean DEFAULT_GLOBAL_BUCKET_NAMESPACE = false;
 
     private final int defaultPresignExpirySeconds;
     private final boolean enforceAuth;
+    private final boolean globalBucketNamespace;
 
     private S3Config(Builder builder) {
         super(builder.enabled);
         this.defaultPresignExpirySeconds = builder.defaultPresignExpirySeconds;
         this.enforceAuth = builder.enforceAuth;
+        this.globalBucketNamespace = builder.globalBucketNamespace;
     }
 
     /**
@@ -65,6 +68,16 @@ public class S3Config extends AbstractServiceConfig<S3Config.Builder> {
         return enforceAuth;
     }
 
+    /**
+     * Returns whether S3 bucket/object existence resolution spans every account's partition,
+     * modelling AWS's globally-unique bucket namespace. Listing operations stay owner-scoped.
+     *
+     * @return {@code true} if the global bucket namespace is enabled
+     */
+    public boolean isGlobalBucketNamespace() {
+        return globalBucketNamespace;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_S3_ENABLED", String.valueOf(isEnabled()));
@@ -72,6 +85,7 @@ public class S3Config extends AbstractServiceConfig<S3Config.Builder> {
         if (isEnabled()) {
             container.withEnv("FLOCI_SERVICES_S3_DEFAULT_PRESIGN_EXPIRY_SECONDS", String.valueOf(defaultPresignExpirySeconds));
             container.withEnv("FLOCI_SERVICES_S3_ENFORCE_AUTH", String.valueOf(enforceAuth));
+            container.withEnv("FLOCI_SERVICES_S3_GLOBAL_BUCKET_NAMESPACE", String.valueOf(globalBucketNamespace));
         }
     }
 
@@ -82,6 +96,7 @@ public class S3Config extends AbstractServiceConfig<S3Config.Builder> {
 
         private int defaultPresignExpirySeconds = DEFAULT_PRESIGN_EXPIRY_SECONDS;
         private boolean enforceAuth = DEFAULT_ENFORCE_AUTH;
+        private boolean globalBucketNamespace = DEFAULT_GLOBAL_BUCKET_NAMESPACE;
 
         private Builder() {
             // Allow instantiation only via S3Config.builder()
@@ -96,6 +111,7 @@ public class S3Config extends AbstractServiceConfig<S3Config.Builder> {
             super(instance);
             this.defaultPresignExpirySeconds = instance.getDefaultPresignExpirySeconds();
             this.enforceAuth = instance.isEnforceAuth();
+            this.globalBucketNamespace = instance.isGlobalBucketNamespace();
         }
 
         /**
@@ -117,6 +133,21 @@ public class S3Config extends AbstractServiceConfig<S3Config.Builder> {
          */
         public Builder enforceAuth(boolean enforceAuth) {
             this.enforceAuth = enforceAuth;
+            return this;
+        }
+
+        /**
+         * Sets whether S3 bucket/object existence resolution spans every account's partition,
+         * modelling AWS's globally-unique bucket namespace so that a bucket owned by one account
+         * is reachable cross-account. Listing operations stay owner-scoped, and mutations are
+         * written back to the bucket's owning account. Leave off when the per-account partition
+         * is the isolation you are relying on.
+         *
+         * @param globalBucketNamespace {@code true} to enable the global bucket namespace (default {@value DEFAULT_GLOBAL_BUCKET_NAMESPACE})
+         * @return this builder
+         */
+        public Builder globalBucketNamespace(boolean globalBucketNamespace) {
+            this.globalBucketNamespace = globalBucketNamespace;
             return this;
         }
 
