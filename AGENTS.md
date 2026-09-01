@@ -55,8 +55,22 @@ entry point; everything else hangs off it:
   `FlociContainer` singleton per JVM in a static initializer and exposes a `client(builder)` helper that wires
   endpoint/region/credentials onto an AWS SDK client builder.
 - `config/services/*ConfigTest` (no Docker) test each config class's builder/env-var logic in isolation.
-- `FlociContainerServicesConfigTest` unit-tests the container-level wiring (env vars/ports) for every registered
-  service.
+- `FlociContainerServicesConfigTest` (no Docker) is the container-level counterpart to `*ConfigTest`: it proves that
+  every config exposed by `FlociContainer` is actually *picked up* by the container. It has **exactly one
+  `@Test` per config class** — one per service config in `config/services/`, plus one per cross-cutting config in
+  `config/` (`DuckDbConfig`, `SecurityConfig`, `ProtocolsConfig`, `AuthConfig`, `InitHooksConfig`). Every test calls
+  the shared `assertConfigWired(...)` helper, which builds a `new FlociContainer()`, applies the `with<X>Config(...)`
+  mutator, and asserts three things:
+    1. the changed value round-trips back out via `get<X>Config()`;
+    2. the matching `FLOCI_*` env var is present on `container.getEnvMap()` with the expected string value;
+    3. `container.getExposedPorts()` contains an expected port — `FlociContainer.PORT` for most services, or the
+       service's own port for the ~12 services whose config overrides `applyExposedPortsToContainer(...)` (RDS,
+       Lambda, ElastiCache, EC2, ECR, EKS, ELBv2, IoT, MWAA, MSK, Neptune, MemoryDB).
+  When adding a new service (or config class), add one `shouldWire<X>ConfigIntoContainer()` method following the
+  pattern of its neighbours: change **one** property to a non-default value (add a second only when required to make
+  the env var / port apply, e.g. `enabled(true)` for a service that's off by default, or `exposeRuntimePorts(true)`
+  for Lambda). Pick a property that maps to a `FLOCI_*` env var; fall back to `enabled(false)` for services whose
+  only setting is the enabled flag. Find the exact env-var name in the config class's `applyEnvVarsToContainer(...)`.
 - `FlociContainerTest.shouldDisableAllServices()` asserts `disableAllServices()` disables every service, but it
   enumerates each `container.get<Service>Config()` **explicitly** (not via `serviceConfigAccessors`). Whenever you
   add a new service config, add its getter to that assertion list too — otherwise the new service is silently
