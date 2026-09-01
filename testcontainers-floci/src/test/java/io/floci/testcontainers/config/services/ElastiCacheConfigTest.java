@@ -19,6 +19,7 @@ class ElastiCacheConfigTest {
         assertThat(config.getDefaultImage()).isEqualTo("valkey/valkey:8");
         assertThat(config.getDefaultMemcachedImage()).isEqualTo("memcached:1.6");
         assertThat(config.getDockerNetwork()).isNull();
+        assertThat(config.getClusterAnnounceHostname()).isEmpty();
     }
 
     @Test
@@ -29,6 +30,7 @@ class ElastiCacheConfigTest {
                 .defaultImage("redis:7")
                 .defaultMemcachedImage("memcached:1.7")
                 .dockerNetwork("my-cache-network")
+                .clusterAnnounceHostname("cache.example.com")
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.getProxyBasePort()).isEqualTo(7000);
@@ -37,6 +39,7 @@ class ElastiCacheConfigTest {
         assertThat(config.getDefaultImage()).isEqualTo("redis:7");
         assertThat(config.getDefaultMemcachedImage()).isEqualTo("memcached:1.7");
         assertThat(config.getDockerNetwork()).isEqualTo("my-cache-network");
+        assertThat(config.getClusterAnnounceHostname()).contains("cache.example.com");
     }
 
     @Test
@@ -50,7 +53,8 @@ class ElastiCacheConfigTest {
                 .containsEntry("FLOCI_SERVICES_ELASTICACHE_PROXY_MAX_PORT", "6388")
                 .containsEntry("FLOCI_SERVICES_ELASTICACHE_DEFAULT_IMAGE", "valkey/valkey:8")
                 .containsEntry("FLOCI_SERVICES_ELASTICACHE_DEFAULT_MEMCACHED_IMAGE", "memcached:1.6")
-                .doesNotContainKey("FLOCI_SERVICES_ELASTICACHE_DOCKER_NETWORK");
+                .doesNotContainKey("FLOCI_SERVICES_ELASTICACHE_DOCKER_NETWORK")
+                .doesNotContainKey("FLOCI_SERVICES_ELASTICACHE_CLUSTER_ANNOUNCE_HOSTNAME");
     }
 
     @Test
@@ -62,6 +66,7 @@ class ElastiCacheConfigTest {
                 .defaultImage("redis:7")
                 .defaultMemcachedImage("memcached:1.7")
                 .dockerNetwork("my-cache-network")
+                .clusterAnnounceHostname("cache.example.com")
                 .build()
                 .applyEnvVarsToContainer(container);
 
@@ -71,7 +76,8 @@ class ElastiCacheConfigTest {
                 .containsEntry("FLOCI_SERVICES_ELASTICACHE_PROXY_MAX_PORT", "7049")
                 .containsEntry("FLOCI_SERVICES_ELASTICACHE_DEFAULT_IMAGE", "redis:7")
                 .containsEntry("FLOCI_SERVICES_ELASTICACHE_DEFAULT_MEMCACHED_IMAGE", "memcached:1.7")
-                .containsEntry("FLOCI_SERVICES_ELASTICACHE_DOCKER_NETWORK", "my-cache-network");
+                .containsEntry("FLOCI_SERVICES_ELASTICACHE_DOCKER_NETWORK", "my-cache-network")
+                .containsEntry("FLOCI_SERVICES_ELASTICACHE_CLUSTER_ANNOUNCE_HOSTNAME", "cache.example.com");
     }
 
     @Test
@@ -101,6 +107,7 @@ class ElastiCacheConfigTest {
                 .defaultImage("test-image")
                 .defaultMemcachedImage("test-memcached")
                 .dockerNetwork("test-network")
+                .clusterAnnounceHostname("test-announce-host")
                 .build();
         ElastiCacheConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
@@ -109,6 +116,7 @@ class ElastiCacheConfigTest {
         assertThat(copy.getDefaultImage()).isEqualTo("test-image");
         assertThat(copy.getDefaultMemcachedImage()).isEqualTo("test-memcached");
         assertThat(copy.getDockerNetwork()).isEqualTo("test-network");
+        assertThat(copy.getClusterAnnounceHostname()).contains("test-announce-host");
     }
 
     @Test

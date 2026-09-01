@@ -385,11 +385,13 @@ class FlociContainerServicesConfigTest {
         try (FlociContainer container = new FlociContainer()) {
             container.withElastiCacheConfig(c -> c
                     .proxyPortRange(7000, 5)
-                    .defaultImage("valkey/valkey:9"));
+                    .defaultImage("valkey/valkey:9")
+                    .clusterAnnounceHostname("cache.example.com"));
 
             assertThat(container.getElastiCacheConfig().getProxyBasePort()).isEqualTo(7000);
             assertThat(container.getElastiCacheConfig().getProxyPortsCount()).isEqualTo(5);
             assertThat(container.getElastiCacheConfig().getDefaultImage()).isEqualTo("valkey/valkey:9");
+            assertThat(container.getElastiCacheConfig().getClusterAnnounceHostname()).contains("cache.example.com");
         }
     }
 
