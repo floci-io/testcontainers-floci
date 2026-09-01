@@ -2,1046 +2,898 @@ package io.floci.testcontainers;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Verifies that every configuration exposed by {@link FlociContainer} is actually picked up by the
+ * container: the changed value survives the {@code with*Config(...)} round-trip, the matching
+ * {@code FLOCI_*} environment variable is applied, and the container's port mappings are wired.
+ *
+ * <p>There is exactly one test method per service config class in {@code config/services/} plus one
+ * per cross-cutting config class in {@code config/}. When adding a new service, add a method here —
+ * see the "FlociContainerServicesConfigTest" note in {@code AGENTS.md} for the exact recipe.
+ */
 class FlociContainerServicesConfigTest {
 
-    @Test
-    void shouldStoreAcmConfigOnContainer() {
+    /**
+     * Applies {@code configurer} to a fresh {@link FlociContainer}, then asserts that:
+     * <ol>
+     *   <li>the changed property is readable again via {@code get*Config()}
+     *       ({@code actualValue} equals {@code expectedValue}),</li>
+     *   <li>the container has the environment variable {@code envKey=envValue}, and</li>
+     *   <li>the container exposes {@code exposedPort}.</li>
+     * </ol>
+     */
+    private static void assertConfigWired(
+            Consumer<FlociContainer> configurer,
+            Function<FlociContainer, Object> actualValue,
+            Object expectedValue,
+            String envKey,
+            String envValue,
+            int exposedPort) {
         try (FlociContainer container = new FlociContainer()) {
-            container.withAcmConfig(c -> c.validationWaitSeconds(5));
+            configurer.accept(container);
 
-            assertThat(container.getAcmConfig().getValidationWaitSeconds()).isEqualTo(5);
+            assertThat(actualValue.apply(container))
+                    .as("value retrieved via get*Config()")
+                    .isEqualTo(expectedValue);
+            assertThat(container.getEnvMap())
+                    .as("environment variable applied to the Floci container")
+                    .containsEntry(envKey, envValue);
+            assertThat(container.getExposedPorts())
+                    .as("port mapping configured on the Floci container")
+                    .contains(exposedPort);
         }
     }
-
-    @Test
-    void shouldStoreApiGatewayConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withApiGatewayConfig(c -> c.enabled(false));
 
-            assertThat(container.getApiGatewayConfig().isEnabled()).isFalse();
-        }
+    /**
+     * Same as {@link #assertConfigWired(Consumer, Function, Object, String, String, int)} but asserts
+     * the always-present main Floci port. Used for services that do not expose extra ports of their
+     * own.
+     */
+    private static void assertConfigWired(
+            Consumer<FlociContainer> configurer,
+            Function<FlociContainer, Object> actualValue,
+            Object expectedValue,
+            String envKey,
+            String envValue) {
+        assertConfigWired(configurer, actualValue, expectedValue, envKey, envValue, FlociContainer.PORT);
     }
 
-    @Test
-    void shouldStoreApiGatewayV2ConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withApiGatewayV2Config(c -> c.enabled(false));
+    // --- Service configs (config/services/) -------------------------------------------------------
 
-            assertThat(container.getApiGatewayV2Config().isEnabled()).isFalse();
-        }
+    @Test
+    void shouldWireAcmConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withAcmConfig(cfg -> cfg.validationWaitSeconds(5)),
+                c -> c.getAcmConfig().getValidationWaitSeconds(), 5,
+                "FLOCI_SERVICES_ACM_VALIDATION_WAIT_SECONDS", "5");
     }
 
     @Test
-    void shouldStoreAppConfigConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withAppConfigConfig(c -> c.enabled(false));
-
-            assertThat(container.getAppConfigConfig().isEnabled()).isFalse();
-        }
+    void shouldWireApiGatewayConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withApiGatewayConfig(cfg -> cfg.enabled(false)),
+                c -> c.getApiGatewayConfig().isEnabled(), false,
+                "FLOCI_SERVICES_APIGATEWAY_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreAppConfigDataConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withAppConfigDataConfig(c -> c.enabled(false));
-
-            assertThat(container.getAppConfigDataConfig().isEnabled()).isFalse();
-        }
+    void shouldWireApiGatewayV2ConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withApiGatewayV2Config(cfg -> cfg.enabled(false)),
+                c -> c.getApiGatewayV2Config().isEnabled(), false,
+                "FLOCI_SERVICES_APIGATEWAYV2_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreAppSyncConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withAppSyncConfig(c -> c.enabled(false));
-
-            assertThat(container.getAppSyncConfig().isEnabled()).isFalse();
-        }
+    void shouldWireAppConfigConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withAppConfigConfig(cfg -> cfg.enabled(false)),
+                c -> c.getAppConfigConfig().isEnabled(), false,
+                "FLOCI_SERVICES_APPCONFIG_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreCloudFormationConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withCloudFormationConfig(c -> c.enabled(false));
-
-            assertThat(container.getCloudFormationConfig().isEnabled()).isFalse();
-        }
+    void shouldWireAppConfigDataConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withAppConfigDataConfig(cfg -> cfg.enabled(false)),
+                c -> c.getAppConfigDataConfig().isEnabled(), false,
+                "FLOCI_SERVICES_APPCONFIGDATA_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreCloudMapConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withCloudMapConfig(c -> c.operationCompletionDelaySeconds(5));
-
-            assertThat(container.getCloudMapConfig().getOperationCompletionDelaySeconds()).isEqualTo(5);
-        }
+    void shouldWireAppSyncConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withAppSyncConfig(cfg -> cfg.enabled(false)),
+                c -> c.getAppSyncConfig().isEnabled(), false,
+                "FLOCI_SERVICES_APPSYNC_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreCloudFrontConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withCloudFrontConfig(c -> c.domainSuffix("example.cloudfront.net"));
-
-            assertThat(container.getCloudFrontConfig().getDomainSuffix()).isEqualTo("example.cloudfront.net");
-        }
+    void shouldWireCloudFormationConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withCloudFormationConfig(cfg -> cfg.enabled(false)),
+                c -> c.getCloudFormationConfig().isEnabled(), false,
+                "FLOCI_SERVICES_CLOUDFORMATION_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreCloudWatchLogsConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withCloudWatchLogsConfig(c -> c.maxEventsPerQuery(5000));
-
-            assertThat(container.getCloudWatchLogsConfig().getMaxEventsPerQuery()).isEqualTo(5000);
-        }
+    void shouldWireCloudMapConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withCloudMapConfig(cfg -> cfg.operationCompletionDelaySeconds(5)),
+                c -> c.getCloudMapConfig().getOperationCompletionDelaySeconds(), 5,
+                "FLOCI_SERVICES_CLOUDMAP_OPERATION_COMPLETION_DELAY_SECONDS", "5");
     }
 
     @Test
-    void shouldStoreCloudWatchMetricsConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withCloudWatchMetricsConfig(c -> c.enabled(false));
-
-            assertThat(container.getCloudWatchMetricsConfig().isEnabled()).isFalse();
-        }
+    void shouldWireCloudFrontConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withCloudFrontConfig(cfg -> cfg.domainSuffix("example.cloudfront.net")),
+                c -> c.getCloudFrontConfig().getDomainSuffix(), "example.cloudfront.net",
+                "FLOCI_SERVICES_CLOUDFRONT_DOMAIN_SUFFIX", "example.cloudfront.net");
     }
 
     @Test
-    void shouldStoreCognitoConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withCognitoConfig(c -> c.enabled(false));
-
-            assertThat(container.getCognitoConfig().isEnabled()).isFalse();
-        }
+    void shouldWireCloudWatchLogsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withCloudWatchLogsConfig(cfg -> cfg.maxEventsPerQuery(5000)),
+                c -> c.getCloudWatchLogsConfig().getMaxEventsPerQuery(), 5000,
+                "FLOCI_SERVICES_CLOUDWATCHLOGS_MAX_EVENTS_PER_QUERY", "5000");
     }
 
     @Test
-    void shouldStoreConfigServiceConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withConfigServiceConfig(c -> c.enabled(false));
-
-            assertThat(container.getConfigServiceConfig().isEnabled()).isFalse();
-        }
+    void shouldWireCloudWatchMetricsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withCloudWatchMetricsConfig(cfg -> cfg.enabled(false)),
+                c -> c.getCloudWatchMetricsConfig().isEnabled(), false,
+                "FLOCI_SERVICES_CLOUDWATCHMETRICS_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreDynamoDbConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withDynamoDbConfig(c -> c.enabled(false));
-
-            assertThat(container.getDynamoDbConfig().isEnabled()).isFalse();
-        }
+    void shouldWireCognitoConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withCognitoConfig(cfg -> cfg.enabled(false)),
+                c -> c.getCognitoConfig().isEnabled(), false,
+                "FLOCI_SERVICES_COGNITO_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreEc2ConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withEc2Config(c -> c.enabled(false));
-
-            assertThat(container.getEc2Config().isEnabled()).isFalse();
-        }
+    void shouldWireConfigServiceConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withConfigServiceConfig(cfg -> cfg.enabled(false)),
+                c -> c.getConfigServiceConfig().isEnabled(), false,
+                "FLOCI_SERVICES_CONFIGSERVICE_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreEventBridgeConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withEventBridgeConfig(c -> c.enabled(false));
-
-            assertThat(container.getEventBridgeConfig().isEnabled()).isFalse();
-        }
+    void shouldWireDynamoDbConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withDynamoDbConfig(cfg -> cfg.enabled(false)),
+                c -> c.getDynamoDbConfig().isEnabled(), false,
+                "FLOCI_SERVICES_DYNAMODB_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreIamConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withIamConfig(c -> c.enabled(false));
-
-            assertThat(container.getIamConfig().isEnabled()).isFalse();
-        }
+    void shouldWireEc2ConfigIntoContainer() {
+        // EC2 exposes the IMDS port, so assert that port rather than the main Floci port.
+        assertConfigWired(
+                c -> c.withEc2Config(cfg -> cfg.imdsPort(9999)),
+                c -> c.getEc2Config().getImdsPort(), 9999,
+                "FLOCI_SERVICES_EC2_IMDS_PORT", "9999", 9999);
     }
 
     @Test
-    void shouldStoreKinesisConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withKinesisConfig(c -> c.enabled(false));
-
-            assertThat(container.getKinesisConfig().isEnabled()).isFalse();
-        }
+    void shouldWireEventBridgeConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withEventBridgeConfig(cfg -> cfg.enabled(false)),
+                c -> c.getEventBridgeConfig().isEnabled(), false,
+                "FLOCI_SERVICES_EVENTBRIDGE_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreKmsConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withKmsConfig(c -> c.enabled(false));
-
-            assertThat(container.getKmsConfig().isEnabled()).isFalse();
-        }
+    void shouldWireIamConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withIamConfig(cfg -> cfg.enabled(false)),
+                c -> c.getIamConfig().isEnabled(), false,
+                "FLOCI_SERVICES_IAM_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreLambdaConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withLambdaConfig(c -> c
-                    .defaultMemoryMb(512)
-                    .ephemeral(true));
-
-            assertThat(container.getLambdaConfig().getDefaultMemoryMb()).isEqualTo(512);
-            assertThat(container.getLambdaConfig().isEphemeral()).isTrue();
-        }
+    void shouldWireKinesisConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withKinesisConfig(cfg -> cfg.enabled(false)),
+                c -> c.getKinesisConfig().isEnabled(), false,
+                "FLOCI_SERVICES_KINESIS_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreRdsConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withRdsConfig(c -> c
-                    .defaultPostgresImage("postgres:15")
-                    .proxyPortRange(8000, 100));
-
-            assertThat(container.getRdsConfig().getDefaultPostgresImage()).isEqualTo("postgres:15");
-            assertThat(container.getRdsConfig().getProxyBasePort()).isEqualTo(8000);
-            assertThat(container.getRdsConfig().getProxyPortsCount()).isEqualTo(100);
-        }
+    void shouldWireKmsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withKmsConfig(cfg -> cfg.enabled(false)),
+                c -> c.getKmsConfig().isEnabled(), false,
+                "FLOCI_SERVICES_KMS_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreS3ConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withS3Config(c -> c.defaultPresignExpirySeconds(7200).enforceAuth(true).globalBucketNamespace(true));
-
-            assertThat(container.getS3Config().getDefaultPresignExpirySeconds()).isEqualTo(7200);
-            assertThat(container.getS3Config().isEnforceAuth()).isTrue();
-            assertThat(container.getS3Config().isGlobalBucketNamespace()).isTrue();
-        }
+    void shouldWireLambdaConfigIntoContainer() {
+        // Lambda only exposes its Runtime API ports when exposeRuntimePorts is on.
+        assertConfigWired(
+                c -> c.withLambdaConfig(cfg -> cfg.exposeRuntimePorts(true).runtimeApiPortRange(13000, 5)),
+                c -> c.getLambdaConfig().getRuntimeApiBasePort(), 13000,
+                "FLOCI_SERVICES_LAMBDA_RUNTIME_API_BASE_PORT", "13000", 13000);
     }
 
     @Test
-    void shouldStoreSchedulerConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withSchedulerConfig(c -> c.enabled(false));
-
-            assertThat(container.getSchedulerConfig().isEnabled()).isFalse();
-        }
+    void shouldWireRdsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withRdsConfig(cfg -> cfg.proxyPortRange(8000, 100)),
+                c -> c.getRdsConfig().getProxyBasePort(), 8000,
+                "FLOCI_SERVICES_RDS_PROXY_BASE_PORT", "8000", 8000);
     }
 
     @Test
-    void shouldStoreSecretsManagerConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withSecretsManagerConfig(c -> c.defaultRecoveryWindowDays(7));
-
-            assertThat(container.getSecretsManagerConfig().getDefaultRecoveryWindowDays()).isEqualTo(7);
-        }
+    void shouldWireS3ConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withS3Config(cfg -> cfg.defaultPresignExpirySeconds(7200)),
+                c -> c.getS3Config().getDefaultPresignExpirySeconds(), 7200,
+                "FLOCI_SERVICES_S3_DEFAULT_PRESIGN_EXPIRY_SECONDS", "7200");
     }
 
     @Test
-    void shouldStoreSesConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withSesConfig(c -> c.enabled(false));
-
-            assertThat(container.getSesConfig().isEnabled()).isFalse();
-        }
+    void shouldWireSchedulerConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withSchedulerConfig(cfg -> cfg.enabled(false)),
+                c -> c.getSchedulerConfig().isEnabled(), false,
+                "FLOCI_SERVICES_SCHEDULER_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreSnsConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withSnsConfig(c -> c.enabled(false));
-
-            assertThat(container.getSnsConfig().isEnabled()).isFalse();
-        }
+    void shouldWireSecretsManagerConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withSecretsManagerConfig(cfg -> cfg.defaultRecoveryWindowDays(7)),
+                c -> c.getSecretsManagerConfig().getDefaultRecoveryWindowDays(), 7,
+                "FLOCI_SERVICES_SECRETSMANAGER_DEFAULT_RECOVERY_WINDOW_DAYS", "7");
     }
 
     @Test
-    void shouldStoreSqsConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withSqsConfig(c -> c
-                    .defaultVisibilityTimeout(60)
-                    .maxMessageSize(131072));
-
-            assertThat(container.getSqsConfig().getDefaultVisibilityTimeout()).isEqualTo(60);
-            assertThat(container.getSqsConfig().getMaxMessageSize()).isEqualTo(131072);
-        }
+    void shouldWireSesConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withSesConfig(cfg -> cfg.enabled(false)),
+                c -> c.getSesConfig().isEnabled(), false,
+                "FLOCI_SERVICES_SES_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreSsmConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withSsmConfig(c -> c.maxParameterHistory(10));
-
-            assertThat(container.getSsmConfig().getMaxParameterHistory()).isEqualTo(10);
-        }
+    void shouldWireSnsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withSnsConfig(cfg -> cfg.enabled(false)),
+                c -> c.getSnsConfig().isEnabled(), false,
+                "FLOCI_SERVICES_SNS_ENABLED", "false");
     }
 
     @Test
-    void shouldStorePricingConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withPricingConfig(c -> c.snapshotPath("/data/pricing"));
-
-            assertThat(container.getPricingConfig().getSnapshotPath()).contains("/data/pricing");
-        }
+    void shouldWireSqsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withSqsConfig(cfg -> cfg.defaultVisibilityTimeout(60)),
+                c -> c.getSqsConfig().getDefaultVisibilityTimeout(), 60,
+                "FLOCI_SERVICES_SQS_DEFAULT_VISIBILITY_TIMEOUT", "60");
     }
 
     @Test
-    void shouldStoreAthenaConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withAthenaConfig(c -> c.mock(true));
-
-            assertThat(container.getAthenaConfig().isMock()).isTrue();
-        }
+    void shouldWireSsmConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withSsmConfig(cfg -> cfg.maxParameterHistory(10)),
+                c -> c.getSsmConfig().getMaxParameterHistory(), 10,
+                "FLOCI_SERVICES_SSM_MAX_PARAMETER_HISTORY", "10");
     }
 
     @Test
-    void shouldStoreBackupConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withBackupConfig(c -> c.jobCompletionDelaySeconds(5));
-
-            assertThat(container.getBackupConfig().getJobCompletionDelaySeconds()).isEqualTo(5);
-        }
+    void shouldWirePricingConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withPricingConfig(cfg -> cfg.snapshotPath("/data/pricing")),
+                c -> c.getPricingConfig().getSnapshotPath(), Optional.of("/data/pricing"),
+                "FLOCI_SERVICES_PRICING_SNAPSHOT_PATH", "/data/pricing");
     }
 
     @Test
-    void shouldStoreBedrockAgentCoreConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withBedrockAgentCoreConfig(c -> c.validateRuntimeExists(true));
-
-            assertThat(container.getBedrockAgentCoreConfig().isValidateRuntimeExists()).isTrue();
-        }
+    void shouldWireAthenaConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withAthenaConfig(cfg -> cfg.mock(true)),
+                c -> c.getAthenaConfig().isMock(), true,
+                "FLOCI_SERVICES_ATHENA_MOCK", "true");
     }
 
     @Test
-    void shouldStoreBedrockAgentCoreControlConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withBedrockAgentCoreControlConfig(c -> c.enabled(false));
-
-            assertThat(container.getBedrockAgentCoreControlConfig().isEnabled()).isFalse();
-        }
+    void shouldWireBackupConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withBackupConfig(cfg -> cfg.jobCompletionDelaySeconds(5)),
+                c -> c.getBackupConfig().getJobCompletionDelaySeconds(), 5,
+                "FLOCI_SERVICES_BACKUP_JOB_COMPLETION_DELAY_SECONDS", "5");
     }
 
     @Test
-    void shouldStoreBedrockRuntimeConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withBedrockRuntimeConfig(c -> c.enabled(false));
-
-            assertThat(container.getBedrockRuntimeConfig().isEnabled()).isFalse();
-        }
+    void shouldWireBedrockAgentCoreConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withBedrockAgentCoreConfig(cfg -> cfg.validateRuntimeExists(true)),
+                c -> c.getBedrockAgentCoreConfig().isValidateRuntimeExists(), true,
+                "FLOCI_SERVICES_BEDROCK_AGENT_CORE_VALIDATE_RUNTIME_EXISTS", "true");
     }
 
     @Test
-    void shouldStoreCodeBuildConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withCodeBuildConfig(c -> c.dockerNetwork("my-network"));
-
-            assertThat(container.getCodeBuildConfig().getDockerNetwork()).isEqualTo("my-network");
-        }
+    void shouldWireBedrockAgentCoreControlConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withBedrockAgentCoreControlConfig(cfg -> cfg.enabled(false)),
+                c -> c.getBedrockAgentCoreControlConfig().isEnabled(), false,
+                "FLOCI_SERVICES_BEDROCK_AGENT_CORE_CONTROL_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreCodeDeployConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withCodeDeployConfig(c -> c.enabled(false));
-
-            assertThat(container.getCodeDeployConfig().isEnabled()).isFalse();
-        }
+    void shouldWireBedrockRuntimeConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withBedrockRuntimeConfig(cfg -> cfg.enabled(false)),
+                c -> c.getBedrockRuntimeConfig().isEnabled(), false,
+                "FLOCI_SERVICES_BEDROCK_RUNTIME_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreEcrConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withEcrConfig(c -> c
-                    .registryPortRange(5200, 5)
-                    .registryImage("registry:3"));
-
-            assertThat(container.getEcrConfig().getRegistryBasePort()).isEqualTo(5200);
-            assertThat(container.getEcrConfig().getRegistryPortsCount()).isEqualTo(5);
-            assertThat(container.getEcrConfig().getRegistryImage()).isEqualTo("registry:3");
-        }
+    void shouldWireCodeBuildConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withCodeBuildConfig(cfg -> cfg.dockerNetwork("my-network")),
+                c -> c.getCodeBuildConfig().getDockerNetwork(), "my-network",
+                "FLOCI_SERVICES_CODEBUILD_DOCKER_NETWORK", "my-network");
     }
 
     @Test
-    void shouldStoreEcsConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withEcsConfig(c -> c
-                    .mock(true)
-                    .defaultMemoryMb(1024));
-
-            assertThat(container.getEcsConfig().isMock()).isTrue();
-            assertThat(container.getEcsConfig().getDefaultMemoryMb()).isEqualTo(1024);
-        }
+    void shouldWireCodeDeployConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withCodeDeployConfig(cfg -> cfg.enabled(false)),
+                c -> c.getCodeDeployConfig().isEnabled(), false,
+                "FLOCI_SERVICES_CODEDEPLOY_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreEksConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withEksConfig(c -> c
-                    .mock(true)
-                    .apiServerPortRange(6600, 5));
-
-            assertThat(container.getEksConfig().isMock()).isTrue();
-            assertThat(container.getEksConfig().getApiServerBasePort()).isEqualTo(6600);
-            assertThat(container.getEksConfig().getApiServerPortsCount()).isEqualTo(5);
-        }
+    void shouldWireEcrConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withEcrConfig(cfg -> cfg.registryPortRange(5200, 5)),
+                c -> c.getEcrConfig().getRegistryBasePort(), 5200,
+                "FLOCI_SERVICES_ECR_REGISTRY_BASE_PORT", "5200", 5200);
     }
 
     @Test
-    void shouldStoreElastiCacheConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withElastiCacheConfig(c -> c
-                    .proxyPortRange(7000, 5)
-                    .defaultImage("valkey/valkey:9")
-                    .clusterAnnounceHostname("cache.example.com"));
-
-            assertThat(container.getElastiCacheConfig().getProxyBasePort()).isEqualTo(7000);
-            assertThat(container.getElastiCacheConfig().getProxyPortsCount()).isEqualTo(5);
-            assertThat(container.getElastiCacheConfig().getDefaultImage()).isEqualTo("valkey/valkey:9");
-            assertThat(container.getElastiCacheConfig().getClusterAnnounceHostname()).contains("cache.example.com");
-        }
+    void shouldWireEcsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withEcsConfig(cfg -> cfg.mock(true)),
+                c -> c.getEcsConfig().isMock(), true,
+                "FLOCI_SERVICES_ECS_MOCK", "true");
     }
 
     @Test
-    void shouldStoreElbV2ConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withElbV2Config(c -> c
-                    .mock(true)
-                    .listenerPort(8080));
-
-            assertThat(container.getElbV2Config().isMock()).isTrue();
-            assertThat(container.getElbV2Config().getListenerPorts()).containsExactly(8080);
-        }
+    void shouldWireEksConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withEksConfig(cfg -> cfg.apiServerPortRange(6600, 5)),
+                c -> c.getEksConfig().getApiServerBasePort(), 6600,
+                "FLOCI_SERVICES_EKS_API_SERVER_BASE_PORT", "6600", 6600);
     }
 
     @Test
-    void shouldStoreFirehoseConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withFirehoseConfig(c -> c.enabled(false));
-
-            assertThat(container.getFirehoseConfig().isEnabled()).isFalse();
-        }
+    void shouldWireElastiCacheConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withElastiCacheConfig(cfg -> cfg.proxyPortRange(7100, 5)),
+                c -> c.getElastiCacheConfig().getProxyBasePort(), 7100,
+                "FLOCI_SERVICES_ELASTICACHE_PROXY_BASE_PORT", "7100", 7100);
     }
 
     @Test
-    void shouldStoreGlueConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withGlueConfig(c -> c.enabled(false));
-
-            assertThat(container.getGlueConfig().isEnabled()).isFalse();
-        }
+    void shouldWireElbV2ConfigIntoContainer() {
+        // ELBv2 has no per-listener env var, so change mock for the env-var check and a listener
+        // port for the port-mapping check.
+        assertConfigWired(
+                c -> c.withElbV2Config(cfg -> cfg.mock(true).listenerPort(8085)),
+                c -> c.getElbV2Config().isMock(), true,
+                "FLOCI_SERVICES_ELBV2_MOCK", "true", 8085);
     }
 
     @Test
-    void shouldStoreMskConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withMskConfig(c -> c
-                    .mock(true)
-                    .defaultImage("redpandadata/redpanda:v24")
-                    .kafkaHostPortRange(9500, 20));
-
-            assertThat(container.getMskConfig().isMock()).isTrue();
-            assertThat(container.getMskConfig().getDefaultImage()).isEqualTo("redpandadata/redpanda:v24");
-            assertThat(container.getMskConfig().getKafkaHostPortBase()).isEqualTo(9500);
-            assertThat(container.getMskConfig().getKafkaHostPortsCount()).isEqualTo(20);
-            assertThat(container.getMskConfig().getKafkaHostPortMax()).isEqualTo(9519);
-        }
+    void shouldWireFirehoseConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withFirehoseConfig(cfg -> cfg.enabled(false)),
+                c -> c.getFirehoseConfig().isEnabled(), false,
+                "FLOCI_SERVICES_FIREHOSE_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreOpenSearchConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withOpenSearchConfig(c -> c
-                    .mock(true)
-                    .proxyPortRange(9500, 5));
-
-            assertThat(container.getOpenSearchConfig().isMock()).isTrue();
-            assertThat(container.getOpenSearchConfig().getProxyBasePort()).isEqualTo(9500);
-            assertThat(container.getOpenSearchConfig().getProxyPortsCount()).isEqualTo(5);
-        }
+    void shouldWireGlueConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withGlueConfig(cfg -> cfg.enabled(false)),
+                c -> c.getGlueConfig().isEnabled(), false,
+                "FLOCI_SERVICES_GLUE_ENABLED", "false");
     }
 
     @Test
-    void shouldStorePipesConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withPipesConfig(c -> c.enabled(false));
-
-            assertThat(container.getPipesConfig().isEnabled()).isFalse();
-        }
+    void shouldWireMskConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withMskConfig(cfg -> cfg.kafkaHostPortRange(9600, 20)),
+                c -> c.getMskConfig().getKafkaHostPortBase(), 9600,
+                "FLOCI_SERVICES_MSK_KAFKA_HOST_PORT_BASE", "9600", 9600);
     }
 
     @Test
-    void shouldStoreResourceGroupsTaggingConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withResourceGroupsTaggingConfig(c -> c.enabled(false));
-
-            assertThat(container.getResourceGroupsTaggingConfig().isEnabled()).isFalse();
-        }
+    void shouldWireOpenSearchConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withOpenSearchConfig(cfg -> cfg.mock(true)),
+                c -> c.getOpenSearchConfig().isMock(), true,
+                "FLOCI_SERVICES_OPENSEARCH_MOCK", "true");
     }
 
     @Test
-    void shouldStoreRoute53ConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withRoute53Config(c -> c.defaultNameserver1("ns1.example.com"));
-
-            assertThat(container.getRoute53Config().getDefaultNameserver1()).isEqualTo("ns1.example.com");
-        }
+    void shouldWirePipesConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withPipesConfig(cfg -> cfg.enabled(false)),
+                c -> c.getPipesConfig().isEnabled(), false,
+                "FLOCI_SERVICES_PIPES_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreStepFunctionsConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withStepFunctionsConfig(c -> c.enabled(false));
-
-            assertThat(container.getStepFunctionsConfig().isEnabled()).isFalse();
-        }
+    void shouldWireResourceGroupsTaggingConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withResourceGroupsTaggingConfig(cfg -> cfg.enabled(false)),
+                c -> c.getResourceGroupsTaggingConfig().isEnabled(), false,
+                "FLOCI_SERVICES_TAGGING_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreTextractConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withTextractConfig(c -> c.enabled(false));
-
-            assertThat(container.getTextractConfig().isEnabled()).isFalse();
-        }
+    void shouldWireRoute53ConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withRoute53Config(cfg -> cfg.defaultNameserver1("ns1.example.com")),
+                c -> c.getRoute53Config().getDefaultNameserver1(), "ns1.example.com",
+                "FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_1", "ns1.example.com");
     }
 
     @Test
-    void shouldStoreTransferFamilyConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withTransferFamilyConfig(c -> c.enabled(false));
-
-            assertThat(container.getTransferFamilyConfig().isEnabled()).isFalse();
-        }
+    void shouldWireStepFunctionsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withStepFunctionsConfig(cfg -> cfg.enabled(false)),
+                c -> c.getStepFunctionsConfig().isEnabled(), false,
+                "FLOCI_SERVICES_STEPFUNCTIONS_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreNeptuneConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withNeptuneConfig(c -> c
-                    .proxyPortRange(9000, 51)
-                    .dbType("neo4j")
-                    .defaultImage("tinkerpop/gremlin-server:3.8.0")
-                    .defaultNeo4jImage("neo4j:5.24-community"));
-
-            assertThat(container.getNeptuneConfig().getProxyBasePort()).isEqualTo(9000);
-            assertThat(container.getNeptuneConfig().getProxyPortsCount()).isEqualTo(51);
-            assertThat(container.getNeptuneConfig().getProxyMaxPort()).isEqualTo(9050);
-            assertThat(container.getNeptuneConfig().getDbType()).isEqualTo("neo4j");
-            assertThat(container.getNeptuneConfig().getDefaultImage()).isEqualTo("tinkerpop/gremlin-server:3.8.0");
-            assertThat(container.getNeptuneConfig().getDefaultNeo4jImage()).isEqualTo("neo4j:5.24-community");
-        }
+    void shouldWireTextractConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withTextractConfig(cfg -> cfg.enabled(false)),
+                c -> c.getTextractConfig().isEnabled(), false,
+                "FLOCI_SERVICES_TEXTRACT_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreCostExplorerConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withCostExplorerConfig(c -> c.creditUsdMonthly(250.0));
-
-            assertThat(container.getCostExplorerConfig().getCreditUsdMonthly()).isEqualTo(250.0);
-        }
+    void shouldWireTransferFamilyConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withTransferFamilyConfig(cfg -> cfg.enabled(false)),
+                c -> c.getTransferFamilyConfig().isEnabled(), false,
+                "FLOCI_SERVICES_TRANSFER_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreCurConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withCurConfig(c -> c
-                    .emitMode("daily")
-                    .stagingBucket("my-staging"));
-
-            assertThat(container.getCurConfig().getEmitMode()).isEqualTo("daily");
-            assertThat(container.getCurConfig().getStagingBucket()).isEqualTo("my-staging");
-        }
+    void shouldWireNeptuneConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withNeptuneConfig(cfg -> cfg.proxyPortRange(9200, 51)),
+                c -> c.getNeptuneConfig().getProxyBasePort(), 9200,
+                "FLOCI_SERVICES_NEPTUNE_PROXY_BASE_PORT", "9200", 9200);
     }
 
     @Test
-    void shouldStoreCloudTrailConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withCloudTrailConfig(c -> c.enabled(false));
-
-            assertThat(container.getCloudTrailConfig().isEnabled()).isFalse();
-        }
+    void shouldWireCostExplorerConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withCostExplorerConfig(cfg -> cfg.creditUsdMonthly(250.0)),
+                c -> c.getCostExplorerConfig().getCreditUsdMonthly(), 250.0,
+                "FLOCI_SERVICES_CE_CREDIT_USD_MONTHLY", "250.0");
     }
 
     @Test
-    void shouldStoreBcmDataExportsConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withBcmDataExportsConfig(c -> c.emitMode("off"));
-
-            assertThat(container.getBcmDataExportsConfig().getEmitMode()).isEqualTo("off");
-        }
+    void shouldWireCurConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withCurConfig(cfg -> cfg.emitMode("daily")),
+                c -> c.getCurConfig().getEmitMode(), "daily",
+                "FLOCI_SERVICES_CUR_EMIT_MODE", "daily");
     }
 
     @Test
-    void shouldStoreBatchConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withBatchConfig(c -> c
-                    .runnerMode("deferred")
-                    .dockerNetwork("my-batch-network"));
-
-            assertThat(container.getBatchConfig().getRunnerMode()).isEqualTo("deferred");
-            assertThat(container.getBatchConfig().getDockerNetwork()).isEqualTo("my-batch-network");
-        }
+    void shouldWireCloudTrailConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withCloudTrailConfig(cfg -> cfg.enabled(false)),
+                c -> c.getCloudTrailConfig().isEnabled(), false,
+                "FLOCI_SERVICES_CLOUDTRAIL_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreRdsDataConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withRdsDataConfig(c -> c.transactionTtlSeconds(300));
-
-            assertThat(container.getRdsDataConfig().getTransactionTtlSeconds()).isEqualTo(300);
-        }
+    void shouldWireBcmDataExportsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withBcmDataExportsConfig(cfg -> cfg.emitMode("off")),
+                c -> c.getBcmDataExportsConfig().getEmitMode(), "off",
+                "FLOCI_SERVICES_BCM_DATA_EXPORTS_EMIT_MODE", "off");
     }
 
     @Test
-    void shouldStoreDocumentDbConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withDocumentDbConfig(c -> c
-                    .mock(true)
-                    .defaultImage("mongo:8.0")
-                    .dockerNetwork("my-docdb-network"));
-
-            assertThat(container.getDocumentDbConfig().isMock()).isTrue();
-            assertThat(container.getDocumentDbConfig().getDefaultImage()).isEqualTo("mongo:8.0");
-            assertThat(container.getDocumentDbConfig().getDockerNetwork()).isEqualTo("my-docdb-network");
-        }
+    void shouldWireBatchConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withBatchConfig(cfg -> cfg.runnerMode("deferred")),
+                c -> c.getBatchConfig().getRunnerMode(), "deferred",
+                "FLOCI_SERVICES_BATCH_RUNNER_MODE", "deferred");
     }
 
     @Test
-    void shouldStoreEmrConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withEmrConfig(c -> c
-                    .defaultReleaseLabel("emr-7.8.0")
-                    .clusterStartupDelaySeconds(10));
-
-            assertThat(container.getEmrConfig().getDefaultReleaseLabel()).isEqualTo("emr-7.8.0");
-            assertThat(container.getEmrConfig().getClusterStartupDelaySeconds()).isEqualTo(10);
-        }
+    void shouldWireRdsDataConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withRdsDataConfig(cfg -> cfg.transactionTtlSeconds(300)),
+                c -> c.getRdsDataConfig().getTransactionTtlSeconds(), 300L,
+                "FLOCI_SERVICES_RDS_DATA_TRANSACTION_TTL_SECONDS", "300");
     }
 
     @Test
-    void shouldStoreWafV2ConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withWafV2Config(c -> c.enabled(false));
-
-            assertThat(container.getWafV2Config().isEnabled()).isFalse();
-        }
+    void shouldWireDocumentDbConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withDocumentDbConfig(cfg -> cfg.mock(true)),
+                c -> c.getDocumentDbConfig().isMock(), true,
+                "FLOCI_SERVICES_DOCDB_MOCK", "true");
     }
 
     @Test
-    void shouldStoreIotConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withIotConfig(c -> c
-                    .mqttAutoStart(true)
-                    .mqttHost("127.0.0.1")
-                    .mqttPort(18830));
-
-            assertThat(container.getIotConfig().isMqttAutoStart()).isTrue();
-            assertThat(container.getIotConfig().getMqttHost()).isEqualTo("127.0.0.1");
-            assertThat(container.getIotConfig().getMqttPort()).isEqualTo(18830);
-        }
+    void shouldWireEmrConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withEmrConfig(cfg -> cfg.defaultReleaseLabel("emr-7.8.0")),
+                c -> c.getEmrConfig().getDefaultReleaseLabel(), "emr-7.8.0",
+                "FLOCI_SERVICES_EMR_DEFAULT_RELEASE_LABEL", "emr-7.8.0");
     }
 
     @Test
-    void shouldStoreIotDataConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withIotDataConfig(c -> c.enabled(false));
-
-            assertThat(container.getIotDataConfig().isEnabled()).isFalse();
-        }
+    void shouldWireWafV2ConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withWafV2Config(cfg -> cfg.enabled(false)),
+                c -> c.getWafV2Config().isEnabled(), false,
+                "FLOCI_SERVICES_WAFV2_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreLightsailConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withLightsailConfig(c -> c.enabled(false));
-
-            assertThat(container.getLightsailConfig().isEnabled()).isFalse();
-        }
+    void shouldWireIotConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withIotConfig(cfg -> cfg.mqttPort(11883)),
+                c -> c.getIotConfig().getMqttPort(), 11883,
+                "FLOCI_SERVICES_IOT_MQTT_PORT", "11883", 11883);
     }
 
     @Test
-    void shouldStoreCloudControlConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withCloudControlConfig(c -> c.enabled(false));
-
-            assertThat(container.getCloudControlConfig().isEnabled()).isFalse();
-        }
+    void shouldWireIotDataConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withIotDataConfig(cfg -> cfg.enabled(false)),
+                c -> c.getIotDataConfig().isEnabled(), false,
+                "FLOCI_SERVICES_IOTDATA_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreS3VectorsConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withS3VectorsConfig(c -> c.enabled(false));
-
-            assertThat(container.getS3VectorsConfig().isEnabled()).isFalse();
-        }
+    void shouldWireLightsailConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withLightsailConfig(cfg -> cfg.enabled(false)),
+                c -> c.getLightsailConfig().isEnabled(), false,
+                "FLOCI_SERVICES_LIGHTSAIL_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreElasticBeanstalkConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withElasticBeanstalkConfig(c -> c.enabled(false));
-
-            assertThat(container.getElasticBeanstalkConfig().isEnabled()).isFalse();
-        }
+    void shouldWireCloudControlConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withCloudControlConfig(cfg -> cfg.enabled(false)),
+                c -> c.getCloudControlConfig().isEnabled(), false,
+                "FLOCI_SERVICES_CLOUDCONTROL_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreCodePipelineConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withCodePipelineConfig(c -> c.enabled(false));
-
-            assertThat(container.getCodePipelineConfig().isEnabled()).isFalse();
-        }
+    void shouldWireS3VectorsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withS3VectorsConfig(cfg -> cfg.enabled(false)),
+                c -> c.getS3VectorsConfig().isEnabled(), false,
+                "FLOCI_SERVICES_S3VECTORS_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreAmazonMqConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withAmazonMqConfig(c -> c
-                    .mock(true)
-                    .defaultImage("rabbitmq:4-management"));
-
-            assertThat(container.getAmazonMqConfig().isMock()).isTrue();
-            assertThat(container.getAmazonMqConfig().getDefaultImage()).isEqualTo("rabbitmq:4-management");
-        }
+    void shouldWireElasticBeanstalkConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withElasticBeanstalkConfig(cfg -> cfg.enabled(false)),
+                c -> c.getElasticBeanstalkConfig().isEnabled(), false,
+                "FLOCI_SERVICES_ELASTICBEANSTALK_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreMemoryDbConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withMemoryDbConfig(c -> c
-                    .mock(true)
-                    .proxyPortRange(7000, 20)
-                    .defaultImage("valkey/valkey:8.1"));
-
-            assertThat(container.getMemoryDbConfig().isMock()).isTrue();
-            assertThat(container.getMemoryDbConfig().getProxyBasePort()).isEqualTo(7000);
-            assertThat(container.getMemoryDbConfig().getProxyMaxPort()).isEqualTo(7019);
-            assertThat(container.getMemoryDbConfig().getProxyPortsCount()).isEqualTo(20);
-            assertThat(container.getMemoryDbConfig().getDefaultImage()).isEqualTo("valkey/valkey:8.1");
-        }
+    void shouldWireCodePipelineConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withCodePipelineConfig(cfg -> cfg.enabled(false)),
+                c -> c.getCodePipelineConfig().isEnabled(), false,
+                "FLOCI_SERVICES_CODEPIPELINE_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreRumConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withRumConfig(c -> c.enabled(false));
-
-            assertThat(container.getRumConfig().isEnabled()).isFalse();
-        }
+    void shouldWireAmazonMqConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withAmazonMqConfig(cfg -> cfg.mock(true)),
+                c -> c.getAmazonMqConfig().isMock(), true,
+                "FLOCI_SERVICES_AMAZONMQ_MOCK", "true");
     }
 
     @Test
-    void shouldStoreS3TablesConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withS3TablesConfig(c -> c.enabled(false));
-
-            assertThat(container.getS3TablesConfig().isEnabled()).isFalse();
-        }
+    void shouldWireMemoryDbConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withMemoryDbConfig(cfg -> cfg.proxyPortRange(7200, 20)),
+                c -> c.getMemoryDbConfig().getProxyBasePort(), 7200,
+                "FLOCI_SERVICES_MEMORYDB_PROXY_BASE_PORT", "7200", 7200);
     }
 
     @Test
-    void shouldStoreApplicationAutoScalingConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withApplicationAutoScalingConfig(c -> c.enabled(false));
-
-            assertThat(container.getApplicationAutoScalingConfig().isEnabled()).isFalse();
-        }
+    void shouldWireRumConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withRumConfig(cfg -> cfg.enabled(false)),
+                c -> c.getRumConfig().isEnabled(), false,
+                "FLOCI_SERVICES_RUM_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreSwfConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withSwfConfig(c -> c
-                    .timeoutSweepEnabled(false)
-                    .timeoutSweepIntervalSeconds(5));
-
-            assertThat(container.getSwfConfig().isTimeoutSweepEnabled()).isFalse();
-            assertThat(container.getSwfConfig().getTimeoutSweepIntervalSeconds()).isEqualTo(5);
-        }
+    void shouldWireS3TablesConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withS3TablesConfig(cfg -> cfg.enabled(false)),
+                c -> c.getS3TablesConfig().isEnabled(), false,
+                "FLOCI_SERVICES_S3TABLES_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreKinesisAnalyticsConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withKinesisAnalyticsConfig(c -> c
-                    .mock(true)
-                    .defaultImage("apache/flink:1.20"));
-
-            assertThat(container.getKinesisAnalyticsConfig().isMock()).isTrue();
-            assertThat(container.getKinesisAnalyticsConfig().getDefaultImage()).contains("apache/flink:1.20");
-        }
+    void shouldWireApplicationAutoScalingConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withApplicationAutoScalingConfig(cfg -> cfg.enabled(false)),
+                c -> c.getApplicationAutoScalingConfig().isEnabled(), false,
+                "FLOCI_SERVICES_APPLICATIONAUTOSCALING_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreMwaaConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withMwaaConfig(c -> c
-                    .mock(true)
-                    .proxyPortRange(9000, 100)
-                    .defaultVersion("2.10.5"));
-
-            assertThat(container.getMwaaConfig().isMock()).isTrue();
-            assertThat(container.getMwaaConfig().getProxyBasePort()).isEqualTo(9000);
-            assertThat(container.getMwaaConfig().getProxyMaxPort()).isEqualTo(9099);
-            assertThat(container.getMwaaConfig().getProxyPortsCount()).isEqualTo(100);
-            assertThat(container.getMwaaConfig().getDefaultVersion()).isEqualTo("2.10.5");
-        }
+    void shouldWireSwfConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withSwfConfig(cfg -> cfg.timeoutSweepEnabled(false)),
+                c -> c.getSwfConfig().isTimeoutSweepEnabled(), false,
+                "FLOCI_SERVICES_SWF_TIMEOUT_SWEEP_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreGuardDutyConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withGuardDutyConfig(c -> c.enabled(false));
-
-            assertThat(container.getGuardDutyConfig().isEnabled()).isFalse();
-        }
+    void shouldWireKinesisAnalyticsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withKinesisAnalyticsConfig(cfg -> cfg.mock(true)),
+                c -> c.getKinesisAnalyticsConfig().isMock(), true,
+                "FLOCI_SERVICES_KINESIS_ANALYTICS_MOCK", "true");
     }
 
     @Test
-    void shouldStoreCloudHsmV2ConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withCloudHsmV2Config(c -> c.enabled(false));
-
-            assertThat(container.getCloudHsmV2Config().isEnabled()).isFalse();
-        }
+    void shouldWireMwaaConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withMwaaConfig(cfg -> cfg.proxyPortRange(9100, 100)),
+                c -> c.getMwaaConfig().getProxyBasePort(), 9100,
+                "FLOCI_SERVICES_MWAA_PROXY_BASE_PORT", "9100", 9100);
     }
 
     @Test
-    void shouldStoreEmrServerlessConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withEmrServerlessConfig(c -> c.enabled(false));
-
-            assertThat(container.getEmrServerlessConfig().isEnabled()).isFalse();
-        }
+    void shouldWireGuardDutyConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withGuardDutyConfig(cfg -> cfg.enabled(false)),
+                c -> c.getGuardDutyConfig().isEnabled(), false,
+                "FLOCI_SERVICES_GUARDDUTY_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreFisConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withFisConfig(c -> c.enabled(false));
-
-            assertThat(container.getFisConfig().isEnabled()).isFalse();
-        }
+    void shouldWireCloudHsmV2ConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withCloudHsmV2Config(cfg -> cfg.enabled(false)),
+                c -> c.getCloudHsmV2Config().isEnabled(), false,
+                "FLOCI_SERVICES_CLOUDHSMV2_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreDuckDbConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withDuckDbConfig(c -> c
-                    .url("http://custom-duckdb:8080")
-                    .defaultImage("floci/floci-duck:1.5.18"));
-
-            assertThat(container.getDuckDbConfig().getUrl()).isEqualTo("http://custom-duckdb:8080");
-            assertThat(container.getDuckDbConfig().getDefaultImage()).isEqualTo("floci/floci-duck:1.5.18");
-        }
+    void shouldWireEmrServerlessConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withEmrServerlessConfig(cfg -> cfg.enabled(false)),
+                c -> c.getEmrServerlessConfig().isEnabled(), false,
+                "FLOCI_SERVICES_EMRSERVERLESS_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreSecurityConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withSecurityConfig(c -> c.disableCorsHeaders(true));
-
-            assertThat(container.getSecurityConfig().isDisableCorsHeaders()).isTrue();
-        }
+    void shouldWireFisConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withFisConfig(cfg -> cfg.enabled(false)),
+                c -> c.getFisConfig().isEnabled(), false,
+                "FLOCI_SERVICES_FIS_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreProtocolsConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withProtocolsConfig(c -> c.strictClaiming(true));
-
-            assertThat(container.getProtocolsConfig().isStrictClaiming()).isTrue();
-        }
+    void shouldWireConnectConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withConnectConfig(cfg -> cfg.enabled(false)),
+                c -> c.getConnectConfig().isEnabled(), false,
+                "FLOCI_SERVICES_CONNECT_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreAuthConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withAuthConfig(c -> c.validateSignatures(true).presignSecret("custom-secret"));
-
-            assertThat(container.getAuthConfig().isValidateSignatures()).isTrue();
-            assertThat(container.getAuthConfig().getPresignSecret()).isEqualTo("custom-secret");
-        }
+    void shouldWireSsoAdminConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withSsoAdminConfig(cfg -> cfg.enabled(false)),
+                c -> c.getSsoAdminConfig().isEnabled(), false,
+                "FLOCI_SERVICES_SSOADMIN_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreInitHooksConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withInitHooksConfig(c -> c
-                    .shellExecutable("/bin/bash")
-                    .shutdownGracePeriodSeconds(5)
-                    .timeoutSeconds(60));
-
-            assertThat(container.getInitHooksConfig().getShellExecutable()).isEqualTo("/bin/bash");
-            assertThat(container.getInitHooksConfig().getShutdownGracePeriodSeconds()).isEqualTo(5);
-            assertThat(container.getInitHooksConfig().getTimeoutSeconds()).isEqualTo(60);
-        }
+    void shouldWireApsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withApsConfig(cfg -> cfg.enabled(false)),
+                c -> c.getApsConfig().isEnabled(), false,
+                "FLOCI_SERVICES_APS_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreConnectConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withConnectConfig(c -> c.enabled(false));
-
-            assertThat(container.getConnectConfig().isEnabled()).isFalse();
-        }
+    void shouldWireCodeGuruReviewerConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withCodeGuruReviewerConfig(cfg -> cfg.enabled(false)),
+                c -> c.getCodeGuruReviewerConfig().isEnabled(), false,
+                "FLOCI_SERVICES_CODEGURUREVIEWER_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreSsoAdminConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withSsoAdminConfig(c -> c.enabled(false));
-
-            assertThat(container.getSsoAdminConfig().isEnabled()).isFalse();
-        }
+    void shouldWireControlTowerConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withControlTowerConfig(cfg -> cfg.enabled(false)),
+                c -> c.getControlTowerConfig().isEnabled(), false,
+                "FLOCI_SERVICES_CONTROLTOWER_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreApsConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withApsConfig(c -> c.enabled(false));
-
-            assertThat(container.getApsConfig().isEnabled()).isFalse();
-        }
+    void shouldWireRoute53ResolverConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withRoute53ResolverConfig(cfg -> cfg.enabled(false)),
+                c -> c.getRoute53ResolverConfig().isEnabled(), false,
+                "FLOCI_SERVICES_ROUTE53RESOLVER_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreCodeGuruReviewerConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withCodeGuruReviewerConfig(c -> c.enabled(false));
-
-            assertThat(container.getCodeGuruReviewerConfig().isEnabled()).isFalse();
-        }
+    void shouldWireNetworkFirewallConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withNetworkFirewallConfig(cfg -> cfg.enabled(false)),
+                c -> c.getNetworkFirewallConfig().isEnabled(), false,
+                "FLOCI_SERVICES_NETWORKFIREWALL_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreControlTowerConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withControlTowerConfig(c -> c.enabled(false));
-
-            assertThat(container.getControlTowerConfig().isEnabled()).isFalse();
-        }
+    void shouldWireServiceCatalogConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withServiceCatalogConfig(cfg -> cfg.enabled(false)),
+                c -> c.getServiceCatalogConfig().isEnabled(), false,
+                "FLOCI_SERVICES_SERVICECATALOG_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreRoute53ResolverConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withRoute53ResolverConfig(c -> c.enabled(false));
-
-            assertThat(container.getRoute53ResolverConfig().isEnabled()).isFalse();
-        }
+    void shouldWireServiceQuotasConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withServiceQuotasConfig(cfg -> cfg.enabled(false)),
+                c -> c.getServiceQuotasConfig().isEnabled(), false,
+                "FLOCI_SERVICES_SERVICEQUOTAS_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreNetworkFirewallConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withNetworkFirewallConfig(c -> c.enabled(false));
-
-            assertThat(container.getNetworkFirewallConfig().isEnabled()).isFalse();
-        }
+    void shouldWireRamConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withRamConfig(cfg -> cfg.enabled(false)),
+                c -> c.getRamConfig().isEnabled(), false,
+                "FLOCI_SERVICES_RAM_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreServiceCatalogConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withServiceCatalogConfig(c -> c.enabled(false));
-
-            assertThat(container.getServiceCatalogConfig().isEnabled()).isFalse();
-        }
+    void shouldWireLakeFormationConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withLakeFormationConfig(cfg -> cfg.enabled(false)),
+                c -> c.getLakeFormationConfig().isEnabled(), false,
+                "FLOCI_SERVICES_LAKEFORMATION_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreServiceQuotasConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withServiceQuotasConfig(c -> c.enabled(false));
-
-            assertThat(container.getServiceQuotasConfig().isEnabled()).isFalse();
-        }
+    void shouldWireEfsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withEfsConfig(cfg -> cfg.enabled(false)),
+                c -> c.getEfsConfig().isEnabled(), false,
+                "FLOCI_SERVICES_EFS_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreRamConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withRamConfig(c -> c.enabled(false));
-
-            assertThat(container.getRamConfig().isEnabled()).isFalse();
-        }
+    void shouldWireResourceExplorer2ConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withResourceExplorer2Config(cfg -> cfg.enabled(false)),
+                c -> c.getResourceExplorer2Config().isEnabled(), false,
+                "FLOCI_SERVICES_RESOURCEEXPLORER2_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreLakeFormationConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withLakeFormationConfig(c -> c.enabled(false));
-
-            assertThat(container.getLakeFormationConfig().isEnabled()).isFalse();
-        }
+    void shouldWireRedshiftConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withRedshiftConfig(cfg -> cfg.defaultPort(5000)),
+                c -> c.getRedshiftConfig().getDefaultPort(), 5000,
+                "FLOCI_SERVICES_REDSHIFT_DEFAULT_PORT", "5000");
     }
 
     @Test
-    void shouldStoreEfsConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withEfsConfig(c -> c.enabled(false));
-
-            assertThat(container.getEfsConfig().isEnabled()).isFalse();
-        }
+    void shouldWireOrganizationsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withOrganizationsConfig(cfg -> cfg.scpEnforcementEnabled(true)),
+                c -> c.getOrganizationsConfig().isScpEnforcementEnabled(), true,
+                "FLOCI_SERVICES_ORGANIZATIONS_SCP_ENFORCEMENT_ENABLED", "true");
     }
 
     @Test
-    void shouldStoreResourceExplorer2ConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withResourceExplorer2Config(c -> c.enabled(false));
-
-            assertThat(container.getResourceExplorer2Config().isEnabled()).isFalse();
-        }
+    void shouldWireComprehendConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withComprehendConfig(cfg -> cfg.enabled(false)),
+                c -> c.getComprehendConfig().isEnabled(), false,
+                "FLOCI_SERVICES_COMPREHEND_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreRedshiftConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withRedshiftConfig(c -> c
-                    .defaultPort(5000)
-                    .imageVersion("postgres:16-alpine")
-                    .dockerNetwork("my-redshift-network"));
-
-            assertThat(container.getRedshiftConfig().getDefaultPort()).isEqualTo(5000);
-            assertThat(container.getRedshiftConfig().getImageVersion()).isEqualTo("postgres:16-alpine");
-            assertThat(container.getRedshiftConfig().getDockerNetwork()).isEqualTo("my-redshift-network");
-        }
+    void shouldWireRekognitionConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withRekognitionConfig(cfg -> cfg.enabled(false)),
+                c -> c.getRekognitionConfig().isEnabled(), false,
+                "FLOCI_SERVICES_REKOGNITION_ENABLED", "false");
     }
 
     @Test
-    void shouldStoreOrganizationsConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withOrganizationsConfig(c -> c
-                    .scpEnforcementEnabled(true)
-                    .managementAccountEmail("root@example.com"));
-
-            assertThat(container.getOrganizationsConfig().isScpEnforcementEnabled()).isTrue();
-            assertThat(container.getOrganizationsConfig().getManagementAccountEmail()).isEqualTo("root@example.com");
-        }
+    void shouldWireTranscribeConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withTranscribeConfig(cfg -> cfg.enabled(false)),
+                c -> c.getTranscribeConfig().isEnabled(), false,
+                "FLOCI_SERVICES_TRANSCRIBE_ENABLED", "false");
     }
 
-    @Test
-    void shouldStoreComprehendConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withComprehendConfig(c -> c.enabled(false));
+    // --- Cross-cutting configs (config/) --------------------------------------------------------
 
-            assertThat(container.getComprehendConfig().isEnabled()).isFalse();
-        }
+    @Test
+    void shouldWireDuckDbConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withDuckDbConfig(cfg -> cfg.url("http://custom-duckdb:8080")),
+                c -> c.getDuckDbConfig().getUrl(), "http://custom-duckdb:8080",
+                "FLOCI_SERVICES_DUCK_URL", "http://custom-duckdb:8080");
     }
 
     @Test
-    void shouldStoreRekognitionConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withRekognitionConfig(c -> c.enabled(false));
+    void shouldWireSecurityConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withSecurityConfig(cfg -> cfg.disableCorsHeaders(true)),
+                c -> c.getSecurityConfig().isDisableCorsHeaders(), true,
+                "FLOCI_SECURITY_DISABLE_CORS_HEADERS", "true");
+    }
 
-            assertThat(container.getRekognitionConfig().isEnabled()).isFalse();
-        }
+    @Test
+    void shouldWireProtocolsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withProtocolsConfig(cfg -> cfg.strictClaiming(true)),
+                c -> c.getProtocolsConfig().isStrictClaiming(), true,
+                "FLOCI_PROTOCOLS_STRICT_CLAIMING", "true");
     }
 
     @Test
-    void shouldStoreTranscribeConfigOnContainer() {
-        try (FlociContainer container = new FlociContainer()) {
-            container.withTranscribeConfig(c -> c.enabled(false));
+    void shouldWireAuthConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withAuthConfig(cfg -> cfg.validateSignatures(true)),
+                c -> c.getAuthConfig().isValidateSignatures(), true,
+                "FLOCI_AUTH_VALIDATE_SIGNATURES", "true");
+    }
 
-            assertThat(container.getTranscribeConfig().isEnabled()).isFalse();
-        }
+    @Test
+    void shouldWireInitHooksConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withInitHooksConfig(cfg -> cfg.timeoutSeconds(60)),
+                c -> c.getInitHooksConfig().getTimeoutSeconds(), 60L,
+                "FLOCI_INIT_HOOKS_TIMEOUT_SECONDS", "60");
     }
 
 }
