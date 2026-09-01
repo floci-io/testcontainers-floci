@@ -314,9 +314,10 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
                 .forResponsePredicate(response -> response.matches("(?s).*\"ready\"\\s*:\\s*true.*"))
                 .withStartupTimeout(Duration.ofSeconds(30)));
 
-        // Configure ports and env vars
+        // Configure ports, env vars and file mounts
         configureExposedPorts();
         configureEnvVars();
+        configureFileMounts();
     }
 
     /**
@@ -510,6 +511,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         serviceConfigAccessors.forEach(ServiceConfigAccessor::disable);
         configureExposedPorts();
         configureEnvVars();
+        configureFileMounts();
         return this;
     }
 
@@ -1687,6 +1689,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.stepFunctionsConfig = builder.build();
         stepFunctionsConfig.applyEnvVarsToContainer(this);
+        stepFunctionsConfig.applyFileMountsToContainer(this);
         return this;
     }
 
@@ -3625,6 +3628,16 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         withExposedPorts(PORT);
 
         serviceConfigAccessors.forEach(accessor -> accessor.get().applyExposedPortsToContainer(this));
+    }
+
+    /**
+     * Mounts into the container any files the service configurations need (e.g. a generated
+     * Step Functions mock configuration file). Called from the same places as
+     * {@link #configureEnvVars()}; service configs tolerate being invoked more than once, so
+     * repeated invocations are harmless.
+     */
+    private void configureFileMounts() {
+        serviceConfigAccessors.forEach(accessor -> accessor.get().applyFileMountsToContainer(this));
     }
 
     /**
