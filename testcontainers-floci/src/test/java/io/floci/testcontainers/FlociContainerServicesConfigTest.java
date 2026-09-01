@@ -117,9 +117,9 @@ class FlociContainerServicesConfigTest {
     @Test
     void shouldWireCloudFormationConfigIntoContainer() {
         assertConfigWired(
-                c -> c.withCloudFormationConfig(cfg -> cfg.enabled(false)),
-                c -> c.getCloudFormationConfig().isEnabled(), false,
-                "FLOCI_SERVICES_CLOUDFORMATION_ENABLED", "false");
+                c -> c.withCloudFormationConfig(cfg -> cfg.allowStubLambdaCode(true)),
+                c -> c.getCloudFormationConfig().isAllowStubLambdaCode(), true,
+                "FLOCI_SERVICES_CLOUDFORMATION_ALLOW_STUB_LAMBDA_CODE", "true");
     }
 
     @Test
