@@ -2,9 +2,11 @@ package io.floci.testcontainers.spring;
 
 import io.awspring.cloud.autoconfigure.core.AwsConnectionDetails;
 import io.floci.testcontainers.FlociContainer;
-import java.net.URI;
 import org.springframework.boot.testcontainers.service.connection.ContainerConnectionDetailsFactory;
 import org.springframework.boot.testcontainers.service.connection.ContainerConnectionSource;
+import org.springframework.util.ClassUtils;
+
+import java.net.URI;
 
 /**
  * {@link ContainerConnectionDetailsFactory} that produces {@link AwsConnectionDetails}
@@ -20,12 +22,23 @@ import org.springframework.boot.testcontainers.service.connection.ContainerConne
 public class FlociAwsContainerConnectionDetailsFactory
         extends ContainerConnectionDetailsFactory<FlociContainer, AwsConnectionDetails> {
 
+    private static final boolean IS_SPRING_AWS_PRESENT = ClassUtils.isPresent(
+            "io.awspring.cloud.testcontainers.AwsFlociContainerConnectionDetailsFactory",
+            FlociAwsContainerConnectionDetailsFactory.class.getClassLoader()
+    );
+
+
     FlociAwsContainerConnectionDetailsFactory() {
     }
 
     @Override
     protected AwsConnectionDetails getContainerConnectionDetails(
             ContainerConnectionSource<FlociContainer> source) {
+        // If the Spring Cloud AWS Testcontainers support is present, skip our implementation
+        if (IS_SPRING_AWS_PRESENT) {
+            return null;
+        }
+
         return new FlociAwsContainerConnectionDetails(source);
     }
 
