@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.16.1](https://github.com/floci-io/testcontainers-floci/compare/v2.16.0...v2.16.1) (2026-09-02)
+
+
+### Bug Fixes
+
+* avoid conflicts with Spring Cloud AWS Testcontainers &gt;= v4.1.0 ([d7e5a53](https://github.com/floci-io/testcontainers-floci/commit/d7e5a5321b446e9896d9b0bcbbf617295282f795))
+
 ## [2.16.0](https://github.com/floci-io/testcontainers-floci/compare/v2.15.0...v2.16.0) (2026-09-01)
 
 
