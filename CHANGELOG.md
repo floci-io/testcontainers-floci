@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.16.2](https://github.com/floci-io/testcontainers-floci/compare/v2.16.1...v2.16.2) (2026-09-06)
+
+
+### Bug Fixes
+
+* **controltower:** create a landing zone in ControlTowerServiceTest ([49d503c](https://github.com/floci-io/testcontainers-floci/commit/49d503c3f4ec7399602b6e50ffabe02c85f3e53a))
+* **eks:** make EksServiceTest's bearer token pass Floci's IAM auth webhook ([deeb287](https://github.com/floci-io/testcontainers-floci/commit/deeb2872011b250683e6971649746d897566fdf9))
+
 ## [2.16.1](https://github.com/floci-io/testcontainers-floci/compare/v2.16.0...v2.16.1) (2026-09-02)
 
 
