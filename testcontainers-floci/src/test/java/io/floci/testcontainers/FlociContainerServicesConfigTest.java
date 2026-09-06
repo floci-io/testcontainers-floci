@@ -745,9 +745,9 @@ class FlociContainerServicesConfigTest {
     @Test
     void shouldWireControlTowerConfigIntoContainer() {
         assertConfigWired(
-                c -> c.withControlTowerConfig(cfg -> cfg.enabled(false)),
-                c -> c.getControlTowerConfig().isEnabled(), false,
-                "FLOCI_SERVICES_CONTROLTOWER_ENABLED", "false");
+                c -> c.withControlTowerConfig(cfg -> cfg.seedLandingZone(true)),
+                c -> c.getControlTowerConfig().hasSeedLandingZone(), true,
+                "FLOCI_SERVICES_CONTROLTOWER_SEED_LANDING_ZONE", "true");
     }
 
     @Test
