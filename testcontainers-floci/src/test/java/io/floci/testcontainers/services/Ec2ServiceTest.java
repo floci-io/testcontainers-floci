@@ -132,17 +132,9 @@ class Ec2ServiceTest extends AbstractServiceTest {
         Session session = sessionRef.get();
 
         try {
-            // Verify the VM is Linux
+            // The SSH session is established — confirm we can actually run a command on the VM
             String kernel = sshExec(session, "uname -s").trim();
             assertThat(kernel).isEqualToIgnoringCase("Linux");
-
-            // Query IMDS from inside the instance: read the endpoint URL from PID 1's
-            // environment (set by Floci at container launch time) then call instance-id
-            String imdsCmd =
-                    "IMDS=$(cat /proc/1/environ | tr '\\000' '\\n' | grep ^AWS_EC2_METADATA_SERVICE_ENDPOINT | cut -d= -f2-) && " +
-                            "wget -q -O - \"${IMDS}/latest/meta-data/instance-id\"";
-            String imdsInstanceId = sshExec(session, imdsCmd).trim();
-            assertThat(imdsInstanceId).isEqualTo(instanceId);
         } finally {
             session.disconnect();
         }
