@@ -1,10 +1,13 @@
 package io.floci.testcontainers.services;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+import software.amazon.awssdk.services.organizations.OrganizationsClient;
+import software.amazon.awssdk.services.organizations.model.OrganizationsException;
 import software.amazon.awssdk.services.ram.RamClient;
 import software.amazon.awssdk.services.ram.model.ResourceOwner;
 import software.amazon.awssdk.services.ram.model.ResourceShare;
@@ -19,12 +22,32 @@ class RamServiceTest extends AbstractServiceTest {
     private static final String TGW_ARN = "arn:aws:ec2:us-east-1:000000000000:transit-gateway/tgw-0abc";
 
     static RamClient ram;
+    static OrganizationsClient organizations;
 
     static String resourceShareArn;
 
     @BeforeAll
     static void setUp() {
         ram = client(RamClient.builder());
+        organizations = client(OrganizationsClient.builder());
+
+        // Nightly Floci mirrors real AWS: EnableSharingWithAwsOrganization requires the
+        // calling account to already belong to an organization, otherwise it returns
+        // "Your account is not a member of an organization." Create one for this test.
+        try {
+            organizations.createOrganization(b -> b.featureSet("ALL"));
+        } catch (OrganizationsException ignored) {
+            // an organization already exists on the shared container — reuse it
+        }
+    }
+
+    @AfterAll
+    static void tearDown() {
+        try {
+            organizations.deleteOrganization();
+        } catch (OrganizationsException ignored) {
+            // best-effort cleanup of the shared container
+        }
     }
 
     @Test
