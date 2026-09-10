@@ -21,7 +21,7 @@ class CloudControlServiceTest extends AbstractServiceTest {
     @Test
     void shouldListResources() {
         List<ResourceDescription> resources = cloudControl
-                .listResources(b -> b.typeName("AWS::SQS::Queue"))
+                .listResources(b -> b.typeName("AWS::S3::Bucket"))
                 .resourceDescriptions();
 
         assertThat(resources).isNotNull();
