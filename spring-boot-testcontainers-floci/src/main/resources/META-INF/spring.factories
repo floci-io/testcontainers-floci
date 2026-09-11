@@ -1,2 +1,0 @@
-org.springframework.boot.autoconfigure.service.connection.ConnectionDetailsFactory=\
-  io.floci.testcontainers.spring.FlociAwsContainerConnectionDetailsFactory

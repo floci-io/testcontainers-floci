@@ -10,10 +10,10 @@ a single endpoint, making it ideal for integration testing. See the [Floci docum
 
 ## Modules
 
-| Module                                                                         | Description                                                      |
-|--------------------------------------------------------------------------------|------------------------------------------------------------------|
-| [`testcontainers-floci`](#module-testcontainers-floci)                         | Core Testcontainers module for starting a Floci container        |
-| [`spring-boot-testcontainers-floci`](#module-spring-boot-testcontainers-floci) | Spring Boot auto-configuration with `@ServiceConnection` support |
+| Module                                                                                                  | Description                                                |
+|-----------------------------------------------------------------------------------------------------------|-------------------------------------------------------------|
+| [`testcontainers-floci`](#module-testcontainers-floci)                                                    | Core Testcontainers module for starting a Floci container   |
+| [`spring-boot-testcontainers-floci`](#module-spring-boot-testcontainers-floci-decommissioned) (decommissioned) | Superseded by Spring Cloud AWS's own testcontainers module |
 
 ## Requirements
 
@@ -22,10 +22,10 @@ a single endpoint, making it ideal for integration testing. See the [Floci docum
 
 ## Version Compatibility
 
-| testcontainers-floci | Spring Boot | Spring Cloud AWS | Testcontainers | Release badges                                                                                                                                                                       |
-|----------------------|-------------|------------------|----------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **2.x**              | 4.0.x       | 4.0.x            | 2.x            | [![Maven Central](https://img.shields.io/maven-central/v/io.floci/testcontainers-floci)](https://central.sonatype.com/artifact/io.floci/testcontainers-floci)                        |
-| **1.x**              | 3.5.x       | 3.4.x            | 1.x            | [![Maven Central](https://img.shields.io/maven-central/v/io.floci/testcontainers-floci?filter=1.*)](https://img.shields.io/maven-central/v/io.floci/testcontainers-floci?filter=1.*) |
+| testcontainers-floci | Spring Boot integration                                     | Testcontainers | Release badges                                                                                                                                                                       |
+|-----------------------|-------------------------------------------------------------|----------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **2.x**               | via [`spring-cloud-aws-testcontainers`](#module-spring-boot-testcontainers-floci-decommissioned) (4.1.0+) | 2.x            | [![Maven Central](https://img.shields.io/maven-central/v/io.floci/testcontainers-floci)](https://central.sonatype.com/artifact/io.floci/testcontainers-floci)                        |
+| **1.x**               | `spring-boot-testcontainers-floci` (Spring Boot 3.5.x / Spring Cloud AWS 3.4.x) | 1.x            | [![Maven Central](https://img.shields.io/maven-central/v/io.floci/testcontainers-floci?filter=1.*)](https://img.shields.io/maven-central/v/io.floci/testcontainers-floci?filter=1.*) |
 
 ---
 
@@ -221,158 +221,28 @@ FlociContainer floci = new FlociContainer().withDockerSocket(true);
 
 ---
 
-## Module: spring-boot-testcontainers-floci
+## Module: spring-boot-testcontainers-floci (decommissioned)
 
-This module integrates `FlociContainer` with [Spring Boot](https://spring.io/projects/spring-boot) and [Spring Cloud AWS](https://awspring.io/) via the `@ServiceConnection` 
-annotation. When a `FlociContainer` is declared as a service connection, **all Spring Cloud AWS clients are automatically 
-configured** to use the Floci instance — no manual endpoint, credentials, or region configuration needed.
-
-### What it does
-
-- Produces `AwsConnectionDetails` from `FlociContainer`, which Spring Cloud AWS uses to auto-configure endpoint, region, 
-and credentials on all AWS SDK clients
-- Automatically enables S3 path-style access on your `S3Client` (required for `Floci`)
-
-### Installation
-
-**Maven:**
-
-```xml
-<dependency>
-    <groupId>io.floci</groupId>
-    <artifactId>spring-boot-testcontainers-floci</artifactId>
-    <version>${testcontainers-floci.version}</version>
-    <scope>test</scope>
-</dependency>
-```
-
-You also need a Spring Cloud AWS starter for the services you want to test, for example:
-
-```xml
-<dependency>
-    <groupId>io.awspring.cloud</groupId>
-    <artifactId>spring-cloud-aws-starter-s3</artifactId>
-    <scope>test</scope>
-</dependency>
-```
-
-**Gradle (Kotlin DSL):**
-
-```kotlin
-testImplementation("io.floci:spring-boot-testcontainers-floci:${testcontainersFlociVersion}")
-testImplementation("io.awspring.cloud:spring-cloud-aws-starter-s3")
-```
-
-**Gradle (Groovy DSL):**
-
-```groovy
-testImplementation "io.floci:spring-boot-testcontainers-floci:${testcontainersFlociVersion}"
-testImplementation 'io.awspring.cloud:spring-cloud-aws-starter-s3'
-```
-
-### Usage
-
-#### Java
-
-```java
-import io.floci.testcontainers.FlociContainer;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import software.amazon.awssdk.services.s3.S3Client;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
-@SpringBootTest
-@Testcontainers
-class S3IntegrationTest {
-
-    @Container
-    @ServiceConnection
-    static FlociContainer floci = new FlociContainer();
-
-    @Autowired
-    private S3Client s3Client;
-
-    @Test
-    void shouldCreateBucket() {
-        s3Client.createBucket(b -> b.bucket("my-bucket"));
-
-        var buckets = s3Client.listBuckets().buckets();
-        assertThat(buckets).anyMatch(b -> b.name().equals("my-bucket"));
-    }
-}
-```
-
-#### Kotlin
-
-```kotlin
-import io.floci.testcontainers.FlociContainer
-import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection
-import org.testcontainers.junit.jupiter.Container
-import org.testcontainers.junit.jupiter.Testcontainers
-import software.amazon.awssdk.services.s3.S3Client
-
-@SpringBootTest
-@Testcontainers
-class S3IntegrationTest {
-
-    companion object {
-        @Container
-        @ServiceConnection
-        @JvmStatic
-        val floci = FlociContainer()
-    }
-
-    @Autowired
-    private lateinit var s3Client: S3Client
-
-    @Test
-    fun `should create bucket`() {
-        s3Client.createBucket { it.bucket("my-bucket") }
-
-        val buckets = s3Client.listBuckets().buckets()
-        assertThat(buckets).anyMatch { it.name() == "my-bucket" }
-    }
-}
-```
-
-#### Using `@Bean` configuration
-
-You can also declare the container as a `@Bean` in a test configuration class:
-
-**Java:**
-
-```java
-@TestConfiguration
-class FlociTestConfig {
-
-    @Bean
-    @ServiceConnection
-    FlociContainer flociContainer() {
-        return new FlociContainer();
-    }
-}
-```
-
-**Kotlin:**
-
-```kotlin
-@TestConfiguration
-class FlociTestConfig {
-
-    @Bean
-    @ServiceConnection
-    fun flociContainer() = FlociContainer()
-}
-```
+> **This module has been decommissioned on `main` and is no longer published for `testcontainers-floci` 2.x.**
+> The same `@ServiceConnection` integration between `FlociContainer` and Spring Cloud AWS is now provided directly
+> by the [Spring Cloud AWS](https://awspring.io/) project itself, via its own `spring-cloud-aws-testcontainers`
+> module, starting from **Spring Cloud AWS 4.1.0**. Depend on that module instead:
+>
+> ```xml
+> <dependency>
+>     <groupId>io.awspring.cloud</groupId>
+>     <artifactId>spring-cloud-aws-testcontainers</artifactId>
+>     <version>4.1.0</version>
+>     <scope>test</scope>
+> </dependency>
+> ```
+>
+> It is still used together with `testcontainers-floci` (for `FlociContainer` itself) — only the Spring Boot glue
+> code moves to Spring Cloud AWS. See the [Spring Cloud AWS documentation](https://docs.awspring.io/spring-cloud-aws/docs/current/reference/html/index.html)
+> for usage details.
+>
+> The `1.x` line (Spring Boot 3.x / Spring Cloud AWS 3.4.x) still ships `spring-boot-testcontainers-floci` on the
+> `releases/1.x` branch and is unaffected by this change.
 
 ---
 

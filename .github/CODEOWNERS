@@ -12,7 +12,6 @@
 
 # Module code
 /testcontainers-floci/              @hectorvent @cfranzen
-/spring-boot-testcontainers-floci/  @hectorvent @cfranzen
 
 # CI, release automation, workflow hygiene
 /.github/                           @hectorvent @cfranzen

@@ -50,12 +50,12 @@ testcontainers-floci/             Core module — FlociContainer and all config 
       config/services/            Unit tests for individual config classes (no Docker)
       services/                   Integration tests per AWS service (Docker required)
         AbstractServiceTest.java  Shared singleton FlociContainer used by all service tests
-
-spring-boot-testcontainers-floci/ Spring Boot auto-configuration module
-  src/main/java/
-    io/floci/testcontainers/springboot/
-      FlociContainerConnectionDetailsFactory.java  @ServiceConnection wiring
 ```
+
+> **Note:** `spring-boot-testcontainers-floci` was removed on `main`. Use the
+> [`spring-cloud-aws-testcontainers`](https://github.com/awspring/spring-cloud-aws) module (from Spring Cloud AWS
+> 4.1.0 onwards) instead — see the [README](README.md#module-spring-boot-testcontainers-floci-decommissioned) for
+> details.
 
 ## Branching Model
 

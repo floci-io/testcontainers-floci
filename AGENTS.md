@@ -7,7 +7,10 @@ Testcontainers module for [Floci](https://github.com/floci-io/floci) — a local
 ## Structure
 
 - `testcontainers-floci/` — Core module: `FlociContainer` extending `GenericContainer`
-- `spring-boot-testcontainers-floci/` — Spring Boot 4 + Spring Cloud AWS 4 integration via `@ServiceConnection`
+
+`spring-boot-testcontainers-floci` (Spring Boot integration via `@ServiceConnection`) was removed on `main` — the
+same functionality is now provided by Spring Cloud AWS's own `spring-cloud-aws-testcontainers` module (from Spring
+Cloud AWS 4.1.0). See the README for the migration note.
 
 ## Build
 
@@ -45,11 +48,6 @@ entry point; everything else hangs off it:
   (`configureEnvVars()`/`configureExposedPorts()`/`configureFileMounts()`, called from the constructor and after
   every `with*Config` call) can iterate all services generically without a big switch. Adding a new service means touching all of these — see
   "Adding support for a new Floci service" in CONTRIBUTING.md for the exact steps and file locations.
-- `spring-boot-testcontainers-floci` wires `FlociContainer` into Spring via a `ContainerConnectionDetailsFactory`
-  (`FlociAwsContainerConnectionDetailsFactory`) producing Spring Cloud AWS's `AwsConnectionDetails`, plus an
-  `@AutoConfiguration` (`FlociAwsAutoConfiguration`) that force-enables S3 path-style access. Registered the old way
-  in `META-INF/spring.factories` *and* the new way in `META-INF/spring/…AutoConfiguration.imports` — keep both in
-  sync when adding auto-configurations.
 
 ## Testing
 
@@ -83,7 +81,7 @@ entry point; everything else hangs off it:
 ## Key Tech
 
 - Java 17, Maven multi-module
-- Testcontainers 2.x, Spring Boot 4.x, Spring Cloud AWS 4.x
+- Testcontainers 2.x
 - Conventional commits → release-please for versioning (release PR → tag → Maven Central)
 - Publishes to Maven Central (GPG signed)
 

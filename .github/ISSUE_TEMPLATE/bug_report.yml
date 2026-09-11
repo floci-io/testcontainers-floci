@@ -36,8 +36,6 @@ body:
       label: Affected module
       options:
         - testcontainers-floci
-        - spring-boot-testcontainers-floci
-        - Both
     validations:
       required: true
 
