@@ -854,6 +854,14 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_SERVICES_TRANSCRIBE_ENABLED", "false");
     }
 
+    @Test
+    void shouldWireRedshiftDataConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withRedshiftDataConfig(cfg -> cfg.resultTtlHours(1)),
+                c -> c.getRedshiftDataConfig().getResultTtlHours(), 1,
+                "FLOCI_SERVICES_REDSHIFT_DATA_RESULT_TTL_HOURS", "1");
+    }
+
     // --- Cross-cutting configs (config/) --------------------------------------------------------
 
     @Test
