@@ -381,7 +381,8 @@ class FlociContainerTest {
                     container.getDataSyncConfig(),
                     container.getCodeArtifactConfig(),
                     container.getMarketplaceConfig(),
-                    container.getDmsConfig()
+                    container.getDmsConfig(),
+                    container.getElbConfig()
             )).noneMatch(AbstractServiceConfig::isEnabled);
         }
     }
