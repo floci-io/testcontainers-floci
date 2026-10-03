@@ -1,7 +1,6 @@
 package io.floci.testcontainers.services;
 
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -117,7 +116,6 @@ class KinesisAnalyticsServiceTest extends AbstractServiceTest {
     // "flink" user (uid 9999) - every CreateApplicationSnapshot call fails with
     // "java.io.IOException: Failed to create savepoint directory at /opt/flink/savepoints".
     // Re-enable once that's fixed upstream.
-    @Disabled("Floci real-mode snapshots are broken: savepoints volume isn't writable by the flink user")
     void shouldCreateAndDescribeApplicationSnapshot() {
         kinesisAnalytics.createApplicationSnapshot(b -> b
                 .applicationName(APPLICATION_NAME)
@@ -138,7 +136,6 @@ class KinesisAnalyticsServiceTest extends AbstractServiceTest {
 
     @Test
     @Order(6)
-    @Disabled("Floci real-mode snapshots are broken: savepoints volume isn't writable by the flink user")
     void shouldListApplicationSnapshotsContainsCreatedSnapshot() {
         var summaries = kinesisAnalytics.listApplicationSnapshots(b -> b.applicationName(APPLICATION_NAME))
                 .snapshotSummaries();
@@ -148,7 +145,6 @@ class KinesisAnalyticsServiceTest extends AbstractServiceTest {
 
     @Test
     @Order(7)
-    @Disabled("Floci real-mode snapshots are broken: savepoints volume isn't writable by the flink user")
     void shouldDeleteApplicationSnapshot() {
         var snapshotCreationTimestamp = kinesisAnalytics.describeApplicationSnapshot(b -> b
                         .applicationName(APPLICATION_NAME)
