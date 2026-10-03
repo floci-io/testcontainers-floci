@@ -950,6 +950,14 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_SERVICES_ACCESSANALYZER_ENABLED", "false");
     }
 
+    @Test
+    void shouldWireIdentityStoreConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withIdentityStoreConfig(cfg -> cfg.scimBearerToken("my-scim-token")),
+                c -> c.getIdentityStoreConfig().getScimBearerToken(), "my-scim-token",
+                "FLOCI_SERVICES_IDENTITYSTORE_SCIM_BEARER_TOKEN", "my-scim-token");
+    }
+
     // --- Cross-cutting configs (config/) --------------------------------------------------------
 
     @Test

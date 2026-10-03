@@ -215,6 +215,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private Macie2Config macie2Config = Macie2Config.builder().build();
     private AccountConfig accountConfig = AccountConfig.builder().build();
     private AccessAnalyzerConfig accessAnalyzerConfig = AccessAnalyzerConfig.builder().build();
+    private IdentityStoreConfig identityStoreConfig = IdentityStoreConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -326,7 +327,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> ssoOidcConfig, c -> ssoOidcConfig = c),
             new ServiceConfigAccessor<>(() -> macie2Config, c -> macie2Config = c),
             new ServiceConfigAccessor<>(() -> accountConfig, c -> accountConfig = c),
-            new ServiceConfigAccessor<>(() -> accessAnalyzerConfig, c -> accessAnalyzerConfig = c)
+            new ServiceConfigAccessor<>(() -> accessAnalyzerConfig, c -> accessAnalyzerConfig = c),
+            new ServiceConfigAccessor<>(() -> identityStoreConfig, c -> identityStoreConfig = c)
     );
 
     /**
@@ -4074,6 +4076,34 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.accessAnalyzerConfig = builder.build();
         accessAnalyzerConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Identity Store-specific settings.
+     *
+     * @return the Identity Store configuration
+     */
+    public IdentityStoreConfig getIdentityStoreConfig() {
+        return identityStoreConfig;
+    }
+
+    /**
+     * Configures Identity Store-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withIdentityStoreConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link IdentityStoreConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withIdentityStoreConfig(Consumer<IdentityStoreConfig.Builder> configurer) {
+        IdentityStoreConfig.Builder builder = identityStoreConfig.toBuilder();
+        configurer.accept(builder);
+        this.identityStoreConfig = builder.build();
+        identityStoreConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
