@@ -216,6 +216,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private AccountConfig accountConfig = AccountConfig.builder().build();
     private AccessAnalyzerConfig accessAnalyzerConfig = AccessAnalyzerConfig.builder().build();
     private IdentityStoreConfig identityStoreConfig = IdentityStoreConfig.builder().build();
+    private BudgetsConfig budgetsConfig = BudgetsConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -328,7 +329,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> macie2Config, c -> macie2Config = c),
             new ServiceConfigAccessor<>(() -> accountConfig, c -> accountConfig = c),
             new ServiceConfigAccessor<>(() -> accessAnalyzerConfig, c -> accessAnalyzerConfig = c),
-            new ServiceConfigAccessor<>(() -> identityStoreConfig, c -> identityStoreConfig = c)
+            new ServiceConfigAccessor<>(() -> identityStoreConfig, c -> identityStoreConfig = c),
+            new ServiceConfigAccessor<>(() -> budgetsConfig, c -> budgetsConfig = c)
     );
 
     /**
@@ -4104,6 +4106,34 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.identityStoreConfig = builder.build();
         identityStoreConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Budgets-specific settings.
+     *
+     * @return the Budgets configuration
+     */
+    public BudgetsConfig getBudgetsConfig() {
+        return budgetsConfig;
+    }
+
+    /**
+     * Configures Budgets-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withBudgetsConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link BudgetsConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withBudgetsConfig(Consumer<BudgetsConfig.Builder> configurer) {
+        BudgetsConfig.Builder builder = budgetsConfig.toBuilder();
+        configurer.accept(builder);
+        this.budgetsConfig = builder.build();
+        budgetsConfig.applyEnvVarsToContainer(this);
         return this;
     }
 

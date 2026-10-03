@@ -958,6 +958,14 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_SERVICES_IDENTITYSTORE_SCIM_BEARER_TOKEN", "my-scim-token");
     }
 
+    @Test
+    void shouldWireBudgetsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withBudgetsConfig(cfg -> cfg.enabled(false)),
+                c -> c.getBudgetsConfig().isEnabled(), false,
+                "FLOCI_SERVICES_BUDGETS_ENABLED", "false");
+    }
+
     // --- Cross-cutting configs (config/) --------------------------------------------------------
 
     @Test
