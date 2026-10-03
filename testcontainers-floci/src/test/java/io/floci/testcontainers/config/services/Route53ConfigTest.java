@@ -90,4 +90,26 @@ class Route53ConfigTest {
         assertThat(copy.getDefaultNameserver4()).isEqualTo("ns4.example.com");
     }
 
+    @Test
+    void shouldApplyVpcAssociationControlPlaneDelayMs() {
+        Route53Config defaults = Route53Config.builder().build();
+        assertThat(defaults.getVpcAssociationControlPlaneDelayMs()).isEqualTo(0L);
+
+        Route53Config config = Route53Config.builder().vpcAssociationControlPlaneDelayMs(2000L).build();
+        assertThat(config.getVpcAssociationControlPlaneDelayMs()).isEqualTo(2000L);
+        assertThat(config.toBuilder().build().getVpcAssociationControlPlaneDelayMs()).isEqualTo(2000L);
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_ROUTE53_VPC_ASSOCIATION_CONTROL_PLANE_DELAY_MS", "2000");
+
+        GenericContainer<?> defaultContainer = genericContainer();
+        defaults.applyEnvVarsToContainer(defaultContainer);
+        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_ROUTE53_VPC_ASSOCIATION_CONTROL_PLANE_DELAY_MS", "0");
+
+        GenericContainer<?> disabledContainer = genericContainer();
+        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
+        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_ROUTE53_VPC_ASSOCIATION_CONTROL_PLANE_DELAY_MS");
+    }
+
 }
