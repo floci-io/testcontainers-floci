@@ -29,6 +29,11 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
     private static final int DEFAULT_REGION_CONCURRENCY_LIMIT = 1000;
     private static final int DEFAULT_UNRESERVED_CONCURRENCY_MIN = 100;
     private static final String DEFAULT_ECR_BASE_URI = "public.ecr.aws";
+    private static final int DEFAULT_ZIP_MAX_ENTRIES = 100000;
+    private static final int DEFAULT_ASYNC_RETRY_DELAY_SECONDS = 60;
+    private static final boolean DEFAULT_HONOUR_ARCHITECTURES = false;
+    private static final int DEFAULT_WARM_POOL_MAX_TOTAL = 0;
+    private static final boolean DEFAULT_ACCEPT_EXTERNAL_LAYER_ARNS = false;
 
     private final boolean ephemeral;
     private final boolean exposeRuntimePorts;
@@ -47,6 +52,13 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
     private final String ecrBaseUri;
     private final String containerNamePrefix;
     private final Integer codeVolumePopulateConcurrency;
+    private final int zipMaxEntries;
+    private final int asyncRetryDelaySeconds;
+    private final boolean honourArchitectures;
+    private final Integer warmPoolMaxPerFunction;
+    private final int warmPoolMaxTotal;
+    private final String dockerFlags;
+    private final boolean acceptExternalLayerArns;
 
     private LambdaConfig(Builder builder) {
         super(builder.enabled);
@@ -67,6 +79,13 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
         this.ecrBaseUri = builder.ecrBaseUri;
         this.containerNamePrefix = builder.containerNamePrefix;
         this.codeVolumePopulateConcurrency = builder.codeVolumePopulateConcurrency;
+        this.zipMaxEntries = builder.zipMaxEntries;
+        this.asyncRetryDelaySeconds = builder.asyncRetryDelaySeconds;
+        this.honourArchitectures = builder.honourArchitectures;
+        this.warmPoolMaxPerFunction = builder.warmPoolMaxPerFunction;
+        this.warmPoolMaxTotal = builder.warmPoolMaxTotal;
+        this.dockerFlags = builder.dockerFlags;
+        this.acceptExternalLayerArns = builder.acceptExternalLayerArns;
     }
 
     /**
@@ -282,6 +301,88 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
         return Optional.ofNullable(codeVolumePopulateConcurrency);
     }
 
+    /**
+     * Returns the maximum number of entries accepted in a Lambda ZIP archive.
+     *
+     * @return the maximum number of entries accepted in a Lambda ZIP archive
+     */
+    public int getZipMaxEntries() {
+        return zipMaxEntries;
+    }
+
+    /**
+     * Returns the number of seconds before the first retry of a failed asynchronous invocation.
+     *
+     * <p>Retry n waits n times this, so the default matches AWS: one minute, then two. Zero retries back to
+     * back.
+     *
+     * @return the number of seconds before the first retry of a failed asynchronous invocation
+     */
+    public int getAsyncRetryDelaySeconds() {
+        return asyncRetryDelaySeconds;
+    }
+
+    /**
+     * Returns whether Docker Lambda containers use the platform declared by the function's
+     * {@code Architectures} value.
+     *
+     * <p>Disabled by default because foreign-platform containers require host support such as binfmt_misc or
+     * QEMU.
+     *
+     * @return whether Docker Lambda containers use the platform declared by the function's {@code Architectures} value
+     */
+    public boolean isHonourArchitectures() {
+        return honourArchitectures;
+    }
+
+    /**
+     * Returns the maximum number of idle (warm) containers kept per function.
+     *
+     * <p>A container released when the function already holds this many idle ones is stopped instead of
+     * pooled. Unset lets Floci derive {@code max(4, availableProcessors())}; values below 1 are ignored by
+     * Floci with a warning.
+     *
+     * @return the maximum number of idle (warm) containers kept per function, or {@link Optional#empty()} if not configured
+     */
+    public Optional<Integer> getWarmPoolMaxPerFunction() {
+        return Optional.ofNullable(warmPoolMaxPerFunction);
+    }
+
+    /**
+     * Returns the maximum number of idle (warm) containers kept across all functions.
+     *
+     * <p>When a release would push the total past this, the least-recently-used idle container of any
+     * function is stopped first. {@code 0} disables the bound. Busy containers are not counted; their ceiling
+     * is the region concurrency limit.
+     *
+     * @return the maximum number of idle (warm) containers kept across all functions
+     */
+    public int getWarmPoolMaxTotal() {
+        return warmPoolMaxTotal;
+    }
+
+    /**
+     * Returns the additional Docker create flags applied to every Lambda execution container.
+     *
+     * @return the additional Docker create flags applied to every Lambda execution container, or {@link Optional#empty()} if not configured
+     */
+    public Optional<String> getDockerFlags() {
+        return Optional.ofNullable(dockerFlags);
+    }
+
+    /**
+     * Returns whether a {@code Layers} ARN naming another account is accepted.
+     *
+     * <p>When enabled, such a layer is recorded on the function without mounting its content (e.g. to attach
+     * public layers such as Powertools). Off by default, because it broadens what CreateFunction and
+     * UpdateFunctionConfiguration accept beyond what AWS does.
+     *
+     * @return whether a {@code Layers} ARN naming another account is accepted
+     */
+    public boolean isAcceptExternalLayerArns() {
+        return acceptExternalLayerArns;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_LAMBDA_ENABLED", String.valueOf(isEnabled()));
@@ -323,6 +424,22 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
                 container.withEnv("FLOCI_SERVICES_LAMBDA_CODE_VOLUME_POPULATE_CONCURRENCY",
                         String.valueOf(codeVolumePopulateConcurrency));
             }
+
+            container.withEnv("FLOCI_SERVICES_LAMBDA_ZIP_MAX_ENTRIES", String.valueOf(zipMaxEntries));
+            container.withEnv("FLOCI_SERVICES_LAMBDA_ASYNC_RETRY_DELAY_SECONDS", String.valueOf(asyncRetryDelaySeconds));
+            container.withEnv("FLOCI_SERVICES_LAMBDA_HONOUR_ARCHITECTURES", String.valueOf(honourArchitectures));
+
+            if (warmPoolMaxPerFunction != null) {
+                container.withEnv("FLOCI_SERVICES_LAMBDA_WARM_POOL_MAX_PER_FUNCTION", String.valueOf(warmPoolMaxPerFunction));
+            }
+
+            container.withEnv("FLOCI_SERVICES_LAMBDA_WARM_POOL_MAX_TOTAL", String.valueOf(warmPoolMaxTotal));
+
+            if (dockerFlags != null) {
+                container.withEnv("FLOCI_SERVICES_LAMBDA_DOCKER_FLAGS", dockerFlags);
+            }
+
+            container.withEnv("FLOCI_SERVICES_LAMBDA_ACCEPT_EXTERNAL_LAYER_ARNS", String.valueOf(acceptExternalLayerArns));
         }
     }
 
@@ -351,11 +468,12 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
         boolean enabled();
 
         /**
-         * Optional allow-list of absolute path prefixes. When non-empty, the S3Key supplied
-         * to a hot-reload CreateFunction/UpdateFunctionCode must start with one of these
-         * prefixes. Empty = all absolute paths are accepted.
+         * Optional allow-list of absolute directories. When non-empty, the S3Key supplied to a
+         * hot-reload CreateFunction/UpdateFunctionCode must be one of these directories or inside
+         * one, compared after {@code .} and {@code ..} segments are resolved. Empty = all absolute
+         * paths are accepted.
          *
-         * @return the list of allowed path prefixes, or empty if unrestricted
+         * @return the list of allowed directories, or empty if unrestricted
          */
         Optional<List<String>> allowedPaths();
     }
@@ -387,6 +505,13 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
         private String ecrBaseUri = DEFAULT_ECR_BASE_URI;
         private String containerNamePrefix;
         private Integer codeVolumePopulateConcurrency;
+        private int zipMaxEntries = DEFAULT_ZIP_MAX_ENTRIES;
+        private int asyncRetryDelaySeconds = DEFAULT_ASYNC_RETRY_DELAY_SECONDS;
+        private boolean honourArchitectures = DEFAULT_HONOUR_ARCHITECTURES;
+        private Integer warmPoolMaxPerFunction;
+        private int warmPoolMaxTotal = DEFAULT_WARM_POOL_MAX_TOTAL;
+        private String dockerFlags;
+        private boolean acceptExternalLayerArns = DEFAULT_ACCEPT_EXTERNAL_LAYER_ARNS;
 
         private Builder() {
             // Allow instantiation only via LambdaConfig.builder()
@@ -416,6 +541,13 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
             this.ecrBaseUri = instance.getEcrBaseUri();
             this.containerNamePrefix = instance.getContainerNamePrefix().orElse(null);
             this.codeVolumePopulateConcurrency = instance.getCodeVolumePopulateConcurrency().orElse(null);
+            this.zipMaxEntries = instance.getZipMaxEntries();
+            this.asyncRetryDelaySeconds = instance.getAsyncRetryDelaySeconds();
+            this.honourArchitectures = instance.isHonourArchitectures();
+            this.warmPoolMaxPerFunction = instance.getWarmPoolMaxPerFunction().orElse(null);
+            this.warmPoolMaxTotal = instance.getWarmPoolMaxTotal();
+            this.dockerFlags = instance.getDockerFlags().orElse(null);
+            this.acceptExternalLayerArns = instance.isAcceptExternalLayerArns();
         }
 
         /**
@@ -550,7 +682,7 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
          * Sets the hot-reload configuration with allowed paths.
          *
          * @param enabled whether hot-reload is enabled
-         * @param allowedPaths optional list of allowed path prefixes
+         * @param allowedPaths optional list of allowed directories (the S3Key must be one of them or inside one)
          * @return this builder
          */
         public Builder hotReload(boolean enabled, List<String> allowedPaths) {
@@ -630,6 +762,102 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
          */
         public Builder codeVolumePopulateConcurrency(Integer codeVolumePopulateConcurrency) {
             this.codeVolumePopulateConcurrency = codeVolumePopulateConcurrency;
+            return this;
+        }
+
+        /**
+         * Sets the maximum number of entries accepted in a Lambda ZIP archive.
+         *
+         * @param zipMaxEntries the maximum number of entries accepted in a Lambda ZIP archive (default {@value DEFAULT_ZIP_MAX_ENTRIES})
+         * @return this builder
+         */
+        public Builder zipMaxEntries(int zipMaxEntries) {
+            this.zipMaxEntries = zipMaxEntries;
+            return this;
+        }
+
+        /**
+         * Sets the number of seconds before the first retry of a failed asynchronous invocation.
+         *
+         * <p>Retry n waits n times this, so the default matches AWS: one minute, then two. Zero retries back
+         * to back.
+         *
+         * @param asyncRetryDelaySeconds the number of seconds before the first retry of a failed asynchronous invocation (default {@value DEFAULT_ASYNC_RETRY_DELAY_SECONDS})
+         * @return this builder
+         */
+        public Builder asyncRetryDelaySeconds(int asyncRetryDelaySeconds) {
+            this.asyncRetryDelaySeconds = asyncRetryDelaySeconds;
+            return this;
+        }
+
+        /**
+         * Sets whether Docker Lambda containers use the platform declared by the function's
+         * {@code Architectures} value.
+         *
+         * <p>Disabled by default because foreign-platform containers require host support such as binfmt_misc
+         * or QEMU.
+         *
+         * @param honourArchitectures whether Docker Lambda containers use the platform declared by the function's {@code Architectures} value (default {@value DEFAULT_HONOUR_ARCHITECTURES})
+         * @return this builder
+         */
+        public Builder honourArchitectures(boolean honourArchitectures) {
+            this.honourArchitectures = honourArchitectures;
+            return this;
+        }
+
+        /**
+         * Sets the maximum number of idle (warm) containers kept per function.
+         *
+         * <p>A container released when the function already holds this many idle ones is stopped instead of
+         * pooled. Unset lets Floci derive {@code max(4, availableProcessors())}; values below 1 are ignored
+         * by Floci with a warning.
+         *
+         * @param warmPoolMaxPerFunction the maximum number of idle (warm) containers kept per function, or {@code null} to use Floci's default
+         * @return this builder
+         */
+        public Builder warmPoolMaxPerFunction(Integer warmPoolMaxPerFunction) {
+            this.warmPoolMaxPerFunction = warmPoolMaxPerFunction;
+            return this;
+        }
+
+        /**
+         * Sets the maximum number of idle (warm) containers kept across all functions.
+         *
+         * <p>When a release would push the total past this, the least-recently-used idle container of any
+         * function is stopped first. {@code 0} disables the bound. Busy containers are not counted; their
+         * ceiling is the region concurrency limit.
+         *
+         * @param warmPoolMaxTotal the maximum number of idle (warm) containers kept across all functions (default {@value DEFAULT_WARM_POOL_MAX_TOTAL})
+         * @return this builder
+         */
+        public Builder warmPoolMaxTotal(int warmPoolMaxTotal) {
+            this.warmPoolMaxTotal = warmPoolMaxTotal;
+            return this;
+        }
+
+        /**
+         * Sets the additional Docker create flags applied to every Lambda execution container.
+         *
+         * @param dockerFlags the additional Docker create flags applied to every Lambda execution container, or {@code null} to use Floci's default
+         * @return this builder
+         */
+        public Builder dockerFlags(String dockerFlags) {
+            this.dockerFlags = dockerFlags;
+            return this;
+        }
+
+        /**
+         * Sets whether a {@code Layers} ARN naming another account is accepted.
+         *
+         * <p>When enabled, such a layer is recorded on the function without mounting its content (e.g. to
+         * attach public layers such as Powertools). Off by default, because it broadens what CreateFunction
+         * and UpdateFunctionConfiguration accept beyond what AWS does.
+         *
+         * @param acceptExternalLayerArns whether a {@code Layers} ARN naming another account is accepted (default {@value DEFAULT_ACCEPT_EXTERNAL_LAYER_ARNS})
+         * @return this builder
+         */
+        public Builder acceptExternalLayerArns(boolean acceptExternalLayerArns) {
+            this.acceptExternalLayerArns = acceptExternalLayerArns;
             return this;
         }
 
