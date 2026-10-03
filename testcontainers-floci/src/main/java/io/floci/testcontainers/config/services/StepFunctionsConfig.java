@@ -22,16 +22,19 @@ public class StepFunctionsConfig extends AbstractServiceConfig<StepFunctionsConf
 
     private static final String MOCK_CONFIG_FILE_PREFIX = "/tmp/floci-sfn-mock-config-";
     private static final String MOCK_CONFIG_FILE_SUFFIX = ".json";
+    private static final int DEFAULT_MAX_WAIT_SECONDS = 30;
 
     private final boolean allowPlaintextHttp;
     private final String mockConfigFile;
     private final String mockConfig;
+    private final int maxWaitSeconds;
 
     private StepFunctionsConfig(Builder builder) {
         super(builder.enabled);
         this.allowPlaintextHttp = builder.allowPlaintextHttp;
         this.mockConfigFile = builder.mockConfigFile;
         this.mockConfig = builder.mockConfig;
+        this.maxWaitSeconds = builder.maxWaitSeconds;
     }
 
     /**
@@ -91,6 +94,18 @@ public class StepFunctionsConfig extends AbstractServiceConfig<StepFunctionsConf
         return Optional.ofNullable(mockConfig);
     }
 
+    /**
+     * Returns the ceiling, in seconds, on a Wait state pause and a Retry backoff.
+     *
+     * <p>AWS allows waits far longer than this, but the emulator caps them to keep runs fast. Raise it to
+     * exercise longer waits.
+     *
+     * @return the ceiling, in seconds, on a Wait state pause and a Retry backoff
+     */
+    public int getMaxWaitSeconds() {
+        return maxWaitSeconds;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_STEPFUNCTIONS_ENABLED", String.valueOf(isEnabled()));
@@ -101,6 +116,8 @@ public class StepFunctionsConfig extends AbstractServiceConfig<StepFunctionsConf
             if (mockConfigFile != null) {
                 container.withEnv("FLOCI_SERVICES_STEPFUNCTIONS_MOCK_CONFIG_FILE", mockConfigFile);
             }
+
+            container.withEnv("FLOCI_SERVICES_STEPFUNCTIONS_MAX_WAIT_SECONDS", String.valueOf(maxWaitSeconds));
         }
     }
 
@@ -119,6 +136,7 @@ public class StepFunctionsConfig extends AbstractServiceConfig<StepFunctionsConf
         private boolean allowPlaintextHttp = DEFAULT_ALLOW_PLAINTEXT_HTTP;
         private String mockConfigFile;
         private String mockConfig;
+        private int maxWaitSeconds = DEFAULT_MAX_WAIT_SECONDS;
 
         private Builder() {
             // Allow instantiation only via StepFunctionsConfig.builder()
@@ -134,6 +152,7 @@ public class StepFunctionsConfig extends AbstractServiceConfig<StepFunctionsConf
             this.allowPlaintextHttp = instance.isAllowPlaintextHttp();
             this.mockConfigFile = instance.mockConfigFile;
             this.mockConfig = instance.mockConfig;
+            this.maxWaitSeconds = instance.getMaxWaitSeconds();
         }
 
         /**
@@ -183,6 +202,20 @@ public class StepFunctionsConfig extends AbstractServiceConfig<StepFunctionsConf
         public Builder mockConfig(String mockConfig) {
             this.mockConfig = mockConfig;
             this.mockConfigFile = null;
+            return this;
+        }
+
+        /**
+         * Sets the ceiling, in seconds, on a Wait state pause and a Retry backoff.
+         *
+         * <p>AWS allows waits far longer than this, but the emulator caps them to keep runs fast. Raise it to
+         * exercise longer waits.
+         *
+         * @param maxWaitSeconds the ceiling, in seconds, on a Wait state pause and a Retry backoff (default {@value DEFAULT_MAX_WAIT_SECONDS})
+         * @return this builder
+         */
+        public Builder maxWaitSeconds(int maxWaitSeconds) {
+            this.maxWaitSeconds = maxWaitSeconds;
             return this;
         }
 
