@@ -153,4 +153,158 @@ class RdsConfigTest {
         assertThat(RdsConfig.builder().mock(true).build().requiresDockerSocket()).isFalse();
     }
 
+    @Test
+    void shouldApplyDefaultSqlServerImage() {
+        RdsConfig defaults = RdsConfig.builder().build();
+        assertThat(defaults.getDefaultSqlServerImage()).isEqualTo("mcr.microsoft.com/mssql/server:2022-latest");
+
+        RdsConfig config = RdsConfig.builder().defaultSqlServerImage("mcr.microsoft.com/mssql/server:2019-latest").build();
+        assertThat(config.getDefaultSqlServerImage()).isEqualTo("mcr.microsoft.com/mssql/server:2019-latest");
+        assertThat(config.toBuilder().build().getDefaultSqlServerImage()).isEqualTo("mcr.microsoft.com/mssql/server:2019-latest");
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_RDS_DEFAULT_SQL_SERVER_IMAGE", "mcr.microsoft.com/mssql/server:2019-latest");
+
+        GenericContainer<?> defaultContainer = genericContainer();
+        defaults.applyEnvVarsToContainer(defaultContainer);
+        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_RDS_DEFAULT_SQL_SERVER_IMAGE", "mcr.microsoft.com/mssql/server:2022-latest");
+
+        GenericContainer<?> disabledContainer = genericContainer();
+        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
+        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_RDS_DEFAULT_SQL_SERVER_IMAGE");
+    }
+
+    @Test
+    void shouldApplyIamTokenEndpointBinding() {
+        RdsConfig defaults = RdsConfig.builder().build();
+        assertThat(defaults.isIamTokenEndpointBinding()).isEqualTo(true);
+
+        RdsConfig config = RdsConfig.builder().iamTokenEndpointBinding(false).build();
+        assertThat(config.isIamTokenEndpointBinding()).isEqualTo(false);
+        assertThat(config.toBuilder().build().isIamTokenEndpointBinding()).isEqualTo(false);
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_RDS_IAM_TOKEN_ENDPOINT_BINDING", "false");
+
+        GenericContainer<?> defaultContainer = genericContainer();
+        defaults.applyEnvVarsToContainer(defaultContainer);
+        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_RDS_IAM_TOKEN_ENDPOINT_BINDING", "true");
+
+        GenericContainer<?> disabledContainer = genericContainer();
+        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
+        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_RDS_IAM_TOKEN_ENDPOINT_BINDING");
+    }
+
+    @Test
+    void shouldApplyProxyHandshakeTimeoutMillis() {
+        RdsConfig defaults = RdsConfig.builder().build();
+        assertThat(defaults.getProxyHandshakeTimeoutMillis()).isEqualTo(10000);
+
+        RdsConfig config = RdsConfig.builder().proxyHandshakeTimeoutMillis(2000).build();
+        assertThat(config.getProxyHandshakeTimeoutMillis()).isEqualTo(2000);
+        assertThat(config.toBuilder().build().getProxyHandshakeTimeoutMillis()).isEqualTo(2000);
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_RDS_PROXY_HANDSHAKE_TIMEOUT_MILLIS", "2000");
+
+        GenericContainer<?> defaultContainer = genericContainer();
+        defaults.applyEnvVarsToContainer(defaultContainer);
+        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_RDS_PROXY_HANDSHAKE_TIMEOUT_MILLIS", "10000");
+
+        GenericContainer<?> disabledContainer = genericContainer();
+        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
+        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_RDS_PROXY_HANDSHAKE_TIMEOUT_MILLIS");
+    }
+
+    @Test
+    void shouldApplyProxyBackendConnectTimeoutMillis() {
+        RdsConfig defaults = RdsConfig.builder().build();
+        assertThat(defaults.getProxyBackendConnectTimeoutMillis()).isEqualTo(5000);
+
+        RdsConfig config = RdsConfig.builder().proxyBackendConnectTimeoutMillis(1000).build();
+        assertThat(config.getProxyBackendConnectTimeoutMillis()).isEqualTo(1000);
+        assertThat(config.toBuilder().build().getProxyBackendConnectTimeoutMillis()).isEqualTo(1000);
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_RDS_PROXY_BACKEND_CONNECT_TIMEOUT_MILLIS", "1000");
+
+        GenericContainer<?> defaultContainer = genericContainer();
+        defaults.applyEnvVarsToContainer(defaultContainer);
+        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_RDS_PROXY_BACKEND_CONNECT_TIMEOUT_MILLIS", "5000");
+
+        GenericContainer<?> disabledContainer = genericContainer();
+        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
+        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_RDS_PROXY_BACKEND_CONNECT_TIMEOUT_MILLIS");
+    }
+
+    @Test
+    void shouldApplyProxyMaxConnections() {
+        RdsConfig defaults = RdsConfig.builder().build();
+        assertThat(defaults.getProxyMaxConnections()).isEqualTo(100);
+
+        RdsConfig config = RdsConfig.builder().proxyMaxConnections(20).build();
+        assertThat(config.getProxyMaxConnections()).isEqualTo(20);
+        assertThat(config.toBuilder().build().getProxyMaxConnections()).isEqualTo(20);
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_RDS_PROXY_MAX_CONNECTIONS", "20");
+
+        GenericContainer<?> defaultContainer = genericContainer();
+        defaults.applyEnvVarsToContainer(defaultContainer);
+        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_RDS_PROXY_MAX_CONNECTIONS", "100");
+
+        GenericContainer<?> disabledContainer = genericContainer();
+        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
+        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_RDS_PROXY_MAX_CONNECTIONS");
+    }
+
+    @Test
+    void shouldApplyAuroraAutoPauseEnabled() {
+        RdsConfig defaults = RdsConfig.builder().build();
+        assertThat(defaults.isAuroraAutoPauseEnabled()).isEqualTo(true);
+
+        RdsConfig config = RdsConfig.builder().auroraAutoPauseEnabled(false).build();
+        assertThat(config.isAuroraAutoPauseEnabled()).isEqualTo(false);
+        assertThat(config.toBuilder().build().isAuroraAutoPauseEnabled()).isEqualTo(false);
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_RDS_AURORA_AUTO_PAUSE_ENABLED", "false");
+
+        GenericContainer<?> defaultContainer = genericContainer();
+        defaults.applyEnvVarsToContainer(defaultContainer);
+        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_RDS_AURORA_AUTO_PAUSE_ENABLED", "true");
+
+        GenericContainer<?> disabledContainer = genericContainer();
+        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
+        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_RDS_AURORA_AUTO_PAUSE_ENABLED");
+    }
+
+    @Test
+    void shouldApplyAuroraResumeDelayMillis() {
+        RdsConfig defaults = RdsConfig.builder().build();
+        assertThat(defaults.getAuroraResumeDelayMillis()).isEqualTo(0);
+
+        RdsConfig config = RdsConfig.builder().auroraResumeDelayMillis(15000).build();
+        assertThat(config.getAuroraResumeDelayMillis()).isEqualTo(15000);
+        assertThat(config.toBuilder().build().getAuroraResumeDelayMillis()).isEqualTo(15000);
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_RDS_AURORA_RESUME_DELAY_MILLIS", "15000");
+
+        GenericContainer<?> defaultContainer = genericContainer();
+        defaults.applyEnvVarsToContainer(defaultContainer);
+        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_RDS_AURORA_RESUME_DELAY_MILLIS", "0");
+
+        GenericContainer<?> disabledContainer = genericContainer();
+        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
+        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_RDS_AURORA_RESUME_DELAY_MILLIS");
+    }
+
 }
