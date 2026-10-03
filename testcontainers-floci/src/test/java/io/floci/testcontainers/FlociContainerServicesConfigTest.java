@@ -918,6 +918,14 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_SERVICES_SAGEMAKER_GPU_ENABLED", "true");
     }
 
+    @Test
+    void shouldWireSsoOidcConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withSsoOidcConfig(cfg -> cfg.localPrincipalId("user-1234")),
+                c -> c.getSsoOidcConfig().getLocalPrincipalId().orElseThrow(), "user-1234",
+                "FLOCI_SERVICES_SSOOIDC_LOCAL_PRINCIPAL_ID", "user-1234");
+    }
+
     // --- Cross-cutting configs (config/) --------------------------------------------------------
 
     @Test
