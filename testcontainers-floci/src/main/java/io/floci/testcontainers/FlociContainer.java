@@ -209,6 +209,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private TranslateConfig translateConfig = TranslateConfig.builder().build();
     private OamConfig oamConfig = OamConfig.builder().build();
     private BcmPricingCalculatorConfig bcmPricingCalculatorConfig = BcmPricingCalculatorConfig.builder().build();
+    private TimestreamInfluxDbConfig timestreamInfluxDbConfig = TimestreamInfluxDbConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -314,7 +315,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> bedrockConfig, c -> bedrockConfig = c),
             new ServiceConfigAccessor<>(() -> translateConfig, c -> translateConfig = c),
             new ServiceConfigAccessor<>(() -> oamConfig, c -> oamConfig = c),
-            new ServiceConfigAccessor<>(() -> bcmPricingCalculatorConfig, c -> bcmPricingCalculatorConfig = c)
+            new ServiceConfigAccessor<>(() -> bcmPricingCalculatorConfig, c -> bcmPricingCalculatorConfig = c),
+            new ServiceConfigAccessor<>(() -> timestreamInfluxDbConfig, c -> timestreamInfluxDbConfig = c)
     );
 
     /**
@@ -3894,6 +3896,34 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.bcmPricingCalculatorConfig = builder.build();
         bcmPricingCalculatorConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Timestream for InfluxDB-specific settings.
+     *
+     * @return the Timestream for InfluxDB configuration
+     */
+    public TimestreamInfluxDbConfig getTimestreamInfluxDbConfig() {
+        return timestreamInfluxDbConfig;
+    }
+
+    /**
+     * Configures Timestream for InfluxDB-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withTimestreamInfluxDbConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link TimestreamInfluxDbConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withTimestreamInfluxDbConfig(Consumer<TimestreamInfluxDbConfig.Builder> configurer) {
+        TimestreamInfluxDbConfig.Builder builder = timestreamInfluxDbConfig.toBuilder();
+        configurer.accept(builder);
+        this.timestreamInfluxDbConfig = builder.build();
+        timestreamInfluxDbConfig.applyEnvVarsToContainer(this);
         return this;
     }
 

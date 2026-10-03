@@ -902,6 +902,14 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_SERVICES_BCM_PRICING_CALCULATOR_ENABLED", "false");
     }
 
+    @Test
+    void shouldWireTimestreamInfluxDbConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withTimestreamInfluxDbConfig(cfg -> cfg.defaultImage("influxdb:2.8")),
+                c -> c.getTimestreamInfluxDbConfig().getDefaultImage(), "influxdb:2.8",
+                "FLOCI_SERVICES_TIMESTREAM_INFLUXDB_DEFAULT_IMAGE", "influxdb:2.8");
+    }
+
     // --- Cross-cutting configs (config/) --------------------------------------------------------
 
     @Test
