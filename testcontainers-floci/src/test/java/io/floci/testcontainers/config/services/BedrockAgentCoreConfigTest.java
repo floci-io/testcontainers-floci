@@ -76,4 +76,48 @@ class BedrockAgentCoreConfigTest {
         assertThat(copy.isValidateRuntimeExists()).isTrue();
     }
 
+    @Test
+    void shouldApplyHarnessEchoPrefix() {
+        BedrockAgentCoreConfig defaults = BedrockAgentCoreConfig.builder().build();
+        assertThat(defaults.getHarnessEchoPrefix()).isEqualTo("You said: ");
+
+        BedrockAgentCoreConfig config = BedrockAgentCoreConfig.builder().harnessEchoPrefix("Echo: ").build();
+        assertThat(config.getHarnessEchoPrefix()).isEqualTo("Echo: ");
+        assertThat(config.toBuilder().build().getHarnessEchoPrefix()).isEqualTo("Echo: ");
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_BEDROCK_AGENT_CORE_HARNESS_ECHO_PREFIX", "Echo: ");
+
+        GenericContainer<?> defaultContainer = genericContainer();
+        defaults.applyEnvVarsToContainer(defaultContainer);
+        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_BEDROCK_AGENT_CORE_HARNESS_ECHO_PREFIX", "You said: ");
+
+        GenericContainer<?> disabledContainer = genericContainer();
+        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
+        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_BEDROCK_AGENT_CORE_HARNESS_ECHO_PREFIX");
+    }
+
+    @Test
+    void shouldApplyHarnessEmptyReply() {
+        BedrockAgentCoreConfig defaults = BedrockAgentCoreConfig.builder().build();
+        assertThat(defaults.getHarnessEmptyReply()).isEqualTo("No user message was supplied.");
+
+        BedrockAgentCoreConfig config = BedrockAgentCoreConfig.builder().harnessEmptyReply("Nothing to echo.").build();
+        assertThat(config.getHarnessEmptyReply()).isEqualTo("Nothing to echo.");
+        assertThat(config.toBuilder().build().getHarnessEmptyReply()).isEqualTo("Nothing to echo.");
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_BEDROCK_AGENT_CORE_HARNESS_EMPTY_REPLY", "Nothing to echo.");
+
+        GenericContainer<?> defaultContainer = genericContainer();
+        defaults.applyEnvVarsToContainer(defaultContainer);
+        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_BEDROCK_AGENT_CORE_HARNESS_EMPTY_REPLY", "No user message was supplied.");
+
+        GenericContainer<?> disabledContainer = genericContainer();
+        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
+        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_BEDROCK_AGENT_CORE_HARNESS_EMPTY_REPLY");
+    }
+
 }
