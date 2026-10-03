@@ -2,6 +2,8 @@ package io.floci.testcontainers.config.services;
 
 import org.testcontainers.containers.Container;
 
+import java.util.Optional;
+
 /**
  * Configuration for IoT Core-specific container settings, including the embedded MQTT broker.
  *
@@ -19,11 +21,16 @@ public class IotConfig extends AbstractServiceConfig<IotConfig.Builder> {
     private static final boolean DEFAULT_MQTT_AUTO_START = false;
     private static final String DEFAULT_MQTT_HOST = "0.0.0.0";
     private static final int DEFAULT_MQTT_PORT = 1883;
+    private static final boolean DEFAULT_RULE_SQL_STRICT = false;
+    private static final int DEFAULT_MQTT_TLS_PORT = 8883;
 
     private final boolean mqttEnabled;
     private final boolean mqttAutoStart;
     private final String mqttHost;
     private final int mqttPort;
+    private final boolean ruleSqlStrict;
+    private final String endpointAddress;
+    private final int mqttTlsPort;
 
     private IotConfig(Builder builder) {
         super(builder.enabled);
@@ -31,6 +38,9 @@ public class IotConfig extends AbstractServiceConfig<IotConfig.Builder> {
         this.mqttAutoStart = builder.mqttAutoStart;
         this.mqttHost = builder.mqttHost;
         this.mqttPort = builder.mqttPort;
+        this.ruleSqlStrict = builder.ruleSqlStrict;
+        this.endpointAddress = builder.endpointAddress;
+        this.mqttTlsPort = builder.mqttTlsPort;
     }
 
     /**
@@ -90,6 +100,43 @@ public class IotConfig extends AbstractServiceConfig<IotConfig.Builder> {
         return mqttPort;
     }
 
+    /**
+     * Returns whether a topic rule whose SQL falls outside the subset Floci evaluates is rejected, as AWS
+     * does.
+     *
+     * <p>Off by default, so such a rule is stored and keeps firing on every matching topic with the whole
+     * payload.
+     *
+     * @return whether a topic rule whose SQL falls outside the subset Floci evaluates is rejected, as AWS does
+     */
+    public boolean isRuleSqlStrict() {
+        return ruleSqlStrict;
+    }
+
+    /**
+     * Returns the address DescribeEndpoint returns for every endpoint type.
+     *
+     * <p>AWS returns a bare hostname and clients add their own port (8883 for MQTT, 443 for HTTPS and MQTT
+     * over WebSocket, 8443 for HTTPS with a client certificate); set it when those ports reach Floci. Unset,
+     * DescribeEndpoint returns the host and port of Floci's base URL.
+     *
+     * @return the address DescribeEndpoint returns for every endpoint type, or {@link Optional#empty()} if not configured
+     */
+    public Optional<String> getEndpointAddress() {
+        return Optional.ofNullable(endpointAddress);
+    }
+
+    /**
+     * Returns the port of the MQTT over TLS listener, the port AWS IoT serves for X.509 device connections.
+     *
+     * <p>The listener is only opened while Floci's TLS is enabled; {@code 0} disables it.
+     *
+     * @return the port of the MQTT over TLS listener, the port AWS IoT serves for X.509 device connections
+     */
+    public int getMqttTlsPort() {
+        return mqttTlsPort;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_IOT_ENABLED", String.valueOf(isEnabled()));
@@ -99,6 +146,13 @@ public class IotConfig extends AbstractServiceConfig<IotConfig.Builder> {
             container.withEnv("FLOCI_SERVICES_IOT_MQTT_AUTO_START", String.valueOf(mqttAutoStart));
             container.withEnv("FLOCI_SERVICES_IOT_MQTT_HOST", mqttHost);
             container.withEnv("FLOCI_SERVICES_IOT_MQTT_PORT", String.valueOf(mqttPort));
+            container.withEnv("FLOCI_SERVICES_IOT_RULE_SQL_STRICT", String.valueOf(ruleSqlStrict));
+
+            if (endpointAddress != null) {
+                container.withEnv("FLOCI_SERVICES_IOT_ENDPOINT_ADDRESS", endpointAddress);
+            }
+
+            container.withEnv("FLOCI_SERVICES_IOT_MQTT_TLS_PORT", String.valueOf(mqttTlsPort));
         }
     }
 
@@ -106,6 +160,11 @@ public class IotConfig extends AbstractServiceConfig<IotConfig.Builder> {
     public void applyExposedPortsToContainer(Container<?> container) {
         if (isEnabled() && mqttEnabled) {
             container.addExposedPorts(mqttPort);
+
+            // Only served by Floci while TLS is enabled
+            if (mqttTlsPort > 0) {
+                container.addExposedPorts(mqttTlsPort);
+            }
         }
     }
 
@@ -118,6 +177,9 @@ public class IotConfig extends AbstractServiceConfig<IotConfig.Builder> {
         private boolean mqttAutoStart = DEFAULT_MQTT_AUTO_START;
         private String mqttHost = DEFAULT_MQTT_HOST;
         private int mqttPort = DEFAULT_MQTT_PORT;
+        private boolean ruleSqlStrict = DEFAULT_RULE_SQL_STRICT;
+        private String endpointAddress;
+        private int mqttTlsPort = DEFAULT_MQTT_TLS_PORT;
 
         private Builder() {
             // Allow instantiation only via IotConfig.builder()
@@ -134,6 +196,9 @@ public class IotConfig extends AbstractServiceConfig<IotConfig.Builder> {
             this.mqttAutoStart = instance.isMqttAutoStart();
             this.mqttHost = instance.getMqttHost();
             this.mqttPort = instance.getMqttPort();
+            this.ruleSqlStrict = instance.isRuleSqlStrict();
+            this.endpointAddress = instance.getEndpointAddress().orElse(null);
+            this.mqttTlsPort = instance.getMqttTlsPort();
         }
 
         /**
@@ -178,6 +243,49 @@ public class IotConfig extends AbstractServiceConfig<IotConfig.Builder> {
          */
         public Builder mqttPort(int mqttPort) {
             this.mqttPort = mqttPort;
+            return this;
+        }
+
+        /**
+         * Sets whether a topic rule whose SQL falls outside the subset Floci evaluates is rejected, as AWS
+         * does.
+         *
+         * <p>Off by default, so such a rule is stored and keeps firing on every matching topic with the whole
+         * payload.
+         *
+         * @param ruleSqlStrict whether a topic rule whose SQL falls outside the subset Floci evaluates is rejected, as AWS does (default {@value DEFAULT_RULE_SQL_STRICT})
+         * @return this builder
+         */
+        public Builder ruleSqlStrict(boolean ruleSqlStrict) {
+            this.ruleSqlStrict = ruleSqlStrict;
+            return this;
+        }
+
+        /**
+         * Sets the address DescribeEndpoint returns for every endpoint type.
+         *
+         * <p>AWS returns a bare hostname and clients add their own port (8883 for MQTT, 443 for HTTPS and
+         * MQTT over WebSocket, 8443 for HTTPS with a client certificate); set it when those ports reach
+         * Floci. Unset, DescribeEndpoint returns the host and port of Floci's base URL.
+         *
+         * @param endpointAddress the address DescribeEndpoint returns for every endpoint type, or {@code null} to use Floci's default
+         * @return this builder
+         */
+        public Builder endpointAddress(String endpointAddress) {
+            this.endpointAddress = endpointAddress;
+            return this;
+        }
+
+        /**
+         * Sets the port of the MQTT over TLS listener, the port AWS IoT serves for X.509 device connections.
+         *
+         * <p>The listener is only opened while Floci's TLS is enabled; {@code 0} disables it.
+         *
+         * @param mqttTlsPort the port of the MQTT over TLS listener, the port AWS IoT serves for X.509 device connections (default {@value DEFAULT_MQTT_TLS_PORT})
+         * @return this builder
+         */
+        public Builder mqttTlsPort(int mqttTlsPort) {
+            this.mqttTlsPort = mqttTlsPort;
             return this;
         }
 
