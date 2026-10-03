@@ -220,6 +220,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private Inspector2Config inspector2Config = Inspector2Config.builder().build();
     private SecurityHubConfig securityHubConfig = SecurityHubConfig.builder().build();
     private DetectiveConfig detectiveConfig = DetectiveConfig.builder().build();
+    private VerifiedPermissionsConfig verifiedPermissionsConfig = VerifiedPermissionsConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -336,7 +337,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> budgetsConfig, c -> budgetsConfig = c),
             new ServiceConfigAccessor<>(() -> inspector2Config, c -> inspector2Config = c),
             new ServiceConfigAccessor<>(() -> securityHubConfig, c -> securityHubConfig = c),
-            new ServiceConfigAccessor<>(() -> detectiveConfig, c -> detectiveConfig = c)
+            new ServiceConfigAccessor<>(() -> detectiveConfig, c -> detectiveConfig = c),
+            new ServiceConfigAccessor<>(() -> verifiedPermissionsConfig, c -> verifiedPermissionsConfig = c)
     );
 
     /**
@@ -4224,6 +4226,34 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.detectiveConfig = builder.build();
         detectiveConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Verified Permissions-specific settings.
+     *
+     * @return the Verified Permissions configuration
+     */
+    public VerifiedPermissionsConfig getVerifiedPermissionsConfig() {
+        return verifiedPermissionsConfig;
+    }
+
+    /**
+     * Configures Verified Permissions-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withVerifiedPermissionsConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link VerifiedPermissionsConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withVerifiedPermissionsConfig(Consumer<VerifiedPermissionsConfig.Builder> configurer) {
+        VerifiedPermissionsConfig.Builder builder = verifiedPermissionsConfig.toBuilder();
+        configurer.accept(builder);
+        this.verifiedPermissionsConfig = builder.build();
+        verifiedPermissionsConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
