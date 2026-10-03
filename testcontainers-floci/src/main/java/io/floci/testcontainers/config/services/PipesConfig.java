@@ -15,7 +15,7 @@ public class PipesConfig extends AbstractServiceConfig<PipesConfig.Builder> {
 
     private static final String DEFAULT_KAFKA_REST_BRIDGE_DEFAULT_IMAGE = "ghcr.io/aiven-open/karapace:latest";
     private static final int DEFAULT_KAFKA_REST_BRIDGE_HOST_PORT_BASE = 9500;
-    private static final int DEFAULT_KAFKA_REST_BRIDGE_HOST_PORTS_COUNT = 100;
+    private static final int DEFAULT_KAFKA_REST_BRIDGE_HOST_PORTS_COUNT = 10;
 
     private final String kafkaRestBridgeDefaultImage;
     private final int kafkaRestBridgeHostPortBase;
