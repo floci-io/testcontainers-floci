@@ -36,7 +36,7 @@ class ProtocolsConfigTest {
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_PROTOCOLS_STRICT_CLAIMING", "false")
                 .containsEntry("FLOCI_PROTOCOLS_REJECT_UNKNOWN_SERVICE_SCOPE", "true")
-                .containsEntry("FLOCI_MAX_REQUEST_SIZE", "2048");
+                .containsEntry("FLOCI_PROTOCOLS_MAX_REQUEST_SIZE", "2048");
     }
 
     @Test
@@ -52,7 +52,7 @@ class ProtocolsConfigTest {
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_PROTOCOLS_STRICT_CLAIMING", "true")
                 .containsEntry("FLOCI_PROTOCOLS_REJECT_UNKNOWN_SERVICE_SCOPE", "false")
-                .containsEntry("FLOCI_MAX_REQUEST_SIZE", "4096");
+                .containsEntry("FLOCI_PROTOCOLS_MAX_REQUEST_SIZE", "4096");
     }
 
     @Test

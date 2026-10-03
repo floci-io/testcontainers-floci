@@ -98,7 +98,7 @@ public class ProtocolsConfig {
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_PROTOCOLS_STRICT_CLAIMING", String.valueOf(strictClaiming));
         container.withEnv("FLOCI_PROTOCOLS_REJECT_UNKNOWN_SERVICE_SCOPE", String.valueOf(rejectUnknownServiceScope));
-        container.withEnv("FLOCI_MAX_REQUEST_SIZE", String.valueOf(maxRequestSize)); // Env var is correct as the config is structured differently in Floci
+        container.withEnv("FLOCI_PROTOCOLS_MAX_REQUEST_SIZE", String.valueOf(maxRequestSize));
     }
 
     /**
