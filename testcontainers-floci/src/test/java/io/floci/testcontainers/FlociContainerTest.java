@@ -366,7 +366,8 @@ class FlociContainerTest {
                     container.getSsoOidcConfig(),
                     container.getMacie2Config(),
                     container.getAccountConfig(),
-                    container.getAccessAnalyzerConfig()
+                    container.getAccessAnalyzerConfig(),
+                    container.getIdentityStoreConfig()
             )).noneMatch(AbstractServiceConfig::isEnabled);
         }
     }
