@@ -966,6 +966,14 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_SERVICES_BUDGETS_ENABLED", "false");
     }
 
+    @Test
+    void shouldWireInspector2ConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withInspector2Config(cfg -> cfg.enabled(false)),
+                c -> c.getInspector2Config().isEnabled(), false,
+                "FLOCI_SERVICES_INSPECTOR2_ENABLED", "false");
+    }
+
     // --- Cross-cutting configs (config/) --------------------------------------------------------
 
     @Test
