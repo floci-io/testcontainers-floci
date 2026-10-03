@@ -1,7 +1,6 @@
 package io.floci.testcontainers.services;
 
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -14,7 +13,6 @@ import software.amazon.awssdk.services.connect.model.InstanceSummary;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @TestMethodOrder(OrderAnnotation.class)
-@Disabled("Connect is not yet registered in the floci/floci:nightly image")
 class ConnectServiceTest extends AbstractServiceTest {
 
     static ConnectClient connect;
