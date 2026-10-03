@@ -206,6 +206,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private RedshiftDataConfig redshiftDataConfig = RedshiftDataConfig.builder().build();
     private RedshiftServerlessConfig redshiftServerlessConfig = RedshiftServerlessConfig.builder().build();
     private BedrockConfig bedrockConfig = BedrockConfig.builder().build();
+    private TranslateConfig translateConfig = TranslateConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -308,7 +309,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> transcribeConfig, c -> transcribeConfig = c),
             new ServiceConfigAccessor<>(() -> redshiftDataConfig, c -> redshiftDataConfig = c),
             new ServiceConfigAccessor<>(() -> redshiftServerlessConfig, c -> redshiftServerlessConfig = c),
-            new ServiceConfigAccessor<>(() -> bedrockConfig, c -> bedrockConfig = c)
+            new ServiceConfigAccessor<>(() -> bedrockConfig, c -> bedrockConfig = c),
+            new ServiceConfigAccessor<>(() -> translateConfig, c -> translateConfig = c)
     );
 
     /**
@@ -573,7 +575,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
 
     /**
      * Returns the path, inside the container, of the shared mock-response configuration file used by the
-     * fixed-stub AI services (Textract, Comprehend, Rekognition) to return a caller-configured response
+     * fixed-stub AI services (Textract, Comprehend, Rekognition, Translate) to return a caller-configured response
      * instead of their default canned stub.
      *
      * <p>The path is either the one passed to {@link #withAiMockConfigFile(String)} verbatim, or a
@@ -598,7 +600,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     /**
      * Sets the path, inside the container, of a shared mock-response configuration file that already exists
      * in the container (for example one added through a volume or another {@code withCopy*} call). The
-     * fixed-stub AI services (Textract, Comprehend, Rekognition) use it to return a caller-configured
+     * fixed-stub AI services (Textract, Comprehend, Rekognition, Translate) use it to return a caller-configured
      * response instead of their default canned stub.
      *
      * <p>Use {@link #withAiMockConfig(String)} instead to hand over just the file content and let
@@ -617,7 +619,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
 
     /**
      * Sets the content of the shared mock-response configuration file used by the fixed-stub AI services
-     * (Textract, Comprehend, Rekognition) to return a caller-configured response instead of their default
+     * (Textract, Comprehend, Rekognition, Translate) to return a caller-configured response instead of their default
      * canned stub.
      *
      * <p>The content is copied into the container under a generated, randomized path, which is then used
@@ -3804,6 +3806,34 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.bedrockConfig = builder.build();
         bedrockConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Translate-specific settings.
+     *
+     * @return the Translate configuration
+     */
+    public TranslateConfig getTranslateConfig() {
+        return translateConfig;
+    }
+
+    /**
+     * Configures Translate-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withTranslateConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link TranslateConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withTranslateConfig(Consumer<TranslateConfig.Builder> configurer) {
+        TranslateConfig.Builder builder = translateConfig.toBuilder();
+        configurer.accept(builder);
+        this.translateConfig = builder.build();
+        translateConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
