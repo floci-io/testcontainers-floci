@@ -8,6 +8,7 @@ import software.amazon.awssdk.services.rds.model.DBCluster;
 import software.amazon.awssdk.services.rdsdata.RdsDataClient;
 import software.amazon.awssdk.services.rdsdata.model.ExecuteStatementResponse;
 import software.amazon.awssdk.services.rdsdata.model.Field;
+import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
 
 import java.time.Duration;
 import java.util.List;
@@ -26,6 +27,7 @@ class RdsDataServiceTest extends AbstractServiceTest {
     static RdsClient rds;
     static RdsDataClient rdsData;
     static String clusterArn;
+    static String secretArn;
 
     @BeforeAll
     static void setUp() {
@@ -34,6 +36,15 @@ class RdsDataServiceTest extends AbstractServiceTest {
         rds = client(RdsClient.builder()
                 .httpClientBuilder(Apache5HttpClient.builder().socketTimeout(Duration.ofMinutes(3))));
         rdsData = client(RdsDataClient.builder());
+
+        // Floci resolves ExecuteStatement's secretArn against its own Secrets Manager (no fallback to
+        // the cluster's master credentials), so the secret must exist and hold the DB credentials.
+        try (SecretsManagerClient secretsManager = client(SecretsManagerClient.builder())) {
+            secretArn = secretsManager.createSecret(b -> b
+                    .name("rds-data-secret-" + CLUSTER_ID)
+                    .secretString("{\"username\":\"" + MASTER_USER + "\",\"password\":\"" + MASTER_PASSWORD + "\"}"))
+                    .arn();
+        }
     }
 
     @Test
@@ -68,7 +79,7 @@ class RdsDataServiceTest extends AbstractServiceTest {
                 .untilAsserted(() -> {
                     ExecuteStatementResponse response = rdsData.executeStatement(b -> b
                             .resourceArn(clusterArn)
-                            .secretArn("arn:aws:secretsmanager:us-east-1:000000000000:secret:rds-secret")
+                            .secretArn(secretArn)
                             .database(DB_NAME)
                             .sql("SELECT 1 AS value"));
 
@@ -82,13 +93,13 @@ class RdsDataServiceTest extends AbstractServiceTest {
     void shouldExecuteDdlStatement() {
         rdsData.executeStatement(b -> b
                 .resourceArn(clusterArn)
-                .secretArn("arn:aws:secretsmanager:us-east-1:000000000000:secret:rds-secret")
+                .secretArn(secretArn)
                 .database(DB_NAME)
                 .sql("CREATE TABLE IF NOT EXISTS greetings (id INT AUTO_INCREMENT PRIMARY KEY, message TEXT)"));
 
         ExecuteStatementResponse response = rdsData.executeStatement(b -> b
                 .resourceArn(clusterArn)
-                .secretArn("arn:aws:secretsmanager:us-east-1:000000000000:secret:rds-secret")
+                .secretArn(secretArn)
                 .database(DB_NAME)
                 .sql("INSERT INTO greetings (message) VALUES ('hello from floci rds data')"));
 
