@@ -65,4 +65,48 @@ class SecretsManagerConfigTest {
         assertThat(copy.getDefaultRecoveryWindowDays()).isEqualTo(14);
     }
 
+    @Test
+    void shouldApplyScheduledRotationEnabled() {
+        SecretsManagerConfig defaults = SecretsManagerConfig.builder().build();
+        assertThat(defaults.isScheduledRotationEnabled()).isEqualTo(true);
+
+        SecretsManagerConfig config = SecretsManagerConfig.builder().scheduledRotationEnabled(false).build();
+        assertThat(config.isScheduledRotationEnabled()).isEqualTo(false);
+        assertThat(config.toBuilder().build().isScheduledRotationEnabled()).isEqualTo(false);
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_SECRETSMANAGER_SCHEDULED_ROTATION_ENABLED", "false");
+
+        GenericContainer<?> defaultContainer = genericContainer();
+        defaults.applyEnvVarsToContainer(defaultContainer);
+        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_SECRETSMANAGER_SCHEDULED_ROTATION_ENABLED", "true");
+
+        GenericContainer<?> disabledContainer = genericContainer();
+        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
+        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_SECRETSMANAGER_SCHEDULED_ROTATION_ENABLED");
+    }
+
+    @Test
+    void shouldApplyRotationTickSeconds() {
+        SecretsManagerConfig defaults = SecretsManagerConfig.builder().build();
+        assertThat(defaults.getRotationTickSeconds()).isEqualTo(60L);
+
+        SecretsManagerConfig config = SecretsManagerConfig.builder().rotationTickSeconds(5L).build();
+        assertThat(config.getRotationTickSeconds()).isEqualTo(5L);
+        assertThat(config.toBuilder().build().getRotationTickSeconds()).isEqualTo(5L);
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_SECRETSMANAGER_ROTATION_TICK_SECONDS", "5");
+
+        GenericContainer<?> defaultContainer = genericContainer();
+        defaults.applyEnvVarsToContainer(defaultContainer);
+        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_SECRETSMANAGER_ROTATION_TICK_SECONDS", "60");
+
+        GenericContainer<?> disabledContainer = genericContainer();
+        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
+        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_SECRETSMANAGER_ROTATION_TICK_SECONDS");
+    }
+
 }
