@@ -225,6 +225,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private AppIntegrationsConfig appIntegrationsConfig = AppIntegrationsConfig.builder().build();
     private DlmConfig dlmConfig = DlmConfig.builder().build();
     private CognitoIdentityConfig cognitoIdentityConfig = CognitoIdentityConfig.builder().build();
+    private GlobalAcceleratorConfig globalAcceleratorConfig = GlobalAcceleratorConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -346,7 +347,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> controlCatalogConfig, c -> controlCatalogConfig = c),
             new ServiceConfigAccessor<>(() -> appIntegrationsConfig, c -> appIntegrationsConfig = c),
             new ServiceConfigAccessor<>(() -> dlmConfig, c -> dlmConfig = c),
-            new ServiceConfigAccessor<>(() -> cognitoIdentityConfig, c -> cognitoIdentityConfig = c)
+            new ServiceConfigAccessor<>(() -> cognitoIdentityConfig, c -> cognitoIdentityConfig = c),
+            new ServiceConfigAccessor<>(() -> globalAcceleratorConfig, c -> globalAcceleratorConfig = c)
     );
 
     /**
@@ -4374,6 +4376,34 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.cognitoIdentityConfig = builder.build();
         cognitoIdentityConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Global Accelerator-specific settings.
+     *
+     * @return the Global Accelerator configuration
+     */
+    public GlobalAcceleratorConfig getGlobalAcceleratorConfig() {
+        return globalAcceleratorConfig;
+    }
+
+    /**
+     * Configures Global Accelerator-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withGlobalAcceleratorConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link GlobalAcceleratorConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withGlobalAcceleratorConfig(Consumer<GlobalAcceleratorConfig.Builder> configurer) {
+        GlobalAcceleratorConfig.Builder builder = globalAcceleratorConfig.toBuilder();
+        configurer.accept(builder);
+        this.globalAcceleratorConfig = builder.build();
+        globalAcceleratorConfig.applyEnvVarsToContainer(this);
         return this;
     }
 

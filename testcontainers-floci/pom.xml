@@ -661,6 +661,11 @@
             <artifactId>cognitoidentity</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>globalaccelerator</artifactId>
+            <scope>test</scope>
+        </dependency>
 
         <dependency>
             <groupId>org.postgresql</groupId>
