@@ -227,6 +227,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private CognitoIdentityConfig cognitoIdentityConfig = CognitoIdentityConfig.builder().build();
     private GlobalAcceleratorConfig globalAcceleratorConfig = GlobalAcceleratorConfig.builder().build();
     private DataSyncConfig dataSyncConfig = DataSyncConfig.builder().build();
+    private CodeArtifactConfig codeArtifactConfig = CodeArtifactConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -350,7 +351,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> dlmConfig, c -> dlmConfig = c),
             new ServiceConfigAccessor<>(() -> cognitoIdentityConfig, c -> cognitoIdentityConfig = c),
             new ServiceConfigAccessor<>(() -> globalAcceleratorConfig, c -> globalAcceleratorConfig = c),
-            new ServiceConfigAccessor<>(() -> dataSyncConfig, c -> dataSyncConfig = c)
+            new ServiceConfigAccessor<>(() -> dataSyncConfig, c -> dataSyncConfig = c),
+            new ServiceConfigAccessor<>(() -> codeArtifactConfig, c -> codeArtifactConfig = c)
     );
 
     /**
@@ -4434,6 +4436,34 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.dataSyncConfig = builder.build();
         dataSyncConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * CodeArtifact-specific settings.
+     *
+     * @return the CodeArtifact configuration
+     */
+    public CodeArtifactConfig getCodeArtifactConfig() {
+        return codeArtifactConfig;
+    }
+
+    /**
+     * Configures CodeArtifact-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withCodeArtifactConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link CodeArtifactConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withCodeArtifactConfig(Consumer<CodeArtifactConfig.Builder> configurer) {
+        CodeArtifactConfig.Builder builder = codeArtifactConfig.toBuilder();
+        configurer.accept(builder);
+        this.codeArtifactConfig = builder.build();
+        codeArtifactConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
