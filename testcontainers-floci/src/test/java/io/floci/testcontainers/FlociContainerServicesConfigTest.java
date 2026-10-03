@@ -1022,6 +1022,14 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_SERVICES_DLM_ENABLED", "false");
     }
 
+    @Test
+    void shouldWireCognitoIdentityConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withCognitoIdentityConfig(cfg -> cfg.enabled(false)),
+                c -> c.getCognitoIdentityConfig().isEnabled(), false,
+                "FLOCI_SERVICES_COGNITOIDENTITY_ENABLED", "false");
+    }
+
     // --- Cross-cutting configs (config/) --------------------------------------------------------
 
     @Test
