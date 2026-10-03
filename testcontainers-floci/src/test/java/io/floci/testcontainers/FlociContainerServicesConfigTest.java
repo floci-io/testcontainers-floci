@@ -990,6 +990,14 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_SERVICES_DETECTIVE_ENABLED", "false");
     }
 
+    @Test
+    void shouldWireVerifiedPermissionsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withVerifiedPermissionsConfig(cfg -> cfg.cedarImage("floci/floci-sidecar-cedar:1.2.0")),
+                c -> c.getVerifiedPermissionsConfig().getCedarImage(), "floci/floci-sidecar-cedar:1.2.0",
+                "FLOCI_SERVICES_VERIFIEDPERMISSIONS_CEDAR_IMAGE", "floci/floci-sidecar-cedar:1.2.0");
+    }
+
     // --- Cross-cutting configs (config/) --------------------------------------------------------
 
     @Test
