@@ -6,6 +6,8 @@ import org.testcontainers.containers.GenericContainer;
 
 import static io.floci.testcontainers.testing.ContainerUtils.genericContainer;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.testcontainers.containers.TransferableCopyInspector.contentCopiedTo;
+import static org.testcontainers.containers.TransferableCopyInspector.pendingCopies;
 
 class Ec2ConfigTest {
 
@@ -222,5 +224,281 @@ class Ec2ConfigTest {
         assertThat(Ec2Config.builder().enabled(false).build().requiresDockerSocket()).isFalse();
         assertThat(Ec2Config.builder().mock(true).build().requiresDockerSocket()).isFalse();
     }
+
+    @Test
+    void shouldApplyReconcileContainersOnStartup() {
+        Ec2Config defaults = Ec2Config.builder().build();
+        assertThat(defaults.isReconcileContainersOnStartup()).isEqualTo(true);
+
+        Ec2Config config = Ec2Config.builder().reconcileContainersOnStartup(false).build();
+        assertThat(config.isReconcileContainersOnStartup()).isEqualTo(false);
+        assertThat(config.toBuilder().build().isReconcileContainersOnStartup()).isEqualTo(false);
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_EC2_RECONCILE_CONTAINERS_ON_STARTUP", "false");
+
+        GenericContainer<?> defaultContainer = genericContainer();
+        defaults.applyEnvVarsToContainer(defaultContainer);
+        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_EC2_RECONCILE_CONTAINERS_ON_STARTUP", "true");
+
+        GenericContainer<?> disabledContainer = genericContainer();
+        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
+        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_EC2_RECONCILE_CONTAINERS_ON_STARTUP");
+    }
+
+    @Test
+    void shouldApplyVolumeBlockDevices() {
+        Ec2Config defaults = Ec2Config.builder().build();
+        assertThat(defaults.isVolumeBlockDevices()).isEqualTo(true);
+
+        Ec2Config config = Ec2Config.builder().volumeBlockDevices(false).build();
+        assertThat(config.isVolumeBlockDevices()).isEqualTo(false);
+        assertThat(config.toBuilder().build().isVolumeBlockDevices()).isEqualTo(false);
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_EC2_VOLUME_BLOCK_DEVICES", "false");
+
+        GenericContainer<?> defaultContainer = genericContainer();
+        defaults.applyEnvVarsToContainer(defaultContainer);
+        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_EC2_VOLUME_BLOCK_DEVICES", "true");
+
+        GenericContainer<?> disabledContainer = genericContainer();
+        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
+        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_EC2_VOLUME_BLOCK_DEVICES");
+    }
+
+    @Test
+    void shouldApplyVolumeHelperImage() {
+        Ec2Config defaults = Ec2Config.builder().build();
+        assertThat(defaults.getVolumeHelperImage()).isEqualTo("alpine:3.21");
+
+        Ec2Config config = Ec2Config.builder().volumeHelperImage("alpine:3.22").build();
+        assertThat(config.getVolumeHelperImage()).isEqualTo("alpine:3.22");
+        assertThat(config.toBuilder().build().getVolumeHelperImage()).isEqualTo("alpine:3.22");
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_EC2_VOLUME_HELPER_IMAGE", "alpine:3.22");
+
+        GenericContainer<?> defaultContainer = genericContainer();
+        defaults.applyEnvVarsToContainer(defaultContainer);
+        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_EC2_VOLUME_HELPER_IMAGE", "alpine:3.21");
+
+        GenericContainer<?> disabledContainer = genericContainer();
+        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
+        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_EC2_VOLUME_HELPER_IMAGE");
+    }
+
+    @Test
+    void shouldApplyInstanceResourceLimits() {
+        Ec2Config defaults = Ec2Config.builder().build();
+        assertThat(defaults.isInstanceResourceLimits()).isEqualTo(true);
+
+        Ec2Config config = Ec2Config.builder().instanceResourceLimits(false).build();
+        assertThat(config.isInstanceResourceLimits()).isEqualTo(false);
+        assertThat(config.toBuilder().build().isInstanceResourceLimits()).isEqualTo(false);
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_EC2_INSTANCE_RESOURCE_LIMITS", "false");
+
+        GenericContainer<?> defaultContainer = genericContainer();
+        defaults.applyEnvVarsToContainer(defaultContainer);
+        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_EC2_INSTANCE_RESOURCE_LIMITS", "true");
+
+        GenericContainer<?> disabledContainer = genericContainer();
+        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
+        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_EC2_INSTANCE_RESOURCE_LIMITS");
+    }
+
+    @Test
+    void shouldApplyVpcNetworksEnabled() {
+        Ec2Config defaults = Ec2Config.builder().build();
+        assertThat(defaults.isVpcNetworksEnabled()).isEqualTo(true);
+
+        Ec2Config config = Ec2Config.builder().vpcNetworksEnabled(false).build();
+        assertThat(config.isVpcNetworksEnabled()).isEqualTo(false);
+        assertThat(config.toBuilder().build().isVpcNetworksEnabled()).isEqualTo(false);
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_EC2_VPC_NETWORKS_ENABLED", "false");
+
+        GenericContainer<?> defaultContainer = genericContainer();
+        defaults.applyEnvVarsToContainer(defaultContainer);
+        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_EC2_VPC_NETWORKS_ENABLED", "true");
+
+        GenericContainer<?> disabledContainer = genericContainer();
+        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
+        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_EC2_VPC_NETWORKS_ENABLED");
+    }
+
+    @Test
+    void shouldApplyVpcNetworksFallbackPool() {
+        Ec2Config defaults = Ec2Config.builder().build();
+        assertThat(defaults.getVpcNetworksFallbackPool()).isEqualTo("10.240.0.0/12");
+
+        Ec2Config config = Ec2Config.builder().vpcNetworksFallbackPool("10.200.0.0/14").build();
+        assertThat(config.getVpcNetworksFallbackPool()).isEqualTo("10.200.0.0/14");
+        assertThat(config.toBuilder().build().getVpcNetworksFallbackPool()).isEqualTo("10.200.0.0/14");
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_EC2_VPC_NETWORKS_FALLBACK_POOL", "10.200.0.0/14");
+
+        GenericContainer<?> defaultContainer = genericContainer();
+        defaults.applyEnvVarsToContainer(defaultContainer);
+        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_EC2_VPC_NETWORKS_FALLBACK_POOL", "10.240.0.0/12");
+
+        GenericContainer<?> disabledContainer = genericContainer();
+        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
+        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_EC2_VPC_NETWORKS_FALLBACK_POOL");
+    }
+
+    @Test
+    void shouldApplyVpcNetworksFallbackPrefixLength() {
+        Ec2Config defaults = Ec2Config.builder().build();
+        assertThat(defaults.getVpcNetworksFallbackPrefixLength()).isEqualTo(16);
+
+        Ec2Config config = Ec2Config.builder().vpcNetworksFallbackPrefixLength(20).build();
+        assertThat(config.getVpcNetworksFallbackPrefixLength()).isEqualTo(20);
+        assertThat(config.toBuilder().build().getVpcNetworksFallbackPrefixLength()).isEqualTo(20);
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_EC2_VPC_NETWORKS_FALLBACK_PREFIX_LENGTH", "20");
+
+        GenericContainer<?> defaultContainer = genericContainer();
+        defaults.applyEnvVarsToContainer(defaultContainer);
+        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_EC2_VPC_NETWORKS_FALLBACK_PREFIX_LENGTH", "16");
+
+        GenericContainer<?> disabledContainer = genericContainer();
+        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
+        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_EC2_VPC_NETWORKS_FALLBACK_PREFIX_LENGTH");
+    }
+
+    @Test
+    void shouldApplyVpcNetworksReconcileOnStartup() {
+        Ec2Config defaults = Ec2Config.builder().build();
+        assertThat(defaults.isVpcNetworksReconcileOnStartup()).isEqualTo(true);
+
+        Ec2Config config = Ec2Config.builder().vpcNetworksReconcileOnStartup(false).build();
+        assertThat(config.isVpcNetworksReconcileOnStartup()).isEqualTo(false);
+        assertThat(config.toBuilder().build().isVpcNetworksReconcileOnStartup()).isEqualTo(false);
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_EC2_VPC_NETWORKS_RECONCILE_ON_STARTUP", "false");
+
+        GenericContainer<?> defaultContainer = genericContainer();
+        defaults.applyEnvVarsToContainer(defaultContainer);
+        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_EC2_VPC_NETWORKS_RECONCILE_ON_STARTUP", "true");
+
+        GenericContainer<?> disabledContainer = genericContainer();
+        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
+        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_EC2_VPC_NETWORKS_RECONCILE_ON_STARTUP");
+    }
+
+    @Test
+    void shouldApplyVpcNetworksDriver() {
+        Ec2Config defaults = Ec2Config.builder().build();
+        assertThat(defaults.getVpcNetworksDriver()).isEqualTo("bridge");
+
+        Ec2Config config = Ec2Config.builder().vpcNetworksDriver("macvlan").build();
+        assertThat(config.getVpcNetworksDriver()).isEqualTo("macvlan");
+        assertThat(config.toBuilder().build().getVpcNetworksDriver()).isEqualTo("macvlan");
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_EC2_VPC_NETWORKS_DRIVER", "macvlan");
+
+        GenericContainer<?> defaultContainer = genericContainer();
+        defaults.applyEnvVarsToContainer(defaultContainer);
+        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_EC2_VPC_NETWORKS_DRIVER", "bridge");
+
+        GenericContainer<?> disabledContainer = genericContainer();
+        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
+        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_EC2_VPC_NETWORKS_DRIVER");
+    }
+
+    @Test
+    void shouldUseBundledImageCatalogByDefault() {
+        Ec2Config config = Ec2Config.builder().build();
+        assertThat(config.getImageCatalogFile()).isEmpty();
+        assertThat(config.getImageCatalog()).isEmpty();
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        config.applyFileMountsToContainer(container);
+        assertThat(container.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_EC2_IMAGE_CATALOG_PATH");
+        assertThat(pendingCopies(container)).isEmpty();
+    }
+
+    @Test
+    void shouldSetImageCatalogPathForExplicitFile() {
+        Ec2Config config = Ec2Config.builder()
+                .imageCatalogFile("/etc/floci/image-catalog.yaml")
+                .build();
+        assertThat(config.toBuilder().build().getImageCatalogFile()).contains("/etc/floci/image-catalog.yaml");
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        config.applyFileMountsToContainer(container);
+        assertThat(container.getEnvMap())
+                .containsEntry("FLOCI_SERVICES_EC2_IMAGE_CATALOG_PATH", "/etc/floci/image-catalog.yaml");
+        assertThat(pendingCopies(container)).isEmpty();
+    }
+
+    @Test
+    void shouldCopyImageCatalogContentIntoContainer() {
+        Ec2Config config = Ec2Config.builder()
+                .imageCatalog(IMAGE_CATALOG_YAML)
+                .build();
+        String containerPath = config.getImageCatalogFile().orElseThrow();
+        assertThat(containerPath).startsWith("/tmp/floci-ec2-image-catalog-").endsWith(".yaml");
+
+        Ec2Config copy = config.toBuilder().mock(true).build();
+        assertThat(copy.getImageCatalogFile()).contains(containerPath);
+        assertThat(copy.getImageCatalog()).contains(IMAGE_CATALOG_YAML);
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        config.applyFileMountsToContainer(container);
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_EC2_IMAGE_CATALOG_PATH", containerPath);
+        assertThat(pendingCopies(container)).hasSize(1);
+        assertThat(contentCopiedTo(container, containerPath)).contains(IMAGE_CATALOG_YAML);
+
+        GenericContainer<?> disabledContainer = genericContainer();
+        Ec2Config disabled = config.toBuilder().enabled(false).build();
+        disabled.applyEnvVarsToContainer(disabledContainer);
+        disabled.applyFileMountsToContainer(disabledContainer);
+        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_EC2_IMAGE_CATALOG_PATH");
+        assertThat(pendingCopies(disabledContainer)).isEmpty();
+    }
+
+    @Test
+    void shouldReplaceImageCatalogContentWithExplicitFileAndViceVersa() {
+        Ec2Config explicit = Ec2Config.builder()
+                .imageCatalog(IMAGE_CATALOG_YAML)
+                .imageCatalogFile("/etc/floci/image-catalog.yaml")
+                .build();
+        assertThat(explicit.getImageCatalog()).isEmpty();
+        assertThat(explicit.getImageCatalogFile()).contains("/etc/floci/image-catalog.yaml");
+
+        Ec2Config content = Ec2Config.builder()
+                .imageCatalogFile("/etc/floci/image-catalog.yaml")
+                .imageCatalog(IMAGE_CATALOG_YAML)
+                .build();
+        assertThat(content.getImageCatalog()).contains(IMAGE_CATALOG_YAML);
+        assertThat(content.getImageCatalogFile().orElseThrow()).startsWith("/tmp/floci-ec2-image-catalog-");
+    }
+
+    private static final String IMAGE_CATALOG_YAML = """
+            images:
+              - id: ami-0123456789abcdef0
+                name: local-guest
+            """;
 
 }
