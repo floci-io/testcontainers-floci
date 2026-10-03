@@ -213,6 +213,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private SageMakerConfig sageMakerConfig = SageMakerConfig.builder().build();
     private SsoOidcConfig ssoOidcConfig = SsoOidcConfig.builder().build();
     private Macie2Config macie2Config = Macie2Config.builder().build();
+    private AccountConfig accountConfig = AccountConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -322,7 +323,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> timestreamInfluxDbConfig, c -> timestreamInfluxDbConfig = c),
             new ServiceConfigAccessor<>(() -> sageMakerConfig, c -> sageMakerConfig = c),
             new ServiceConfigAccessor<>(() -> ssoOidcConfig, c -> ssoOidcConfig = c),
-            new ServiceConfigAccessor<>(() -> macie2Config, c -> macie2Config = c)
+            new ServiceConfigAccessor<>(() -> macie2Config, c -> macie2Config = c),
+            new ServiceConfigAccessor<>(() -> accountConfig, c -> accountConfig = c)
     );
 
     /**
@@ -4014,6 +4016,34 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.macie2Config = builder.build();
         macie2Config.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Account Management-specific settings.
+     *
+     * @return the Account Management configuration
+     */
+    public AccountConfig getAccountConfig() {
+        return accountConfig;
+    }
+
+    /**
+     * Configures Account Management-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withAccountConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link AccountConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withAccountConfig(Consumer<AccountConfig.Builder> configurer) {
+        AccountConfig.Builder builder = accountConfig.toBuilder();
+        configurer.accept(builder);
+        this.accountConfig = builder.build();
+        accountConfig.applyEnvVarsToContainer(this);
         return this;
     }
 

@@ -364,7 +364,8 @@ class FlociContainerTest {
                     container.getTimestreamInfluxDbConfig(),
                     container.getSageMakerConfig(),
                     container.getSsoOidcConfig(),
-                    container.getMacie2Config()
+                    container.getMacie2Config(),
+                    container.getAccountConfig()
             )).noneMatch(AbstractServiceConfig::isEnabled);
         }
     }
