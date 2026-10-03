@@ -982,6 +982,14 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_SERVICES_SECURITYHUB_ENABLED", "false");
     }
 
+    @Test
+    void shouldWireDetectiveConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withDetectiveConfig(cfg -> cfg.enabled(false)),
+                c -> c.getDetectiveConfig().isEnabled(), false,
+                "FLOCI_SERVICES_DETECTIVE_ENABLED", "false");
+    }
+
     // --- Cross-cutting configs (config/) --------------------------------------------------------
 
     @Test
