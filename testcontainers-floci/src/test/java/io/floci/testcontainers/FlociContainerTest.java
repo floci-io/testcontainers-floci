@@ -357,7 +357,8 @@ class FlociContainerTest {
                     container.getTranscribeConfig(),
                     container.getRedshiftDataConfig(),
                     container.getRedshiftServerlessConfig(),
-                    container.getBedrockConfig()
+                    container.getBedrockConfig(),
+                    container.getTranslateConfig()
             )).noneMatch(AbstractServiceConfig::isEnabled);
         }
     }

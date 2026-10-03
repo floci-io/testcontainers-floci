@@ -878,6 +878,14 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_SERVICES_BEDROCK_ENABLED", "false");
     }
 
+    @Test
+    void shouldWireTranslateConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withTranslateConfig(cfg -> cfg.enabled(false)),
+                c -> c.getTranslateConfig().isEnabled(), false,
+                "FLOCI_SERVICES_TRANSLATE_ENABLED", "false");
+    }
+
     // --- Cross-cutting configs (config/) --------------------------------------------------------
 
     @Test
