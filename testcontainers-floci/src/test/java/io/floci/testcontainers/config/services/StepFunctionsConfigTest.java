@@ -244,4 +244,27 @@ class StepFunctionsConfigTest {
         assertThat(pendingCopies(container).values()).containsOnly(containerPath);
         assertThat(contentCopiedTo(container, containerPath)).contains(MOCK_CONFIG_JSON);
     }
+
+    @Test
+    void shouldApplyMaxWaitSeconds() {
+        StepFunctionsConfig defaults = StepFunctionsConfig.builder().build();
+        assertThat(defaults.getMaxWaitSeconds()).isEqualTo(30);
+
+        StepFunctionsConfig config = StepFunctionsConfig.builder().maxWaitSeconds(120).build();
+        assertThat(config.getMaxWaitSeconds()).isEqualTo(120);
+        assertThat(config.toBuilder().build().getMaxWaitSeconds()).isEqualTo(120);
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_STEPFUNCTIONS_MAX_WAIT_SECONDS", "120");
+
+        GenericContainer<?> defaultContainer = genericContainer();
+        defaults.applyEnvVarsToContainer(defaultContainer);
+        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_STEPFUNCTIONS_MAX_WAIT_SECONDS", "30");
+
+        GenericContainer<?> disabledContainer = genericContainer();
+        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
+        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_STEPFUNCTIONS_MAX_WAIT_SECONDS");
+    }
+
 }
