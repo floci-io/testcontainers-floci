@@ -379,7 +379,8 @@ class FlociContainerTest {
                     container.getCognitoIdentityConfig(),
                     container.getGlobalAcceleratorConfig(),
                     container.getDataSyncConfig(),
-                    container.getCodeArtifactConfig()
+                    container.getCodeArtifactConfig(),
+                    container.getMarketplaceConfig()
             )).noneMatch(AbstractServiceConfig::isEnabled);
         }
     }

@@ -1054,6 +1054,14 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_SERVICES_CODEARTIFACT_MAVEN_IMAGE", "dzikoysk/reposilite:3.7.0");
     }
 
+    @Test
+    void shouldWireMarketplaceConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withMarketplaceConfig(cfg -> cfg.enabled(false)),
+                c -> c.getMarketplaceConfig().isEnabled(), false,
+                "FLOCI_SERVICES_MARKETPLACE_ENABLED", "false");
+    }
+
     // --- Cross-cutting configs (config/) --------------------------------------------------------
 
     @Test
