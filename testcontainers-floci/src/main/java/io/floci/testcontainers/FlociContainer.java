@@ -218,6 +218,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private IdentityStoreConfig identityStoreConfig = IdentityStoreConfig.builder().build();
     private BudgetsConfig budgetsConfig = BudgetsConfig.builder().build();
     private Inspector2Config inspector2Config = Inspector2Config.builder().build();
+    private SecurityHubConfig securityHubConfig = SecurityHubConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -332,7 +333,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> accessAnalyzerConfig, c -> accessAnalyzerConfig = c),
             new ServiceConfigAccessor<>(() -> identityStoreConfig, c -> identityStoreConfig = c),
             new ServiceConfigAccessor<>(() -> budgetsConfig, c -> budgetsConfig = c),
-            new ServiceConfigAccessor<>(() -> inspector2Config, c -> inspector2Config = c)
+            new ServiceConfigAccessor<>(() -> inspector2Config, c -> inspector2Config = c),
+            new ServiceConfigAccessor<>(() -> securityHubConfig, c -> securityHubConfig = c)
     );
 
     /**
@@ -4164,6 +4166,34 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.inspector2Config = builder.build();
         inspector2Config.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Security Hub-specific settings.
+     *
+     * @return the Security Hub configuration
+     */
+    public SecurityHubConfig getSecurityHubConfig() {
+        return securityHubConfig;
+    }
+
+    /**
+     * Configures Security Hub-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withSecurityHubConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link SecurityHubConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withSecurityHubConfig(Consumer<SecurityHubConfig.Builder> configurer) {
+        SecurityHubConfig.Builder builder = securityHubConfig.toBuilder();
+        configurer.accept(builder);
+        this.securityHubConfig = builder.build();
+        securityHubConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
