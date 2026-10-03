@@ -205,6 +205,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private TranscribeConfig transcribeConfig = TranscribeConfig.builder().build();
     private RedshiftDataConfig redshiftDataConfig = RedshiftDataConfig.builder().build();
     private RedshiftServerlessConfig redshiftServerlessConfig = RedshiftServerlessConfig.builder().build();
+    private BedrockConfig bedrockConfig = BedrockConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -306,7 +307,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> rekognitionConfig, c -> rekognitionConfig = c),
             new ServiceConfigAccessor<>(() -> transcribeConfig, c -> transcribeConfig = c),
             new ServiceConfigAccessor<>(() -> redshiftDataConfig, c -> redshiftDataConfig = c),
-            new ServiceConfigAccessor<>(() -> redshiftServerlessConfig, c -> redshiftServerlessConfig = c)
+            new ServiceConfigAccessor<>(() -> redshiftServerlessConfig, c -> redshiftServerlessConfig = c),
+            new ServiceConfigAccessor<>(() -> bedrockConfig, c -> bedrockConfig = c)
     );
 
     /**
@@ -3774,6 +3776,34 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.redshiftServerlessConfig = builder.build();
         redshiftServerlessConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Bedrock-specific settings.
+     *
+     * @return the Bedrock configuration
+     */
+    public BedrockConfig getBedrockConfig() {
+        return bedrockConfig;
+    }
+
+    /**
+     * Configures Bedrock-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withBedrockConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link BedrockConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withBedrockConfig(Consumer<BedrockConfig.Builder> configurer) {
+        BedrockConfig.Builder builder = bedrockConfig.toBuilder();
+        configurer.accept(builder);
+        this.bedrockConfig = builder.build();
+        bedrockConfig.applyEnvVarsToContainer(this);
         return this;
     }
 

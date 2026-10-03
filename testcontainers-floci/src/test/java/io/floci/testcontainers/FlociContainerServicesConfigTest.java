@@ -870,6 +870,14 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_SERVICES_REDSHIFT_SERVERLESS_ENABLED", "false");
     }
 
+    @Test
+    void shouldWireBedrockConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withBedrockConfig(cfg -> cfg.enabled(false)),
+                c -> c.getBedrockConfig().isEnabled(), false,
+                "FLOCI_SERVICES_BEDROCK_ENABLED", "false");
+    }
+
     // --- Cross-cutting configs (config/) --------------------------------------------------------
 
     @Test
