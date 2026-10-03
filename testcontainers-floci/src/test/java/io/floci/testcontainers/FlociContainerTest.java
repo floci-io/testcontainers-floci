@@ -359,7 +359,8 @@ class FlociContainerTest {
                     container.getRedshiftServerlessConfig(),
                     container.getBedrockConfig(),
                     container.getTranslateConfig(),
-                    container.getOamConfig()
+                    container.getOamConfig(),
+                    container.getBcmPricingCalculatorConfig()
             )).noneMatch(AbstractServiceConfig::isEnabled);
         }
     }
