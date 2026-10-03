@@ -208,6 +208,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private BedrockConfig bedrockConfig = BedrockConfig.builder().build();
     private TranslateConfig translateConfig = TranslateConfig.builder().build();
     private OamConfig oamConfig = OamConfig.builder().build();
+    private BcmPricingCalculatorConfig bcmPricingCalculatorConfig = BcmPricingCalculatorConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -312,7 +313,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> redshiftServerlessConfig, c -> redshiftServerlessConfig = c),
             new ServiceConfigAccessor<>(() -> bedrockConfig, c -> bedrockConfig = c),
             new ServiceConfigAccessor<>(() -> translateConfig, c -> translateConfig = c),
-            new ServiceConfigAccessor<>(() -> oamConfig, c -> oamConfig = c)
+            new ServiceConfigAccessor<>(() -> oamConfig, c -> oamConfig = c),
+            new ServiceConfigAccessor<>(() -> bcmPricingCalculatorConfig, c -> bcmPricingCalculatorConfig = c)
     );
 
     /**
@@ -3864,6 +3866,34 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.oamConfig = builder.build();
         oamConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * BCM Pricing Calculator-specific settings.
+     *
+     * @return the BCM Pricing Calculator configuration
+     */
+    public BcmPricingCalculatorConfig getBcmPricingCalculatorConfig() {
+        return bcmPricingCalculatorConfig;
+    }
+
+    /**
+     * Configures BCM Pricing Calculator-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withBcmPricingCalculatorConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link BcmPricingCalculatorConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withBcmPricingCalculatorConfig(Consumer<BcmPricingCalculatorConfig.Builder> configurer) {
+        BcmPricingCalculatorConfig.Builder builder = bcmPricingCalculatorConfig.toBuilder();
+        configurer.accept(builder);
+        this.bcmPricingCalculatorConfig = builder.build();
+        bcmPricingCalculatorConfig.applyEnvVarsToContainer(this);
         return this;
     }
 

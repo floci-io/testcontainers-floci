@@ -894,6 +894,14 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_SERVICES_OAM_ENABLED", "false");
     }
 
+    @Test
+    void shouldWireBcmPricingCalculatorConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withBcmPricingCalculatorConfig(cfg -> cfg.enabled(false)),
+                c -> c.getBcmPricingCalculatorConfig().isEnabled(), false,
+                "FLOCI_SERVICES_BCM_PRICING_CALCULATOR_ENABLED", "false");
+    }
+
     // --- Cross-cutting configs (config/) --------------------------------------------------------
 
     @Test
