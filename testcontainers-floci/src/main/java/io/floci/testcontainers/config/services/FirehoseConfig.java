@@ -17,14 +17,17 @@ public class FirehoseConfig extends AbstractServiceConfig<FirehoseConfig.Builder
 
     private static final long DEFAULT_TICK_INTERVAL_SECONDS = 10;
     private static final int DEFAULT_FLUSH_RECORD_COUNT = 0;
+    private static final String DEFAULT_STAGING_BUCKET = "floci-firehose-staging";
 
     private final long tickIntervalSeconds;
     private final int flushRecordCount;
+    private final String stagingBucket;
 
     private FirehoseConfig(Builder builder) {
         super(builder.enabled);
         this.tickIntervalSeconds = builder.tickIntervalSeconds;
         this.flushRecordCount = builder.flushRecordCount;
+        this.stagingBucket = builder.stagingBucket;
     }
 
     /**
@@ -69,6 +72,18 @@ public class FirehoseConfig extends AbstractServiceConfig<FirehoseConfig.Builder
         return flushRecordCount;
     }
 
+    /**
+     * Returns the S3 bucket used to stage validated NDJSON batches before DuckDB writes the Parquet object of
+     * data-format-converting delivery streams.
+     *
+     * <p>Created on first use if it doesn't exist.
+     *
+     * @return the S3 bucket used to stage validated NDJSON batches before DuckDB writes the Parquet object of data-format-converting delivery streams
+     */
+    public String getStagingBucket() {
+        return stagingBucket;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_FIREHOSE_ENABLED", String.valueOf(isEnabled()));
@@ -76,6 +91,7 @@ public class FirehoseConfig extends AbstractServiceConfig<FirehoseConfig.Builder
         if (isEnabled()) {
             container.withEnv("FLOCI_SERVICES_FIREHOSE_TICK_INTERVAL_SECONDS", String.valueOf(tickIntervalSeconds));
             container.withEnv("FLOCI_SERVICES_FIREHOSE_FLUSH_RECORD_COUNT", String.valueOf(flushRecordCount));
+            container.withEnv("FLOCI_SERVICES_FIREHOSE_STAGING_BUCKET", stagingBucket);
         }
     }
 
@@ -86,6 +102,7 @@ public class FirehoseConfig extends AbstractServiceConfig<FirehoseConfig.Builder
 
         private long tickIntervalSeconds = DEFAULT_TICK_INTERVAL_SECONDS;
         private int flushRecordCount = DEFAULT_FLUSH_RECORD_COUNT;
+        private String stagingBucket = DEFAULT_STAGING_BUCKET;
 
         private Builder() {
             // Allow instantiation only via FirehoseConfig.builder()
@@ -100,6 +117,7 @@ public class FirehoseConfig extends AbstractServiceConfig<FirehoseConfig.Builder
             super(instance);
             this.tickIntervalSeconds = instance.getTickIntervalSeconds();
             this.flushRecordCount = instance.getFlushRecordCount();
+            this.stagingBucket = instance.getStagingBucket();
         }
 
         /**
@@ -123,6 +141,20 @@ public class FirehoseConfig extends AbstractServiceConfig<FirehoseConfig.Builder
          */
         public Builder flushRecordCount(int flushRecordCount) {
             this.flushRecordCount = flushRecordCount;
+            return this;
+        }
+
+        /**
+         * Sets the S3 bucket used to stage validated NDJSON batches before DuckDB writes the Parquet object
+         * of data-format-converting delivery streams.
+         *
+         * <p>Created on first use if it doesn't exist.
+         *
+         * @param stagingBucket the S3 bucket used to stage validated NDJSON batches before DuckDB writes the Parquet object of data-format-converting delivery streams (default {@value DEFAULT_STAGING_BUCKET})
+         * @return this builder
+         */
+        public Builder stagingBucket(String stagingBucket) {
+            this.stagingBucket = stagingBucket;
             return this;
         }
 
