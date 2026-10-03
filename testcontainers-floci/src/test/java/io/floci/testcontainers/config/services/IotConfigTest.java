@@ -119,4 +119,81 @@ class IotConfigTest {
         assertThat(copy.getMqttPort()).isEqualTo(1884);
     }
 
+    @Test
+    void shouldApplyRuleSqlStrict() {
+        IotConfig defaults = IotConfig.builder().build();
+        assertThat(defaults.isRuleSqlStrict()).isEqualTo(false);
+
+        IotConfig config = IotConfig.builder().ruleSqlStrict(true).build();
+        assertThat(config.isRuleSqlStrict()).isEqualTo(true);
+        assertThat(config.toBuilder().build().isRuleSqlStrict()).isEqualTo(true);
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_IOT_RULE_SQL_STRICT", "true");
+
+        GenericContainer<?> defaultContainer = genericContainer();
+        defaults.applyEnvVarsToContainer(defaultContainer);
+        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_IOT_RULE_SQL_STRICT", "false");
+
+        GenericContainer<?> disabledContainer = genericContainer();
+        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
+        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_IOT_RULE_SQL_STRICT");
+    }
+
+    @Test
+    void shouldApplyEndpointAddress() {
+        IotConfig defaults = IotConfig.builder().build();
+        assertThat(defaults.getEndpointAddress()).isEmpty();
+
+        IotConfig config = IotConfig.builder().endpointAddress("iot.example.com").build();
+        assertThat(config.getEndpointAddress()).contains("iot.example.com");
+        assertThat(config.toBuilder().build().getEndpointAddress()).contains("iot.example.com");
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_IOT_ENDPOINT_ADDRESS", "iot.example.com");
+
+        GenericContainer<?> defaultContainer = genericContainer();
+        defaults.applyEnvVarsToContainer(defaultContainer);
+        assertThat(defaultContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_IOT_ENDPOINT_ADDRESS");
+
+        GenericContainer<?> disabledContainer = genericContainer();
+        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
+        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_IOT_ENDPOINT_ADDRESS");
+    }
+
+    @Test
+    void shouldApplyMqttTlsPort() {
+        IotConfig defaults = IotConfig.builder().build();
+        assertThat(defaults.getMqttTlsPort()).isEqualTo(8883);
+
+        IotConfig config = IotConfig.builder().mqttTlsPort(8884).build();
+        assertThat(config.getMqttTlsPort()).isEqualTo(8884);
+        assertThat(config.toBuilder().build().getMqttTlsPort()).isEqualTo(8884);
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_IOT_MQTT_TLS_PORT", "8884");
+
+        GenericContainer<?> defaultContainer = genericContainer();
+        defaults.applyEnvVarsToContainer(defaultContainer);
+        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_IOT_MQTT_TLS_PORT", "8883");
+
+        GenericContainer<?> disabledContainer = genericContainer();
+        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
+        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_IOT_MQTT_TLS_PORT");
+    }
+
+    @Test
+    void shouldExposeMqttTlsPort() {
+        GenericContainer<?> container = genericContainer();
+        IotConfig.builder().build().applyExposedPortsToContainer(container);
+        assertThat(container.getExposedPorts()).contains(1883, 8883);
+
+        GenericContainer<?> disabledTlsContainer = genericContainer();
+        IotConfig.builder().mqttTlsPort(0).build().applyExposedPortsToContainer(disabledTlsContainer);
+        assertThat(disabledTlsContainer.getExposedPorts()).contains(1883).doesNotContain(0, 8883);
+    }
+
 }
