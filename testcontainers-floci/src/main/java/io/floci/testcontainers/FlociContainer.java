@@ -207,6 +207,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private RedshiftServerlessConfig redshiftServerlessConfig = RedshiftServerlessConfig.builder().build();
     private BedrockConfig bedrockConfig = BedrockConfig.builder().build();
     private TranslateConfig translateConfig = TranslateConfig.builder().build();
+    private OamConfig oamConfig = OamConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -310,7 +311,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> redshiftDataConfig, c -> redshiftDataConfig = c),
             new ServiceConfigAccessor<>(() -> redshiftServerlessConfig, c -> redshiftServerlessConfig = c),
             new ServiceConfigAccessor<>(() -> bedrockConfig, c -> bedrockConfig = c),
-            new ServiceConfigAccessor<>(() -> translateConfig, c -> translateConfig = c)
+            new ServiceConfigAccessor<>(() -> translateConfig, c -> translateConfig = c),
+            new ServiceConfigAccessor<>(() -> oamConfig, c -> oamConfig = c)
     );
 
     /**
@@ -3834,6 +3836,34 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.translateConfig = builder.build();
         translateConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * OAM (CloudWatch Observability Access Manager)-specific settings.
+     *
+     * @return the OAM (CloudWatch Observability Access Manager) configuration
+     */
+    public OamConfig getOamConfig() {
+        return oamConfig;
+    }
+
+    /**
+     * Configures OAM (CloudWatch Observability Access Manager)-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withOamConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link OamConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withOamConfig(Consumer<OamConfig.Builder> configurer) {
+        OamConfig.Builder builder = oamConfig.toBuilder();
+        configurer.accept(builder);
+        this.oamConfig = builder.build();
+        oamConfig.applyEnvVarsToContainer(this);
         return this;
     }
 

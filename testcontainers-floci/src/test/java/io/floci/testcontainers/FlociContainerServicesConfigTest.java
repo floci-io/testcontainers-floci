@@ -886,6 +886,14 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_SERVICES_TRANSLATE_ENABLED", "false");
     }
 
+    @Test
+    void shouldWireOamConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withOamConfig(cfg -> cfg.enabled(false)),
+                c -> c.getOamConfig().isEnabled(), false,
+                "FLOCI_SERVICES_OAM_ENABLED", "false");
+    }
+
     // --- Cross-cutting configs (config/) --------------------------------------------------------
 
     @Test
