@@ -165,6 +165,7 @@ class S3IntegrationTest {
 | `withProtocolsConfig(...)`            | Configures RPC wire-protocol handling (e.g. strict protocol claiming)                                          |
 | `withAuthConfig(...)`                 | Configures authentication settings (e.g. SigV4 signature validation, presign secret)                           |
 | `withInitHooksConfig(...)`            | Configures lifecycle init hook execution (shell, timeouts)                                                     |
+| `withPartitionsConfig(...)`           | Configures the served AWS partition and partition/region strictness                                            |
 | `with*Config(...)`                    | Configures service-specific settings                                                                           |
 
 Each AWS service emulated by Floci can be individually configured via a `with*Config(...)` method on
@@ -216,6 +217,7 @@ FlociContainer floci = new FlociContainer().withDockerSocket(true);
 | `getProtocolsConfig()`        | Current protocols configuration                                   | —                |
 | `getAuthConfig()`             | Current auth configuration                                        | —                |
 | `getInitHooksConfig()`        | Current init hooks configuration                                  | —                |
+| `getPartitionsConfig()`       | Current partitions configuration                                  | —                |
 | `get*Config()`                | Current configuration of a service                                | —                |
 
 

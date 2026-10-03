@@ -103,6 +103,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private ProtocolsConfig protocolsConfig = ProtocolsConfig.builder().build();
     private AuthConfig authConfig = AuthConfig.builder().build();
     private InitHooksConfig initHooksConfig = InitHooksConfig.builder().build();
+    private PartitionsConfig partitionsConfig = PartitionsConfig.builder().build();
 
     // Services config
     private AcmConfig acmConfig = AcmConfig.builder().build();
@@ -962,6 +963,36 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.initHooksConfig = builder.build();
         initHooksConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Returns the current partitions configuration. Defaults to deriving the AWS partition from the
+     * default region, serving every enabled service in every partition and refusing unknown regions.
+     *
+     * @return the partitions configuration
+     */
+    public PartitionsConfig getPartitionsConfig() {
+        return partitionsConfig;
+    }
+
+    /**
+     * Configures which AWS partition Floci serves and how strictly requests are checked against it.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withRegion("cn-north-1")
+     *     .withPartitionsConfig(c -> c.id("aws-cn").strict(true));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link PartitionsConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withPartitionsConfig(Consumer<PartitionsConfig.Builder> configurer) {
+        PartitionsConfig.Builder builder = partitionsConfig.toBuilder();
+        configurer.accept(builder);
+        this.partitionsConfig = builder.build();
+        partitionsConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
@@ -4648,6 +4679,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         protocolsConfig.applyEnvVarsToContainer(this);
         authConfig.applyEnvVarsToContainer(this);
         initHooksConfig.applyEnvVarsToContainer(this);
+        partitionsConfig.applyEnvVarsToContainer(this);
 
         // Services config
         serviceConfigAccessors.forEach(accessor -> accessor.get().applyEnvVarsToContainer(this));
