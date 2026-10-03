@@ -910,6 +910,14 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_SERVICES_TIMESTREAM_INFLUXDB_DEFAULT_IMAGE", "influxdb:2.8");
     }
 
+    @Test
+    void shouldWireSageMakerConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withSageMakerConfig(cfg -> cfg.gpuEnabled(true)),
+                c -> c.getSageMakerConfig().isGpuEnabled(), true,
+                "FLOCI_SERVICES_SAGEMAKER_GPU_ENABLED", "true");
+    }
+
     // --- Cross-cutting configs (config/) --------------------------------------------------------
 
     @Test

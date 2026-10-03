@@ -361,7 +361,8 @@ class FlociContainerTest {
                     container.getTranslateConfig(),
                     container.getOamConfig(),
                     container.getBcmPricingCalculatorConfig(),
-                    container.getTimestreamInfluxDbConfig()
+                    container.getTimestreamInfluxDbConfig(),
+                    container.getSageMakerConfig()
             )).noneMatch(AbstractServiceConfig::isEnabled);
         }
     }
