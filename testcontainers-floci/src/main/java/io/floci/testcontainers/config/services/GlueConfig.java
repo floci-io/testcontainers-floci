@@ -13,9 +13,16 @@ import org.testcontainers.containers.Container;
  */
 public class GlueConfig extends AbstractServiceConfig<GlueConfig.Builder> {
 
+    private static final int DEFAULT_JOB_RUN_DURATION_SECONDS = 0;
+    private static final int DEFAULT_CRAWLER_RUN_DURATION_SECONDS = 0;
+
+    private final int jobRunDurationSeconds;
+    private final int crawlerRunDurationSeconds;
 
     private GlueConfig(Builder builder) {
         super(builder.enabled);
+        this.jobRunDurationSeconds = builder.jobRunDurationSeconds;
+        this.crawlerRunDurationSeconds = builder.crawlerRunDurationSeconds;
     }
 
     /**
@@ -38,9 +45,36 @@ public class GlueConfig extends AbstractServiceConfig<GlueConfig.Builder> {
         return new Builder(this);
     }
 
+    /**
+     * Returns how long, in seconds, a job run stays {@code RUNNING} before it succeeds.
+     *
+     * <p>{@code 0} means a run succeeds as soon as it starts.
+     *
+     * @return how long, in seconds, a job run stays {@code RUNNING} before it succeeds
+     */
+    public int getJobRunDurationSeconds() {
+        return jobRunDurationSeconds;
+    }
+
+    /**
+     * Returns how long, in seconds, a crawl keeps the crawler {@code RUNNING} before it succeeds.
+     *
+     * <p>{@code 0} means a crawl finishes as soon as it starts.
+     *
+     * @return how long, in seconds, a crawl keeps the crawler {@code RUNNING} before it succeeds
+     */
+    public int getCrawlerRunDurationSeconds() {
+        return crawlerRunDurationSeconds;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_GLUE_ENABLED", String.valueOf(isEnabled()));
+
+        if (isEnabled()) {
+            container.withEnv("FLOCI_SERVICES_GLUE_JOB_RUN_DURATION_SECONDS", String.valueOf(jobRunDurationSeconds));
+            container.withEnv("FLOCI_SERVICES_GLUE_CRAWLER_RUN_DURATION_SECONDS", String.valueOf(crawlerRunDurationSeconds));
+        }
     }
 
     /**
@@ -48,6 +82,8 @@ public class GlueConfig extends AbstractServiceConfig<GlueConfig.Builder> {
      */
     public static class Builder extends AbstractServiceConfigBuilder<Builder, GlueConfig> {
 
+        private int jobRunDurationSeconds = DEFAULT_JOB_RUN_DURATION_SECONDS;
+        private int crawlerRunDurationSeconds = DEFAULT_CRAWLER_RUN_DURATION_SECONDS;
 
         private Builder() {
             // Allow instantiation only via GlueConfig.builder()
@@ -60,6 +96,34 @@ public class GlueConfig extends AbstractServiceConfig<GlueConfig.Builder> {
          */
         private Builder(GlueConfig instance) {
             super(instance);
+            this.jobRunDurationSeconds = instance.getJobRunDurationSeconds();
+            this.crawlerRunDurationSeconds = instance.getCrawlerRunDurationSeconds();
+        }
+
+        /**
+         * Sets how long, in seconds, a job run stays {@code RUNNING} before it succeeds.
+         *
+         * <p>{@code 0} means a run succeeds as soon as it starts.
+         *
+         * @param jobRunDurationSeconds how long, in seconds, a job run stays {@code RUNNING} before it succeeds (default {@value DEFAULT_JOB_RUN_DURATION_SECONDS})
+         * @return this builder
+         */
+        public Builder jobRunDurationSeconds(int jobRunDurationSeconds) {
+            this.jobRunDurationSeconds = jobRunDurationSeconds;
+            return this;
+        }
+
+        /**
+         * Sets how long, in seconds, a crawl keeps the crawler {@code RUNNING} before it succeeds.
+         *
+         * <p>{@code 0} means a crawl finishes as soon as it starts.
+         *
+         * @param crawlerRunDurationSeconds how long, in seconds, a crawl keeps the crawler {@code RUNNING} before it succeeds (default {@value DEFAULT_CRAWLER_RUN_DURATION_SECONDS})
+         * @return this builder
+         */
+        public Builder crawlerRunDurationSeconds(int crawlerRunDurationSeconds) {
+            this.crawlerRunDurationSeconds = crawlerRunDurationSeconds;
+            return this;
         }
 
         /**
