@@ -360,7 +360,8 @@ class FlociContainerTest {
                     container.getBedrockConfig(),
                     container.getTranslateConfig(),
                     container.getOamConfig(),
-                    container.getBcmPricingCalculatorConfig()
+                    container.getBcmPricingCalculatorConfig(),
+                    container.getTimestreamInfluxDbConfig()
             )).noneMatch(AbstractServiceConfig::isEnabled);
         }
     }
