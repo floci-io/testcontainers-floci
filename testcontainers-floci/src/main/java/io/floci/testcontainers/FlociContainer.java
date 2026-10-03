@@ -204,6 +204,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private RekognitionConfig rekognitionConfig = RekognitionConfig.builder().build();
     private TranscribeConfig transcribeConfig = TranscribeConfig.builder().build();
     private RedshiftDataConfig redshiftDataConfig = RedshiftDataConfig.builder().build();
+    private RedshiftServerlessConfig redshiftServerlessConfig = RedshiftServerlessConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -304,7 +305,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> comprehendConfig, c -> comprehendConfig = c),
             new ServiceConfigAccessor<>(() -> rekognitionConfig, c -> rekognitionConfig = c),
             new ServiceConfigAccessor<>(() -> transcribeConfig, c -> transcribeConfig = c),
-            new ServiceConfigAccessor<>(() -> redshiftDataConfig, c -> redshiftDataConfig = c)
+            new ServiceConfigAccessor<>(() -> redshiftDataConfig, c -> redshiftDataConfig = c),
+            new ServiceConfigAccessor<>(() -> redshiftServerlessConfig, c -> redshiftServerlessConfig = c)
     );
 
     /**
@@ -3743,6 +3745,34 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.redshiftDataConfig = builder.build();
         redshiftDataConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Redshift Serverless-specific settings.
+     *
+     * @return the Redshift Serverless configuration
+     */
+    public RedshiftServerlessConfig getRedshiftServerlessConfig() {
+        return redshiftServerlessConfig;
+    }
+
+    /**
+     * Configures Redshift Serverless-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withRedshiftServerlessConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link RedshiftServerlessConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withRedshiftServerlessConfig(Consumer<RedshiftServerlessConfig.Builder> configurer) {
+        RedshiftServerlessConfig.Builder builder = redshiftServerlessConfig.toBuilder();
+        configurer.accept(builder);
+        this.redshiftServerlessConfig = builder.build();
+        redshiftServerlessConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
