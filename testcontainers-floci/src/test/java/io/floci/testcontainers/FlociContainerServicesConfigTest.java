@@ -862,6 +862,14 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_SERVICES_REDSHIFT_DATA_RESULT_TTL_HOURS", "1");
     }
 
+    @Test
+    void shouldWireRedshiftServerlessConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withRedshiftServerlessConfig(cfg -> cfg.enabled(false)),
+                c -> c.getRedshiftServerlessConfig().isEnabled(), false,
+                "FLOCI_SERVICES_REDSHIFT_SERVERLESS_ENABLED", "false");
+    }
+
     // --- Cross-cutting configs (config/) --------------------------------------------------------
 
     @Test
