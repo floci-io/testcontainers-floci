@@ -161,7 +161,7 @@ class S3IntegrationTest {
 | `withDockerSocket(boolean)`           | Overrides whether the host Docker socket is mounted, bypassing auto-detection (see below)                      |
 | `withTlsConfig(...)`                  | Configures TLS/HTTPS (self-signed by default; optionally provide cert/key paths)                               |
 | `withStorageConfig(...)`              | Configures persistent storage and volume behaviour                                                             |
-| `withSecurityConfig(...)`             | Configures CORS-related security settings                                                                      |
+| `withSecurityConfig(...)`             | Configures security settings (CORS, private JWT issuer targets, network exposure)                              |
 | `withProtocolsConfig(...)`            | Configures RPC wire-protocol handling (e.g. strict protocol claiming)                                          |
 | `withAuthConfig(...)`                 | Configures authentication settings (e.g. SigV4 signature validation, presign secret)                           |
 | `withInitHooksConfig(...)`            | Configures lifecycle init hook execution (shell, timeouts)                                                     |
