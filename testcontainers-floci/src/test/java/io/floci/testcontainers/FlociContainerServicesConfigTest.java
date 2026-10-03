@@ -1120,4 +1120,12 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_INIT_HOOKS_TIMEOUT_SECONDS", "60");
     }
 
+    @Test
+    void shouldWirePartitionsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withPartitionsConfig(cfg -> cfg.strict(true)),
+                c -> c.getPartitionsConfig().isStrict(), true,
+                "FLOCI_PARTITIONS_STRICT", "true");
+    }
+
 }
