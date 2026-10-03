@@ -369,7 +369,8 @@ class FlociContainerTest {
                     container.getAccessAnalyzerConfig(),
                     container.getIdentityStoreConfig(),
                     container.getBudgetsConfig(),
-                    container.getInspector2Config()
+                    container.getInspector2Config(),
+                    container.getSecurityHubConfig()
             )).noneMatch(AbstractServiceConfig::isEnabled);
         }
     }
