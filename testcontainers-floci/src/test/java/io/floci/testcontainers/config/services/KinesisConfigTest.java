@@ -47,4 +47,26 @@ class KinesisConfigTest {
         assertThat(copy.isEnabled()).isFalse();
     }
 
+    @Test
+    void shouldApplyListShardsNextTokenTtlMillis() {
+        KinesisConfig defaults = KinesisConfig.builder().build();
+        assertThat(defaults.getListShardsNextTokenTtlMillis()).isEqualTo(300000L);
+
+        KinesisConfig config = KinesisConfig.builder().listShardsNextTokenTtlMillis(1000L).build();
+        assertThat(config.getListShardsNextTokenTtlMillis()).isEqualTo(1000L);
+        assertThat(config.toBuilder().build().getListShardsNextTokenTtlMillis()).isEqualTo(1000L);
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_KINESIS_LIST_SHARDS_NEXT_TOKEN_TTL_MILLIS", "1000");
+
+        GenericContainer<?> defaultContainer = genericContainer();
+        defaults.applyEnvVarsToContainer(defaultContainer);
+        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_KINESIS_LIST_SHARDS_NEXT_TOKEN_TTL_MILLIS", "300000");
+
+        GenericContainer<?> disabledContainer = genericContainer();
+        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
+        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_KINESIS_LIST_SHARDS_NEXT_TOKEN_TTL_MILLIS");
+    }
+
 }
