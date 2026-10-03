@@ -17,8 +17,8 @@ class TimestreamInfluxDbConfigTest {
         assertThat(config.getReadinessTimeoutSeconds()).isEqualTo(120);
         assertThat(config.getDockerNetwork()).isEmpty();
         assertThat(config.getHostPortBase()).isEqualTo(8086);
-        assertThat(config.getHostPortsCount()).isEqualTo(100);
-        assertThat(config.getHostPortMax()).isEqualTo(8185);
+        assertThat(config.getHostPortsCount()).isEqualTo(10);
+        assertThat(config.getHostPortMax()).isEqualTo(8095);
     }
 
     @Test
@@ -53,7 +53,7 @@ class TimestreamInfluxDbConfigTest {
                 .containsEntry("FLOCI_SERVICES_TIMESTREAM_INFLUXDB_READINESS_TIMEOUT_SECONDS", "120")
                 .doesNotContainKey("FLOCI_SERVICES_TIMESTREAM_INFLUXDB_DOCKER_NETWORK")
                 .containsEntry("FLOCI_SERVICES_TIMESTREAM_INFLUXDB_HOST_PORT_BASE", "8086")
-                .containsEntry("FLOCI_SERVICES_TIMESTREAM_INFLUXDB_HOST_PORT_MAX", "8185");
+                .containsEntry("FLOCI_SERVICES_TIMESTREAM_INFLUXDB_HOST_PORT_MAX", "8095");
     }
 
     @Test
