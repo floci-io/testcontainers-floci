@@ -1014,6 +1014,14 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_SERVICES_APPINTEGRATIONS_ENABLED", "false");
     }
 
+    @Test
+    void shouldWireDlmConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withDlmConfig(cfg -> cfg.enabled(false)),
+                c -> c.getDlmConfig().isEnabled(), false,
+                "FLOCI_SERVICES_DLM_ENABLED", "false");
+    }
+
     // --- Cross-cutting configs (config/) --------------------------------------------------------
 
     @Test

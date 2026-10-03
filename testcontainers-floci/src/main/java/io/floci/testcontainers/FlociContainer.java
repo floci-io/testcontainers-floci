@@ -223,6 +223,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private VerifiedPermissionsConfig verifiedPermissionsConfig = VerifiedPermissionsConfig.builder().build();
     private ControlCatalogConfig controlCatalogConfig = ControlCatalogConfig.builder().build();
     private AppIntegrationsConfig appIntegrationsConfig = AppIntegrationsConfig.builder().build();
+    private DlmConfig dlmConfig = DlmConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -342,7 +343,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> detectiveConfig, c -> detectiveConfig = c),
             new ServiceConfigAccessor<>(() -> verifiedPermissionsConfig, c -> verifiedPermissionsConfig = c),
             new ServiceConfigAccessor<>(() -> controlCatalogConfig, c -> controlCatalogConfig = c),
-            new ServiceConfigAccessor<>(() -> appIntegrationsConfig, c -> appIntegrationsConfig = c)
+            new ServiceConfigAccessor<>(() -> appIntegrationsConfig, c -> appIntegrationsConfig = c),
+            new ServiceConfigAccessor<>(() -> dlmConfig, c -> dlmConfig = c)
     );
 
     /**
@@ -4314,6 +4316,34 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.appIntegrationsConfig = builder.build();
         appIntegrationsConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * DLM (Data Lifecycle Manager)-specific settings.
+     *
+     * @return the DLM (Data Lifecycle Manager) configuration
+     */
+    public DlmConfig getDlmConfig() {
+        return dlmConfig;
+    }
+
+    /**
+     * Configures DLM (Data Lifecycle Manager)-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withDlmConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link DlmConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withDlmConfig(Consumer<DlmConfig.Builder> configurer) {
+        DlmConfig.Builder builder = dlmConfig.toBuilder();
+        configurer.accept(builder);
+        this.dlmConfig = builder.build();
+        dlmConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
