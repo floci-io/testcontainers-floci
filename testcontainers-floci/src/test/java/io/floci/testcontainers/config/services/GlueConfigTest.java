@@ -47,4 +47,48 @@ class GlueConfigTest {
         assertThat(copy.isEnabled()).isFalse();
     }
 
+    @Test
+    void shouldApplyJobRunDurationSeconds() {
+        GlueConfig defaults = GlueConfig.builder().build();
+        assertThat(defaults.getJobRunDurationSeconds()).isEqualTo(0);
+
+        GlueConfig config = GlueConfig.builder().jobRunDurationSeconds(5).build();
+        assertThat(config.getJobRunDurationSeconds()).isEqualTo(5);
+        assertThat(config.toBuilder().build().getJobRunDurationSeconds()).isEqualTo(5);
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_GLUE_JOB_RUN_DURATION_SECONDS", "5");
+
+        GenericContainer<?> defaultContainer = genericContainer();
+        defaults.applyEnvVarsToContainer(defaultContainer);
+        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_GLUE_JOB_RUN_DURATION_SECONDS", "0");
+
+        GenericContainer<?> disabledContainer = genericContainer();
+        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
+        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_GLUE_JOB_RUN_DURATION_SECONDS");
+    }
+
+    @Test
+    void shouldApplyCrawlerRunDurationSeconds() {
+        GlueConfig defaults = GlueConfig.builder().build();
+        assertThat(defaults.getCrawlerRunDurationSeconds()).isEqualTo(0);
+
+        GlueConfig config = GlueConfig.builder().crawlerRunDurationSeconds(5).build();
+        assertThat(config.getCrawlerRunDurationSeconds()).isEqualTo(5);
+        assertThat(config.toBuilder().build().getCrawlerRunDurationSeconds()).isEqualTo(5);
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_GLUE_CRAWLER_RUN_DURATION_SECONDS", "5");
+
+        GenericContainer<?> defaultContainer = genericContainer();
+        defaults.applyEnvVarsToContainer(defaultContainer);
+        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_GLUE_CRAWLER_RUN_DURATION_SECONDS", "0");
+
+        GenericContainer<?> disabledContainer = genericContainer();
+        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
+        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_GLUE_CRAWLER_RUN_DURATION_SECONDS");
+    }
+
 }
