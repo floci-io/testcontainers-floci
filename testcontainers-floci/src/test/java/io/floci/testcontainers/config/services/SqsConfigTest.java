@@ -82,4 +82,26 @@ class SqsConfigTest {
         assertThat(copy.isClearFifoDeduplicationCacheOnPurge()).isFalse();
     }
 
+    @Test
+    void shouldApplyReceiptHandleSecret() {
+        SqsConfig defaults = SqsConfig.builder().build();
+        assertThat(defaults.getReceiptHandleSecret()).isEqualTo("local-emulator-secret");
+
+        SqsConfig config = SqsConfig.builder().receiptHandleSecret("my-secret").build();
+        assertThat(config.getReceiptHandleSecret()).isEqualTo("my-secret");
+        assertThat(config.toBuilder().build().getReceiptHandleSecret()).isEqualTo("my-secret");
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_SQS_RECEIPT_HANDLE_SECRET", "my-secret");
+
+        GenericContainer<?> defaultContainer = genericContainer();
+        defaults.applyEnvVarsToContainer(defaultContainer);
+        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_SQS_RECEIPT_HANDLE_SECRET", "local-emulator-secret");
+
+        GenericContainer<?> disabledContainer = genericContainer();
+        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
+        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_SQS_RECEIPT_HANDLE_SECRET");
+    }
+
 }
