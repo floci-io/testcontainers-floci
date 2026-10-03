@@ -12,7 +12,7 @@ import java.util.Optional;
  * TimestreamInfluxDbConfig config = TimestreamInfluxDbConfig.builder()
  *     .mock(false)
  *     .defaultImage("influxdb:2.7")
- *     .hostPortRange(8086, 100)
+ *     .hostPortRange(8086, 10)
  *     .build();
  * }</pre>
  */
@@ -21,7 +21,7 @@ public class TimestreamInfluxDbConfig extends AbstractServiceConfig<TimestreamIn
     private static final boolean DEFAULT_MOCK = false;
     private static final String DEFAULT_IMAGE = "influxdb:2.7";
     private static final int DEFAULT_HOST_PORT_BASE = 8086;
-    private static final int DEFAULT_HOST_PORTS_COUNT = 100;
+    private static final int DEFAULT_HOST_PORTS_COUNT = 10;
     private static final int DEFAULT_READINESS_TIMEOUT_SECONDS = 120;
 
     private final boolean mock;
