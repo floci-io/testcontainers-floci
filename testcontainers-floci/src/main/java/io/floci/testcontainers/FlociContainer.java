@@ -228,6 +228,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private GlobalAcceleratorConfig globalAcceleratorConfig = GlobalAcceleratorConfig.builder().build();
     private DataSyncConfig dataSyncConfig = DataSyncConfig.builder().build();
     private CodeArtifactConfig codeArtifactConfig = CodeArtifactConfig.builder().build();
+    private MarketplaceConfig marketplaceConfig = MarketplaceConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -352,7 +353,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> cognitoIdentityConfig, c -> cognitoIdentityConfig = c),
             new ServiceConfigAccessor<>(() -> globalAcceleratorConfig, c -> globalAcceleratorConfig = c),
             new ServiceConfigAccessor<>(() -> dataSyncConfig, c -> dataSyncConfig = c),
-            new ServiceConfigAccessor<>(() -> codeArtifactConfig, c -> codeArtifactConfig = c)
+            new ServiceConfigAccessor<>(() -> codeArtifactConfig, c -> codeArtifactConfig = c),
+            new ServiceConfigAccessor<>(() -> marketplaceConfig, c -> marketplaceConfig = c)
     );
 
     /**
@@ -4464,6 +4466,34 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.codeArtifactConfig = builder.build();
         codeArtifactConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * AWS Marketplace-specific settings.
+     *
+     * @return the AWS Marketplace configuration
+     */
+    public MarketplaceConfig getMarketplaceConfig() {
+        return marketplaceConfig;
+    }
+
+    /**
+     * Configures AWS Marketplace-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withMarketplaceConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link MarketplaceConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withMarketplaceConfig(Consumer<MarketplaceConfig.Builder> configurer) {
+        MarketplaceConfig.Builder builder = marketplaceConfig.toBuilder();
+        configurer.accept(builder);
+        this.marketplaceConfig = builder.build();
+        marketplaceConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
