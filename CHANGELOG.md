@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.15.1](https://github.com/floci-io/testcontainers-floci/compare/v1.15.0...v1.15.1) (2026-10-03)
+
+
+### Bug Fixes
+
+* **controltower:** create a landing zone in ControlTowerServiceTest ([fbd3d37](https://github.com/floci-io/testcontainers-floci/commit/fbd3d373a59403b34432dfe6b918e109fc837754))
+* create a real Secrets Manager secret in RdsDataServiceTest ([4cea609](https://github.com/floci-io/testcontainers-floci/commit/4cea60985a33880323f6c8becfd9d766fff9a97b))
+* **eks:** make EksServiceTest's bearer token pass Floci's IAM auth webhook ([2482689](https://github.com/floci-io/testcontainers-floci/commit/248268975239f0b4543d306c3d129363f2338ee3))
+
+
+### Documentation
+
+* **agents:** add step to re-check disabled tests during Floci migration ([58be08b](https://github.com/floci-io/testcontainers-floci/commit/58be08b3b28bde3bf79b09bfb835c00133b5c99a))
+* **agents:** document the Floci config migration process ([c6d0c5f](https://github.com/floci-io/testcontainers-floci/commit/c6d0c5faa3a8c4e453d9a639f8cb6cff9b00bf1d))
+* **agents:** reinforce no AI attribution trailers in commits/PRs ([dad8724](https://github.com/floci-io/testcontainers-floci/commit/dad87242cd3469cde78f740cadeb2fc17c9426b6))
+
 ## [1.15.0](https://github.com/floci-io/testcontainers-floci/compare/v1.14.0...v1.15.0) (2026-09-01)
 
 
