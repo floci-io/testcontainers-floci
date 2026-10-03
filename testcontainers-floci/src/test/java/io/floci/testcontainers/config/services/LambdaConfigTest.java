@@ -90,7 +90,7 @@ class LambdaConfigTest {
                 .containsEntry("FLOCI_SERVICES_LAMBDA_CONTAINER_IDLE_TIMEOUT_SECONDS", "300")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_REGION_CONCURRENCY_LIMIT", "1000")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_UNRESERVED_CONCURRENCY_MIN", "100")
-                .containsEntry("FLOCI_ECR_BASE_URI", "public.ecr.aws")
+                .containsEntry("FLOCI_SERVICES_LAMBDA_ECR_BASE_URI", "public.ecr.aws")
                 .doesNotContainKey("FLOCI_SERVICES_LAMBDA_DOCKER_NETWORK")
                 .doesNotContainKey("FLOCI_SERVICES_LAMBDA_AWS_CONFIG_PATH")
                 .doesNotContainKey("FLOCI_SERVICES_LAMBDA_EXTRA_HOSTS")
@@ -134,7 +134,7 @@ class LambdaConfigTest {
                 .containsEntry("FLOCI_SERVICES_LAMBDA_DOCKER_NETWORK", "my-network")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_AWS_CONFIG_PATH", "/home/user/.aws")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_EXTRA_HOSTS", "host.docker.internal:host-gateway,my-service:172.17.0.1")
-                .containsEntry("FLOCI_ECR_BASE_URI", "123456789012.dkr.ecr.us-east-1.amazonaws.com")
+                .containsEntry("FLOCI_SERVICES_LAMBDA_ECR_BASE_URI", "123456789012.dkr.ecr.us-east-1.amazonaws.com")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_CONTAINER_NAME_PREFIX", "acme")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_CODE_VOLUME_POPULATE_CONCURRENCY", "4");
     }
