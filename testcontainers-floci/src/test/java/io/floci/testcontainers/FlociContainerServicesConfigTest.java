@@ -934,6 +934,14 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_SERVICES_MACIE2_ENABLED", "false");
     }
 
+    @Test
+    void shouldWireAccountConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withAccountConfig(cfg -> cfg.enabled(false)),
+                c -> c.getAccountConfig().isEnabled(), false,
+                "FLOCI_SERVICES_ACCOUNT_ENABLED", "false");
+    }
+
     // --- Cross-cutting configs (config/) --------------------------------------------------------
 
     @Test
