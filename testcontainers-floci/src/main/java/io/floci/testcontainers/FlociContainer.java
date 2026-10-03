@@ -229,6 +229,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private DataSyncConfig dataSyncConfig = DataSyncConfig.builder().build();
     private CodeArtifactConfig codeArtifactConfig = CodeArtifactConfig.builder().build();
     private MarketplaceConfig marketplaceConfig = MarketplaceConfig.builder().build();
+    private DmsConfig dmsConfig = DmsConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -354,7 +355,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> globalAcceleratorConfig, c -> globalAcceleratorConfig = c),
             new ServiceConfigAccessor<>(() -> dataSyncConfig, c -> dataSyncConfig = c),
             new ServiceConfigAccessor<>(() -> codeArtifactConfig, c -> codeArtifactConfig = c),
-            new ServiceConfigAccessor<>(() -> marketplaceConfig, c -> marketplaceConfig = c)
+            new ServiceConfigAccessor<>(() -> marketplaceConfig, c -> marketplaceConfig = c),
+            new ServiceConfigAccessor<>(() -> dmsConfig, c -> dmsConfig = c)
     );
 
     /**
@@ -4494,6 +4496,34 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.marketplaceConfig = builder.build();
         marketplaceConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * DMS (Database Migration Service)-specific settings.
+     *
+     * @return the DMS (Database Migration Service) configuration
+     */
+    public DmsConfig getDmsConfig() {
+        return dmsConfig;
+    }
+
+    /**
+     * Configures DMS (Database Migration Service)-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withDmsConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link DmsConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withDmsConfig(Consumer<DmsConfig.Builder> configurer) {
+        DmsConfig.Builder builder = dmsConfig.toBuilder();
+        configurer.accept(builder);
+        this.dmsConfig = builder.build();
+        dmsConfig.applyEnvVarsToContainer(this);
         return this;
     }
 

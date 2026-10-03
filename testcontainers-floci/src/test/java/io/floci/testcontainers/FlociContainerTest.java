@@ -380,7 +380,8 @@ class FlociContainerTest {
                     container.getGlobalAcceleratorConfig(),
                     container.getDataSyncConfig(),
                     container.getCodeArtifactConfig(),
-                    container.getMarketplaceConfig()
+                    container.getMarketplaceConfig(),
+                    container.getDmsConfig()
             )).noneMatch(AbstractServiceConfig::isEnabled);
         }
     }
