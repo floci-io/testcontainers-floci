@@ -942,6 +942,14 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_SERVICES_ACCOUNT_ENABLED", "false");
     }
 
+    @Test
+    void shouldWireAccessAnalyzerConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withAccessAnalyzerConfig(cfg -> cfg.enabled(false)),
+                c -> c.getAccessAnalyzerConfig().isEnabled(), false,
+                "FLOCI_SERVICES_ACCESSANALYZER_ENABLED", "false");
+    }
+
     // --- Cross-cutting configs (config/) --------------------------------------------------------
 
     @Test
