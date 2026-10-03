@@ -47,4 +47,26 @@ class CodePipelineConfigTest {
         assertThat(copy.isEnabled()).isFalse();
     }
 
+    @Test
+    void shouldApplySourcePollIntervalMs() {
+        CodePipelineConfig defaults = CodePipelineConfig.builder().build();
+        assertThat(defaults.getSourcePollIntervalMs()).isEqualTo(500L);
+
+        CodePipelineConfig config = CodePipelineConfig.builder().sourcePollIntervalMs(100L).build();
+        assertThat(config.getSourcePollIntervalMs()).isEqualTo(100L);
+        assertThat(config.toBuilder().build().getSourcePollIntervalMs()).isEqualTo(100L);
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_CODEPIPELINE_SOURCE_POLL_INTERVAL_MS", "100");
+
+        GenericContainer<?> defaultContainer = genericContainer();
+        defaults.applyEnvVarsToContainer(defaultContainer);
+        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_CODEPIPELINE_SOURCE_POLL_INTERVAL_MS", "500");
+
+        GenericContainer<?> disabledContainer = genericContainer();
+        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
+        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_CODEPIPELINE_SOURCE_POLL_INTERVAL_MS");
+    }
+
 }
