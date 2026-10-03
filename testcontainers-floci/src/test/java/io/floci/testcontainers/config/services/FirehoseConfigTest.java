@@ -77,4 +77,26 @@ class FirehoseConfigTest {
         assertThat(copy.getFlushRecordCount()).isEqualTo(1);
     }
 
+    @Test
+    void shouldApplyStagingBucket() {
+        FirehoseConfig defaults = FirehoseConfig.builder().build();
+        assertThat(defaults.getStagingBucket()).isEqualTo("floci-firehose-staging");
+
+        FirehoseConfig config = FirehoseConfig.builder().stagingBucket("my-staging-bucket").build();
+        assertThat(config.getStagingBucket()).isEqualTo("my-staging-bucket");
+        assertThat(config.toBuilder().build().getStagingBucket()).isEqualTo("my-staging-bucket");
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_FIREHOSE_STAGING_BUCKET", "my-staging-bucket");
+
+        GenericContainer<?> defaultContainer = genericContainer();
+        defaults.applyEnvVarsToContainer(defaultContainer);
+        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_FIREHOSE_STAGING_BUCKET", "floci-firehose-staging");
+
+        GenericContainer<?> disabledContainer = genericContainer();
+        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
+        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_FIREHOSE_STAGING_BUCKET");
+    }
+
 }
