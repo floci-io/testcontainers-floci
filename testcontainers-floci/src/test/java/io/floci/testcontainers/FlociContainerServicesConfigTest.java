@@ -1128,4 +1128,12 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_PARTITIONS_STRICT", "true");
     }
 
+    @Test
+    void shouldWireNetworkConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withNetworkConfig(cfg -> cfg.securityGroupEnforcementEnabled(true)),
+                c -> c.getNetworkConfig().isSecurityGroupEnforcementEnabled(), true,
+                "FLOCI_NETWORK_SECURITY_GROUP_ENFORCEMENT_ENABLED", "true");
+    }
+
 }

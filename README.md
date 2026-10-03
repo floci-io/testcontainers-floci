@@ -166,6 +166,7 @@ class S3IntegrationTest {
 | `withAuthConfig(...)`                 | Configures authentication settings (e.g. SigV4 signature validation, presign secret)                           |
 | `withInitHooksConfig(...)`            | Configures lifecycle init hook execution (shell, timeouts)                                                     |
 | `withPartitionsConfig(...)`           | Configures the served AWS partition and partition/region strictness                                            |
+| `withNetworkConfig(...)`              | Configures network settings (e.g. security-group enforcement for EC2/ECS containers)                           |
 | `with*Config(...)`                    | Configures service-specific settings                                                                           |
 
 Each AWS service emulated by Floci can be individually configured via a `with*Config(...)` method on
@@ -218,6 +219,7 @@ FlociContainer floci = new FlociContainer().withDockerSocket(true);
 | `getAuthConfig()`             | Current auth configuration                                        | —                |
 | `getInitHooksConfig()`        | Current init hooks configuration                                  | —                |
 | `getPartitionsConfig()`       | Current partitions configuration                                  | —                |
+| `getNetworkConfig()`          | Current network configuration                                     | —                |
 | `get*Config()`                | Current configuration of a service                                | —                |
 
 

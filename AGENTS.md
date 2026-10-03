@@ -30,8 +30,8 @@ mvn -pl testcontainers-floci test -Dtest=IamServiceTest
 entry point; everything else hangs off it:
 
 - **Cross-cutting config** (`config/`: `TlsConfig`, `StorageConfig`, `DuckDbConfig`, `SecurityConfig`,
-  `ProtocolsConfig`, `AuthConfig`, `InitHooksConfig`, `PartitionsConfig`) and **per-service config**
-  (`config/services/`, one class per AWS service, e.g. `IamConfig`, `S3Config`) are immutable value classes built via a nested `Builder`, each extending `AbstractServiceConfig`/
+  `ProtocolsConfig`, `AuthConfig`, `InitHooksConfig`, `PartitionsConfig`, `NetworkConfig`) and
+  **per-service config** (`config/services/`, one class per AWS service, e.g. `IamConfig`, `S3Config`) are immutable value classes built via a nested `Builder`, each extending `AbstractServiceConfig`/
   `AbstractServiceConfigBuilder` for the shared `enabled` flag and `toBuilder()` round-trip.
 - Each service config's `applyEnvVarsToContainer(Container<?>)` sets its own `FLOCI_SERVICES_<SERVICE>_<PROPERTY>`
   env vars (only when enabled); some also override `applyExposedPortsToContainer(...)` for services that need extra
@@ -84,7 +84,7 @@ entry point; everything else hangs off it:
   every config exposed by `FlociContainer` is actually *picked up* by the container. It has **exactly one
   `@Test` per config class** — one per service config in `config/services/`, plus one per cross-cutting config in
   `config/` (`DuckDbConfig`, `SecurityConfig`, `ProtocolsConfig`, `AuthConfig`, `InitHooksConfig`,
-  `PartitionsConfig`). Every test calls
+  `PartitionsConfig`, `NetworkConfig`). Every test calls
   the shared `assertConfigWired(...)` helper, which builds a `new FlociContainer()`, applies the `with<X>Config(...)`
   mutator, and asserts three things:
     1. the changed value round-trips back out via `get<X>Config()`;
@@ -186,7 +186,7 @@ them onto the new branch.)
    `duckdb()`, `initHooks()`, `partitions()`, and `default` helper methods — **do not migrate**. Only summarize them
    for the user (step 8). This applies even when a matching cross-cutting class already exists under `config/`
    (`TlsConfig`, `StorageConfig`, `DuckDbConfig`, `SecurityConfig`, `ProtocolsConfig`, `AuthConfig`,
-   `InitHooksConfig`, `PartitionsConfig`) — the user decides about those manually.
+   `InitHooksConfig`, `PartitionsConfig`, `NetworkConfig`) — the user decides about those manually.
 
 Within the services part, build a list of affected services, in the order they appear in `ServicesConfig`:
 

@@ -104,6 +104,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private AuthConfig authConfig = AuthConfig.builder().build();
     private InitHooksConfig initHooksConfig = InitHooksConfig.builder().build();
     private PartitionsConfig partitionsConfig = PartitionsConfig.builder().build();
+    private NetworkConfig networkConfig = NetworkConfig.builder().build();
 
     // Services config
     private AcmConfig acmConfig = AcmConfig.builder().build();
@@ -993,6 +994,35 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.partitionsConfig = builder.build();
         partitionsConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Returns the current network configuration. Defaults to security-group enforcement disabled.
+     *
+     * @return the network configuration
+     */
+    public NetworkConfig getNetworkConfig() {
+        return networkConfig;
+    }
+
+    /**
+     * Configures network settings such as security-group enforcement for Docker-backed EC2 instances and
+     * ECS {@code awsvpc} tasks.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withNetworkConfig(c -> c.securityGroupEnforcementEnabled(true));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link NetworkConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withNetworkConfig(Consumer<NetworkConfig.Builder> configurer) {
+        NetworkConfig.Builder builder = networkConfig.toBuilder();
+        configurer.accept(builder);
+        this.networkConfig = builder.build();
+        networkConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
@@ -4680,6 +4710,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         authConfig.applyEnvVarsToContainer(this);
         initHooksConfig.applyEnvVarsToContainer(this);
         partitionsConfig.applyEnvVarsToContainer(this);
+        networkConfig.applyEnvVarsToContainer(this);
 
         // Services config
         serviceConfigAccessors.forEach(accessor -> accessor.get().applyEnvVarsToContainer(this));
