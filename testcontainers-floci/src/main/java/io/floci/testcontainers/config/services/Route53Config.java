@@ -18,11 +18,13 @@ public class Route53Config extends AbstractServiceConfig<Route53Config.Builder> 
     private static final String DEFAULT_NAMESERVER_2 = "ns-2.awsdns-02.net";
     private static final String DEFAULT_NAMESERVER_3 = "ns-3.awsdns-03.com";
     private static final String DEFAULT_NAMESERVER_4 = "ns-4.awsdns-04.co.uk";
+    private static final long DEFAULT_VPC_ASSOCIATION_CONTROL_PLANE_DELAY_MS = 0L;
 
     private final String defaultNameserver1;
     private final String defaultNameserver2;
     private final String defaultNameserver3;
     private final String defaultNameserver4;
+    private final long vpcAssociationControlPlaneDelayMs;
 
     private Route53Config(Builder builder) {
         super(builder.enabled);
@@ -30,6 +32,7 @@ public class Route53Config extends AbstractServiceConfig<Route53Config.Builder> 
         this.defaultNameserver2 = builder.defaultNameserver2;
         this.defaultNameserver3 = builder.defaultNameserver3;
         this.defaultNameserver4 = builder.defaultNameserver4;
+        this.vpcAssociationControlPlaneDelayMs = builder.vpcAssociationControlPlaneDelayMs;
     }
 
     /**
@@ -88,6 +91,18 @@ public class Route53Config extends AbstractServiceConfig<Route53Config.Builder> 
         return defaultNameserver4;
     }
 
+    /**
+     * Returns the optional control-plane processing window, in milliseconds, of VPC association mutations.
+     *
+     * <p>A positive value makes the documented Route 53 retryable overlap errors reproducible; {@code 0}
+     * keeps the immediate-completion behaviour.
+     *
+     * @return the optional control-plane processing window, in milliseconds, of VPC association mutations
+     */
+    public long getVpcAssociationControlPlaneDelayMs() {
+        return vpcAssociationControlPlaneDelayMs;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_ROUTE53_ENABLED", String.valueOf(isEnabled()));
@@ -97,6 +112,7 @@ public class Route53Config extends AbstractServiceConfig<Route53Config.Builder> 
             container.withEnv("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_2", defaultNameserver2);
             container.withEnv("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_3", defaultNameserver3);
             container.withEnv("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_4", defaultNameserver4);
+            container.withEnv("FLOCI_SERVICES_ROUTE53_VPC_ASSOCIATION_CONTROL_PLANE_DELAY_MS", String.valueOf(vpcAssociationControlPlaneDelayMs));
         }
     }
 
@@ -109,6 +125,7 @@ public class Route53Config extends AbstractServiceConfig<Route53Config.Builder> 
         private String defaultNameserver2 = DEFAULT_NAMESERVER_2;
         private String defaultNameserver3 = DEFAULT_NAMESERVER_3;
         private String defaultNameserver4 = DEFAULT_NAMESERVER_4;
+        private long vpcAssociationControlPlaneDelayMs = DEFAULT_VPC_ASSOCIATION_CONTROL_PLANE_DELAY_MS;
 
         private Builder() {
             // Allow instantiation only via Route53Config.builder()
@@ -125,6 +142,7 @@ public class Route53Config extends AbstractServiceConfig<Route53Config.Builder> 
             this.defaultNameserver2 = instance.getDefaultNameserver2();
             this.defaultNameserver3 = instance.getDefaultNameserver3();
             this.defaultNameserver4 = instance.getDefaultNameserver4();
+            this.vpcAssociationControlPlaneDelayMs = instance.getVpcAssociationControlPlaneDelayMs();
         }
 
         /**
@@ -168,6 +186,20 @@ public class Route53Config extends AbstractServiceConfig<Route53Config.Builder> 
          */
         public Builder defaultNameserver4(String defaultNameserver4) {
             this.defaultNameserver4 = defaultNameserver4;
+            return this;
+        }
+
+        /**
+         * Sets the optional control-plane processing window, in milliseconds, of VPC association mutations.
+         *
+         * <p>A positive value makes the documented Route 53 retryable overlap errors reproducible; {@code 0}
+         * keeps the immediate-completion behaviour.
+         *
+         * @param vpcAssociationControlPlaneDelayMs the optional control-plane processing window, in milliseconds, of VPC association mutations (default {@value DEFAULT_VPC_ASSOCIATION_CONTROL_PLANE_DELAY_MS})
+         * @return this builder
+         */
+        public Builder vpcAssociationControlPlaneDelayMs(long vpcAssociationControlPlaneDelayMs) {
+            this.vpcAssociationControlPlaneDelayMs = vpcAssociationControlPlaneDelayMs;
             return this;
         }
 
