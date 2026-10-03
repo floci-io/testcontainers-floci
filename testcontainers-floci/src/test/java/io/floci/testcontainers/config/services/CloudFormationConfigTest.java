@@ -81,4 +81,26 @@ class CloudFormationConfigTest {
         assertThat(copy.isAllowStubLambdaCode()).isTrue();
     }
 
+    @Test
+    void shouldApplyAllowStubUnsupportedResourceTypes() {
+        CloudFormationConfig defaults = CloudFormationConfig.builder().build();
+        assertThat(defaults.isAllowStubUnsupportedResourceTypes()).isEqualTo(true);
+
+        CloudFormationConfig config = CloudFormationConfig.builder().allowStubUnsupportedResourceTypes(false).build();
+        assertThat(config.isAllowStubUnsupportedResourceTypes()).isEqualTo(false);
+        assertThat(config.toBuilder().build().isAllowStubUnsupportedResourceTypes()).isEqualTo(false);
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_CLOUDFORMATION_ALLOW_STUB_UNSUPPORTED_RESOURCE_TYPES", "false");
+
+        GenericContainer<?> defaultContainer = genericContainer();
+        defaults.applyEnvVarsToContainer(defaultContainer);
+        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_CLOUDFORMATION_ALLOW_STUB_UNSUPPORTED_RESOURCE_TYPES", "true");
+
+        GenericContainer<?> disabledContainer = genericContainer();
+        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
+        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_CLOUDFORMATION_ALLOW_STUB_UNSUPPORTED_RESOURCE_TYPES");
+    }
+
 }
