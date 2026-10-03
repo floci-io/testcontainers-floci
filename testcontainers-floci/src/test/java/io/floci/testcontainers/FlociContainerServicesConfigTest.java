@@ -1030,6 +1030,14 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_SERVICES_COGNITOIDENTITY_ENABLED", "false");
     }
 
+    @Test
+    void shouldWireGlobalAcceleratorConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withGlobalAcceleratorConfig(cfg -> cfg.enabled(false)),
+                c -> c.getGlobalAcceleratorConfig().isEnabled(), false,
+                "FLOCI_SERVICES_GLOBALACCELERATOR_ENABLED", "false");
+    }
+
     // --- Cross-cutting configs (config/) --------------------------------------------------------
 
     @Test
