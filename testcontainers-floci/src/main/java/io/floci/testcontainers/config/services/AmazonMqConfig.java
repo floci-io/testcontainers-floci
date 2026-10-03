@@ -11,8 +11,8 @@ import org.testcontainers.containers.Container;
  *     .enabled(true)
  *     .mock(false)
  *     .defaultImage("rabbitmq:3-management")
- *     .amqpHostPortRange(5672, 28)
- *     .consoleHostPortRange(15672, 28)
+ *     .amqpHostPortRange(5672, 10)
+ *     .consoleHostPortRange(15672, 10)
  *     .build();
  * }</pre>
  */
@@ -21,9 +21,9 @@ public class AmazonMqConfig extends AbstractServiceConfig<AmazonMqConfig.Builder
     private static final boolean DEFAULT_MOCK = false;
     private static final String DEFAULT_IMAGE = "rabbitmq:3-management";
     private static final int DEFAULT_AMQP_HOST_PORT_BASE = 5672;
-    private static final int DEFAULT_AMQP_HOST_PORTS_COUNT = 28;
+    private static final int DEFAULT_AMQP_HOST_PORTS_COUNT = 10;
     private static final int DEFAULT_CONSOLE_HOST_PORT_BASE = 15672;
-    private static final int DEFAULT_CONSOLE_HOST_PORTS_COUNT = 28;
+    private static final int DEFAULT_CONSOLE_HOST_PORTS_COUNT = 10;
 
     private final boolean mock;
     private final String defaultImage;
