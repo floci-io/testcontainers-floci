@@ -19,16 +19,19 @@ public class SqsConfig extends AbstractServiceConfig<SqsConfig.Builder> {
     private static final int DEFAULT_VISIBILITY_TIMEOUT = 30;
     private static final int DEFAULT_MAX_MESSAGE_SIZE = 1048576;
     private static final boolean DEFAULT_CLEAR_FIFO_DEDUPLICATION_CACHE_ON_PURGE = true;
+    private static final String DEFAULT_RECEIPT_HANDLE_SECRET = "local-emulator-secret";
 
     private final int defaultVisibilityTimeout;
     private final int maxMessageSize;
     private final boolean clearFifoDeduplicationCacheOnPurge;
+    private final String receiptHandleSecret;
 
     private SqsConfig(Builder builder) {
         super(builder.enabled);
         this.defaultVisibilityTimeout = builder.defaultVisibilityTimeout;
         this.maxMessageSize = builder.maxMessageSize;
         this.clearFifoDeduplicationCacheOnPurge = builder.clearFifoDeduplicationCacheOnPurge;
+        this.receiptHandleSecret = builder.receiptHandleSecret;
     }
 
     /**
@@ -78,6 +81,17 @@ public class SqsConfig extends AbstractServiceConfig<SqsConfig.Builder> {
         return clearFifoDeduplicationCacheOnPurge;
     }
 
+    /**
+     * Returns the secret used to sign the receipt handles issued by ReceiveMessage.
+     *
+     * <p>Floci uses it to recognize stale, gone and invalid receipt handles the way AWS does.
+     *
+     * @return the secret used to sign the receipt handles issued by ReceiveMessage
+     */
+    public String getReceiptHandleSecret() {
+        return receiptHandleSecret;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_SQS_ENABLED", String.valueOf(isEnabled()));
@@ -86,6 +100,7 @@ public class SqsConfig extends AbstractServiceConfig<SqsConfig.Builder> {
             container.withEnv("FLOCI_SERVICES_SQS_DEFAULT_VISIBILITY_TIMEOUT", String.valueOf(defaultVisibilityTimeout));
             container.withEnv("FLOCI_SERVICES_SQS_MAX_MESSAGE_SIZE", String.valueOf(maxMessageSize));
             container.withEnv("FLOCI_SERVICES_SQS_CLEAR_FIFO_DEDUPLICATION_CACHE_ON_PURGE", String.valueOf(clearFifoDeduplicationCacheOnPurge));
+            container.withEnv("FLOCI_SERVICES_SQS_RECEIPT_HANDLE_SECRET", receiptHandleSecret);
         }
     }
 
@@ -97,6 +112,7 @@ public class SqsConfig extends AbstractServiceConfig<SqsConfig.Builder> {
         private int defaultVisibilityTimeout = DEFAULT_VISIBILITY_TIMEOUT;
         private int maxMessageSize = DEFAULT_MAX_MESSAGE_SIZE;
         private boolean clearFifoDeduplicationCacheOnPurge = DEFAULT_CLEAR_FIFO_DEDUPLICATION_CACHE_ON_PURGE;
+        private String receiptHandleSecret = DEFAULT_RECEIPT_HANDLE_SECRET;
 
         private Builder() {
             // Allow instantiation only via SqsConfig.builder()
@@ -112,6 +128,7 @@ public class SqsConfig extends AbstractServiceConfig<SqsConfig.Builder> {
             this.defaultVisibilityTimeout = instance.getDefaultVisibilityTimeout();
             this.maxMessageSize = instance.getMaxMessageSize();
             this.clearFifoDeduplicationCacheOnPurge = instance.isClearFifoDeduplicationCacheOnPurge();
+            this.receiptHandleSecret = instance.getReceiptHandleSecret();
         }
 
         /**
@@ -144,6 +161,19 @@ public class SqsConfig extends AbstractServiceConfig<SqsConfig.Builder> {
          */
         public Builder clearFifoDeduplicationCacheOnPurge(boolean clearFifoDeduplicationCacheOnPurge) {
             this.clearFifoDeduplicationCacheOnPurge = clearFifoDeduplicationCacheOnPurge;
+            return this;
+        }
+
+        /**
+         * Sets the secret used to sign the receipt handles issued by ReceiveMessage.
+         *
+         * <p>Floci uses it to recognize stale, gone and invalid receipt handles the way AWS does.
+         *
+         * @param receiptHandleSecret the secret used to sign the receipt handles issued by ReceiveMessage (default {@value DEFAULT_RECEIPT_HANDLE_SECRET})
+         * @return this builder
+         */
+        public Builder receiptHandleSecret(String receiptHandleSecret) {
+            this.receiptHandleSecret = receiptHandleSecret;
             return this;
         }
 
