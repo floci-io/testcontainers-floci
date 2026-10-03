@@ -1,8 +1,10 @@
 package io.floci.testcontainers.config.services;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import org.testcontainers.containers.Container;
+import org.testcontainers.images.builder.Transferable;
 
 /**
  * Configuration for EC2-specific container settings.
@@ -16,6 +18,9 @@ import org.testcontainers.containers.Container;
  */
 public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
 
+    private static final String IMAGE_CATALOG_FILE_PREFIX = "/tmp/floci-ec2-image-catalog-";
+    private static final String IMAGE_CATALOG_FILE_SUFFIX = ".yaml";
+
     private static final boolean DEFAULT_MOCK = false;
     private static final int DEFAULT_IMDS_PORT = 9169;
     private static final int DEFAULT_SSH_PORT_RANGE_START = 2200;
@@ -26,6 +31,15 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
     private static final int DEFAULT_MAX_PUBLISHED_PORTS_PER_INSTANCE = 2;
     private static final String DEFAULT_SOCAT_IMAGE = "alpine/socat";
     private static final boolean DEFAULT_AWS_FAITHFUL_PRIVATE_IP = false;
+    private static final boolean DEFAULT_RECONCILE_CONTAINERS_ON_STARTUP = true;
+    private static final boolean DEFAULT_VOLUME_BLOCK_DEVICES = true;
+    private static final String DEFAULT_VOLUME_HELPER_IMAGE = "alpine:3.21";
+    private static final boolean DEFAULT_INSTANCE_RESOURCE_LIMITS = true;
+    private static final boolean DEFAULT_VPC_NETWORKS_ENABLED = true;
+    private static final String DEFAULT_VPC_NETWORKS_FALLBACK_POOL = "10.240.0.0/12";
+    private static final int DEFAULT_VPC_NETWORKS_FALLBACK_PREFIX_LENGTH = 16;
+    private static final boolean DEFAULT_VPC_NETWORKS_RECONCILE_ON_STARTUP = true;
+    private static final String DEFAULT_VPC_NETWORKS_DRIVER = "bridge";
 
     private final boolean mock;
     private final int imdsPort;
@@ -39,6 +53,17 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
     private final boolean awsFaithfulPrivateIp;
     private final Boolean containerIpsRoutable;
     private final AutoScaling autoScaling;
+    private final String imageCatalogFile;
+    private final String imageCatalog;
+    private final boolean reconcileContainersOnStartup;
+    private final boolean volumeBlockDevices;
+    private final String volumeHelperImage;
+    private final boolean instanceResourceLimits;
+    private final boolean vpcNetworksEnabled;
+    private final String vpcNetworksFallbackPool;
+    private final int vpcNetworksFallbackPrefixLength;
+    private final boolean vpcNetworksReconcileOnStartup;
+    private final String vpcNetworksDriver;
 
     private Ec2Config(Builder builder) {
         super(builder.enabled);
@@ -54,6 +79,17 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
         this.awsFaithfulPrivateIp = builder.awsFaithfulPrivateIp;
         this.containerIpsRoutable = builder.containerIpsRoutable;
         this.autoScaling = builder.autoScaling;
+        this.imageCatalogFile = builder.imageCatalogFile;
+        this.imageCatalog = builder.imageCatalog;
+        this.reconcileContainersOnStartup = builder.reconcileContainersOnStartup;
+        this.volumeBlockDevices = builder.volumeBlockDevices;
+        this.volumeHelperImage = builder.volumeHelperImage;
+        this.instanceResourceLimits = builder.instanceResourceLimits;
+        this.vpcNetworksEnabled = builder.vpcNetworksEnabled;
+        this.vpcNetworksFallbackPool = builder.vpcNetworksFallbackPool;
+        this.vpcNetworksFallbackPrefixLength = builder.vpcNetworksFallbackPrefixLength;
+        this.vpcNetworksReconcileOnStartup = builder.vpcNetworksReconcileOnStartup;
+        this.vpcNetworksDriver = builder.vpcNetworksDriver;
     }
 
     /**
@@ -216,6 +252,129 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
         return autoScaling;
     }
 
+    /**
+     * Returns whether Floci removes, on startup, EC2 instance containers left on the Docker daemon by a
+     * previous run of the same Floci whose instance record did not survive the restart.
+     *
+     * <p>Stopped instances are never swept, their containers are exactly what StartInstances revives.
+     *
+     * @return whether Floci removes, on startup, EC2 instance containers left on the Docker daemon by a previous run of the same Floci whose instance record did not survive the restart
+     */
+    public boolean isReconcileContainersOnStartup() {
+        return reconcileContainersOnStartup;
+    }
+
+    /**
+     * Returns whether EBS volumes are backed by real storage and attached as block devices inside target
+     * containers.
+     *
+     * <p>When disabled or unavailable, attachment remains metadata-only.
+     *
+     * @return whether EBS volumes are backed by real storage and attached as block devices inside target containers
+     */
+    public boolean isVolumeBlockDevices() {
+        return volumeBlockDevices;
+    }
+
+    /**
+     * Returns the image used for the helper container that manages volume loop devices and storage.
+     *
+     * @return the image used for the helper container that manages volume loop devices and storage
+     */
+    public String getVolumeHelperImage() {
+        return volumeHelperImage;
+    }
+
+    /**
+     * Returns whether instance containers are bounded to the CPU and memory limits of their instance type.
+     *
+     * <p>When disabled, containers are launched without CPU or memory limits.
+     *
+     * @return whether instance containers are bounded to the CPU and memory limits of their instance type
+     */
+    public boolean isInstanceResourceLimits() {
+        return instanceResourceLimits;
+    }
+
+    /**
+     * Returns whether each VPC is backed by a real Docker network.
+     *
+     * <p>Instances then get private addresses drawn from the CIDR the caller declared, and instances in
+     * different VPCs cannot route to each other.
+     *
+     * @return whether each VPC is backed by a real Docker network
+     */
+    public boolean isVpcNetworksEnabled() {
+        return vpcNetworksEnabled;
+    }
+
+    /**
+     * Returns the private range that substituted VPC network CIDRs are allocated from.
+     *
+     * <p>Used when a declared VPC CIDR is absent, malformed, outside RFC 1918, or already claimed on the
+     * Docker daemon. Must itself be RFC 1918.
+     *
+     * @return the private range that substituted VPC network CIDRs are allocated from
+     */
+    public String getVpcNetworksFallbackPool() {
+        return vpcNetworksFallbackPool;
+    }
+
+    /**
+     * Returns the prefix length of each block handed out of the VPC network fallback pool.
+     *
+     * @return the prefix length of each block handed out of the VPC network fallback pool
+     */
+    public int getVpcNetworksFallbackPrefixLength() {
+        return vpcNetworksFallbackPrefixLength;
+    }
+
+    /**
+     * Returns whether VPC networks left behind by a previous run of the same Floci instance are removed at
+     * startup.
+     *
+     * @return whether VPC networks left behind by a previous run of the same Floci instance are removed at startup
+     */
+    public boolean isVpcNetworksReconcileOnStartup() {
+        return vpcNetworksReconcileOnStartup;
+    }
+
+    /**
+     * Returns the Docker network driver used for VPC networks.
+     *
+     * @return the Docker network driver used for VPC networks
+     */
+    public String getVpcNetworksDriver() {
+        return vpcNetworksDriver;
+    }
+
+    /**
+     * Returns the path, inside the container, of an external EC2 image catalog file that replaces
+     * the image catalog bundled with Floci (e.g. to expose locally built guest images).
+     *
+     * <p>The file uses the same YAML schema as Floci's bundled {@code ec2/image-catalog.yaml} and
+     * must include every image that should be exposed. The path is either the one passed to
+     * {@link Builder#imageCatalogFile(String)} verbatim, or a generated path pointing at the file whose
+     * content was passed to {@link Builder#imageCatalog(String)}.
+     *
+     * @return the container path of the image catalog file, or {@link Optional#empty()} if the
+     *         bundled catalog is used
+     */
+    public Optional<String> getImageCatalogFile() {
+        return Optional.ofNullable(imageCatalogFile);
+    }
+
+    /**
+     * Returns the raw image catalog content supplied via {@link Builder#imageCatalog(String)}, if any.
+     * When present, this content is copied into the container at {@link #getImageCatalogFile()}.
+     *
+     * @return the image catalog content, or {@link Optional#empty()} if the image catalog was not
+     *         configured by content
+     */
+    public Optional<String> getImageCatalog() {
+        return Optional.ofNullable(imageCatalog);
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_EC2_ENABLED", String.valueOf(isEnabled()));
@@ -236,6 +395,20 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
             if (containerIpsRoutable != null) {
                 container.withEnv("FLOCI_SERVICES_EC2_CONTAINER_IPS_ROUTABLE", String.valueOf(containerIpsRoutable));
             }
+
+            container.withEnv("FLOCI_SERVICES_EC2_RECONCILE_CONTAINERS_ON_STARTUP", String.valueOf(reconcileContainersOnStartup));
+            container.withEnv("FLOCI_SERVICES_EC2_VOLUME_BLOCK_DEVICES", String.valueOf(volumeBlockDevices));
+            container.withEnv("FLOCI_SERVICES_EC2_VOLUME_HELPER_IMAGE", volumeHelperImage);
+            container.withEnv("FLOCI_SERVICES_EC2_INSTANCE_RESOURCE_LIMITS", String.valueOf(instanceResourceLimits));
+            container.withEnv("FLOCI_SERVICES_EC2_VPC_NETWORKS_ENABLED", String.valueOf(vpcNetworksEnabled));
+            container.withEnv("FLOCI_SERVICES_EC2_VPC_NETWORKS_FALLBACK_POOL", vpcNetworksFallbackPool);
+            container.withEnv("FLOCI_SERVICES_EC2_VPC_NETWORKS_FALLBACK_PREFIX_LENGTH", String.valueOf(vpcNetworksFallbackPrefixLength));
+            container.withEnv("FLOCI_SERVICES_EC2_VPC_NETWORKS_RECONCILE_ON_STARTUP", String.valueOf(vpcNetworksReconcileOnStartup));
+            container.withEnv("FLOCI_SERVICES_EC2_VPC_NETWORKS_DRIVER", vpcNetworksDriver);
+
+            if (imageCatalogFile != null) {
+                container.withEnv("FLOCI_SERVICES_EC2_IMAGE_CATALOG_PATH", imageCatalogFile);
+            }
         }
     }
 
@@ -249,6 +422,13 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
                     container.addExposedPorts(port);
                 }
             }
+        }
+    }
+
+    @Override
+    public void applyFileMountsToContainer(Container<?> container) {
+        if (isEnabled() && imageCatalogFile != null && imageCatalog != null) {
+            container.withCopyToContainer(Transferable.of(imageCatalog), imageCatalogFile);
         }
     }
 
@@ -274,6 +454,17 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
         private boolean awsFaithfulPrivateIp = DEFAULT_AWS_FAITHFUL_PRIVATE_IP;
         private Boolean containerIpsRoutable;
         private AutoScaling autoScaling = new DefaultAutoScaling(true);
+        private String imageCatalogFile;
+        private String imageCatalog;
+        private boolean reconcileContainersOnStartup = DEFAULT_RECONCILE_CONTAINERS_ON_STARTUP;
+        private boolean volumeBlockDevices = DEFAULT_VOLUME_BLOCK_DEVICES;
+        private String volumeHelperImage = DEFAULT_VOLUME_HELPER_IMAGE;
+        private boolean instanceResourceLimits = DEFAULT_INSTANCE_RESOURCE_LIMITS;
+        private boolean vpcNetworksEnabled = DEFAULT_VPC_NETWORKS_ENABLED;
+        private String vpcNetworksFallbackPool = DEFAULT_VPC_NETWORKS_FALLBACK_POOL;
+        private int vpcNetworksFallbackPrefixLength = DEFAULT_VPC_NETWORKS_FALLBACK_PREFIX_LENGTH;
+        private boolean vpcNetworksReconcileOnStartup = DEFAULT_VPC_NETWORKS_RECONCILE_ON_STARTUP;
+        private String vpcNetworksDriver = DEFAULT_VPC_NETWORKS_DRIVER;
 
         private Builder() {
             // Allow instantiation only via Ec2Config.builder()
@@ -298,6 +489,17 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
             this.awsFaithfulPrivateIp = instance.isAwsFaithfulPrivateIp();
             this.containerIpsRoutable = instance.getContainerIpsRoutable().orElse(null);
             this.autoScaling = instance.getAutoScaling();
+            this.imageCatalogFile = instance.imageCatalogFile;
+            this.imageCatalog = instance.imageCatalog;
+            this.reconcileContainersOnStartup = instance.isReconcileContainersOnStartup();
+            this.volumeBlockDevices = instance.isVolumeBlockDevices();
+            this.volumeHelperImage = instance.getVolumeHelperImage();
+            this.instanceResourceLimits = instance.isInstanceResourceLimits();
+            this.vpcNetworksEnabled = instance.isVpcNetworksEnabled();
+            this.vpcNetworksFallbackPool = instance.getVpcNetworksFallbackPool();
+            this.vpcNetworksFallbackPrefixLength = instance.getVpcNetworksFallbackPrefixLength();
+            this.vpcNetworksReconcileOnStartup = instance.isVpcNetworksReconcileOnStartup();
+            this.vpcNetworksDriver = instance.getVpcNetworksDriver();
         }
 
         /**
@@ -437,12 +639,170 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
         }
 
         /**
+         * Sets whether Floci removes, on startup, EC2 instance containers left on the Docker daemon by a
+         * previous run of the same Floci whose instance record did not survive the restart.
+         *
+         * <p>Stopped instances are never swept, their containers are exactly what StartInstances revives.
+         *
+         * @param reconcileContainersOnStartup whether Floci removes, on startup, EC2 instance containers left on the Docker daemon by a previous run of the same Floci whose instance record did not survive the restart (default {@value DEFAULT_RECONCILE_CONTAINERS_ON_STARTUP})
+         * @return this builder
+         */
+        public Builder reconcileContainersOnStartup(boolean reconcileContainersOnStartup) {
+            this.reconcileContainersOnStartup = reconcileContainersOnStartup;
+            return this;
+        }
+
+        /**
+         * Sets whether EBS volumes are backed by real storage and attached as block devices inside target
+         * containers.
+         *
+         * <p>When disabled or unavailable, attachment remains metadata-only.
+         *
+         * @param volumeBlockDevices whether EBS volumes are backed by real storage and attached as block devices inside target containers (default {@value DEFAULT_VOLUME_BLOCK_DEVICES})
+         * @return this builder
+         */
+        public Builder volumeBlockDevices(boolean volumeBlockDevices) {
+            this.volumeBlockDevices = volumeBlockDevices;
+            return this;
+        }
+
+        /**
+         * Sets the image used for the helper container that manages volume loop devices and storage.
+         *
+         * @param volumeHelperImage the image used for the helper container that manages volume loop devices and storage (default {@value DEFAULT_VOLUME_HELPER_IMAGE})
+         * @return this builder
+         */
+        public Builder volumeHelperImage(String volumeHelperImage) {
+            this.volumeHelperImage = volumeHelperImage;
+            return this;
+        }
+
+        /**
+         * Sets whether instance containers are bounded to the CPU and memory limits of their instance type.
+         *
+         * <p>When disabled, containers are launched without CPU or memory limits.
+         *
+         * @param instanceResourceLimits whether instance containers are bounded to the CPU and memory limits of their instance type (default {@value DEFAULT_INSTANCE_RESOURCE_LIMITS})
+         * @return this builder
+         */
+        public Builder instanceResourceLimits(boolean instanceResourceLimits) {
+            this.instanceResourceLimits = instanceResourceLimits;
+            return this;
+        }
+
+        /**
+         * Sets whether each VPC is backed by a real Docker network.
+         *
+         * <p>Instances then get private addresses drawn from the CIDR the caller declared, and instances in
+         * different VPCs cannot route to each other.
+         *
+         * @param vpcNetworksEnabled whether each VPC is backed by a real Docker network (default {@value DEFAULT_VPC_NETWORKS_ENABLED})
+         * @return this builder
+         */
+        public Builder vpcNetworksEnabled(boolean vpcNetworksEnabled) {
+            this.vpcNetworksEnabled = vpcNetworksEnabled;
+            return this;
+        }
+
+        /**
+         * Sets the private range that substituted VPC network CIDRs are allocated from.
+         *
+         * <p>Used when a declared VPC CIDR is absent, malformed, outside RFC 1918, or already claimed on the
+         * Docker daemon. Must itself be RFC 1918.
+         *
+         * @param vpcNetworksFallbackPool the private range that substituted VPC network CIDRs are allocated from (default {@value DEFAULT_VPC_NETWORKS_FALLBACK_POOL})
+         * @return this builder
+         */
+        public Builder vpcNetworksFallbackPool(String vpcNetworksFallbackPool) {
+            this.vpcNetworksFallbackPool = vpcNetworksFallbackPool;
+            return this;
+        }
+
+        /**
+         * Sets the prefix length of each block handed out of the VPC network fallback pool.
+         *
+         * @param vpcNetworksFallbackPrefixLength the prefix length of each block handed out of the VPC network fallback pool (default {@value DEFAULT_VPC_NETWORKS_FALLBACK_PREFIX_LENGTH})
+         * @return this builder
+         */
+        public Builder vpcNetworksFallbackPrefixLength(int vpcNetworksFallbackPrefixLength) {
+            this.vpcNetworksFallbackPrefixLength = vpcNetworksFallbackPrefixLength;
+            return this;
+        }
+
+        /**
+         * Sets whether VPC networks left behind by a previous run of the same Floci instance are removed at
+         * startup.
+         *
+         * @param vpcNetworksReconcileOnStartup whether VPC networks left behind by a previous run of the same Floci instance are removed at startup (default {@value DEFAULT_VPC_NETWORKS_RECONCILE_ON_STARTUP})
+         * @return this builder
+         */
+        public Builder vpcNetworksReconcileOnStartup(boolean vpcNetworksReconcileOnStartup) {
+            this.vpcNetworksReconcileOnStartup = vpcNetworksReconcileOnStartup;
+            return this;
+        }
+
+        /**
+         * Sets the Docker network driver used for VPC networks.
+         *
+         * @param vpcNetworksDriver the Docker network driver used for VPC networks (default {@value DEFAULT_VPC_NETWORKS_DRIVER})
+         * @return this builder
+         */
+        public Builder vpcNetworksDriver(String vpcNetworksDriver) {
+            this.vpcNetworksDriver = vpcNetworksDriver;
+            return this;
+        }
+
+        /**
+         * Sets the path, inside the container, of an external EC2 image catalog file that already
+         * exists in the container (for example one added through a volume or another
+         * {@code withCopy*} call). It replaces the image catalog bundled with Floci, uses the same
+         * YAML schema, and must include every image that should be exposed.
+         *
+         * <p>Use {@link #imageCatalog(String)} instead to hand over just the file content and let
+         * {@link Ec2Config} take care of placing the file into the container.
+         *
+         * <p>Calling this method clears any content previously set via {@link #imageCatalog(String)}.
+         *
+         * @param imageCatalogFile the container path of the image catalog file, or {@code null} to use
+         *                         the bundled catalog
+         * @return this builder
+         */
+        public Builder imageCatalogFile(String imageCatalogFile) {
+            this.imageCatalogFile = imageCatalogFile;
+            this.imageCatalog = null;
+            return this;
+        }
+
+        /**
+         * Sets the content of an external EC2 image catalog (YAML, same schema as Floci's bundled
+         * {@code ec2/image-catalog.yaml}) that replaces the bundled catalog, e.g. to expose locally
+         * built guest images.
+         *
+         * <p>The content is copied into the container under a generated, randomized path, which is
+         * then used as {@link Ec2Config#getImageCatalogFile()}. Callers therefore do not need to
+         * manage any files themselves.
+         *
+         * <p>Calling this method clears any path previously set via {@link #imageCatalogFile(String)}.
+         *
+         * @param imageCatalog the image catalog content, or {@code null} to use the bundled catalog
+         * @return this builder
+         */
+        public Builder imageCatalog(String imageCatalog) {
+            this.imageCatalog = imageCatalog;
+            this.imageCatalogFile = null;
+            return this;
+        }
+
+        /**
          * Creates an immutable {@link Ec2Config} from this builder.
          *
          * @return the EC2 configuration
          */
         @Override
         public Ec2Config build() {
+            if (imageCatalog != null && imageCatalogFile == null) {
+                this.imageCatalogFile = IMAGE_CATALOG_FILE_PREFIX + UUID.randomUUID() + IMAGE_CATALOG_FILE_SUFFIX;
+            }
             return new Ec2Config(this);
         }
     }
