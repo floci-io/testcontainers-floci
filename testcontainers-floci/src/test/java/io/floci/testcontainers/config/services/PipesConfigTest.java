@@ -14,8 +14,8 @@ class PipesConfigTest {
         assertThat(config.isEnabled()).isTrue();
         assertThat(config.getKafkaRestBridgeDefaultImage()).isEqualTo("ghcr.io/aiven-open/karapace:latest");
         assertThat(config.getKafkaRestBridgeHostPortBase()).isEqualTo(9500);
-        assertThat(config.getKafkaRestBridgeHostPortsCount()).isEqualTo(100);
-        assertThat(config.getKafkaRestBridgeHostPortMax()).isEqualTo(9599);
+        assertThat(config.getKafkaRestBridgeHostPortsCount()).isEqualTo(10);
+        assertThat(config.getKafkaRestBridgeHostPortMax()).isEqualTo(9509);
     }
 
     @Test
@@ -23,13 +23,13 @@ class PipesConfigTest {
         PipesConfig config = PipesConfig.builder()
                 .enabled(false)
                 .kafkaRestBridgeDefaultImage("ghcr.io/aiven-open/karapace:5.0.0")
-                .kafkaRestBridgeHostPortRange(9700, 10)
+                .kafkaRestBridgeHostPortRange(9700, 20)
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.getKafkaRestBridgeDefaultImage()).isEqualTo("ghcr.io/aiven-open/karapace:5.0.0");
         assertThat(config.getKafkaRestBridgeHostPortBase()).isEqualTo(9700);
-        assertThat(config.getKafkaRestBridgeHostPortsCount()).isEqualTo(10);
-        assertThat(config.getKafkaRestBridgeHostPortMax()).isEqualTo(9709);
+        assertThat(config.getKafkaRestBridgeHostPortsCount()).isEqualTo(20);
+        assertThat(config.getKafkaRestBridgeHostPortMax()).isEqualTo(9719);
     }
 
     @Test
@@ -41,7 +41,7 @@ class PipesConfigTest {
                 .containsEntry("FLOCI_SERVICES_PIPES_ENABLED", "true")
                 .containsEntry("FLOCI_SERVICES_PIPES_KAFKA_REST_BRIDGE_DEFAULT_IMAGE", "ghcr.io/aiven-open/karapace:latest")
                 .containsEntry("FLOCI_SERVICES_PIPES_KAFKA_REST_BRIDGE_HOST_PORT_BASE", "9500")
-                .containsEntry("FLOCI_SERVICES_PIPES_KAFKA_REST_BRIDGE_HOST_PORT_MAX", "9599");
+                .containsEntry("FLOCI_SERVICES_PIPES_KAFKA_REST_BRIDGE_HOST_PORT_MAX", "9509");
     }
 
     @Test
@@ -49,14 +49,14 @@ class PipesConfigTest {
         GenericContainer<?> container = genericContainer();
         PipesConfig.builder()
                 .kafkaRestBridgeDefaultImage("ghcr.io/aiven-open/karapace:5.0.0")
-                .kafkaRestBridgeHostPortRange(9700, 10)
+                .kafkaRestBridgeHostPortRange(9700, 20)
                 .build()
                 .applyEnvVarsToContainer(container);
 
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_SERVICES_PIPES_KAFKA_REST_BRIDGE_DEFAULT_IMAGE", "ghcr.io/aiven-open/karapace:5.0.0")
                 .containsEntry("FLOCI_SERVICES_PIPES_KAFKA_REST_BRIDGE_HOST_PORT_BASE", "9700")
-                .containsEntry("FLOCI_SERVICES_PIPES_KAFKA_REST_BRIDGE_HOST_PORT_MAX", "9709");
+                .containsEntry("FLOCI_SERVICES_PIPES_KAFKA_REST_BRIDGE_HOST_PORT_MAX", "9719");
     }
 
     @Test
@@ -76,13 +76,13 @@ class PipesConfigTest {
         PipesConfig config = PipesConfig.builder()
                 .enabled(false)
                 .kafkaRestBridgeDefaultImage("ghcr.io/aiven-open/karapace:5.0.0")
-                .kafkaRestBridgeHostPortRange(9700, 10)
+                .kafkaRestBridgeHostPortRange(9700, 20)
                 .build();
         PipesConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
         assertThat(copy.getKafkaRestBridgeDefaultImage()).isEqualTo("ghcr.io/aiven-open/karapace:5.0.0");
         assertThat(copy.getKafkaRestBridgeHostPortBase()).isEqualTo(9700);
-        assertThat(copy.getKafkaRestBridgeHostPortsCount()).isEqualTo(10);
+        assertThat(copy.getKafkaRestBridgeHostPortsCount()).isEqualTo(20);
     }
 
     @Test
