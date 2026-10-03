@@ -21,16 +21,31 @@ public class RedshiftConfig extends AbstractServiceConfig<RedshiftConfig.Builder
 
     private static final int DEFAULT_PORT = 5439;
     private static final String DEFAULT_IMAGE_VERSION = "postgres:15-alpine";
+    private static final long DEFAULT_POLL_INTERVAL_MS = 1000L;
+    private static final int DEFAULT_DEFAULT_CREDENTIAL_DURATION_SECONDS = 900;
+    private static final int DEFAULT_PROXY_HANDSHAKE_TIMEOUT_MILLIS = 10000;
+    private static final int DEFAULT_PROXY_BACKEND_CONNECT_TIMEOUT_MILLIS = 5000;
+    private static final int DEFAULT_PROXY_MAX_CONNECTIONS = 100;
 
     private final int defaultPort;
     private final String imageVersion;
     private final String dockerNetwork;
+    private final long pollIntervalMs;
+    private final int defaultCredentialDurationSeconds;
+    private final int proxyHandshakeTimeoutMillis;
+    private final int proxyBackendConnectTimeoutMillis;
+    private final int proxyMaxConnections;
 
     private RedshiftConfig(Builder builder) {
         super(builder.enabled);
         this.defaultPort = builder.defaultPort;
         this.imageVersion = builder.imageVersion;
         this.dockerNetwork = builder.dockerNetwork;
+        this.pollIntervalMs = builder.pollIntervalMs;
+        this.defaultCredentialDurationSeconds = builder.defaultCredentialDurationSeconds;
+        this.proxyHandshakeTimeoutMillis = builder.proxyHandshakeTimeoutMillis;
+        this.proxyBackendConnectTimeoutMillis = builder.proxyBackendConnectTimeoutMillis;
+        this.proxyMaxConnections = builder.proxyMaxConnections;
     }
 
     /**
@@ -80,6 +95,56 @@ public class RedshiftConfig extends AbstractServiceConfig<RedshiftConfig.Builder
         return dockerNetwork;
     }
 
+    /**
+     * Returns the interval, in milliseconds, at which DynamoDB to Redshift zero-ETL integrations poll their
+     * source table for changes.
+     *
+     * @return the interval, in milliseconds, at which DynamoDB to Redshift zero-ETL integrations poll their source table for changes
+     */
+    public long getPollIntervalMs() {
+        return pollIntervalMs;
+    }
+
+    /**
+     * Returns the default lifetime, in seconds, of credentials returned by GetClusterCredentials and
+     * GetClusterCredentialsWithIAM when {@code DurationSeconds} is omitted.
+     *
+     * <p>AWS allows 900 to 3600.
+     *
+     * @return the default lifetime, in seconds, of credentials returned by GetClusterCredentials and GetClusterCredentialsWithIAM when {@code DurationSeconds} is omitted
+     */
+    public int getDefaultCredentialDurationSeconds() {
+        return defaultCredentialDurationSeconds;
+    }
+
+    /**
+     * Returns how long, in milliseconds, a client has to complete the startup/auth handshake with the
+     * per-cluster auth proxy.
+     *
+     * @return how long, in milliseconds, a client has to complete the startup/auth handshake with the per-cluster auth proxy
+     */
+    public int getProxyHandshakeTimeoutMillis() {
+        return proxyHandshakeTimeoutMillis;
+    }
+
+    /**
+     * Returns how long, in milliseconds, a backend connect attempt of the per-cluster auth proxy may take.
+     *
+     * @return how long, in milliseconds, a backend connect attempt of the per-cluster auth proxy may take
+     */
+    public int getProxyBackendConnectTimeoutMillis() {
+        return proxyBackendConnectTimeoutMillis;
+    }
+
+    /**
+     * Returns how many concurrent connections the per-cluster auth proxy accepts before refusing new ones.
+     *
+     * @return how many concurrent connections the per-cluster auth proxy accepts before refusing new ones
+     */
+    public int getProxyMaxConnections() {
+        return proxyMaxConnections;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_REDSHIFT_ENABLED", String.valueOf(isEnabled()));
@@ -91,6 +156,12 @@ public class RedshiftConfig extends AbstractServiceConfig<RedshiftConfig.Builder
             if (dockerNetwork != null) {
                 container.withEnv("FLOCI_SERVICES_REDSHIFT_DOCKER_NETWORK", dockerNetwork);
             }
+
+            container.withEnv("FLOCI_SERVICES_REDSHIFT_POLL_INTERVAL_MS", String.valueOf(pollIntervalMs));
+            container.withEnv("FLOCI_SERVICES_REDSHIFT_DEFAULT_CREDENTIAL_DURATION_SECONDS", String.valueOf(defaultCredentialDurationSeconds));
+            container.withEnv("FLOCI_SERVICES_REDSHIFT_PROXY_HANDSHAKE_TIMEOUT_MILLIS", String.valueOf(proxyHandshakeTimeoutMillis));
+            container.withEnv("FLOCI_SERVICES_REDSHIFT_PROXY_BACKEND_CONNECT_TIMEOUT_MILLIS", String.valueOf(proxyBackendConnectTimeoutMillis));
+            container.withEnv("FLOCI_SERVICES_REDSHIFT_PROXY_MAX_CONNECTIONS", String.valueOf(proxyMaxConnections));
         }
     }
 
@@ -107,6 +178,11 @@ public class RedshiftConfig extends AbstractServiceConfig<RedshiftConfig.Builder
         private int defaultPort = DEFAULT_PORT;
         private String imageVersion = DEFAULT_IMAGE_VERSION;
         private String dockerNetwork;
+        private long pollIntervalMs = DEFAULT_POLL_INTERVAL_MS;
+        private int defaultCredentialDurationSeconds = DEFAULT_DEFAULT_CREDENTIAL_DURATION_SECONDS;
+        private int proxyHandshakeTimeoutMillis = DEFAULT_PROXY_HANDSHAKE_TIMEOUT_MILLIS;
+        private int proxyBackendConnectTimeoutMillis = DEFAULT_PROXY_BACKEND_CONNECT_TIMEOUT_MILLIS;
+        private int proxyMaxConnections = DEFAULT_PROXY_MAX_CONNECTIONS;
 
         private Builder() {
             // Allow instantiation only via RedshiftConfig.builder()
@@ -122,6 +198,11 @@ public class RedshiftConfig extends AbstractServiceConfig<RedshiftConfig.Builder
             this.defaultPort = instance.getDefaultPort();
             this.imageVersion = instance.getImageVersion();
             this.dockerNetwork = instance.getDockerNetwork();
+            this.pollIntervalMs = instance.getPollIntervalMs();
+            this.defaultCredentialDurationSeconds = instance.getDefaultCredentialDurationSeconds();
+            this.proxyHandshakeTimeoutMillis = instance.getProxyHandshakeTimeoutMillis();
+            this.proxyBackendConnectTimeoutMillis = instance.getProxyBackendConnectTimeoutMillis();
+            this.proxyMaxConnections = instance.getProxyMaxConnections();
         }
 
         /**
@@ -154,6 +235,66 @@ public class RedshiftConfig extends AbstractServiceConfig<RedshiftConfig.Builder
          */
         public Builder dockerNetwork(String dockerNetwork) {
             this.dockerNetwork = dockerNetwork;
+            return this;
+        }
+
+        /**
+         * Sets the interval, in milliseconds, at which DynamoDB to Redshift zero-ETL integrations poll their
+         * source table for changes.
+         *
+         * @param pollIntervalMs the interval, in milliseconds, at which DynamoDB to Redshift zero-ETL integrations poll their source table for changes (default {@value DEFAULT_POLL_INTERVAL_MS})
+         * @return this builder
+         */
+        public Builder pollIntervalMs(long pollIntervalMs) {
+            this.pollIntervalMs = pollIntervalMs;
+            return this;
+        }
+
+        /**
+         * Sets the default lifetime, in seconds, of credentials returned by GetClusterCredentials and
+         * GetClusterCredentialsWithIAM when {@code DurationSeconds} is omitted.
+         *
+         * <p>AWS allows 900 to 3600.
+         *
+         * @param defaultCredentialDurationSeconds the default lifetime, in seconds, of credentials returned by GetClusterCredentials and GetClusterCredentialsWithIAM when {@code DurationSeconds} is omitted (default {@value DEFAULT_DEFAULT_CREDENTIAL_DURATION_SECONDS})
+         * @return this builder
+         */
+        public Builder defaultCredentialDurationSeconds(int defaultCredentialDurationSeconds) {
+            this.defaultCredentialDurationSeconds = defaultCredentialDurationSeconds;
+            return this;
+        }
+
+        /**
+         * Sets how long, in milliseconds, a client has to complete the startup/auth handshake with the
+         * per-cluster auth proxy.
+         *
+         * @param proxyHandshakeTimeoutMillis how long, in milliseconds, a client has to complete the startup/auth handshake with the per-cluster auth proxy (default {@value DEFAULT_PROXY_HANDSHAKE_TIMEOUT_MILLIS})
+         * @return this builder
+         */
+        public Builder proxyHandshakeTimeoutMillis(int proxyHandshakeTimeoutMillis) {
+            this.proxyHandshakeTimeoutMillis = proxyHandshakeTimeoutMillis;
+            return this;
+        }
+
+        /**
+         * Sets how long, in milliseconds, a backend connect attempt of the per-cluster auth proxy may take.
+         *
+         * @param proxyBackendConnectTimeoutMillis how long, in milliseconds, a backend connect attempt of the per-cluster auth proxy may take (default {@value DEFAULT_PROXY_BACKEND_CONNECT_TIMEOUT_MILLIS})
+         * @return this builder
+         */
+        public Builder proxyBackendConnectTimeoutMillis(int proxyBackendConnectTimeoutMillis) {
+            this.proxyBackendConnectTimeoutMillis = proxyBackendConnectTimeoutMillis;
+            return this;
+        }
+
+        /**
+         * Sets how many concurrent connections the per-cluster auth proxy accepts before refusing new ones.
+         *
+         * @param proxyMaxConnections how many concurrent connections the per-cluster auth proxy accepts before refusing new ones (default {@value DEFAULT_PROXY_MAX_CONNECTIONS})
+         * @return this builder
+         */
+        public Builder proxyMaxConnections(int proxyMaxConnections) {
+            this.proxyMaxConnections = proxyMaxConnections;
             return this;
         }
 
