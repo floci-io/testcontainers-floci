@@ -217,6 +217,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private AccessAnalyzerConfig accessAnalyzerConfig = AccessAnalyzerConfig.builder().build();
     private IdentityStoreConfig identityStoreConfig = IdentityStoreConfig.builder().build();
     private BudgetsConfig budgetsConfig = BudgetsConfig.builder().build();
+    private Inspector2Config inspector2Config = Inspector2Config.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -330,7 +331,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> accountConfig, c -> accountConfig = c),
             new ServiceConfigAccessor<>(() -> accessAnalyzerConfig, c -> accessAnalyzerConfig = c),
             new ServiceConfigAccessor<>(() -> identityStoreConfig, c -> identityStoreConfig = c),
-            new ServiceConfigAccessor<>(() -> budgetsConfig, c -> budgetsConfig = c)
+            new ServiceConfigAccessor<>(() -> budgetsConfig, c -> budgetsConfig = c),
+            new ServiceConfigAccessor<>(() -> inspector2Config, c -> inspector2Config = c)
     );
 
     /**
@@ -4134,6 +4136,34 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.budgetsConfig = builder.build();
         budgetsConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Inspector-specific settings.
+     *
+     * @return the Inspector configuration
+     */
+    public Inspector2Config getInspector2Config() {
+        return inspector2Config;
+    }
+
+    /**
+     * Configures Inspector-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withInspector2Config(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link Inspector2Config.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withInspector2Config(Consumer<Inspector2Config.Builder> configurer) {
+        Inspector2Config.Builder builder = inspector2Config.toBuilder();
+        configurer.accept(builder);
+        this.inspector2Config = builder.build();
+        inspector2Config.applyEnvVarsToContainer(this);
         return this;
     }
 
