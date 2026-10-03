@@ -926,6 +926,14 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_SERVICES_SSOOIDC_LOCAL_PRINCIPAL_ID", "user-1234");
     }
 
+    @Test
+    void shouldWireMacie2ConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withMacie2Config(cfg -> cfg.enabled(false)),
+                c -> c.getMacie2Config().isEnabled(), false,
+                "FLOCI_SERVICES_MACIE2_ENABLED", "false");
+    }
+
     // --- Cross-cutting configs (config/) --------------------------------------------------------
 
     @Test
