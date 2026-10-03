@@ -1038,6 +1038,14 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_SERVICES_GLOBALACCELERATOR_ENABLED", "false");
     }
 
+    @Test
+    void shouldWireDataSyncConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withDataSyncConfig(cfg -> cfg.enabled(false)),
+                c -> c.getDataSyncConfig().isEnabled(), false,
+                "FLOCI_SERVICES_DATASYNC_ENABLED", "false");
+    }
+
     // --- Cross-cutting configs (config/) --------------------------------------------------------
 
     @Test
