@@ -1046,6 +1046,14 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_SERVICES_DATASYNC_ENABLED", "false");
     }
 
+    @Test
+    void shouldWireCodeArtifactConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withCodeArtifactConfig(cfg -> cfg.mavenImage("dzikoysk/reposilite:3.7.0")),
+                c -> c.getCodeArtifactConfig().getMavenImage(), "dzikoysk/reposilite:3.7.0",
+                "FLOCI_SERVICES_CODEARTIFACT_MAVEN_IMAGE", "dzikoysk/reposilite:3.7.0");
+    }
+
     // --- Cross-cutting configs (config/) --------------------------------------------------------
 
     @Test
