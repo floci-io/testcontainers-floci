@@ -219,6 +219,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private BudgetsConfig budgetsConfig = BudgetsConfig.builder().build();
     private Inspector2Config inspector2Config = Inspector2Config.builder().build();
     private SecurityHubConfig securityHubConfig = SecurityHubConfig.builder().build();
+    private DetectiveConfig detectiveConfig = DetectiveConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -334,7 +335,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> identityStoreConfig, c -> identityStoreConfig = c),
             new ServiceConfigAccessor<>(() -> budgetsConfig, c -> budgetsConfig = c),
             new ServiceConfigAccessor<>(() -> inspector2Config, c -> inspector2Config = c),
-            new ServiceConfigAccessor<>(() -> securityHubConfig, c -> securityHubConfig = c)
+            new ServiceConfigAccessor<>(() -> securityHubConfig, c -> securityHubConfig = c),
+            new ServiceConfigAccessor<>(() -> detectiveConfig, c -> detectiveConfig = c)
     );
 
     /**
@@ -4194,6 +4196,34 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.securityHubConfig = builder.build();
         securityHubConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Detective-specific settings.
+     *
+     * @return the Detective configuration
+     */
+    public DetectiveConfig getDetectiveConfig() {
+        return detectiveConfig;
+    }
+
+    /**
+     * Configures Detective-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withDetectiveConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link DetectiveConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withDetectiveConfig(Consumer<DetectiveConfig.Builder> configurer) {
+        DetectiveConfig.Builder builder = detectiveConfig.toBuilder();
+        configurer.accept(builder);
+        this.detectiveConfig = builder.build();
+        detectiveConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
