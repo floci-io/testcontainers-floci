@@ -81,9 +81,9 @@ public class ProtocolsConfig {
     }
 
     /**
-     * Returns the maximum accepted request size, in bytes.
+     * Returns the maximum accepted HTTP request body size, in megabytes.
      *
-     * @return the maximum request size in bytes
+     * @return the maximum request size in megabytes
      */
     public int getMaxRequestSize() {
         return maxRequestSize;
@@ -148,9 +148,9 @@ public class ProtocolsConfig {
         }
 
         /**
-         * Sets the maximum accepted request size, in bytes.
+         * Sets the maximum accepted HTTP request body size, in megabytes.
          *
-         * @param maxRequestSize the maximum request size in bytes (default {@value DEFAULT_MAX_REQUEST_SIZE})
+         * @param maxRequestSize the maximum request size in megabytes (default {@value DEFAULT_MAX_REQUEST_SIZE})
          * @return this builder
          */
         public Builder maxRequestSize(int maxRequestSize) {
