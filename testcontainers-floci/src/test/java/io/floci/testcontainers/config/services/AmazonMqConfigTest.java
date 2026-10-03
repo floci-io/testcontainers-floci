@@ -85,4 +85,46 @@ class AmazonMqConfigTest {
         assertThat(AmazonMqConfig.builder().mock(true).build().requiresDockerSocket()).isFalse();
     }
 
+    @Test
+    void shouldApplyHostPortRanges() {
+        AmazonMqConfig defaults = AmazonMqConfig.builder().build();
+        assertThat(defaults.getAmqpHostPortBase()).isEqualTo(5672);
+        assertThat(defaults.getAmqpHostPortsCount()).isEqualTo(28);
+        assertThat(defaults.getAmqpHostPortMax()).isEqualTo(5699);
+        assertThat(defaults.getConsoleHostPortBase()).isEqualTo(15672);
+        assertThat(defaults.getConsoleHostPortsCount()).isEqualTo(28);
+        assertThat(defaults.getConsoleHostPortMax()).isEqualTo(15699);
+
+        AmazonMqConfig config = AmazonMqConfig.builder()
+                .amqpHostPortRange(6000, 5)
+                .consoleHostPortRange(16000, 3)
+                .build();
+        AmazonMqConfig copy = config.toBuilder().build();
+        assertThat(copy.getAmqpHostPortBase()).isEqualTo(6000);
+        assertThat(copy.getAmqpHostPortMax()).isEqualTo(6004);
+        assertThat(copy.getConsoleHostPortBase()).isEqualTo(16000);
+        assertThat(copy.getConsoleHostPortMax()).isEqualTo(16002);
+
+        GenericContainer<?> defaultContainer = genericContainer();
+        defaults.applyEnvVarsToContainer(defaultContainer);
+        assertThat(defaultContainer.getEnvMap())
+                .containsEntry("FLOCI_SERVICES_AMAZONMQ_AMQP_HOST_PORT_BASE", "5672")
+                .containsEntry("FLOCI_SERVICES_AMAZONMQ_AMQP_HOST_PORT_MAX", "5699")
+                .containsEntry("FLOCI_SERVICES_AMAZONMQ_CONSOLE_HOST_PORT_BASE", "15672")
+                .containsEntry("FLOCI_SERVICES_AMAZONMQ_CONSOLE_HOST_PORT_MAX", "15699");
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        assertThat(container.getEnvMap())
+                .containsEntry("FLOCI_SERVICES_AMAZONMQ_AMQP_HOST_PORT_BASE", "6000")
+                .containsEntry("FLOCI_SERVICES_AMAZONMQ_AMQP_HOST_PORT_MAX", "6004")
+                .containsEntry("FLOCI_SERVICES_AMAZONMQ_CONSOLE_HOST_PORT_BASE", "16000")
+                .containsEntry("FLOCI_SERVICES_AMAZONMQ_CONSOLE_HOST_PORT_MAX", "16002");
+
+        GenericContainer<?> disabledContainer = genericContainer();
+        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
+        assertThat(disabledContainer.getEnvMap())
+                .doesNotContainKeys("FLOCI_SERVICES_AMAZONMQ_AMQP_HOST_PORT_BASE", "FLOCI_SERVICES_AMAZONMQ_CONSOLE_HOST_PORT_BASE");
+    }
+
 }
