@@ -211,6 +211,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private BcmPricingCalculatorConfig bcmPricingCalculatorConfig = BcmPricingCalculatorConfig.builder().build();
     private TimestreamInfluxDbConfig timestreamInfluxDbConfig = TimestreamInfluxDbConfig.builder().build();
     private SageMakerConfig sageMakerConfig = SageMakerConfig.builder().build();
+    private SsoOidcConfig ssoOidcConfig = SsoOidcConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -318,7 +319,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> oamConfig, c -> oamConfig = c),
             new ServiceConfigAccessor<>(() -> bcmPricingCalculatorConfig, c -> bcmPricingCalculatorConfig = c),
             new ServiceConfigAccessor<>(() -> timestreamInfluxDbConfig, c -> timestreamInfluxDbConfig = c),
-            new ServiceConfigAccessor<>(() -> sageMakerConfig, c -> sageMakerConfig = c)
+            new ServiceConfigAccessor<>(() -> sageMakerConfig, c -> sageMakerConfig = c),
+            new ServiceConfigAccessor<>(() -> ssoOidcConfig, c -> ssoOidcConfig = c)
     );
 
     /**
@@ -3954,6 +3956,34 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.sageMakerConfig = builder.build();
         sageMakerConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * SSO OIDC (IAM Identity Center OIDC)-specific settings.
+     *
+     * @return the SSO OIDC (IAM Identity Center OIDC) configuration
+     */
+    public SsoOidcConfig getSsoOidcConfig() {
+        return ssoOidcConfig;
+    }
+
+    /**
+     * Configures SSO OIDC (IAM Identity Center OIDC)-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withSsoOidcConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link SsoOidcConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withSsoOidcConfig(Consumer<SsoOidcConfig.Builder> configurer) {
+        SsoOidcConfig.Builder builder = ssoOidcConfig.toBuilder();
+        configurer.accept(builder);
+        this.ssoOidcConfig = builder.build();
+        ssoOidcConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
