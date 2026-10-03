@@ -22,6 +22,8 @@ public class EcrConfig extends AbstractServiceConfig<EcrConfig.Builder> {
     private static final int DEFAULT_REGISTRY_PORTS_COUNT = 10;
     private static final boolean DEFAULT_TLS_ENABLED = false;
     private static final String DEFAULT_URI_STYLE = "hostname";
+    private static final boolean DEFAULT_TLS_URI = false;
+    private static final boolean DEFAULT_PREFER_LOCAL_IMAGES = true;
 
     private final String registryImage;
     private final String registryContainerName;
@@ -30,6 +32,8 @@ public class EcrConfig extends AbstractServiceConfig<EcrConfig.Builder> {
     private final boolean tlsEnabled;
     private final String uriStyle;
     private final String dockerNetwork;
+    private final boolean tlsUri;
+    private final boolean preferLocalImages;
 
     private EcrConfig(Builder builder) {
         super(builder.enabled);
@@ -40,6 +44,8 @@ public class EcrConfig extends AbstractServiceConfig<EcrConfig.Builder> {
         this.tlsEnabled = builder.tlsEnabled;
         this.uriStyle = builder.uriStyle;
         this.dockerNetwork = builder.dockerNetwork;
+        this.tlsUri = builder.tlsUri;
+        this.preferLocalImages = builder.preferLocalImages;
     }
 
     /**
@@ -134,6 +140,28 @@ public class EcrConfig extends AbstractServiceConfig<EcrConfig.Builder> {
         return dockerNetwork;
     }
 
+    /**
+     * Returns whether TLS registry hostnames are advertised in repository URIs when Floci's global TLS
+     * listener is enabled.
+     *
+     * @return whether TLS registry hostnames are advertised in repository URIs when Floci's global TLS listener is enabled
+     */
+    public boolean isTlsUri() {
+        return tlsUri;
+    }
+
+    /**
+     * Returns whether an AWS-shaped ECR image URI that names an image already present on the Docker daemon is
+     * used as-is.
+     *
+     * <p>When disabled, such a URI is always rewritten to Floci's loopback registry.
+     *
+     * @return whether an AWS-shaped ECR image URI that names an image already present on the Docker daemon is used as-is
+     */
+    public boolean isPreferLocalImages() {
+        return preferLocalImages;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_ECR_ENABLED", String.valueOf(isEnabled()));
@@ -150,6 +178,9 @@ public class EcrConfig extends AbstractServiceConfig<EcrConfig.Builder> {
             if (dockerNetwork != null) {
                 container.withEnv("FLOCI_SERVICES_ECR_DOCKER_NETWORK", dockerNetwork);
             }
+
+            container.withEnv("FLOCI_SERVICES_ECR_TLS_URI", String.valueOf(tlsUri));
+            container.withEnv("FLOCI_SERVICES_ECR_PREFER_LOCAL_IMAGES", String.valueOf(preferLocalImages));
         }
     }
 
@@ -179,6 +210,8 @@ public class EcrConfig extends AbstractServiceConfig<EcrConfig.Builder> {
         private boolean tlsEnabled = DEFAULT_TLS_ENABLED;
         private String uriStyle = DEFAULT_URI_STYLE;
         private String dockerNetwork;
+        private boolean tlsUri = DEFAULT_TLS_URI;
+        private boolean preferLocalImages = DEFAULT_PREFER_LOCAL_IMAGES;
 
         private Builder() {
             // Allow instantiation only via EcrConfig.builder()
@@ -198,6 +231,8 @@ public class EcrConfig extends AbstractServiceConfig<EcrConfig.Builder> {
             this.tlsEnabled = instance.isTlsEnabled();
             this.uriStyle = instance.getUriStyle();
             this.dockerNetwork = instance.getDockerNetwork();
+            this.tlsUri = instance.isTlsUri();
+            this.preferLocalImages = instance.isPreferLocalImages();
         }
 
         /**
@@ -265,6 +300,32 @@ public class EcrConfig extends AbstractServiceConfig<EcrConfig.Builder> {
          */
         public Builder dockerNetwork(String dockerNetwork) {
             this.dockerNetwork = dockerNetwork;
+            return this;
+        }
+
+        /**
+         * Sets whether TLS registry hostnames are advertised in repository URIs when Floci's global TLS
+         * listener is enabled.
+         *
+         * @param tlsUri whether TLS registry hostnames are advertised in repository URIs when Floci's global TLS listener is enabled (default {@value DEFAULT_TLS_URI})
+         * @return this builder
+         */
+        public Builder tlsUri(boolean tlsUri) {
+            this.tlsUri = tlsUri;
+            return this;
+        }
+
+        /**
+         * Sets whether an AWS-shaped ECR image URI that names an image already present on the Docker daemon
+         * is used as-is.
+         *
+         * <p>When disabled, such a URI is always rewritten to Floci's loopback registry.
+         *
+         * @param preferLocalImages whether an AWS-shaped ECR image URI that names an image already present on the Docker daemon is used as-is (default {@value DEFAULT_PREFER_LOCAL_IMAGES})
+         * @return this builder
+         */
+        public Builder preferLocalImages(boolean preferLocalImages) {
+            this.preferLocalImages = preferLocalImages;
             return this;
         }
 
