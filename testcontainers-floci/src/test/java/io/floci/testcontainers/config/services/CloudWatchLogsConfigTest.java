@@ -74,4 +74,26 @@ class CloudWatchLogsConfigTest {
         assertThat(copy.getQueryCompletionDelayMs()).isEqualTo(100L);
     }
 
+    @Test
+    void shouldApplyMaxStoredEvents() {
+        CloudWatchLogsConfig defaults = CloudWatchLogsConfig.builder().build();
+        assertThat(defaults.getMaxStoredEvents()).isEqualTo(20000);
+
+        CloudWatchLogsConfig config = CloudWatchLogsConfig.builder().maxStoredEvents(5000).build();
+        assertThat(config.getMaxStoredEvents()).isEqualTo(5000);
+        assertThat(config.toBuilder().build().getMaxStoredEvents()).isEqualTo(5000);
+
+        GenericContainer<?> container = genericContainer();
+        config.applyEnvVarsToContainer(container);
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_CLOUDWATCHLOGS_MAX_STORED_EVENTS", "5000");
+
+        GenericContainer<?> defaultContainer = genericContainer();
+        defaults.applyEnvVarsToContainer(defaultContainer);
+        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_CLOUDWATCHLOGS_MAX_STORED_EVENTS", "20000");
+
+        GenericContainer<?> disabledContainer = genericContainer();
+        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
+        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_CLOUDWATCHLOGS_MAX_STORED_EVENTS");
+    }
+
 }

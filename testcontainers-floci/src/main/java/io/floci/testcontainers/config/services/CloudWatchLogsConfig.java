@@ -16,14 +16,17 @@ public class CloudWatchLogsConfig extends AbstractServiceConfig<CloudWatchLogsCo
 
     private static final int DEFAULT_MAX_EVENTS_PER_QUERY = 10000;
     private static final long DEFAULT_QUERY_COMPLETION_DELAY_MS = 0;
+    private static final int DEFAULT_MAX_STORED_EVENTS = 20000;
 
     private final int maxEventsPerQuery;
     private final long queryCompletionDelayMs;
+    private final int maxStoredEvents;
 
     private CloudWatchLogsConfig(Builder builder) {
         super(builder.enabled);
         this.maxEventsPerQuery = builder.maxEventsPerQuery;
         this.queryCompletionDelayMs = builder.queryCompletionDelayMs;
+        this.maxStoredEvents = builder.maxStoredEvents;
     }
 
     /**
@@ -64,6 +67,18 @@ public class CloudWatchLogsConfig extends AbstractServiceConfig<CloudWatchLogsCo
         return queryCompletionDelayMs;
     }
 
+    /**
+     * Returns the upper bound on log events kept across all log groups.
+     *
+     * <p>Oldest events are evicted first once exceeded, so a chatty or retrying Lambda cannot turn the store
+     * into a sustained heavy disk writer.
+     *
+     * @return the upper bound on log events kept across all log groups
+     */
+    public int getMaxStoredEvents() {
+        return maxStoredEvents;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_CLOUDWATCHLOGS_ENABLED", String.valueOf(isEnabled()));
@@ -71,6 +86,7 @@ public class CloudWatchLogsConfig extends AbstractServiceConfig<CloudWatchLogsCo
         if (isEnabled()) {
             container.withEnv("FLOCI_SERVICES_CLOUDWATCHLOGS_MAX_EVENTS_PER_QUERY", String.valueOf(maxEventsPerQuery));
             container.withEnv("FLOCI_SERVICES_CLOUDWATCHLOGS_QUERY_COMPLETION_DELAY_MS", String.valueOf(queryCompletionDelayMs));
+            container.withEnv("FLOCI_SERVICES_CLOUDWATCHLOGS_MAX_STORED_EVENTS", String.valueOf(maxStoredEvents));
         }
     }
 
@@ -81,6 +97,7 @@ public class CloudWatchLogsConfig extends AbstractServiceConfig<CloudWatchLogsCo
 
         private int maxEventsPerQuery = DEFAULT_MAX_EVENTS_PER_QUERY;
         private long queryCompletionDelayMs = DEFAULT_QUERY_COMPLETION_DELAY_MS;
+        private int maxStoredEvents = DEFAULT_MAX_STORED_EVENTS;
 
         private Builder() {
             // Allow instantiation only via CloudWatchLogsConfig.builder()
@@ -95,6 +112,7 @@ public class CloudWatchLogsConfig extends AbstractServiceConfig<CloudWatchLogsCo
             super(instance);
             this.maxEventsPerQuery = instance.getMaxEventsPerQuery();
             this.queryCompletionDelayMs = instance.getQueryCompletionDelayMs();
+            this.maxStoredEvents = instance.getMaxStoredEvents();
         }
 
         /**
@@ -119,6 +137,20 @@ public class CloudWatchLogsConfig extends AbstractServiceConfig<CloudWatchLogsCo
          */
         public Builder queryCompletionDelayMs(long queryCompletionDelayMs) {
             this.queryCompletionDelayMs = queryCompletionDelayMs;
+            return this;
+        }
+
+        /**
+         * Sets the upper bound on log events kept across all log groups.
+         *
+         * <p>Oldest events are evicted first once exceeded, so a chatty or retrying Lambda cannot turn the
+         * store into a sustained heavy disk writer.
+         *
+         * @param maxStoredEvents the upper bound on log events kept across all log groups (default {@value DEFAULT_MAX_STORED_EVENTS})
+         * @return this builder
+         */
+        public Builder maxStoredEvents(int maxStoredEvents) {
+            this.maxStoredEvents = maxStoredEvents;
             return this;
         }
 
