@@ -203,6 +203,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private ComprehendConfig comprehendConfig = ComprehendConfig.builder().build();
     private RekognitionConfig rekognitionConfig = RekognitionConfig.builder().build();
     private TranscribeConfig transcribeConfig = TranscribeConfig.builder().build();
+    private RedshiftDataConfig redshiftDataConfig = RedshiftDataConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -302,7 +303,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> organizationsConfig, c -> organizationsConfig = c),
             new ServiceConfigAccessor<>(() -> comprehendConfig, c -> comprehendConfig = c),
             new ServiceConfigAccessor<>(() -> rekognitionConfig, c -> rekognitionConfig = c),
-            new ServiceConfigAccessor<>(() -> transcribeConfig, c -> transcribeConfig = c)
+            new ServiceConfigAccessor<>(() -> transcribeConfig, c -> transcribeConfig = c),
+            new ServiceConfigAccessor<>(() -> redshiftDataConfig, c -> redshiftDataConfig = c)
     );
 
     /**
@@ -3713,6 +3715,34 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.transcribeConfig = builder.build();
         transcribeConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Redshift Data API-specific settings.
+     *
+     * @return the Redshift Data API configuration
+     */
+    public RedshiftDataConfig getRedshiftDataConfig() {
+        return redshiftDataConfig;
+    }
+
+    /**
+     * Configures Redshift Data API-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withRedshiftDataConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link RedshiftDataConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withRedshiftDataConfig(Consumer<RedshiftDataConfig.Builder> configurer) {
+        RedshiftDataConfig.Builder builder = redshiftDataConfig.toBuilder();
+        configurer.accept(builder);
+        this.redshiftDataConfig = builder.build();
+        redshiftDataConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
