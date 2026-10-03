@@ -222,6 +222,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private DetectiveConfig detectiveConfig = DetectiveConfig.builder().build();
     private VerifiedPermissionsConfig verifiedPermissionsConfig = VerifiedPermissionsConfig.builder().build();
     private ControlCatalogConfig controlCatalogConfig = ControlCatalogConfig.builder().build();
+    private AppIntegrationsConfig appIntegrationsConfig = AppIntegrationsConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -340,7 +341,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> securityHubConfig, c -> securityHubConfig = c),
             new ServiceConfigAccessor<>(() -> detectiveConfig, c -> detectiveConfig = c),
             new ServiceConfigAccessor<>(() -> verifiedPermissionsConfig, c -> verifiedPermissionsConfig = c),
-            new ServiceConfigAccessor<>(() -> controlCatalogConfig, c -> controlCatalogConfig = c)
+            new ServiceConfigAccessor<>(() -> controlCatalogConfig, c -> controlCatalogConfig = c),
+            new ServiceConfigAccessor<>(() -> appIntegrationsConfig, c -> appIntegrationsConfig = c)
     );
 
     /**
@@ -4284,6 +4286,34 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.controlCatalogConfig = builder.build();
         controlCatalogConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * AppIntegrations-specific settings.
+     *
+     * @return the AppIntegrations configuration
+     */
+    public AppIntegrationsConfig getAppIntegrationsConfig() {
+        return appIntegrationsConfig;
+    }
+
+    /**
+     * Configures AppIntegrations-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withAppIntegrationsConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link AppIntegrationsConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withAppIntegrationsConfig(Consumer<AppIntegrationsConfig.Builder> configurer) {
+        AppIntegrationsConfig.Builder builder = appIntegrationsConfig.toBuilder();
+        configurer.accept(builder);
+        this.appIntegrationsConfig = builder.build();
+        appIntegrationsConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
