@@ -863,7 +863,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     }
 
     /**
-     * Configures security settings such as CORS allowed origins, headers, and expose headers.
+     * Configures security settings such as CORS allowed origins, headers, and expose headers, whether JWT
+     * issuers may live on private addresses, and whether Floci may listen outside loopback.
      *
      * <pre>{@code
      * new FlociContainer()
