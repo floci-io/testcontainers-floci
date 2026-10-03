@@ -1070,6 +1070,14 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_SERVICES_DMS_ENABLED", "false");
     }
 
+    @Test
+    void shouldWireElbConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withElbConfig(cfg -> cfg.mock(true)),
+                c -> c.getElbConfig().isMock(), true,
+                "FLOCI_SERVICES_ELB_MOCK", "true");
+    }
+
     // --- Cross-cutting configs (config/) --------------------------------------------------------
 
     @Test

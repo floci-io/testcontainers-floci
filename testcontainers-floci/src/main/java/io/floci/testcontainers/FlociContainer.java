@@ -230,6 +230,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private CodeArtifactConfig codeArtifactConfig = CodeArtifactConfig.builder().build();
     private MarketplaceConfig marketplaceConfig = MarketplaceConfig.builder().build();
     private DmsConfig dmsConfig = DmsConfig.builder().build();
+    private ElbConfig elbConfig = ElbConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -356,7 +357,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> dataSyncConfig, c -> dataSyncConfig = c),
             new ServiceConfigAccessor<>(() -> codeArtifactConfig, c -> codeArtifactConfig = c),
             new ServiceConfigAccessor<>(() -> marketplaceConfig, c -> marketplaceConfig = c),
-            new ServiceConfigAccessor<>(() -> dmsConfig, c -> dmsConfig = c)
+            new ServiceConfigAccessor<>(() -> dmsConfig, c -> dmsConfig = c),
+            new ServiceConfigAccessor<>(() -> elbConfig, c -> elbConfig = c)
     );
 
     /**
@@ -4526,6 +4528,34 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.dmsConfig = builder.build();
         dmsConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Classic ELB (Elastic Load Balancing, API version 2012-06-01)-specific settings.
+     *
+     * @return the Classic ELB configuration
+     */
+    public ElbConfig getElbConfig() {
+        return elbConfig;
+    }
+
+    /**
+     * Configures Classic ELB (Elastic Load Balancing, API version 2012-06-01)-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withElbConfig(c -> c.mock(true));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link ElbConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withElbConfig(Consumer<ElbConfig.Builder> configurer) {
+        ElbConfig.Builder builder = elbConfig.toBuilder();
+        configurer.accept(builder);
+        this.elbConfig = builder.build();
+        elbConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
