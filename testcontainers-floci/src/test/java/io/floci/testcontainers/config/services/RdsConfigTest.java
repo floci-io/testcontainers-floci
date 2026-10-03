@@ -22,6 +22,13 @@ class RdsConfigTest {
         assertThat(config.getDefaultMariadbImage()).isNull();
         assertThat(config.getDockerNetwork()).isNull();
         assertThat(config.getEndpointHost()).isNull();
+        assertThat(config.getDefaultSqlServerImage()).isEqualTo("mcr.microsoft.com/mssql/server:2022-latest");
+        assertThat(config.isIamTokenEndpointBinding()).isTrue();
+        assertThat(config.getProxyHandshakeTimeoutMillis()).isEqualTo(10000);
+        assertThat(config.getProxyBackendConnectTimeoutMillis()).isEqualTo(5000);
+        assertThat(config.getProxyMaxConnections()).isEqualTo(100);
+        assertThat(config.isAuroraAutoPauseEnabled()).isTrue();
+        assertThat(config.getAuroraResumeDelayMillis()).isEqualTo(0);
     }
 
     @Test
@@ -35,6 +42,13 @@ class RdsConfigTest {
                 .defaultMariadbImage("mariadb:10")
                 .dockerNetwork("my-rds-network")
                 .endpointHost("rds.example.com")
+                .defaultSqlServerImage("mcr.microsoft.com/mssql/server:2019-latest")
+                .iamTokenEndpointBinding(false)
+                .proxyHandshakeTimeoutMillis(2000)
+                .proxyBackendConnectTimeoutMillis(1000)
+                .proxyMaxConnections(20)
+                .auroraAutoPauseEnabled(false)
+                .auroraResumeDelayMillis(15000)
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.isMock()).isTrue();
@@ -46,6 +60,13 @@ class RdsConfigTest {
         assertThat(config.getDefaultMariadbImage()).isEqualTo("mariadb:10");
         assertThat(config.getDockerNetwork()).isEqualTo("my-rds-network");
         assertThat(config.getEndpointHost()).isEqualTo("rds.example.com");
+        assertThat(config.getDefaultSqlServerImage()).isEqualTo("mcr.microsoft.com/mssql/server:2019-latest");
+        assertThat(config.isIamTokenEndpointBinding()).isFalse();
+        assertThat(config.getProxyHandshakeTimeoutMillis()).isEqualTo(2000);
+        assertThat(config.getProxyBackendConnectTimeoutMillis()).isEqualTo(1000);
+        assertThat(config.getProxyMaxConnections()).isEqualTo(20);
+        assertThat(config.isAuroraAutoPauseEnabled()).isFalse();
+        assertThat(config.getAuroraResumeDelayMillis()).isEqualTo(15000);
     }
 
     @Test
@@ -62,7 +83,14 @@ class RdsConfigTest {
                 .doesNotContainKey("FLOCI_SERVICES_RDS_DEFAULT_MYSQL_IMAGE")
                 .doesNotContainKey("FLOCI_SERVICES_RDS_DEFAULT_MARIADB_IMAGE")
                 .doesNotContainKey("FLOCI_SERVICES_RDS_DOCKER_NETWORK")
-                .containsEntry("FLOCI_SERVICES_RDS_ENDPOINT_HOST", container.getHost());
+                .containsEntry("FLOCI_SERVICES_RDS_ENDPOINT_HOST", container.getHost())
+                .containsEntry("FLOCI_SERVICES_RDS_DEFAULT_SQL_SERVER_IMAGE", "mcr.microsoft.com/mssql/server:2022-latest")
+                .containsEntry("FLOCI_SERVICES_RDS_IAM_TOKEN_ENDPOINT_BINDING", "true")
+                .containsEntry("FLOCI_SERVICES_RDS_PROXY_HANDSHAKE_TIMEOUT_MILLIS", "10000")
+                .containsEntry("FLOCI_SERVICES_RDS_PROXY_BACKEND_CONNECT_TIMEOUT_MILLIS", "5000")
+                .containsEntry("FLOCI_SERVICES_RDS_PROXY_MAX_CONNECTIONS", "100")
+                .containsEntry("FLOCI_SERVICES_RDS_AURORA_AUTO_PAUSE_ENABLED", "true")
+                .containsEntry("FLOCI_SERVICES_RDS_AURORA_RESUME_DELAY_MILLIS", "0");
     }
 
     @Test
@@ -77,6 +105,13 @@ class RdsConfigTest {
                 .defaultMariadbImage("mariadb:10")
                 .dockerNetwork("my-rds-network")
                 .endpointHost("rds.example.com")
+                .defaultSqlServerImage("mcr.microsoft.com/mssql/server:2019-latest")
+                .iamTokenEndpointBinding(false)
+                .proxyHandshakeTimeoutMillis(2000)
+                .proxyBackendConnectTimeoutMillis(1000)
+                .proxyMaxConnections(20)
+                .auroraAutoPauseEnabled(false)
+                .auroraResumeDelayMillis(15000)
                 .build()
                 .applyEnvVarsToContainer(container);
 
@@ -89,7 +124,30 @@ class RdsConfigTest {
                 .containsEntry("FLOCI_SERVICES_RDS_DEFAULT_MYSQL_IMAGE", "mysql:9.0")
                 .containsEntry("FLOCI_SERVICES_RDS_DEFAULT_MARIADB_IMAGE", "mariadb:10")
                 .containsEntry("FLOCI_SERVICES_RDS_DOCKER_NETWORK", "my-rds-network")
-                .containsEntry("FLOCI_SERVICES_RDS_ENDPOINT_HOST", "rds.example.com");
+                .containsEntry("FLOCI_SERVICES_RDS_ENDPOINT_HOST", "rds.example.com")
+                .containsEntry("FLOCI_SERVICES_RDS_DEFAULT_SQL_SERVER_IMAGE", "mcr.microsoft.com/mssql/server:2019-latest")
+                .containsEntry("FLOCI_SERVICES_RDS_IAM_TOKEN_ENDPOINT_BINDING", "false")
+                .containsEntry("FLOCI_SERVICES_RDS_PROXY_HANDSHAKE_TIMEOUT_MILLIS", "2000")
+                .containsEntry("FLOCI_SERVICES_RDS_PROXY_BACKEND_CONNECT_TIMEOUT_MILLIS", "1000")
+                .containsEntry("FLOCI_SERVICES_RDS_PROXY_MAX_CONNECTIONS", "20")
+                .containsEntry("FLOCI_SERVICES_RDS_AURORA_AUTO_PAUSE_ENABLED", "false")
+                .containsEntry("FLOCI_SERVICES_RDS_AURORA_RESUME_DELAY_MILLIS", "15000");
+    }
+
+    @Test
+    void shouldApplyDisabledEnvVarToContainer() {
+        GenericContainer<?> container = genericContainer();
+        RdsConfig.builder().enabled(false).build().applyEnvVarsToContainer(container);
+
+        assertThat(container.getEnvMap())
+                .containsEntry("FLOCI_SERVICES_RDS_ENABLED", "false")
+                .doesNotContainKey("FLOCI_SERVICES_RDS_DEFAULT_SQL_SERVER_IMAGE")
+                .doesNotContainKey("FLOCI_SERVICES_RDS_IAM_TOKEN_ENDPOINT_BINDING")
+                .doesNotContainKey("FLOCI_SERVICES_RDS_PROXY_HANDSHAKE_TIMEOUT_MILLIS")
+                .doesNotContainKey("FLOCI_SERVICES_RDS_PROXY_BACKEND_CONNECT_TIMEOUT_MILLIS")
+                .doesNotContainKey("FLOCI_SERVICES_RDS_PROXY_MAX_CONNECTIONS")
+                .doesNotContainKey("FLOCI_SERVICES_RDS_AURORA_AUTO_PAUSE_ENABLED")
+                .doesNotContainKey("FLOCI_SERVICES_RDS_AURORA_RESUME_DELAY_MILLIS");
     }
 
     @Test
@@ -133,6 +191,13 @@ class RdsConfigTest {
                 .defaultMariadbImage("test-mariadb")
                 .dockerNetwork("test-network")
                 .endpointHost("test-host")
+                .defaultSqlServerImage("mcr.microsoft.com/mssql/server:2019-latest")
+                .iamTokenEndpointBinding(false)
+                .proxyHandshakeTimeoutMillis(2000)
+                .proxyBackendConnectTimeoutMillis(1000)
+                .proxyMaxConnections(20)
+                .auroraAutoPauseEnabled(false)
+                .auroraResumeDelayMillis(15000)
                 .build();
         RdsConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
@@ -144,6 +209,13 @@ class RdsConfigTest {
         assertThat(copy.getDefaultMariadbImage()).isEqualTo("test-mariadb");
         assertThat(copy.getDockerNetwork()).isEqualTo("test-network");
         assertThat(copy.getEndpointHost()).isEqualTo("test-host");
+        assertThat(copy.getDefaultSqlServerImage()).isEqualTo("mcr.microsoft.com/mssql/server:2019-latest");
+        assertThat(copy.isIamTokenEndpointBinding()).isFalse();
+        assertThat(copy.getProxyHandshakeTimeoutMillis()).isEqualTo(2000);
+        assertThat(copy.getProxyBackendConnectTimeoutMillis()).isEqualTo(1000);
+        assertThat(copy.getProxyMaxConnections()).isEqualTo(20);
+        assertThat(copy.isAuroraAutoPauseEnabled()).isFalse();
+        assertThat(copy.getAuroraResumeDelayMillis()).isEqualTo(15000);
     }
 
     @Test
@@ -151,160 +223,6 @@ class RdsConfigTest {
         assertThat(RdsConfig.builder().build().requiresDockerSocket()).isTrue();
         assertThat(RdsConfig.builder().enabled(false).build().requiresDockerSocket()).isFalse();
         assertThat(RdsConfig.builder().mock(true).build().requiresDockerSocket()).isFalse();
-    }
-
-    @Test
-    void shouldApplyDefaultSqlServerImage() {
-        RdsConfig defaults = RdsConfig.builder().build();
-        assertThat(defaults.getDefaultSqlServerImage()).isEqualTo("mcr.microsoft.com/mssql/server:2022-latest");
-
-        RdsConfig config = RdsConfig.builder().defaultSqlServerImage("mcr.microsoft.com/mssql/server:2019-latest").build();
-        assertThat(config.getDefaultSqlServerImage()).isEqualTo("mcr.microsoft.com/mssql/server:2019-latest");
-        assertThat(config.toBuilder().build().getDefaultSqlServerImage()).isEqualTo("mcr.microsoft.com/mssql/server:2019-latest");
-
-        GenericContainer<?> container = genericContainer();
-        config.applyEnvVarsToContainer(container);
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_RDS_DEFAULT_SQL_SERVER_IMAGE", "mcr.microsoft.com/mssql/server:2019-latest");
-
-        GenericContainer<?> defaultContainer = genericContainer();
-        defaults.applyEnvVarsToContainer(defaultContainer);
-        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_RDS_DEFAULT_SQL_SERVER_IMAGE", "mcr.microsoft.com/mssql/server:2022-latest");
-
-        GenericContainer<?> disabledContainer = genericContainer();
-        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
-        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_RDS_DEFAULT_SQL_SERVER_IMAGE");
-    }
-
-    @Test
-    void shouldApplyIamTokenEndpointBinding() {
-        RdsConfig defaults = RdsConfig.builder().build();
-        assertThat(defaults.isIamTokenEndpointBinding()).isEqualTo(true);
-
-        RdsConfig config = RdsConfig.builder().iamTokenEndpointBinding(false).build();
-        assertThat(config.isIamTokenEndpointBinding()).isEqualTo(false);
-        assertThat(config.toBuilder().build().isIamTokenEndpointBinding()).isEqualTo(false);
-
-        GenericContainer<?> container = genericContainer();
-        config.applyEnvVarsToContainer(container);
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_RDS_IAM_TOKEN_ENDPOINT_BINDING", "false");
-
-        GenericContainer<?> defaultContainer = genericContainer();
-        defaults.applyEnvVarsToContainer(defaultContainer);
-        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_RDS_IAM_TOKEN_ENDPOINT_BINDING", "true");
-
-        GenericContainer<?> disabledContainer = genericContainer();
-        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
-        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_RDS_IAM_TOKEN_ENDPOINT_BINDING");
-    }
-
-    @Test
-    void shouldApplyProxyHandshakeTimeoutMillis() {
-        RdsConfig defaults = RdsConfig.builder().build();
-        assertThat(defaults.getProxyHandshakeTimeoutMillis()).isEqualTo(10000);
-
-        RdsConfig config = RdsConfig.builder().proxyHandshakeTimeoutMillis(2000).build();
-        assertThat(config.getProxyHandshakeTimeoutMillis()).isEqualTo(2000);
-        assertThat(config.toBuilder().build().getProxyHandshakeTimeoutMillis()).isEqualTo(2000);
-
-        GenericContainer<?> container = genericContainer();
-        config.applyEnvVarsToContainer(container);
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_RDS_PROXY_HANDSHAKE_TIMEOUT_MILLIS", "2000");
-
-        GenericContainer<?> defaultContainer = genericContainer();
-        defaults.applyEnvVarsToContainer(defaultContainer);
-        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_RDS_PROXY_HANDSHAKE_TIMEOUT_MILLIS", "10000");
-
-        GenericContainer<?> disabledContainer = genericContainer();
-        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
-        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_RDS_PROXY_HANDSHAKE_TIMEOUT_MILLIS");
-    }
-
-    @Test
-    void shouldApplyProxyBackendConnectTimeoutMillis() {
-        RdsConfig defaults = RdsConfig.builder().build();
-        assertThat(defaults.getProxyBackendConnectTimeoutMillis()).isEqualTo(5000);
-
-        RdsConfig config = RdsConfig.builder().proxyBackendConnectTimeoutMillis(1000).build();
-        assertThat(config.getProxyBackendConnectTimeoutMillis()).isEqualTo(1000);
-        assertThat(config.toBuilder().build().getProxyBackendConnectTimeoutMillis()).isEqualTo(1000);
-
-        GenericContainer<?> container = genericContainer();
-        config.applyEnvVarsToContainer(container);
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_RDS_PROXY_BACKEND_CONNECT_TIMEOUT_MILLIS", "1000");
-
-        GenericContainer<?> defaultContainer = genericContainer();
-        defaults.applyEnvVarsToContainer(defaultContainer);
-        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_RDS_PROXY_BACKEND_CONNECT_TIMEOUT_MILLIS", "5000");
-
-        GenericContainer<?> disabledContainer = genericContainer();
-        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
-        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_RDS_PROXY_BACKEND_CONNECT_TIMEOUT_MILLIS");
-    }
-
-    @Test
-    void shouldApplyProxyMaxConnections() {
-        RdsConfig defaults = RdsConfig.builder().build();
-        assertThat(defaults.getProxyMaxConnections()).isEqualTo(100);
-
-        RdsConfig config = RdsConfig.builder().proxyMaxConnections(20).build();
-        assertThat(config.getProxyMaxConnections()).isEqualTo(20);
-        assertThat(config.toBuilder().build().getProxyMaxConnections()).isEqualTo(20);
-
-        GenericContainer<?> container = genericContainer();
-        config.applyEnvVarsToContainer(container);
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_RDS_PROXY_MAX_CONNECTIONS", "20");
-
-        GenericContainer<?> defaultContainer = genericContainer();
-        defaults.applyEnvVarsToContainer(defaultContainer);
-        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_RDS_PROXY_MAX_CONNECTIONS", "100");
-
-        GenericContainer<?> disabledContainer = genericContainer();
-        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
-        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_RDS_PROXY_MAX_CONNECTIONS");
-    }
-
-    @Test
-    void shouldApplyAuroraAutoPauseEnabled() {
-        RdsConfig defaults = RdsConfig.builder().build();
-        assertThat(defaults.isAuroraAutoPauseEnabled()).isEqualTo(true);
-
-        RdsConfig config = RdsConfig.builder().auroraAutoPauseEnabled(false).build();
-        assertThat(config.isAuroraAutoPauseEnabled()).isEqualTo(false);
-        assertThat(config.toBuilder().build().isAuroraAutoPauseEnabled()).isEqualTo(false);
-
-        GenericContainer<?> container = genericContainer();
-        config.applyEnvVarsToContainer(container);
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_RDS_AURORA_AUTO_PAUSE_ENABLED", "false");
-
-        GenericContainer<?> defaultContainer = genericContainer();
-        defaults.applyEnvVarsToContainer(defaultContainer);
-        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_RDS_AURORA_AUTO_PAUSE_ENABLED", "true");
-
-        GenericContainer<?> disabledContainer = genericContainer();
-        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
-        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_RDS_AURORA_AUTO_PAUSE_ENABLED");
-    }
-
-    @Test
-    void shouldApplyAuroraResumeDelayMillis() {
-        RdsConfig defaults = RdsConfig.builder().build();
-        assertThat(defaults.getAuroraResumeDelayMillis()).isEqualTo(0);
-
-        RdsConfig config = RdsConfig.builder().auroraResumeDelayMillis(15000).build();
-        assertThat(config.getAuroraResumeDelayMillis()).isEqualTo(15000);
-        assertThat(config.toBuilder().build().getAuroraResumeDelayMillis()).isEqualTo(15000);
-
-        GenericContainer<?> container = genericContainer();
-        config.applyEnvVarsToContainer(container);
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_RDS_AURORA_RESUME_DELAY_MILLIS", "15000");
-
-        GenericContainer<?> defaultContainer = genericContainer();
-        defaults.applyEnvVarsToContainer(defaultContainer);
-        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_RDS_AURORA_RESUME_DELAY_MILLIS", "0");
-
-        GenericContainer<?> disabledContainer = genericContainer();
-        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
-        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_RDS_AURORA_RESUME_DELAY_MILLIS");
     }
 
 }

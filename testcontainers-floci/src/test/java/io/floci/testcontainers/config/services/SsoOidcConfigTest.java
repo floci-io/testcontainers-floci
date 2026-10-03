@@ -12,14 +12,17 @@ class SsoOidcConfigTest {
     void shouldApplyDefaultSsoOidcConfig() {
         SsoOidcConfig config = SsoOidcConfig.builder().build();
         assertThat(config.isEnabled()).isTrue();
+        assertThat(config.getLocalPrincipalId()).isEmpty();
     }
 
     @Test
     void shouldApplyCustomSsoOidcConfig() {
         SsoOidcConfig config = SsoOidcConfig.builder()
                 .enabled(false)
+                .localPrincipalId("user-1234")
                 .build();
         assertThat(config.isEnabled()).isFalse();
+        assertThat(config.getLocalPrincipalId()).contains("user-1234");
     }
 
     @Test
@@ -27,7 +30,20 @@ class SsoOidcConfigTest {
         GenericContainer<?> container = genericContainer();
         SsoOidcConfig.builder().build().applyEnvVarsToContainer(container);
 
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_SSOOIDC_ENABLED", "true");
+        assertThat(container.getEnvMap())
+                .containsEntry("FLOCI_SERVICES_SSOOIDC_ENABLED", "true")
+                .doesNotContainKey("FLOCI_SERVICES_SSOOIDC_LOCAL_PRINCIPAL_ID");
+    }
+
+    @Test
+    void shouldApplyCustomEnvVarsToContainer() {
+        GenericContainer<?> container = genericContainer();
+        SsoOidcConfig.builder()
+                .localPrincipalId("user-1234")
+                .build()
+                .applyEnvVarsToContainer(container);
+
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_SSOOIDC_LOCAL_PRINCIPAL_ID", "user-1234");
     }
 
     @Test
@@ -35,38 +51,20 @@ class SsoOidcConfigTest {
         GenericContainer<?> container = genericContainer();
         SsoOidcConfig.builder().enabled(false).build().applyEnvVarsToContainer(container);
 
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_SSOOIDC_ENABLED", "false");
+        assertThat(container.getEnvMap())
+                .containsEntry("FLOCI_SERVICES_SSOOIDC_ENABLED", "false")
+                .doesNotContainKey("FLOCI_SERVICES_SSOOIDC_LOCAL_PRINCIPAL_ID");
     }
 
     @Test
     void shouldPreserveValuesOnToBuilder() {
         SsoOidcConfig config = SsoOidcConfig.builder()
                 .enabled(false)
+                .localPrincipalId("user-1234")
                 .build();
         SsoOidcConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
-    }
-
-    @Test
-    void shouldApplyLocalPrincipalId() {
-        SsoOidcConfig defaults = SsoOidcConfig.builder().build();
-        assertThat(defaults.getLocalPrincipalId()).isEmpty();
-
-        SsoOidcConfig config = SsoOidcConfig.builder().localPrincipalId("user-1234").build();
-        assertThat(config.getLocalPrincipalId()).contains("user-1234");
-        assertThat(config.toBuilder().build().getLocalPrincipalId()).contains("user-1234");
-
-        GenericContainer<?> container = genericContainer();
-        config.applyEnvVarsToContainer(container);
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_SSOOIDC_LOCAL_PRINCIPAL_ID", "user-1234");
-
-        GenericContainer<?> defaultContainer = genericContainer();
-        defaults.applyEnvVarsToContainer(defaultContainer);
-        assertThat(defaultContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_SSOOIDC_LOCAL_PRINCIPAL_ID");
-
-        GenericContainer<?> disabledContainer = genericContainer();
-        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
-        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_SSOOIDC_LOCAL_PRINCIPAL_ID");
+        assertThat(copy.getLocalPrincipalId()).contains("user-1234");
     }
 
 }

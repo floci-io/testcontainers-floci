@@ -26,6 +26,7 @@ class StepFunctionsConfigTest {
         assertThat(config.isAllowPlaintextHttp()).isTrue();
         assertThat(config.getMockConfigFile()).isEmpty();
         assertThat(config.getMockConfig()).isEmpty();
+        assertThat(config.getMaxWaitSeconds()).isEqualTo(30);
     }
 
     @Test
@@ -33,9 +34,11 @@ class StepFunctionsConfigTest {
         StepFunctionsConfig config = StepFunctionsConfig.builder()
                 .enabled(false)
                 .allowPlaintextHttp(false)
+                .maxWaitSeconds(120)
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.isAllowPlaintextHttp()).isFalse();
+        assertThat(config.getMaxWaitSeconds()).isEqualTo(120);
     }
 
     @Test
@@ -46,14 +49,21 @@ class StepFunctionsConfigTest {
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_STEPFUNCTIONS_ENABLED", "true");
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_STEPFUNCTIONS_ALLOW_PLAINTEXT_HTTP", "true");
         assertThat(container.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_STEPFUNCTIONS_MOCK_CONFIG_FILE");
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_STEPFUNCTIONS_MAX_WAIT_SECONDS", "30");
     }
 
     @Test
     void shouldApplyCustomEnvVarsToContainer() {
         GenericContainer<?> container = genericContainer();
-        StepFunctionsConfig.builder().allowPlaintextHttp(false).build().applyEnvVarsToContainer(container);
+        StepFunctionsConfig.builder()
+                .allowPlaintextHttp(false)
+                .maxWaitSeconds(120)
+                .build()
+                .applyEnvVarsToContainer(container);
 
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_STEPFUNCTIONS_ALLOW_PLAINTEXT_HTTP", "false");
+        assertThat(container.getEnvMap())
+                .containsEntry("FLOCI_SERVICES_STEPFUNCTIONS_ALLOW_PLAINTEXT_HTTP", "false")
+                .containsEntry("FLOCI_SERVICES_STEPFUNCTIONS_MAX_WAIT_SECONDS", "120");
     }
 
     @Test
@@ -63,6 +73,7 @@ class StepFunctionsConfigTest {
 
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_STEPFUNCTIONS_ENABLED", "false");
         assertThat(container.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_STEPFUNCTIONS_ALLOW_PLAINTEXT_HTTP");
+        assertThat(container.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_STEPFUNCTIONS_MAX_WAIT_SECONDS");
     }
 
     @Test
@@ -70,10 +81,12 @@ class StepFunctionsConfigTest {
         StepFunctionsConfig config = StepFunctionsConfig.builder()
                 .enabled(false)
                 .allowPlaintextHttp(false)
+                .maxWaitSeconds(120)
                 .build();
         StepFunctionsConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
         assertThat(copy.isAllowPlaintextHttp()).isFalse();
+        assertThat(copy.getMaxWaitSeconds()).isEqualTo(120);
     }
 
     @Test
@@ -243,28 +256,6 @@ class StepFunctionsConfigTest {
         // Re-applying targets the same path with the same content (a harmless repeat copy on start).
         assertThat(pendingCopies(container).values()).containsOnly(containerPath);
         assertThat(contentCopiedTo(container, containerPath)).contains(MOCK_CONFIG_JSON);
-    }
-
-    @Test
-    void shouldApplyMaxWaitSeconds() {
-        StepFunctionsConfig defaults = StepFunctionsConfig.builder().build();
-        assertThat(defaults.getMaxWaitSeconds()).isEqualTo(30);
-
-        StepFunctionsConfig config = StepFunctionsConfig.builder().maxWaitSeconds(120).build();
-        assertThat(config.getMaxWaitSeconds()).isEqualTo(120);
-        assertThat(config.toBuilder().build().getMaxWaitSeconds()).isEqualTo(120);
-
-        GenericContainer<?> container = genericContainer();
-        config.applyEnvVarsToContainer(container);
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_STEPFUNCTIONS_MAX_WAIT_SECONDS", "120");
-
-        GenericContainer<?> defaultContainer = genericContainer();
-        defaults.applyEnvVarsToContainer(defaultContainer);
-        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_STEPFUNCTIONS_MAX_WAIT_SECONDS", "30");
-
-        GenericContainer<?> disabledContainer = genericContainer();
-        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
-        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_STEPFUNCTIONS_MAX_WAIT_SECONDS");
     }
 
 }

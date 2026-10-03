@@ -21,6 +21,8 @@ class EcrConfigTest {
         assertThat(config.isTlsEnabled()).isFalse();
         assertThat(config.getUriStyle()).isEqualTo("hostname");
         assertThat(config.getDockerNetwork()).isNull();
+        assertThat(config.isTlsUri()).isFalse();
+        assertThat(config.isPreferLocalImages()).isTrue();
     }
 
     @Test
@@ -33,6 +35,8 @@ class EcrConfigTest {
                 .tlsEnabled(true)
                 .uriStyle("path")
                 .dockerNetwork("my-ecr-network")
+                .tlsUri(true)
+                .preferLocalImages(false)
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.getRegistryImage()).isEqualTo("registry:3");
@@ -43,6 +47,8 @@ class EcrConfigTest {
         assertThat(config.isTlsEnabled()).isTrue();
         assertThat(config.getUriStyle()).isEqualTo("path");
         assertThat(config.getDockerNetwork()).isEqualTo("my-ecr-network");
+        assertThat(config.isTlsUri()).isTrue();
+        assertThat(config.isPreferLocalImages()).isFalse();
     }
 
     @Test
@@ -59,7 +65,9 @@ class EcrConfigTest {
                 .containsEntry("FLOCI_SERVICES_ECR_TLS_ENABLED", "false")
                 .containsEntry("FLOCI_SERVICES_ECR_URI_STYLE", "hostname")
                 .containsEntry("FLOCI_SERVICES_ECR_KEEP_RUNNING_ON_SHUTDOWN", "false")
-                .doesNotContainKey("FLOCI_SERVICES_ECR_DOCKER_NETWORK");
+                .doesNotContainKey("FLOCI_SERVICES_ECR_DOCKER_NETWORK")
+                .containsEntry("FLOCI_SERVICES_ECR_TLS_URI", "false")
+                .containsEntry("FLOCI_SERVICES_ECR_PREFER_LOCAL_IMAGES", "true");
     }
 
     @Test
@@ -73,6 +81,8 @@ class EcrConfigTest {
                 .tlsEnabled(true)
                 .uriStyle("path")
                 .dockerNetwork("my-ecr-network")
+                .tlsUri(true)
+                .preferLocalImages(false)
                 .build()
                 .applyEnvVarsToContainer(container);
 
@@ -85,7 +95,9 @@ class EcrConfigTest {
                 .containsEntry("FLOCI_SERVICES_ECR_TLS_ENABLED", "true")
                 .containsEntry("FLOCI_SERVICES_ECR_URI_STYLE", "path")
                 .containsEntry("FLOCI_SERVICES_ECR_KEEP_RUNNING_ON_SHUTDOWN", "false")
-                .containsEntry("FLOCI_SERVICES_ECR_DOCKER_NETWORK", "my-ecr-network");
+                .containsEntry("FLOCI_SERVICES_ECR_DOCKER_NETWORK", "my-ecr-network")
+                .containsEntry("FLOCI_SERVICES_ECR_TLS_URI", "true")
+                .containsEntry("FLOCI_SERVICES_ECR_PREFER_LOCAL_IMAGES", "false");
     }
 
     @Test
@@ -93,7 +105,10 @@ class EcrConfigTest {
         GenericContainer<?> container = genericContainer();
         EcrConfig.builder().enabled(false).build().applyEnvVarsToContainer(container);
 
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_ECR_ENABLED", "false");
+        assertThat(container.getEnvMap())
+                .containsEntry("FLOCI_SERVICES_ECR_ENABLED", "false")
+                .doesNotContainKey("FLOCI_SERVICES_ECR_TLS_URI")
+                .doesNotContainKey("FLOCI_SERVICES_ECR_PREFER_LOCAL_IMAGES");
     }
 
     @Test
@@ -117,6 +132,8 @@ class EcrConfigTest {
                 .tlsEnabled(true)
                 .uriStyle("ip")
                 .dockerNetwork("test-network")
+                .tlsUri(true)
+                .preferLocalImages(false)
                 .build();
         EcrConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
@@ -127,56 +144,14 @@ class EcrConfigTest {
         assertThat(copy.isTlsEnabled()).isTrue();
         assertThat(copy.getUriStyle()).isEqualTo("ip");
         assertThat(copy.getDockerNetwork()).isEqualTo("test-network");
+        assertThat(copy.isTlsUri()).isTrue();
+        assertThat(copy.isPreferLocalImages()).isFalse();
     }
 
     @Test
     void shouldRequireDockerSocketWhenEnabled() {
         assertThat(EcrConfig.builder().build().requiresDockerSocket()).isTrue();
         assertThat(EcrConfig.builder().enabled(false).build().requiresDockerSocket()).isFalse();
-    }
-
-    @Test
-    void shouldApplyTlsUri() {
-        EcrConfig defaults = EcrConfig.builder().build();
-        assertThat(defaults.isTlsUri()).isEqualTo(false);
-
-        EcrConfig config = EcrConfig.builder().tlsUri(true).build();
-        assertThat(config.isTlsUri()).isEqualTo(true);
-        assertThat(config.toBuilder().build().isTlsUri()).isEqualTo(true);
-
-        GenericContainer<?> container = genericContainer();
-        config.applyEnvVarsToContainer(container);
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_ECR_TLS_URI", "true");
-
-        GenericContainer<?> defaultContainer = genericContainer();
-        defaults.applyEnvVarsToContainer(defaultContainer);
-        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_ECR_TLS_URI", "false");
-
-        GenericContainer<?> disabledContainer = genericContainer();
-        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
-        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_ECR_TLS_URI");
-    }
-
-    @Test
-    void shouldApplyPreferLocalImages() {
-        EcrConfig defaults = EcrConfig.builder().build();
-        assertThat(defaults.isPreferLocalImages()).isEqualTo(true);
-
-        EcrConfig config = EcrConfig.builder().preferLocalImages(false).build();
-        assertThat(config.isPreferLocalImages()).isEqualTo(false);
-        assertThat(config.toBuilder().build().isPreferLocalImages()).isEqualTo(false);
-
-        GenericContainer<?> container = genericContainer();
-        config.applyEnvVarsToContainer(container);
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_ECR_PREFER_LOCAL_IMAGES", "false");
-
-        GenericContainer<?> defaultContainer = genericContainer();
-        defaults.applyEnvVarsToContainer(defaultContainer);
-        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_ECR_PREFER_LOCAL_IMAGES", "true");
-
-        GenericContainer<?> disabledContainer = genericContainer();
-        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
-        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_ECR_PREFER_LOCAL_IMAGES");
     }
 
 }

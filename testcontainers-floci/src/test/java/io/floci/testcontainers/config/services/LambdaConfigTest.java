@@ -30,6 +30,13 @@ class LambdaConfigTest {
         assertThat(config.getEcrBaseUri()).isEqualTo("public.ecr.aws");
         assertThat(config.getContainerNamePrefix()).isEmpty();
         assertThat(config.getCodeVolumePopulateConcurrency()).isEmpty();
+        assertThat(config.getZipMaxEntries()).isEqualTo(100000);
+        assertThat(config.getAsyncRetryDelaySeconds()).isEqualTo(60);
+        assertThat(config.isHonourArchitectures()).isFalse();
+        assertThat(config.getWarmPoolMaxPerFunction()).isEmpty();
+        assertThat(config.getWarmPoolMaxTotal()).isEqualTo(0);
+        assertThat(config.getDockerFlags()).isEmpty();
+        assertThat(config.isAcceptExternalLayerArns()).isFalse();
     }
 
     @Test
@@ -51,6 +58,13 @@ class LambdaConfigTest {
                 .ecrBaseUri("123456789012.dkr.ecr.us-east-1.amazonaws.com")
                 .containerNamePrefix("acme")
                 .codeVolumePopulateConcurrency(4)
+                .zipMaxEntries(500)
+                .asyncRetryDelaySeconds(0)
+                .honourArchitectures(true)
+                .warmPoolMaxPerFunction(2)
+                .warmPoolMaxTotal(8)
+                .dockerFlags("--cpus=1 --memory=512m")
+                .acceptExternalLayerArns(true)
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.isEphemeral()).isTrue();
@@ -72,6 +86,13 @@ class LambdaConfigTest {
         assertThat(config.getEcrBaseUri()).isEqualTo("123456789012.dkr.ecr.us-east-1.amazonaws.com");
         assertThat(config.getContainerNamePrefix()).contains("acme");
         assertThat(config.getCodeVolumePopulateConcurrency()).contains(4);
+        assertThat(config.getZipMaxEntries()).isEqualTo(500);
+        assertThat(config.getAsyncRetryDelaySeconds()).isEqualTo(0);
+        assertThat(config.isHonourArchitectures()).isTrue();
+        assertThat(config.getWarmPoolMaxPerFunction()).contains(2);
+        assertThat(config.getWarmPoolMaxTotal()).isEqualTo(8);
+        assertThat(config.getDockerFlags()).contains("--cpus=1 --memory=512m");
+        assertThat(config.isAcceptExternalLayerArns()).isTrue();
     }
 
     @Test
@@ -95,7 +116,14 @@ class LambdaConfigTest {
                 .doesNotContainKey("FLOCI_SERVICES_LAMBDA_AWS_CONFIG_PATH")
                 .doesNotContainKey("FLOCI_SERVICES_LAMBDA_EXTRA_HOSTS")
                 .doesNotContainKey("FLOCI_SERVICES_LAMBDA_CONTAINER_NAME_PREFIX")
-                .doesNotContainKey("FLOCI_SERVICES_LAMBDA_CODE_VOLUME_POPULATE_CONCURRENCY");
+                .doesNotContainKey("FLOCI_SERVICES_LAMBDA_CODE_VOLUME_POPULATE_CONCURRENCY")
+                .containsEntry("FLOCI_SERVICES_LAMBDA_ZIP_MAX_ENTRIES", "100000")
+                .containsEntry("FLOCI_SERVICES_LAMBDA_ASYNC_RETRY_DELAY_SECONDS", "60")
+                .containsEntry("FLOCI_SERVICES_LAMBDA_HONOUR_ARCHITECTURES", "false")
+                .doesNotContainKey("FLOCI_SERVICES_LAMBDA_WARM_POOL_MAX_PER_FUNCTION")
+                .containsEntry("FLOCI_SERVICES_LAMBDA_WARM_POOL_MAX_TOTAL", "0")
+                .doesNotContainKey("FLOCI_SERVICES_LAMBDA_DOCKER_FLAGS")
+                .containsEntry("FLOCI_SERVICES_LAMBDA_ACCEPT_EXTERNAL_LAYER_ARNS", "false");
     }
 
     @Test
@@ -117,6 +145,13 @@ class LambdaConfigTest {
                 .ecrBaseUri("123456789012.dkr.ecr.us-east-1.amazonaws.com")
                 .containerNamePrefix("acme")
                 .codeVolumePopulateConcurrency(4)
+                .zipMaxEntries(500)
+                .asyncRetryDelaySeconds(0)
+                .honourArchitectures(true)
+                .warmPoolMaxPerFunction(2)
+                .warmPoolMaxTotal(8)
+                .dockerFlags("--cpus=1 --memory=512m")
+                .acceptExternalLayerArns(true)
                 .build()
                 .applyEnvVarsToContainer(container);
 
@@ -136,7 +171,14 @@ class LambdaConfigTest {
                 .containsEntry("FLOCI_SERVICES_LAMBDA_EXTRA_HOSTS", "host.docker.internal:host-gateway,my-service:172.17.0.1")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_ECR_BASE_URI", "123456789012.dkr.ecr.us-east-1.amazonaws.com")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_CONTAINER_NAME_PREFIX", "acme")
-                .containsEntry("FLOCI_SERVICES_LAMBDA_CODE_VOLUME_POPULATE_CONCURRENCY", "4");
+                .containsEntry("FLOCI_SERVICES_LAMBDA_CODE_VOLUME_POPULATE_CONCURRENCY", "4")
+                .containsEntry("FLOCI_SERVICES_LAMBDA_ZIP_MAX_ENTRIES", "500")
+                .containsEntry("FLOCI_SERVICES_LAMBDA_ASYNC_RETRY_DELAY_SECONDS", "0")
+                .containsEntry("FLOCI_SERVICES_LAMBDA_HONOUR_ARCHITECTURES", "true")
+                .containsEntry("FLOCI_SERVICES_LAMBDA_WARM_POOL_MAX_PER_FUNCTION", "2")
+                .containsEntry("FLOCI_SERVICES_LAMBDA_WARM_POOL_MAX_TOTAL", "8")
+                .containsEntry("FLOCI_SERVICES_LAMBDA_DOCKER_FLAGS", "--cpus=1 --memory=512m")
+                .containsEntry("FLOCI_SERVICES_LAMBDA_ACCEPT_EXTERNAL_LAYER_ARNS", "true");
     }
 
     @Test
@@ -144,7 +186,15 @@ class LambdaConfigTest {
         GenericContainer<?> container = genericContainer();
         LambdaConfig.builder().enabled(false).build().applyEnvVarsToContainer(container);
 
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_LAMBDA_ENABLED", "false");
+        assertThat(container.getEnvMap())
+                .containsEntry("FLOCI_SERVICES_LAMBDA_ENABLED", "false")
+                .doesNotContainKey("FLOCI_SERVICES_LAMBDA_ZIP_MAX_ENTRIES")
+                .doesNotContainKey("FLOCI_SERVICES_LAMBDA_ASYNC_RETRY_DELAY_SECONDS")
+                .doesNotContainKey("FLOCI_SERVICES_LAMBDA_HONOUR_ARCHITECTURES")
+                .doesNotContainKey("FLOCI_SERVICES_LAMBDA_WARM_POOL_MAX_PER_FUNCTION")
+                .doesNotContainKey("FLOCI_SERVICES_LAMBDA_WARM_POOL_MAX_TOTAL")
+                .doesNotContainKey("FLOCI_SERVICES_LAMBDA_DOCKER_FLAGS")
+                .doesNotContainKey("FLOCI_SERVICES_LAMBDA_ACCEPT_EXTERNAL_LAYER_ARNS");
     }
 
     @Test
@@ -315,6 +365,13 @@ class LambdaConfigTest {
                 .ecrBaseUri("123456789012.dkr.ecr.us-east-1.amazonaws.com")
                 .containerNamePrefix("acme-prefix")
                 .codeVolumePopulateConcurrency(4)
+                .zipMaxEntries(500)
+                .asyncRetryDelaySeconds(0)
+                .honourArchitectures(true)
+                .warmPoolMaxPerFunction(2)
+                .warmPoolMaxTotal(8)
+                .dockerFlags("--cpus=1 --memory=512m")
+                .acceptExternalLayerArns(true)
                 .build();
         LambdaConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
@@ -336,166 +393,19 @@ class LambdaConfigTest {
         assertThat(copy.getEcrBaseUri()).isEqualTo("123456789012.dkr.ecr.us-east-1.amazonaws.com");
         assertThat(copy.getContainerNamePrefix()).contains("acme-prefix");
         assertThat(copy.getCodeVolumePopulateConcurrency()).contains(4);
+        assertThat(copy.getZipMaxEntries()).isEqualTo(500);
+        assertThat(copy.getAsyncRetryDelaySeconds()).isEqualTo(0);
+        assertThat(copy.isHonourArchitectures()).isTrue();
+        assertThat(copy.getWarmPoolMaxPerFunction()).contains(2);
+        assertThat(copy.getWarmPoolMaxTotal()).isEqualTo(8);
+        assertThat(copy.getDockerFlags()).contains("--cpus=1 --memory=512m");
+        assertThat(copy.isAcceptExternalLayerArns()).isTrue();
     }
 
     @Test
     void shouldRequireDockerSocketWhenEnabled() {
         assertThat(LambdaConfig.builder().build().requiresDockerSocket()).isTrue();
         assertThat(LambdaConfig.builder().enabled(false).build().requiresDockerSocket()).isFalse();
-    }
-
-    @Test
-    void shouldApplyZipMaxEntries() {
-        LambdaConfig defaults = LambdaConfig.builder().build();
-        assertThat(defaults.getZipMaxEntries()).isEqualTo(100000);
-
-        LambdaConfig config = LambdaConfig.builder().zipMaxEntries(500).build();
-        assertThat(config.getZipMaxEntries()).isEqualTo(500);
-        assertThat(config.toBuilder().build().getZipMaxEntries()).isEqualTo(500);
-
-        GenericContainer<?> container = genericContainer();
-        config.applyEnvVarsToContainer(container);
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_LAMBDA_ZIP_MAX_ENTRIES", "500");
-
-        GenericContainer<?> defaultContainer = genericContainer();
-        defaults.applyEnvVarsToContainer(defaultContainer);
-        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_LAMBDA_ZIP_MAX_ENTRIES", "100000");
-
-        GenericContainer<?> disabledContainer = genericContainer();
-        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
-        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_LAMBDA_ZIP_MAX_ENTRIES");
-    }
-
-    @Test
-    void shouldApplyAsyncRetryDelaySeconds() {
-        LambdaConfig defaults = LambdaConfig.builder().build();
-        assertThat(defaults.getAsyncRetryDelaySeconds()).isEqualTo(60);
-
-        LambdaConfig config = LambdaConfig.builder().asyncRetryDelaySeconds(0).build();
-        assertThat(config.getAsyncRetryDelaySeconds()).isEqualTo(0);
-        assertThat(config.toBuilder().build().getAsyncRetryDelaySeconds()).isEqualTo(0);
-
-        GenericContainer<?> container = genericContainer();
-        config.applyEnvVarsToContainer(container);
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_LAMBDA_ASYNC_RETRY_DELAY_SECONDS", "0");
-
-        GenericContainer<?> defaultContainer = genericContainer();
-        defaults.applyEnvVarsToContainer(defaultContainer);
-        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_LAMBDA_ASYNC_RETRY_DELAY_SECONDS", "60");
-
-        GenericContainer<?> disabledContainer = genericContainer();
-        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
-        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_LAMBDA_ASYNC_RETRY_DELAY_SECONDS");
-    }
-
-    @Test
-    void shouldApplyHonourArchitectures() {
-        LambdaConfig defaults = LambdaConfig.builder().build();
-        assertThat(defaults.isHonourArchitectures()).isEqualTo(false);
-
-        LambdaConfig config = LambdaConfig.builder().honourArchitectures(true).build();
-        assertThat(config.isHonourArchitectures()).isEqualTo(true);
-        assertThat(config.toBuilder().build().isHonourArchitectures()).isEqualTo(true);
-
-        GenericContainer<?> container = genericContainer();
-        config.applyEnvVarsToContainer(container);
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_LAMBDA_HONOUR_ARCHITECTURES", "true");
-
-        GenericContainer<?> defaultContainer = genericContainer();
-        defaults.applyEnvVarsToContainer(defaultContainer);
-        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_LAMBDA_HONOUR_ARCHITECTURES", "false");
-
-        GenericContainer<?> disabledContainer = genericContainer();
-        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
-        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_LAMBDA_HONOUR_ARCHITECTURES");
-    }
-
-    @Test
-    void shouldApplyWarmPoolMaxPerFunction() {
-        LambdaConfig defaults = LambdaConfig.builder().build();
-        assertThat(defaults.getWarmPoolMaxPerFunction()).isEmpty();
-
-        LambdaConfig config = LambdaConfig.builder().warmPoolMaxPerFunction(2).build();
-        assertThat(config.getWarmPoolMaxPerFunction()).contains(2);
-        assertThat(config.toBuilder().build().getWarmPoolMaxPerFunction()).contains(2);
-
-        GenericContainer<?> container = genericContainer();
-        config.applyEnvVarsToContainer(container);
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_LAMBDA_WARM_POOL_MAX_PER_FUNCTION", "2");
-
-        GenericContainer<?> defaultContainer = genericContainer();
-        defaults.applyEnvVarsToContainer(defaultContainer);
-        assertThat(defaultContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_LAMBDA_WARM_POOL_MAX_PER_FUNCTION");
-
-        GenericContainer<?> disabledContainer = genericContainer();
-        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
-        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_LAMBDA_WARM_POOL_MAX_PER_FUNCTION");
-    }
-
-    @Test
-    void shouldApplyWarmPoolMaxTotal() {
-        LambdaConfig defaults = LambdaConfig.builder().build();
-        assertThat(defaults.getWarmPoolMaxTotal()).isEqualTo(0);
-
-        LambdaConfig config = LambdaConfig.builder().warmPoolMaxTotal(8).build();
-        assertThat(config.getWarmPoolMaxTotal()).isEqualTo(8);
-        assertThat(config.toBuilder().build().getWarmPoolMaxTotal()).isEqualTo(8);
-
-        GenericContainer<?> container = genericContainer();
-        config.applyEnvVarsToContainer(container);
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_LAMBDA_WARM_POOL_MAX_TOTAL", "8");
-
-        GenericContainer<?> defaultContainer = genericContainer();
-        defaults.applyEnvVarsToContainer(defaultContainer);
-        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_LAMBDA_WARM_POOL_MAX_TOTAL", "0");
-
-        GenericContainer<?> disabledContainer = genericContainer();
-        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
-        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_LAMBDA_WARM_POOL_MAX_TOTAL");
-    }
-
-    @Test
-    void shouldApplyDockerFlags() {
-        LambdaConfig defaults = LambdaConfig.builder().build();
-        assertThat(defaults.getDockerFlags()).isEmpty();
-
-        LambdaConfig config = LambdaConfig.builder().dockerFlags("--cpus=1 --memory=512m").build();
-        assertThat(config.getDockerFlags()).contains("--cpus=1 --memory=512m");
-        assertThat(config.toBuilder().build().getDockerFlags()).contains("--cpus=1 --memory=512m");
-
-        GenericContainer<?> container = genericContainer();
-        config.applyEnvVarsToContainer(container);
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_LAMBDA_DOCKER_FLAGS", "--cpus=1 --memory=512m");
-
-        GenericContainer<?> defaultContainer = genericContainer();
-        defaults.applyEnvVarsToContainer(defaultContainer);
-        assertThat(defaultContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_LAMBDA_DOCKER_FLAGS");
-
-        GenericContainer<?> disabledContainer = genericContainer();
-        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
-        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_LAMBDA_DOCKER_FLAGS");
-    }
-
-    @Test
-    void shouldApplyAcceptExternalLayerArns() {
-        LambdaConfig defaults = LambdaConfig.builder().build();
-        assertThat(defaults.isAcceptExternalLayerArns()).isEqualTo(false);
-
-        LambdaConfig config = LambdaConfig.builder().acceptExternalLayerArns(true).build();
-        assertThat(config.isAcceptExternalLayerArns()).isEqualTo(true);
-        assertThat(config.toBuilder().build().isAcceptExternalLayerArns()).isEqualTo(true);
-
-        GenericContainer<?> container = genericContainer();
-        config.applyEnvVarsToContainer(container);
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_LAMBDA_ACCEPT_EXTERNAL_LAYER_ARNS", "true");
-
-        GenericContainer<?> defaultContainer = genericContainer();
-        defaults.applyEnvVarsToContainer(defaultContainer);
-        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_LAMBDA_ACCEPT_EXTERNAL_LAYER_ARNS", "false");
-
-        GenericContainer<?> disabledContainer = genericContainer();
-        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
-        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_LAMBDA_ACCEPT_EXTERNAL_LAYER_ARNS");
     }
 
 }
