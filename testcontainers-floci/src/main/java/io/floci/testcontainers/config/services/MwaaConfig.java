@@ -94,7 +94,10 @@ public class MwaaConfig extends AbstractServiceConfig<MwaaConfig.Builder> {
     }
 
     /**
-     * Returns the Airflow versions environments may request.
+     * Returns the Airflow versions environments may request. Each is combined with the image tag
+     * {@code apache/airflow:<version>-<pythonTag>}, where the Python tag matches the version real
+     * Amazon MWAA runs for that Airflow version ({@code python3.11} through 2.10.x,
+     * {@code python3.12} from 2.11.0 on).
      *
      * @return the list of supported Airflow versions
      */
@@ -275,7 +278,10 @@ public class MwaaConfig extends AbstractServiceConfig<MwaaConfig.Builder> {
         }
 
         /**
-         * Sets the Airflow versions environments may request.
+         * Sets the Airflow versions environments may request. Each is combined with the image tag
+         * {@code apache/airflow:<version>-<pythonTag>}, where the Python tag matches the version real
+         * Amazon MWAA runs for that Airflow version ({@code python3.11} through 2.10.x,
+         * {@code python3.12} from 2.11.0 on).
          *
          * @param supportedVersions the list of supported Airflow versions (default {@code ["2.10.5", "2.9.3", "2.8.4"]})
          * @return this builder
