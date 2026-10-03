@@ -88,6 +88,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private ProtocolsConfig protocolsConfig = ProtocolsConfig.builder().build();
     private AuthConfig authConfig = AuthConfig.builder().build();
     private InitHooksConfig initHooksConfig = InitHooksConfig.builder().build();
+    private PartitionsConfig partitionsConfig = PartitionsConfig.builder().build();
+    private NetworkConfig networkConfig = NetworkConfig.builder().build();
 
     // Services config
     private AcmConfig acmConfig = AcmConfig.builder().build();
@@ -188,6 +190,34 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private ComprehendConfig comprehendConfig = ComprehendConfig.builder().build();
     private RekognitionConfig rekognitionConfig = RekognitionConfig.builder().build();
     private TranscribeConfig transcribeConfig = TranscribeConfig.builder().build();
+    private RedshiftDataConfig redshiftDataConfig = RedshiftDataConfig.builder().build();
+    private RedshiftServerlessConfig redshiftServerlessConfig = RedshiftServerlessConfig.builder().build();
+    private BedrockConfig bedrockConfig = BedrockConfig.builder().build();
+    private TranslateConfig translateConfig = TranslateConfig.builder().build();
+    private OamConfig oamConfig = OamConfig.builder().build();
+    private BcmPricingCalculatorConfig bcmPricingCalculatorConfig = BcmPricingCalculatorConfig.builder().build();
+    private TimestreamInfluxDbConfig timestreamInfluxDbConfig = TimestreamInfluxDbConfig.builder().build();
+    private SageMakerConfig sageMakerConfig = SageMakerConfig.builder().build();
+    private SsoOidcConfig ssoOidcConfig = SsoOidcConfig.builder().build();
+    private Macie2Config macie2Config = Macie2Config.builder().build();
+    private AccountConfig accountConfig = AccountConfig.builder().build();
+    private AccessAnalyzerConfig accessAnalyzerConfig = AccessAnalyzerConfig.builder().build();
+    private IdentityStoreConfig identityStoreConfig = IdentityStoreConfig.builder().build();
+    private BudgetsConfig budgetsConfig = BudgetsConfig.builder().build();
+    private Inspector2Config inspector2Config = Inspector2Config.builder().build();
+    private SecurityHubConfig securityHubConfig = SecurityHubConfig.builder().build();
+    private DetectiveConfig detectiveConfig = DetectiveConfig.builder().build();
+    private VerifiedPermissionsConfig verifiedPermissionsConfig = VerifiedPermissionsConfig.builder().build();
+    private ControlCatalogConfig controlCatalogConfig = ControlCatalogConfig.builder().build();
+    private AppIntegrationsConfig appIntegrationsConfig = AppIntegrationsConfig.builder().build();
+    private DlmConfig dlmConfig = DlmConfig.builder().build();
+    private CognitoIdentityConfig cognitoIdentityConfig = CognitoIdentityConfig.builder().build();
+    private GlobalAcceleratorConfig globalAcceleratorConfig = GlobalAcceleratorConfig.builder().build();
+    private DataSyncConfig dataSyncConfig = DataSyncConfig.builder().build();
+    private CodeArtifactConfig codeArtifactConfig = CodeArtifactConfig.builder().build();
+    private MarketplaceConfig marketplaceConfig = MarketplaceConfig.builder().build();
+    private DmsConfig dmsConfig = DmsConfig.builder().build();
+    private ElbConfig elbConfig = ElbConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -287,7 +317,35 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> organizationsConfig, c -> organizationsConfig = c),
             new ServiceConfigAccessor<>(() -> comprehendConfig, c -> comprehendConfig = c),
             new ServiceConfigAccessor<>(() -> rekognitionConfig, c -> rekognitionConfig = c),
-            new ServiceConfigAccessor<>(() -> transcribeConfig, c -> transcribeConfig = c)
+            new ServiceConfigAccessor<>(() -> transcribeConfig, c -> transcribeConfig = c),
+            new ServiceConfigAccessor<>(() -> redshiftDataConfig, c -> redshiftDataConfig = c),
+            new ServiceConfigAccessor<>(() -> redshiftServerlessConfig, c -> redshiftServerlessConfig = c),
+            new ServiceConfigAccessor<>(() -> bedrockConfig, c -> bedrockConfig = c),
+            new ServiceConfigAccessor<>(() -> translateConfig, c -> translateConfig = c),
+            new ServiceConfigAccessor<>(() -> oamConfig, c -> oamConfig = c),
+            new ServiceConfigAccessor<>(() -> bcmPricingCalculatorConfig, c -> bcmPricingCalculatorConfig = c),
+            new ServiceConfigAccessor<>(() -> timestreamInfluxDbConfig, c -> timestreamInfluxDbConfig = c),
+            new ServiceConfigAccessor<>(() -> sageMakerConfig, c -> sageMakerConfig = c),
+            new ServiceConfigAccessor<>(() -> ssoOidcConfig, c -> ssoOidcConfig = c),
+            new ServiceConfigAccessor<>(() -> macie2Config, c -> macie2Config = c),
+            new ServiceConfigAccessor<>(() -> accountConfig, c -> accountConfig = c),
+            new ServiceConfigAccessor<>(() -> accessAnalyzerConfig, c -> accessAnalyzerConfig = c),
+            new ServiceConfigAccessor<>(() -> identityStoreConfig, c -> identityStoreConfig = c),
+            new ServiceConfigAccessor<>(() -> budgetsConfig, c -> budgetsConfig = c),
+            new ServiceConfigAccessor<>(() -> inspector2Config, c -> inspector2Config = c),
+            new ServiceConfigAccessor<>(() -> securityHubConfig, c -> securityHubConfig = c),
+            new ServiceConfigAccessor<>(() -> detectiveConfig, c -> detectiveConfig = c),
+            new ServiceConfigAccessor<>(() -> verifiedPermissionsConfig, c -> verifiedPermissionsConfig = c),
+            new ServiceConfigAccessor<>(() -> controlCatalogConfig, c -> controlCatalogConfig = c),
+            new ServiceConfigAccessor<>(() -> appIntegrationsConfig, c -> appIntegrationsConfig = c),
+            new ServiceConfigAccessor<>(() -> dlmConfig, c -> dlmConfig = c),
+            new ServiceConfigAccessor<>(() -> cognitoIdentityConfig, c -> cognitoIdentityConfig = c),
+            new ServiceConfigAccessor<>(() -> globalAcceleratorConfig, c -> globalAcceleratorConfig = c),
+            new ServiceConfigAccessor<>(() -> dataSyncConfig, c -> dataSyncConfig = c),
+            new ServiceConfigAccessor<>(() -> codeArtifactConfig, c -> codeArtifactConfig = c),
+            new ServiceConfigAccessor<>(() -> marketplaceConfig, c -> marketplaceConfig = c),
+            new ServiceConfigAccessor<>(() -> dmsConfig, c -> dmsConfig = c),
+            new ServiceConfigAccessor<>(() -> elbConfig, c -> elbConfig = c)
     );
 
     /**
@@ -487,7 +545,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
 
     /**
      * Returns the path, inside the container, of the shared mock-response configuration file used by the
-     * fixed-stub AI services (Textract, Comprehend, Rekognition) to return a caller-configured response
+     * fixed-stub AI services (Textract, Comprehend, Rekognition, Translate) to return a caller-configured response
      * instead of their default canned stub.
      *
      * <p>The path is either the one passed to {@link #withAiMockConfigFile(String)} verbatim, or a
@@ -512,7 +570,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     /**
      * Sets the path, inside the container, of a shared mock-response configuration file that already exists
      * in the container (for example one added through a volume or another {@code withCopy*} call). The
-     * fixed-stub AI services (Textract, Comprehend, Rekognition) use it to return a caller-configured
+     * fixed-stub AI services (Textract, Comprehend, Rekognition, Translate) use it to return a caller-configured
      * response instead of their default canned stub.
      *
      * <p>Use {@link #withAiMockConfig(String)} instead to hand over just the file content and let
@@ -531,7 +589,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
 
     /**
      * Sets the content of the shared mock-response configuration file used by the fixed-stub AI services
-     * (Textract, Comprehend, Rekognition) to return a caller-configured response instead of their default
+     * (Textract, Comprehend, Rekognition, Translate) to return a caller-configured response instead of their default
      * canned stub.
      *
      * <p>The content is copied into the container under a generated, randomized path, which is then used
@@ -626,19 +684,20 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     /**
      * Configures TLS/HTTPS for the Floci server.
      *
-     * <p>By default, a self-signed certificate is auto-generated. To use a custom certificate,
+     * <p>By default, a server certificate issued by Floci's local root CA is auto-generated; clients
+     * trust that CA (served at {@code GET /_floci/ca.pem}), not the leaf. To use a custom certificate,
      * provide paths to the PEM certificate and private key files:
      *
      * <pre>{@code
      * new FlociContainer()
-     *     .withTls(c -> c.enabled(true).certPath("/certs/server.crt").keyPath("/certs/server.key"));
+     *     .withTlsConfig(c -> c.enabled(true).certPath("/certs/server.crt").keyPath("/certs/server.key"));
      * }</pre>
      *
-     * <p>To enable TLS with a self-signed certificate:
+     * <p>To enable TLS with an auto-generated certificate:
      *
      * <pre>{@code
      * new FlociContainer()
-     *     .withTls(c -> c.enabled(true));
+     *     .withTlsConfig(c -> c.enabled(true));
      * }</pre>
      *
      * @param configurer a consumer that receives a {@link TlsConfig.Builder} to modify
@@ -648,7 +707,9 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         TlsConfig.Builder builder = tlsConfig.toBuilder();
         configurer.accept(builder);
         this.tlsConfig = builder.build();
-        tlsConfig.applyEnvVarsToContainer(this);
+        // Some service ports and env vars (e.g. IoT's MQTT over TLS listener) only apply while TLS is enabled
+        configureExposedPorts();
+        configureEnvVars();
         return this;
     }
 
@@ -722,7 +783,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     }
 
     /**
-     * Configures security settings such as CORS allowed origins, headers, and expose headers.
+     * Configures security settings such as CORS allowed origins, headers, and expose headers, whether JWT
+     * issuers may live on private addresses, and whether Floci may listen outside loopback.
      *
      * <pre>{@code
      * new FlociContainer()
@@ -823,6 +885,65 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.initHooksConfig = builder.build();
         initHooksConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Returns the current partitions configuration. Defaults to deriving the AWS partition from the
+     * default region, serving every enabled service in every partition and refusing unknown regions.
+     *
+     * @return the partitions configuration
+     */
+    public PartitionsConfig getPartitionsConfig() {
+        return partitionsConfig;
+    }
+
+    /**
+     * Configures which AWS partition Floci serves and how strictly requests are checked against it.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withRegion("cn-north-1")
+     *     .withPartitionsConfig(c -> c.id("aws-cn").strict(true));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link PartitionsConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withPartitionsConfig(Consumer<PartitionsConfig.Builder> configurer) {
+        PartitionsConfig.Builder builder = partitionsConfig.toBuilder();
+        configurer.accept(builder);
+        this.partitionsConfig = builder.build();
+        partitionsConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Returns the current network configuration. Defaults to security-group enforcement disabled.
+     *
+     * @return the network configuration
+     */
+    public NetworkConfig getNetworkConfig() {
+        return networkConfig;
+    }
+
+    /**
+     * Configures network settings such as security-group enforcement for Docker-backed EC2 instances and
+     * ECS {@code awsvpc} tasks.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withNetworkConfig(c -> c.securityGroupEnforcementEnabled(true));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link NetworkConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withNetworkConfig(Consumer<NetworkConfig.Builder> configurer) {
+        NetworkConfig.Builder builder = networkConfig.toBuilder();
+        configurer.accept(builder);
+        this.networkConfig = builder.build();
+        networkConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
@@ -1244,6 +1365,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         this.ec2Config = builder.build();
         configureExposedPorts();
         ec2Config.applyEnvVarsToContainer(this);
+        ec2Config.applyFileMountsToContainer(this);
         return this;
     }
 
@@ -3636,6 +3758,790 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         return this;
     }
 
+    /**
+     * Redshift Data API-specific settings.
+     *
+     * @return the Redshift Data API configuration
+     */
+    public RedshiftDataConfig getRedshiftDataConfig() {
+        return redshiftDataConfig;
+    }
+
+    /**
+     * Configures Redshift Data API-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withRedshiftDataConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link RedshiftDataConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withRedshiftDataConfig(Consumer<RedshiftDataConfig.Builder> configurer) {
+        RedshiftDataConfig.Builder builder = redshiftDataConfig.toBuilder();
+        configurer.accept(builder);
+        this.redshiftDataConfig = builder.build();
+        redshiftDataConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Redshift Serverless-specific settings.
+     *
+     * @return the Redshift Serverless configuration
+     */
+    public RedshiftServerlessConfig getRedshiftServerlessConfig() {
+        return redshiftServerlessConfig;
+    }
+
+    /**
+     * Configures Redshift Serverless-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withRedshiftServerlessConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link RedshiftServerlessConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withRedshiftServerlessConfig(Consumer<RedshiftServerlessConfig.Builder> configurer) {
+        RedshiftServerlessConfig.Builder builder = redshiftServerlessConfig.toBuilder();
+        configurer.accept(builder);
+        this.redshiftServerlessConfig = builder.build();
+        redshiftServerlessConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Bedrock-specific settings.
+     *
+     * @return the Bedrock configuration
+     */
+    public BedrockConfig getBedrockConfig() {
+        return bedrockConfig;
+    }
+
+    /**
+     * Configures Bedrock-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withBedrockConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link BedrockConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withBedrockConfig(Consumer<BedrockConfig.Builder> configurer) {
+        BedrockConfig.Builder builder = bedrockConfig.toBuilder();
+        configurer.accept(builder);
+        this.bedrockConfig = builder.build();
+        bedrockConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Translate-specific settings.
+     *
+     * @return the Translate configuration
+     */
+    public TranslateConfig getTranslateConfig() {
+        return translateConfig;
+    }
+
+    /**
+     * Configures Translate-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withTranslateConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link TranslateConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withTranslateConfig(Consumer<TranslateConfig.Builder> configurer) {
+        TranslateConfig.Builder builder = translateConfig.toBuilder();
+        configurer.accept(builder);
+        this.translateConfig = builder.build();
+        translateConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * OAM (CloudWatch Observability Access Manager)-specific settings.
+     *
+     * @return the OAM (CloudWatch Observability Access Manager) configuration
+     */
+    public OamConfig getOamConfig() {
+        return oamConfig;
+    }
+
+    /**
+     * Configures OAM (CloudWatch Observability Access Manager)-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withOamConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link OamConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withOamConfig(Consumer<OamConfig.Builder> configurer) {
+        OamConfig.Builder builder = oamConfig.toBuilder();
+        configurer.accept(builder);
+        this.oamConfig = builder.build();
+        oamConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * BCM Pricing Calculator-specific settings.
+     *
+     * @return the BCM Pricing Calculator configuration
+     */
+    public BcmPricingCalculatorConfig getBcmPricingCalculatorConfig() {
+        return bcmPricingCalculatorConfig;
+    }
+
+    /**
+     * Configures BCM Pricing Calculator-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withBcmPricingCalculatorConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link BcmPricingCalculatorConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withBcmPricingCalculatorConfig(Consumer<BcmPricingCalculatorConfig.Builder> configurer) {
+        BcmPricingCalculatorConfig.Builder builder = bcmPricingCalculatorConfig.toBuilder();
+        configurer.accept(builder);
+        this.bcmPricingCalculatorConfig = builder.build();
+        bcmPricingCalculatorConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Timestream for InfluxDB-specific settings.
+     *
+     * @return the Timestream for InfluxDB configuration
+     */
+    public TimestreamInfluxDbConfig getTimestreamInfluxDbConfig() {
+        return timestreamInfluxDbConfig;
+    }
+
+    /**
+     * Configures Timestream for InfluxDB-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withTimestreamInfluxDbConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link TimestreamInfluxDbConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withTimestreamInfluxDbConfig(Consumer<TimestreamInfluxDbConfig.Builder> configurer) {
+        TimestreamInfluxDbConfig.Builder builder = timestreamInfluxDbConfig.toBuilder();
+        configurer.accept(builder);
+        this.timestreamInfluxDbConfig = builder.build();
+        timestreamInfluxDbConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * SageMaker-specific settings.
+     *
+     * @return the SageMaker configuration
+     */
+    public SageMakerConfig getSageMakerConfig() {
+        return sageMakerConfig;
+    }
+
+    /**
+     * Configures SageMaker-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withSageMakerConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link SageMakerConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withSageMakerConfig(Consumer<SageMakerConfig.Builder> configurer) {
+        SageMakerConfig.Builder builder = sageMakerConfig.toBuilder();
+        configurer.accept(builder);
+        this.sageMakerConfig = builder.build();
+        sageMakerConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * SSO OIDC (IAM Identity Center OIDC)-specific settings.
+     *
+     * @return the SSO OIDC (IAM Identity Center OIDC) configuration
+     */
+    public SsoOidcConfig getSsoOidcConfig() {
+        return ssoOidcConfig;
+    }
+
+    /**
+     * Configures SSO OIDC (IAM Identity Center OIDC)-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withSsoOidcConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link SsoOidcConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withSsoOidcConfig(Consumer<SsoOidcConfig.Builder> configurer) {
+        SsoOidcConfig.Builder builder = ssoOidcConfig.toBuilder();
+        configurer.accept(builder);
+        this.ssoOidcConfig = builder.build();
+        ssoOidcConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Macie-specific settings.
+     *
+     * @return the Macie configuration
+     */
+    public Macie2Config getMacie2Config() {
+        return macie2Config;
+    }
+
+    /**
+     * Configures Macie-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withMacie2Config(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link Macie2Config.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withMacie2Config(Consumer<Macie2Config.Builder> configurer) {
+        Macie2Config.Builder builder = macie2Config.toBuilder();
+        configurer.accept(builder);
+        this.macie2Config = builder.build();
+        macie2Config.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Account Management-specific settings.
+     *
+     * @return the Account Management configuration
+     */
+    public AccountConfig getAccountConfig() {
+        return accountConfig;
+    }
+
+    /**
+     * Configures Account Management-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withAccountConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link AccountConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withAccountConfig(Consumer<AccountConfig.Builder> configurer) {
+        AccountConfig.Builder builder = accountConfig.toBuilder();
+        configurer.accept(builder);
+        this.accountConfig = builder.build();
+        accountConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * IAM Access Analyzer-specific settings.
+     *
+     * @return the IAM Access Analyzer configuration
+     */
+    public AccessAnalyzerConfig getAccessAnalyzerConfig() {
+        return accessAnalyzerConfig;
+    }
+
+    /**
+     * Configures IAM Access Analyzer-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withAccessAnalyzerConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link AccessAnalyzerConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withAccessAnalyzerConfig(Consumer<AccessAnalyzerConfig.Builder> configurer) {
+        AccessAnalyzerConfig.Builder builder = accessAnalyzerConfig.toBuilder();
+        configurer.accept(builder);
+        this.accessAnalyzerConfig = builder.build();
+        accessAnalyzerConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Identity Store-specific settings.
+     *
+     * @return the Identity Store configuration
+     */
+    public IdentityStoreConfig getIdentityStoreConfig() {
+        return identityStoreConfig;
+    }
+
+    /**
+     * Configures Identity Store-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withIdentityStoreConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link IdentityStoreConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withIdentityStoreConfig(Consumer<IdentityStoreConfig.Builder> configurer) {
+        IdentityStoreConfig.Builder builder = identityStoreConfig.toBuilder();
+        configurer.accept(builder);
+        this.identityStoreConfig = builder.build();
+        identityStoreConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Budgets-specific settings.
+     *
+     * @return the Budgets configuration
+     */
+    public BudgetsConfig getBudgetsConfig() {
+        return budgetsConfig;
+    }
+
+    /**
+     * Configures Budgets-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withBudgetsConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link BudgetsConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withBudgetsConfig(Consumer<BudgetsConfig.Builder> configurer) {
+        BudgetsConfig.Builder builder = budgetsConfig.toBuilder();
+        configurer.accept(builder);
+        this.budgetsConfig = builder.build();
+        budgetsConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Inspector-specific settings.
+     *
+     * @return the Inspector configuration
+     */
+    public Inspector2Config getInspector2Config() {
+        return inspector2Config;
+    }
+
+    /**
+     * Configures Inspector-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withInspector2Config(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link Inspector2Config.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withInspector2Config(Consumer<Inspector2Config.Builder> configurer) {
+        Inspector2Config.Builder builder = inspector2Config.toBuilder();
+        configurer.accept(builder);
+        this.inspector2Config = builder.build();
+        inspector2Config.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Security Hub-specific settings.
+     *
+     * @return the Security Hub configuration
+     */
+    public SecurityHubConfig getSecurityHubConfig() {
+        return securityHubConfig;
+    }
+
+    /**
+     * Configures Security Hub-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withSecurityHubConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link SecurityHubConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withSecurityHubConfig(Consumer<SecurityHubConfig.Builder> configurer) {
+        SecurityHubConfig.Builder builder = securityHubConfig.toBuilder();
+        configurer.accept(builder);
+        this.securityHubConfig = builder.build();
+        securityHubConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Detective-specific settings.
+     *
+     * @return the Detective configuration
+     */
+    public DetectiveConfig getDetectiveConfig() {
+        return detectiveConfig;
+    }
+
+    /**
+     * Configures Detective-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withDetectiveConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link DetectiveConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withDetectiveConfig(Consumer<DetectiveConfig.Builder> configurer) {
+        DetectiveConfig.Builder builder = detectiveConfig.toBuilder();
+        configurer.accept(builder);
+        this.detectiveConfig = builder.build();
+        detectiveConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Verified Permissions-specific settings.
+     *
+     * @return the Verified Permissions configuration
+     */
+    public VerifiedPermissionsConfig getVerifiedPermissionsConfig() {
+        return verifiedPermissionsConfig;
+    }
+
+    /**
+     * Configures Verified Permissions-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withVerifiedPermissionsConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link VerifiedPermissionsConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withVerifiedPermissionsConfig(Consumer<VerifiedPermissionsConfig.Builder> configurer) {
+        VerifiedPermissionsConfig.Builder builder = verifiedPermissionsConfig.toBuilder();
+        configurer.accept(builder);
+        this.verifiedPermissionsConfig = builder.build();
+        verifiedPermissionsConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Control Catalog-specific settings.
+     *
+     * @return the Control Catalog configuration
+     */
+    public ControlCatalogConfig getControlCatalogConfig() {
+        return controlCatalogConfig;
+    }
+
+    /**
+     * Configures Control Catalog-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withControlCatalogConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link ControlCatalogConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withControlCatalogConfig(Consumer<ControlCatalogConfig.Builder> configurer) {
+        ControlCatalogConfig.Builder builder = controlCatalogConfig.toBuilder();
+        configurer.accept(builder);
+        this.controlCatalogConfig = builder.build();
+        controlCatalogConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * AppIntegrations-specific settings.
+     *
+     * @return the AppIntegrations configuration
+     */
+    public AppIntegrationsConfig getAppIntegrationsConfig() {
+        return appIntegrationsConfig;
+    }
+
+    /**
+     * Configures AppIntegrations-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withAppIntegrationsConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link AppIntegrationsConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withAppIntegrationsConfig(Consumer<AppIntegrationsConfig.Builder> configurer) {
+        AppIntegrationsConfig.Builder builder = appIntegrationsConfig.toBuilder();
+        configurer.accept(builder);
+        this.appIntegrationsConfig = builder.build();
+        appIntegrationsConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * DLM (Data Lifecycle Manager)-specific settings.
+     *
+     * @return the DLM (Data Lifecycle Manager) configuration
+     */
+    public DlmConfig getDlmConfig() {
+        return dlmConfig;
+    }
+
+    /**
+     * Configures DLM (Data Lifecycle Manager)-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withDlmConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link DlmConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withDlmConfig(Consumer<DlmConfig.Builder> configurer) {
+        DlmConfig.Builder builder = dlmConfig.toBuilder();
+        configurer.accept(builder);
+        this.dlmConfig = builder.build();
+        dlmConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Cognito Identity-specific settings.
+     *
+     * @return the Cognito Identity configuration
+     */
+    public CognitoIdentityConfig getCognitoIdentityConfig() {
+        return cognitoIdentityConfig;
+    }
+
+    /**
+     * Configures Cognito Identity-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withCognitoIdentityConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link CognitoIdentityConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withCognitoIdentityConfig(Consumer<CognitoIdentityConfig.Builder> configurer) {
+        CognitoIdentityConfig.Builder builder = cognitoIdentityConfig.toBuilder();
+        configurer.accept(builder);
+        this.cognitoIdentityConfig = builder.build();
+        cognitoIdentityConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Global Accelerator-specific settings.
+     *
+     * @return the Global Accelerator configuration
+     */
+    public GlobalAcceleratorConfig getGlobalAcceleratorConfig() {
+        return globalAcceleratorConfig;
+    }
+
+    /**
+     * Configures Global Accelerator-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withGlobalAcceleratorConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link GlobalAcceleratorConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withGlobalAcceleratorConfig(Consumer<GlobalAcceleratorConfig.Builder> configurer) {
+        GlobalAcceleratorConfig.Builder builder = globalAcceleratorConfig.toBuilder();
+        configurer.accept(builder);
+        this.globalAcceleratorConfig = builder.build();
+        globalAcceleratorConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * DataSync-specific settings.
+     *
+     * @return the DataSync configuration
+     */
+    public DataSyncConfig getDataSyncConfig() {
+        return dataSyncConfig;
+    }
+
+    /**
+     * Configures DataSync-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withDataSyncConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link DataSyncConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withDataSyncConfig(Consumer<DataSyncConfig.Builder> configurer) {
+        DataSyncConfig.Builder builder = dataSyncConfig.toBuilder();
+        configurer.accept(builder);
+        this.dataSyncConfig = builder.build();
+        dataSyncConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * CodeArtifact-specific settings.
+     *
+     * @return the CodeArtifact configuration
+     */
+    public CodeArtifactConfig getCodeArtifactConfig() {
+        return codeArtifactConfig;
+    }
+
+    /**
+     * Configures CodeArtifact-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withCodeArtifactConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link CodeArtifactConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withCodeArtifactConfig(Consumer<CodeArtifactConfig.Builder> configurer) {
+        CodeArtifactConfig.Builder builder = codeArtifactConfig.toBuilder();
+        configurer.accept(builder);
+        this.codeArtifactConfig = builder.build();
+        codeArtifactConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * AWS Marketplace-specific settings.
+     *
+     * @return the AWS Marketplace configuration
+     */
+    public MarketplaceConfig getMarketplaceConfig() {
+        return marketplaceConfig;
+    }
+
+    /**
+     * Configures AWS Marketplace-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withMarketplaceConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link MarketplaceConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withMarketplaceConfig(Consumer<MarketplaceConfig.Builder> configurer) {
+        MarketplaceConfig.Builder builder = marketplaceConfig.toBuilder();
+        configurer.accept(builder);
+        this.marketplaceConfig = builder.build();
+        marketplaceConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * DMS (Database Migration Service)-specific settings.
+     *
+     * @return the DMS (Database Migration Service) configuration
+     */
+    public DmsConfig getDmsConfig() {
+        return dmsConfig;
+    }
+
+    /**
+     * Configures DMS (Database Migration Service)-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withDmsConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link DmsConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withDmsConfig(Consumer<DmsConfig.Builder> configurer) {
+        DmsConfig.Builder builder = dmsConfig.toBuilder();
+        configurer.accept(builder);
+        this.dmsConfig = builder.build();
+        dmsConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Classic ELB (Elastic Load Balancing, API version 2012-06-01)-specific settings.
+     *
+     * @return the Classic ELB configuration
+     */
+    public ElbConfig getElbConfig() {
+        return elbConfig;
+    }
+
+    /**
+     * Configures Classic ELB (Elastic Load Balancing, API version 2012-06-01)-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withElbConfig(c -> c.mock(true));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link ElbConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withElbConfig(Consumer<ElbConfig.Builder> configurer) {
+        ElbConfig.Builder builder = elbConfig.toBuilder();
+        configurer.accept(builder);
+        this.elbConfig = builder.build();
+        elbConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
     private void preparePersistentStorageForCleanup() {
         if (storageConfig.getHostPersistentPath().isEmpty() || !isRunning()) {
             return;
@@ -3724,6 +4630,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         protocolsConfig.applyEnvVarsToContainer(this);
         authConfig.applyEnvVarsToContainer(this);
         initHooksConfig.applyEnvVarsToContainer(this);
+        partitionsConfig.applyEnvVarsToContainer(this);
+        networkConfig.applyEnvVarsToContainer(this);
 
         // Services config
         serviceConfigAccessors.forEach(accessor -> accessor.get().applyEnvVarsToContainer(this));

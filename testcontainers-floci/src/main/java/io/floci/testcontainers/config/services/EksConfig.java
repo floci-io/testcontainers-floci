@@ -2,6 +2,8 @@ package io.floci.testcontainers.config.services;
 
 import org.testcontainers.containers.Container;
 
+import java.util.Optional;
+
 /**
  * Configuration for EKS (Elastic Kubernetes Service)-specific container settings.
  *
@@ -27,6 +29,14 @@ public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
     private static final boolean DEFAULT_IAM_AUTH_WEBHOOK = true;
     private static final boolean DEFAULT_ECR_REGISTRY_MIRROR = true;
     private static final boolean DEFAULT_DISABLE_CNI = false;
+    private static final int DEFAULT_MAX_MEMORY_MIB = 0;
+    private static final int DEFAULT_MAX_VCPUS = 0;
+    private static final boolean DEFAULT_IMDS = false;
+    private static final boolean DEFAULT_IMDS_POD_NETWORK = false;
+    private static final boolean DEFAULT_IRSA_SIGNING_KEY = true;
+    private static final boolean DEFAULT_POD_IDENTITY_WEBHOOK = true;
+    private static final boolean DEFAULT_EMBEDDED_DNS = true;
+    private static final boolean DEFAULT_VPC_ROUTE_PROGRAMMING = true;
 
     private final boolean mock;
     private final String provider;
@@ -38,6 +48,15 @@ public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
     private final boolean iamAuthWebhook;
     private final boolean ecrRegistryMirror;
     private final boolean disableCni;
+    private final int maxMemoryMib;
+    private final int maxVcpus;
+    private final String imageTemplate;
+    private final boolean imds;
+    private final boolean imdsPodNetwork;
+    private final boolean irsaSigningKey;
+    private final boolean podIdentityWebhook;
+    private final boolean embeddedDns;
+    private final boolean vpcRouteProgramming;
 
     private EksConfig(Builder builder) {
         super(builder.enabled);
@@ -51,6 +70,15 @@ public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
         this.iamAuthWebhook = builder.iamAuthWebhook;
         this.ecrRegistryMirror = builder.ecrRegistryMirror;
         this.disableCni = builder.disableCni;
+        this.maxMemoryMib = builder.maxMemoryMib;
+        this.maxVcpus = builder.maxVcpus;
+        this.imageTemplate = builder.imageTemplate;
+        this.imds = builder.imds;
+        this.imdsPodNetwork = builder.imdsPodNetwork;
+        this.irsaSigningKey = builder.irsaSigningKey;
+        this.podIdentityWebhook = builder.podIdentityWebhook;
+        this.embeddedDns = builder.embeddedDns;
+        this.vpcRouteProgramming = builder.vpcRouteProgramming;
     }
 
     /**
@@ -192,6 +220,105 @@ public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
         return disableCni;
     }
 
+    /**
+     * Returns the optional memory ceiling, in MiB, of the single k3s node container.
+     *
+     * <p>{@code 0} uses the limit of its instance type.
+     *
+     * @return the optional memory ceiling, in MiB, of the single k3s node container
+     */
+    public int getMaxMemoryMib() {
+        return maxMemoryMib;
+    }
+
+    /**
+     * Returns the optional vCPU ceiling of the single k3s node container.
+     *
+     * <p>{@code 0} uses the limit of its instance type.
+     *
+     * @return the optional vCPU ceiling of the single k3s node container
+     */
+    public int getMaxVcpus() {
+        return maxVcpus;
+    }
+
+    /**
+     * Returns the image template for k3s images when a Kubernetes version is specified (e.g.
+     * {@code custom-registry.internal/k3s:v%s}).
+     *
+     * <p>If unset, Floci maps supported Kubernetes versions to stable upstream k3s images.
+     *
+     * @return the image template for k3s images when a Kubernetes version is specified (e.g. {@code custom-registry.internal/k3s:v%s}), or {@link Optional#empty()} if not configured
+     */
+    public Optional<String> getImageTemplate() {
+        return Optional.ofNullable(imageTemplate);
+    }
+
+    /**
+     * Returns whether an IMDS link-local proxy ({@code 169.254.169.254:80}) relaying to Floci's EC2 metadata
+     * service is exposed inside the cluster container's network namespace.
+     *
+     * @return whether an IMDS link-local proxy ({@code 169.254.169.254:80}) relaying to Floci's EC2 metadata service is exposed inside the cluster container's network namespace
+     */
+    public boolean isImds() {
+        return imds;
+    }
+
+    /**
+     * Returns whether link-local IMDS traffic from ordinary pod network namespaces is routed to the node's
+     * link-local listener.
+     *
+     * <p>Requires the IMDS proxy to be enabled.
+     *
+     * @return whether link-local IMDS traffic from ordinary pod network namespaces is routed to the node's link-local listener
+     */
+    public boolean isImdsPodNetwork() {
+        return imdsPodNetwork;
+    }
+
+    /**
+     * Returns whether k3s is configured with the cluster's OIDC signing keypair and Floci's OIDC issuer URL,
+     * enabling in-cluster IAM Roles for Service Accounts (IRSA).
+     *
+     * @return whether k3s is configured with the cluster's OIDC signing keypair and Floci's OIDC issuer URL, enabling in-cluster IAM Roles for Service Accounts (IRSA)
+     */
+    public boolean isIrsaSigningKey() {
+        return irsaSigningKey;
+    }
+
+    /**
+     * Returns whether a mutating admission webhook injecting EKS Pod Identity credentials is registered in
+     * each new cluster.
+     *
+     * <p>Requires Floci's TLS to be enabled, because Kubernetes rejects an admission webhook URL that is not
+     * {@code https}; with TLS off the webhook is skipped with a warning.
+     *
+     * @return whether a mutating admission webhook injecting EKS Pod Identity credentials is registered in each new cluster
+     */
+    public boolean isPodIdentityWebhook() {
+        return podIdentityWebhook;
+    }
+
+    /**
+     * Returns whether cluster containers use Floci's embedded DNS server, so that Route 53 private hosted
+     * zone records resolve from inside cluster pods.
+     *
+     * @return whether cluster containers use Floci's embedded DNS server, so that Route 53 private hosted zone records resolve from inside cluster pods
+     */
+    public boolean isEmbeddedDns() {
+        return embeddedDns;
+    }
+
+    /**
+     * Returns whether static routes inside EKS cluster containers are programmed from the emulated VPC route
+     * tables associated with the cluster's subnets or VPC.
+     *
+     * @return whether static routes inside EKS cluster containers are programmed from the emulated VPC route tables associated with the cluster's subnets or VPC
+     */
+    public boolean isVpcRouteProgramming() {
+        return vpcRouteProgramming;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_EKS_ENABLED", String.valueOf(isEnabled()));
@@ -210,6 +337,20 @@ public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
             if (dockerNetwork != null) {
                 container.withEnv("FLOCI_SERVICES_EKS_DOCKER_NETWORK", dockerNetwork);
             }
+
+            container.withEnv("FLOCI_SERVICES_EKS_MAX_MEMORY_MIB", String.valueOf(maxMemoryMib));
+            container.withEnv("FLOCI_SERVICES_EKS_MAX_VCPUS", String.valueOf(maxVcpus));
+
+            if (imageTemplate != null) {
+                container.withEnv("FLOCI_SERVICES_EKS_IMAGE_TEMPLATE", imageTemplate);
+            }
+
+            container.withEnv("FLOCI_SERVICES_EKS_IMDS", String.valueOf(imds));
+            container.withEnv("FLOCI_SERVICES_EKS_IMDS_POD_NETWORK", String.valueOf(imdsPodNetwork));
+            container.withEnv("FLOCI_SERVICES_EKS_IRSA_SIGNING_KEY", String.valueOf(irsaSigningKey));
+            container.withEnv("FLOCI_SERVICES_EKS_POD_IDENTITY_WEBHOOK", String.valueOf(podIdentityWebhook));
+            container.withEnv("FLOCI_SERVICES_EKS_EMBEDDED_DNS", String.valueOf(embeddedDns));
+            container.withEnv("FLOCI_SERVICES_EKS_VPC_ROUTE_PROGRAMMING", String.valueOf(vpcRouteProgramming));
         }
     }
 
@@ -242,6 +383,15 @@ public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
         private boolean iamAuthWebhook = DEFAULT_IAM_AUTH_WEBHOOK;
         private boolean ecrRegistryMirror = DEFAULT_ECR_REGISTRY_MIRROR;
         private boolean disableCni = DEFAULT_DISABLE_CNI;
+        private int maxMemoryMib = DEFAULT_MAX_MEMORY_MIB;
+        private int maxVcpus = DEFAULT_MAX_VCPUS;
+        private String imageTemplate;
+        private boolean imds = DEFAULT_IMDS;
+        private boolean imdsPodNetwork = DEFAULT_IMDS_POD_NETWORK;
+        private boolean irsaSigningKey = DEFAULT_IRSA_SIGNING_KEY;
+        private boolean podIdentityWebhook = DEFAULT_POD_IDENTITY_WEBHOOK;
+        private boolean embeddedDns = DEFAULT_EMBEDDED_DNS;
+        private boolean vpcRouteProgramming = DEFAULT_VPC_ROUTE_PROGRAMMING;
 
         private Builder() {
             // Allow instantiation only via EksConfig.builder()
@@ -264,6 +414,15 @@ public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
             this.iamAuthWebhook = instance.isIamAuthWebhook();
             this.ecrRegistryMirror = instance.isEcrRegistryMirror();
             this.disableCni = instance.isDisableCni();
+            this.maxMemoryMib = instance.getMaxMemoryMib();
+            this.maxVcpus = instance.getMaxVcpus();
+            this.imageTemplate = instance.getImageTemplate().orElse(null);
+            this.imds = instance.isImds();
+            this.imdsPodNetwork = instance.isImdsPodNetwork();
+            this.irsaSigningKey = instance.isIrsaSigningKey();
+            this.podIdentityWebhook = instance.isPodIdentityWebhook();
+            this.embeddedDns = instance.isEmbeddedDns();
+            this.vpcRouteProgramming = instance.isVpcRouteProgramming();
         }
 
         /**
@@ -383,6 +542,123 @@ public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
          */
         public Builder disableCni(boolean disableCni) {
             this.disableCni = disableCni;
+            return this;
+        }
+
+        /**
+         * Sets the optional memory ceiling, in MiB, of the single k3s node container.
+         *
+         * <p>{@code 0} uses the limit of its instance type.
+         *
+         * @param maxMemoryMib the optional memory ceiling, in MiB, of the single k3s node container (default {@value DEFAULT_MAX_MEMORY_MIB})
+         * @return this builder
+         */
+        public Builder maxMemoryMib(int maxMemoryMib) {
+            this.maxMemoryMib = maxMemoryMib;
+            return this;
+        }
+
+        /**
+         * Sets the optional vCPU ceiling of the single k3s node container.
+         *
+         * <p>{@code 0} uses the limit of its instance type.
+         *
+         * @param maxVcpus the optional vCPU ceiling of the single k3s node container (default {@value DEFAULT_MAX_VCPUS})
+         * @return this builder
+         */
+        public Builder maxVcpus(int maxVcpus) {
+            this.maxVcpus = maxVcpus;
+            return this;
+        }
+
+        /**
+         * Sets the image template for k3s images when a Kubernetes version is specified (e.g.
+         * {@code custom-registry.internal/k3s:v%s}).
+         *
+         * <p>If unset, Floci maps supported Kubernetes versions to stable upstream k3s images.
+         *
+         * @param imageTemplate the image template for k3s images when a Kubernetes version is specified (e.g. {@code custom-registry.internal/k3s:v%s}), or {@code null} to use Floci's default
+         * @return this builder
+         */
+        public Builder imageTemplate(String imageTemplate) {
+            this.imageTemplate = imageTemplate;
+            return this;
+        }
+
+        /**
+         * Sets whether an IMDS link-local proxy ({@code 169.254.169.254:80}) relaying to Floci's EC2 metadata
+         * service is exposed inside the cluster container's network namespace.
+         *
+         * @param imds whether an IMDS link-local proxy ({@code 169.254.169.254:80}) relaying to Floci's EC2 metadata service is exposed inside the cluster container's network namespace (default {@value DEFAULT_IMDS})
+         * @return this builder
+         */
+        public Builder imds(boolean imds) {
+            this.imds = imds;
+            return this;
+        }
+
+        /**
+         * Sets whether link-local IMDS traffic from ordinary pod network namespaces is routed to the node's
+         * link-local listener.
+         *
+         * <p>Requires the IMDS proxy to be enabled.
+         *
+         * @param imdsPodNetwork whether link-local IMDS traffic from ordinary pod network namespaces is routed to the node's link-local listener (default {@value DEFAULT_IMDS_POD_NETWORK})
+         * @return this builder
+         */
+        public Builder imdsPodNetwork(boolean imdsPodNetwork) {
+            this.imdsPodNetwork = imdsPodNetwork;
+            return this;
+        }
+
+        /**
+         * Sets whether k3s is configured with the cluster's OIDC signing keypair and Floci's OIDC issuer URL,
+         * enabling in-cluster IAM Roles for Service Accounts (IRSA).
+         *
+         * @param irsaSigningKey whether k3s is configured with the cluster's OIDC signing keypair and Floci's OIDC issuer URL, enabling in-cluster IAM Roles for Service Accounts (IRSA) (default {@value DEFAULT_IRSA_SIGNING_KEY})
+         * @return this builder
+         */
+        public Builder irsaSigningKey(boolean irsaSigningKey) {
+            this.irsaSigningKey = irsaSigningKey;
+            return this;
+        }
+
+        /**
+         * Sets whether a mutating admission webhook injecting EKS Pod Identity credentials is registered in
+         * each new cluster.
+         *
+         * <p>Requires Floci's TLS to be enabled, because Kubernetes rejects an admission webhook URL that is
+         * not {@code https}; with TLS off the webhook is skipped with a warning.
+         *
+         * @param podIdentityWebhook whether a mutating admission webhook injecting EKS Pod Identity credentials is registered in each new cluster (default {@value DEFAULT_POD_IDENTITY_WEBHOOK})
+         * @return this builder
+         */
+        public Builder podIdentityWebhook(boolean podIdentityWebhook) {
+            this.podIdentityWebhook = podIdentityWebhook;
+            return this;
+        }
+
+        /**
+         * Sets whether cluster containers use Floci's embedded DNS server, so that Route 53 private hosted
+         * zone records resolve from inside cluster pods.
+         *
+         * @param embeddedDns whether cluster containers use Floci's embedded DNS server, so that Route 53 private hosted zone records resolve from inside cluster pods (default {@value DEFAULT_EMBEDDED_DNS})
+         * @return this builder
+         */
+        public Builder embeddedDns(boolean embeddedDns) {
+            this.embeddedDns = embeddedDns;
+            return this;
+        }
+
+        /**
+         * Sets whether static routes inside EKS cluster containers are programmed from the emulated VPC route
+         * tables associated with the cluster's subnets or VPC.
+         *
+         * @param vpcRouteProgramming whether static routes inside EKS cluster containers are programmed from the emulated VPC route tables associated with the cluster's subnets or VPC (default {@value DEFAULT_VPC_ROUTE_PROGRAMMING})
+         * @return this builder
+         */
+        public Builder vpcRouteProgramming(boolean vpcRouteProgramming) {
+            this.vpcRouteProgramming = vpcRouteProgramming;
             return this;
         }
 

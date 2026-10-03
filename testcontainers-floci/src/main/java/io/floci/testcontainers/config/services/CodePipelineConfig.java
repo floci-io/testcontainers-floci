@@ -13,8 +13,13 @@ import org.testcontainers.containers.Container;
  */
 public class CodePipelineConfig extends AbstractServiceConfig<CodePipelineConfig.Builder> {
 
+    private static final long DEFAULT_SOURCE_POLL_INTERVAL_MS = 500L;
+
+    private final long sourcePollIntervalMs;
+
     private CodePipelineConfig(Builder builder) {
         super(builder.enabled);
+        this.sourcePollIntervalMs = builder.sourcePollIntervalMs;
     }
 
     /**
@@ -37,9 +42,22 @@ public class CodePipelineConfig extends AbstractServiceConfig<CodePipelineConfig
         return new Builder(this);
     }
 
+    /**
+     * Returns how often, in milliseconds, S3 sources are polled for a new object revision.
+     *
+     * @return how often, in milliseconds, S3 sources are polled for a new object revision
+     */
+    public long getSourcePollIntervalMs() {
+        return sourcePollIntervalMs;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_CODEPIPELINE_ENABLED", String.valueOf(isEnabled()));
+
+        if (isEnabled()) {
+            container.withEnv("FLOCI_SERVICES_CODEPIPELINE_SOURCE_POLL_INTERVAL_MS", String.valueOf(sourcePollIntervalMs));
+        }
     }
 
     /**
@@ -47,6 +65,7 @@ public class CodePipelineConfig extends AbstractServiceConfig<CodePipelineConfig
      */
     public static class Builder extends AbstractServiceConfigBuilder<Builder, CodePipelineConfig> {
 
+        private long sourcePollIntervalMs = DEFAULT_SOURCE_POLL_INTERVAL_MS;
 
         private Builder() {
             // Allow instantiation only via CodePipelineConfig.builder()
@@ -59,6 +78,18 @@ public class CodePipelineConfig extends AbstractServiceConfig<CodePipelineConfig
          */
         private Builder(CodePipelineConfig instance) {
             super(instance);
+            this.sourcePollIntervalMs = instance.getSourcePollIntervalMs();
+        }
+
+        /**
+         * Sets how often, in milliseconds, S3 sources are polled for a new object revision.
+         *
+         * @param sourcePollIntervalMs how often, in milliseconds, S3 sources are polled for a new object revision (default {@value DEFAULT_SOURCE_POLL_INTERVAL_MS})
+         * @return this builder
+         */
+        public Builder sourcePollIntervalMs(long sourcePollIntervalMs) {
+            this.sourcePollIntervalMs = sourcePollIntervalMs;
+            return this;
         }
 
         /**

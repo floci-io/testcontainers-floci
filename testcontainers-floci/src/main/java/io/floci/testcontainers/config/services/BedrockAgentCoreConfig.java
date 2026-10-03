@@ -16,14 +16,20 @@ public class BedrockAgentCoreConfig extends AbstractServiceConfig<BedrockAgentCo
 
     private static final String DEFAULT_INVOKE_RESPONSE = "{\"output\":\"yes\"}";
     private static final boolean DEFAULT_VALIDATE_RUNTIME_EXISTS = false;
+    private static final String DEFAULT_HARNESS_ECHO_PREFIX = "You said: ";
+    private static final String DEFAULT_HARNESS_EMPTY_REPLY = "No user message was supplied.";
 
     private final String invokeResponse;
     private final boolean validateRuntimeExists;
+    private final String harnessEchoPrefix;
+    private final String harnessEmptyReply;
 
     private BedrockAgentCoreConfig(Builder builder) {
         super(builder.enabled);
         this.invokeResponse = builder.invokeResponse;
         this.validateRuntimeExists = builder.validateRuntimeExists;
+        this.harnessEchoPrefix = builder.harnessEchoPrefix;
+        this.harnessEmptyReply = builder.harnessEmptyReply;
     }
 
     /**
@@ -64,6 +70,26 @@ public class BedrockAgentCoreConfig extends AbstractServiceConfig<BedrockAgentCo
         return validateRuntimeExists;
     }
 
+    /**
+     * Returns the prefix of the assistant reply InvokeHarness streams back.
+     *
+     * <p>There is no model: the reply echoes the caller's last user message, prefixed with this value.
+     *
+     * @return the prefix of the assistant reply InvokeHarness streams back
+     */
+    public String getHarnessEchoPrefix() {
+        return harnessEchoPrefix;
+    }
+
+    /**
+     * Returns the reply InvokeHarness uses when a request carries no user message.
+     *
+     * @return the reply InvokeHarness uses when a request carries no user message
+     */
+    public String getHarnessEmptyReply() {
+        return harnessEmptyReply;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_BEDROCK_AGENT_CORE_ENABLED", String.valueOf(isEnabled()));
@@ -72,6 +98,8 @@ public class BedrockAgentCoreConfig extends AbstractServiceConfig<BedrockAgentCo
             container.withEnv("FLOCI_SERVICES_BEDROCK_AGENT_CORE_INVOKE_RESPONSE", invokeResponse);
             container.withEnv("FLOCI_SERVICES_BEDROCK_AGENT_CORE_VALIDATE_RUNTIME_EXISTS",
                     String.valueOf(validateRuntimeExists));
+            container.withEnv("FLOCI_SERVICES_BEDROCK_AGENT_CORE_HARNESS_ECHO_PREFIX", harnessEchoPrefix);
+            container.withEnv("FLOCI_SERVICES_BEDROCK_AGENT_CORE_HARNESS_EMPTY_REPLY", harnessEmptyReply);
         }
     }
 
@@ -82,6 +110,8 @@ public class BedrockAgentCoreConfig extends AbstractServiceConfig<BedrockAgentCo
 
         private String invokeResponse = DEFAULT_INVOKE_RESPONSE;
         private boolean validateRuntimeExists = DEFAULT_VALIDATE_RUNTIME_EXISTS;
+        private String harnessEchoPrefix = DEFAULT_HARNESS_ECHO_PREFIX;
+        private String harnessEmptyReply = DEFAULT_HARNESS_EMPTY_REPLY;
 
         private Builder() {
             // Allow instantiation only via BedrockAgentCoreConfig.builder()
@@ -96,6 +126,8 @@ public class BedrockAgentCoreConfig extends AbstractServiceConfig<BedrockAgentCo
             super(instance);
             this.invokeResponse = instance.getInvokeResponse();
             this.validateRuntimeExists = instance.isValidateRuntimeExists();
+            this.harnessEchoPrefix = instance.getHarnessEchoPrefix();
+            this.harnessEmptyReply = instance.getHarnessEmptyReply();
         }
 
         /**
@@ -118,6 +150,30 @@ public class BedrockAgentCoreConfig extends AbstractServiceConfig<BedrockAgentCo
          */
         public Builder validateRuntimeExists(boolean validateRuntimeExists) {
             this.validateRuntimeExists = validateRuntimeExists;
+            return this;
+        }
+
+        /**
+         * Sets the prefix of the assistant reply InvokeHarness streams back.
+         *
+         * <p>There is no model: the reply echoes the caller's last user message, prefixed with this value.
+         *
+         * @param harnessEchoPrefix the prefix of the assistant reply InvokeHarness streams back (default {@value DEFAULT_HARNESS_ECHO_PREFIX})
+         * @return this builder
+         */
+        public Builder harnessEchoPrefix(String harnessEchoPrefix) {
+            this.harnessEchoPrefix = harnessEchoPrefix;
+            return this;
+        }
+
+        /**
+         * Sets the reply InvokeHarness uses when a request carries no user message.
+         *
+         * @param harnessEmptyReply the reply InvokeHarness uses when a request carries no user message (default {@value DEFAULT_HARNESS_EMPTY_REPLY})
+         * @return this builder
+         */
+        public Builder harnessEmptyReply(String harnessEmptyReply) {
+            this.harnessEmptyReply = harnessEmptyReply;
             return this;
         }
 

@@ -1,7 +1,6 @@
 package io.floci.testcontainers.services;
 
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -13,7 +12,6 @@ import software.amazon.awssdk.services.codegurureviewer.model.RepositoryAssociat
 import static org.assertj.core.api.Assertions.assertThat;
 
 @TestMethodOrder(OrderAnnotation.class)
-@Disabled("CodeGuru Reviewer is not yet registered in the floci/floci:nightly image")
 class CodeGuruReviewerServiceTest extends AbstractServiceTest {
 
     static CodeGuruReviewerClient codeGuruReviewer;

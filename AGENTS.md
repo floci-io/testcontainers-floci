@@ -33,8 +33,8 @@ mvn -pl testcontainers-floci test -Dtest=IamServiceTest
 entry point; everything else hangs off it:
 
 - **Cross-cutting config** (`config/`: `TlsConfig`, `StorageConfig`, `DuckDbConfig`, `SecurityConfig`,
-  `ProtocolsConfig`) and **per-service config** (`config/services/`, one class per AWS service, e.g. `IamConfig`,
-  `S3Config`) are immutable value classes built via a nested `Builder`, each extending `AbstractServiceConfig`/
+  `ProtocolsConfig`, `AuthConfig`, `InitHooksConfig`, `PartitionsConfig`, `NetworkConfig`) and
+  **per-service config** (`config/services/`, one class per AWS service, e.g. `IamConfig`, `S3Config`) are immutable value classes built via a nested `Builder`, each extending `AbstractServiceConfig`/
   `AbstractServiceConfigBuilder` for the shared `enabled` flag and `toBuilder()` round-trip.
 - Each service config's `applyEnvVarsToContainer(Container<?>)` sets its own `FLOCI_SERVICES_<SERVICE>_<PROPERTY>`
   env vars (only when enabled); some also override `applyExposedPortsToContainer(...)` for services that need extra
@@ -55,11 +55,34 @@ entry point; everything else hangs off it:
   (`testcontainers-floci/src/test/java/io/floci/testcontainers/services/AbstractServiceTest.java`), which starts one
   `FlociContainer` singleton per JVM in a static initializer and exposes a `client(builder)` helper that wires
   endpoint/region/credentials onto an AWS SDK client builder.
-- `config/services/*ConfigTest` (no Docker) test each config class's builder/env-var logic in isolation.
+- `config/services/*ConfigTest` (no Docker) test each config class's builder/env-var logic in isolation. They are
+  structured **by aspect, not by property**: each test method checks one aspect for *all* properties of the class at
+  once. Never add a per-property method (e.g. `shouldApplyMaxWaitSeconds()` checking default, custom value, env var
+  and `toBuilder()` for just that property) — when a property is added, extend every aspect method instead:
+    1. `shouldApplyDefault<Service>Config()` — `<Service>Config.builder().build()`; assert every getter's default
+       (`isEmpty()` for `Optional`/unset values).
+    2. `shouldApplyCustom<Service>Config()` — one builder chain setting every property (incl. `enabled(false)`) to a
+       non-default value; assert every getter.
+    3. `shouldApplyDefaultEnvVarsToContainer()` — apply the default config to `genericContainer()`; one chained
+       `assertThat(container.getEnvMap())` with a `.containsEntry(...)` per emitted env var and a
+       `.doesNotContainKey(...)` per optional env var that is not emitted while unset.
+    4. `shouldApplyCustomEnvVarsToContainer()` — apply the custom values from (2) (service left enabled); one
+       `.containsEntry(...)` per env var.
+    5. `shouldApplyDisabledEnvVarToContainer()` — `builder().enabled(false).build()`; assert `…_ENABLED=false` plus a
+       `.doesNotContainKey(...)` for every other env var of the service.
+    6. `shouldPreserveValuesOnToBuilder()` — set every property to a non-default value, `toBuilder().build()`, assert
+       every getter on the copy.
+
+  Port ranges are just properties too: base/count/max getters go into (1), (2), (6), the `…_BASE`/`…_MAX` env vars
+  into (3)–(5). Only genuinely behavioural checks get their own method next to these, e.g.
+  `shouldRequireDockerSocket…()`, `shouldExpose…Port()`/`shouldNotExpose…PortsWhenDisabled()`, or file-mount tests
+  (see `StepFunctionsConfigTest`, `Ec2ConfigTest`). If a class is missing one of the six methods, add it rather than
+  working around it. `SqsConfigTest` and `AppSyncConfigTest` are good references.
 - `FlociContainerServicesConfigTest` (no Docker) is the container-level counterpart to `*ConfigTest`: it proves that
   every config exposed by `FlociContainer` is actually *picked up* by the container. It has **exactly one
   `@Test` per config class** — one per service config in `config/services/`, plus one per cross-cutting config in
-  `config/` (`DuckDbConfig`, `SecurityConfig`, `ProtocolsConfig`, `AuthConfig`, `InitHooksConfig`). Every test calls
+  `config/` (`DuckDbConfig`, `SecurityConfig`, `ProtocolsConfig`, `AuthConfig`, `InitHooksConfig`,
+  `PartitionsConfig`, `NetworkConfig`). Every test calls
   the shared `assertConfigWired(...)` helper, which builds a `new FlociContainer()`, applies the `with<X>Config(...)`
   mutator, and asserts three things:
     1. the changed value round-trips back out via `get<X>Config()`;
@@ -153,12 +176,15 @@ them onto the new branch.)
    references) — **migrate** (step 5).
 2. **`ServiceStorageOverrides`** and the per-service `<Name>StorageConfig` interfaces it references — **ignore
    completely**. They are never migrated and need not even be mentioned in the summary.
+   The same applies to **`UiServiceConfig`** (`services().ui()`, the web console sidecar), even though it sits inside
+   `ServicesConfig`: it never gets a config class here, regardless of what changes in it, and is not listed as a known
+   gap either.
 3. **Everything else** — root properties (`port`, `baseUrl`, `defaultRegion`, …), and global sections such as `dns()`,
    `network()`, `auth()`, `security()`, `storage()` (except the overrides above), `tls()`, `protocols()`,
    `duckdb()`, `initHooks()`, `partitions()`, and `default` helper methods — **do not migrate**. Only summarize them
    for the user (step 8). This applies even when a matching cross-cutting class already exists under `config/`
    (`TlsConfig`, `StorageConfig`, `DuckDbConfig`, `SecurityConfig`, `ProtocolsConfig`, `AuthConfig`,
-   `InitHooksConfig`) — the user decides about those manually.
+   `InitHooksConfig`, `PartitionsConfig`, `NetworkConfig`) — the user decides about those manually.
 
 Within the services part, build a list of affected services, in the order they appear in `ServicesConfig`:
 
@@ -208,7 +234,9 @@ order of fields/getters/builder methods/env vars aligned with each other and wit
 - `config/services/<Service>Config.java` (field, constructor, getter, `Builder` field + copy constructor + setter,
   `applyEnvVarsToContainer`, and `applyExposedPortsToContainer` if ports are involved);
 - `config/services/<Service>ConfigTest.java` — cover the default, a custom value, the env var being emitted (and
-  *not* emitted when disabled / when an optional value is unset), and the `toBuilder()` round-trip.
+  *not* emitted when disabled / when an optional value is unset), and the `toBuilder()` round-trip, by adding the new
+  property to each of the existing aspect methods (default config, custom config, default env vars, custom env vars,
+  disabled, `toBuilder()`) as described under "Testing" — **never** as a new per-property test method.
 
 **For a new service** follow "Adding support for a new Floci service" in CONTRIBUTING.md in full: the config class,
 `FlociContainer` field/getter/`with…Config`/`serviceConfigAccessors` entry, `<Service>ConfigTest`, a

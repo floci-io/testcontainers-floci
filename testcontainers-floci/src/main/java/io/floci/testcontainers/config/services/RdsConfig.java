@@ -20,6 +20,13 @@ public class RdsConfig extends AbstractServiceConfig<RdsConfig.Builder> {
     private static final boolean DEFAULT_MOCK = false;
     private static final int DEFAULT_PROXY_BASE_PORT = 7000;
     private static final int DEFAULT_PROXY_PORTS_COUNT = 10;
+    private static final String DEFAULT_DEFAULT_SQL_SERVER_IMAGE = "mcr.microsoft.com/mssql/server:2022-latest";
+    private static final boolean DEFAULT_IAM_TOKEN_ENDPOINT_BINDING = true;
+    private static final int DEFAULT_PROXY_HANDSHAKE_TIMEOUT_MILLIS = 10000;
+    private static final int DEFAULT_PROXY_BACKEND_CONNECT_TIMEOUT_MILLIS = 5000;
+    private static final int DEFAULT_PROXY_MAX_CONNECTIONS = 100;
+    private static final boolean DEFAULT_AURORA_AUTO_PAUSE_ENABLED = true;
+    private static final int DEFAULT_AURORA_RESUME_DELAY_MILLIS = 0;
 
     private final boolean mock;
     private final int proxyBasePort;
@@ -29,6 +36,13 @@ public class RdsConfig extends AbstractServiceConfig<RdsConfig.Builder> {
     private final String defaultMariadbImage;
     private final String dockerNetwork;
     private final String endpointHost;
+    private final String defaultSqlServerImage;
+    private final boolean iamTokenEndpointBinding;
+    private final int proxyHandshakeTimeoutMillis;
+    private final int proxyBackendConnectTimeoutMillis;
+    private final int proxyMaxConnections;
+    private final boolean auroraAutoPauseEnabled;
+    private final int auroraResumeDelayMillis;
 
     private RdsConfig(Builder builder) {
         super(builder.enabled);
@@ -40,6 +54,13 @@ public class RdsConfig extends AbstractServiceConfig<RdsConfig.Builder> {
         this.defaultMariadbImage = builder.defaultMariadbImage;
         this.dockerNetwork = builder.dockerNetwork;
         this.endpointHost = builder.endpointHost;
+        this.defaultSqlServerImage = builder.defaultSqlServerImage;
+        this.iamTokenEndpointBinding = builder.iamTokenEndpointBinding;
+        this.proxyHandshakeTimeoutMillis = builder.proxyHandshakeTimeoutMillis;
+        this.proxyBackendConnectTimeoutMillis = builder.proxyBackendConnectTimeoutMillis;
+        this.proxyMaxConnections = builder.proxyMaxConnections;
+        this.auroraAutoPauseEnabled = builder.auroraAutoPauseEnabled;
+        this.auroraResumeDelayMillis = builder.auroraResumeDelayMillis;
     }
 
     /**
@@ -150,6 +171,79 @@ public class RdsConfig extends AbstractServiceConfig<RdsConfig.Builder> {
         return endpointHost;
     }
 
+    /**
+     * Returns the Docker image used for SQL Server instances when no override is configured.
+     *
+     * @return the Docker image used for SQL Server instances when no override is configured
+     */
+    public String getDefaultSqlServerImage() {
+        return defaultSqlServerImage;
+    }
+
+    /**
+     * Returns whether a PostgreSQL IAM auth token must have been generated for the endpoint the instance
+     * publishes.
+     *
+     * <p>The token must match the published hostname, port and region, as on RDS. Turn it off when clients
+     * generate tokens for a container name or DNS alias the endpoint does not publish. MySQL and MariaDB
+     * always require it.
+     *
+     * @return whether a PostgreSQL IAM auth token must have been generated for the endpoint the instance publishes
+     */
+    public boolean isIamTokenEndpointBinding() {
+        return iamTokenEndpointBinding;
+    }
+
+    /**
+     * Returns how long, in milliseconds, a client has to complete the startup/auth handshake with the
+     * per-instance auth proxy.
+     *
+     * @return how long, in milliseconds, a client has to complete the startup/auth handshake with the per-instance auth proxy
+     */
+    public int getProxyHandshakeTimeoutMillis() {
+        return proxyHandshakeTimeoutMillis;
+    }
+
+    /**
+     * Returns how long, in milliseconds, a backend connect attempt of the per-instance auth proxy may take.
+     *
+     * @return how long, in milliseconds, a backend connect attempt of the per-instance auth proxy may take
+     */
+    public int getProxyBackendConnectTimeoutMillis() {
+        return proxyBackendConnectTimeoutMillis;
+    }
+
+    /**
+     * Returns how many concurrent connections the per-instance auth proxy accepts before refusing new ones.
+     *
+     * @return how many concurrent connections the per-instance auth proxy accepts before refusing new ones
+     */
+    public int getProxyMaxConnections() {
+        return proxyMaxConnections;
+    }
+
+    /**
+     * Returns whether an Aurora Serverless v2 cluster with {@code MinCapacity} 0 pauses its container after
+     * {@code SecondsUntilAutoPause} without connections, as Aurora does.
+     *
+     * @return whether an Aurora Serverless v2 cluster with {@code MinCapacity} 0 pauses its container after {@code SecondsUntilAutoPause} without connections, as Aurora does
+     */
+    public boolean isAuroraAutoPauseEnabled() {
+        return auroraAutoPauseEnabled;
+    }
+
+    /**
+     * Returns how long, in milliseconds, the first connection to an auto-paused Aurora cluster is held while
+     * it resumes.
+     *
+     * <p>Aurora takes about 15 seconds; 0 resumes at once.
+     *
+     * @return how long, in milliseconds, the first connection to an auto-paused Aurora cluster is held while it resumes
+     */
+    public int getAuroraResumeDelayMillis() {
+        return auroraResumeDelayMillis;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_RDS_ENABLED", String.valueOf(isEnabled()));
@@ -177,6 +271,14 @@ public class RdsConfig extends AbstractServiceConfig<RdsConfig.Builder> {
             // proxy ports.
             container.withEnv("FLOCI_SERVICES_RDS_ENDPOINT_HOST",
                     endpointHost != null ? endpointHost : container.getHost());
+
+            container.withEnv("FLOCI_SERVICES_RDS_DEFAULT_SQL_SERVER_IMAGE", defaultSqlServerImage);
+            container.withEnv("FLOCI_SERVICES_RDS_IAM_TOKEN_ENDPOINT_BINDING", String.valueOf(iamTokenEndpointBinding));
+            container.withEnv("FLOCI_SERVICES_RDS_PROXY_HANDSHAKE_TIMEOUT_MILLIS", String.valueOf(proxyHandshakeTimeoutMillis));
+            container.withEnv("FLOCI_SERVICES_RDS_PROXY_BACKEND_CONNECT_TIMEOUT_MILLIS", String.valueOf(proxyBackendConnectTimeoutMillis));
+            container.withEnv("FLOCI_SERVICES_RDS_PROXY_MAX_CONNECTIONS", String.valueOf(proxyMaxConnections));
+            container.withEnv("FLOCI_SERVICES_RDS_AURORA_AUTO_PAUSE_ENABLED", String.valueOf(auroraAutoPauseEnabled));
+            container.withEnv("FLOCI_SERVICES_RDS_AURORA_RESUME_DELAY_MILLIS", String.valueOf(auroraResumeDelayMillis));
         }
     }
 
@@ -208,6 +310,13 @@ public class RdsConfig extends AbstractServiceConfig<RdsConfig.Builder> {
         private String defaultMariadbImage;
         private String dockerNetwork;
         private String endpointHost;
+        private String defaultSqlServerImage = DEFAULT_DEFAULT_SQL_SERVER_IMAGE;
+        private boolean iamTokenEndpointBinding = DEFAULT_IAM_TOKEN_ENDPOINT_BINDING;
+        private int proxyHandshakeTimeoutMillis = DEFAULT_PROXY_HANDSHAKE_TIMEOUT_MILLIS;
+        private int proxyBackendConnectTimeoutMillis = DEFAULT_PROXY_BACKEND_CONNECT_TIMEOUT_MILLIS;
+        private int proxyMaxConnections = DEFAULT_PROXY_MAX_CONNECTIONS;
+        private boolean auroraAutoPauseEnabled = DEFAULT_AURORA_AUTO_PAUSE_ENABLED;
+        private int auroraResumeDelayMillis = DEFAULT_AURORA_RESUME_DELAY_MILLIS;
 
         private Builder() {
             // Allow instantiation only via RdsConfig.builder()
@@ -228,6 +337,13 @@ public class RdsConfig extends AbstractServiceConfig<RdsConfig.Builder> {
             this.defaultMariadbImage = instance.getDefaultMariadbImage();
             this.dockerNetwork = instance.getDockerNetwork();
             this.endpointHost = instance.getEndpointHost();
+            this.defaultSqlServerImage = instance.getDefaultSqlServerImage();
+            this.iamTokenEndpointBinding = instance.isIamTokenEndpointBinding();
+            this.proxyHandshakeTimeoutMillis = instance.getProxyHandshakeTimeoutMillis();
+            this.proxyBackendConnectTimeoutMillis = instance.getProxyBackendConnectTimeoutMillis();
+            this.proxyMaxConnections = instance.getProxyMaxConnections();
+            this.auroraAutoPauseEnabled = instance.isAuroraAutoPauseEnabled();
+            this.auroraResumeDelayMillis = instance.getAuroraResumeDelayMillis();
         }
 
         /**
@@ -312,6 +428,93 @@ public class RdsConfig extends AbstractServiceConfig<RdsConfig.Builder> {
          */
         public Builder endpointHost(String endpointHost) {
             this.endpointHost = endpointHost;
+            return this;
+        }
+
+        /**
+         * Sets the Docker image used for SQL Server instances when no override is configured.
+         *
+         * @param defaultSqlServerImage the Docker image used for SQL Server instances when no override is configured (default {@value DEFAULT_DEFAULT_SQL_SERVER_IMAGE})
+         * @return this builder
+         */
+        public Builder defaultSqlServerImage(String defaultSqlServerImage) {
+            this.defaultSqlServerImage = defaultSqlServerImage;
+            return this;
+        }
+
+        /**
+         * Sets whether a PostgreSQL IAM auth token must have been generated for the endpoint the instance
+         * publishes.
+         *
+         * <p>The token must match the published hostname, port and region, as on RDS. Turn it off when
+         * clients generate tokens for a container name or DNS alias the endpoint does not publish. MySQL and
+         * MariaDB always require it.
+         *
+         * @param iamTokenEndpointBinding whether a PostgreSQL IAM auth token must have been generated for the endpoint the instance publishes (default {@value DEFAULT_IAM_TOKEN_ENDPOINT_BINDING})
+         * @return this builder
+         */
+        public Builder iamTokenEndpointBinding(boolean iamTokenEndpointBinding) {
+            this.iamTokenEndpointBinding = iamTokenEndpointBinding;
+            return this;
+        }
+
+        /**
+         * Sets how long, in milliseconds, a client has to complete the startup/auth handshake with the
+         * per-instance auth proxy.
+         *
+         * @param proxyHandshakeTimeoutMillis how long, in milliseconds, a client has to complete the startup/auth handshake with the per-instance auth proxy (default {@value DEFAULT_PROXY_HANDSHAKE_TIMEOUT_MILLIS})
+         * @return this builder
+         */
+        public Builder proxyHandshakeTimeoutMillis(int proxyHandshakeTimeoutMillis) {
+            this.proxyHandshakeTimeoutMillis = proxyHandshakeTimeoutMillis;
+            return this;
+        }
+
+        /**
+         * Sets how long, in milliseconds, a backend connect attempt of the per-instance auth proxy may take.
+         *
+         * @param proxyBackendConnectTimeoutMillis how long, in milliseconds, a backend connect attempt of the per-instance auth proxy may take (default {@value DEFAULT_PROXY_BACKEND_CONNECT_TIMEOUT_MILLIS})
+         * @return this builder
+         */
+        public Builder proxyBackendConnectTimeoutMillis(int proxyBackendConnectTimeoutMillis) {
+            this.proxyBackendConnectTimeoutMillis = proxyBackendConnectTimeoutMillis;
+            return this;
+        }
+
+        /**
+         * Sets how many concurrent connections the per-instance auth proxy accepts before refusing new ones.
+         *
+         * @param proxyMaxConnections how many concurrent connections the per-instance auth proxy accepts before refusing new ones (default {@value DEFAULT_PROXY_MAX_CONNECTIONS})
+         * @return this builder
+         */
+        public Builder proxyMaxConnections(int proxyMaxConnections) {
+            this.proxyMaxConnections = proxyMaxConnections;
+            return this;
+        }
+
+        /**
+         * Sets whether an Aurora Serverless v2 cluster with {@code MinCapacity} 0 pauses its container after
+         * {@code SecondsUntilAutoPause} without connections, as Aurora does.
+         *
+         * @param auroraAutoPauseEnabled whether an Aurora Serverless v2 cluster with {@code MinCapacity} 0 pauses its container after {@code SecondsUntilAutoPause} without connections, as Aurora does (default {@value DEFAULT_AURORA_AUTO_PAUSE_ENABLED})
+         * @return this builder
+         */
+        public Builder auroraAutoPauseEnabled(boolean auroraAutoPauseEnabled) {
+            this.auroraAutoPauseEnabled = auroraAutoPauseEnabled;
+            return this;
+        }
+
+        /**
+         * Sets how long, in milliseconds, the first connection to an auto-paused Aurora cluster is held while
+         * it resumes.
+         *
+         * <p>Aurora takes about 15 seconds; 0 resumes at once.
+         *
+         * @param auroraResumeDelayMillis how long, in milliseconds, the first connection to an auto-paused Aurora cluster is held while it resumes (default {@value DEFAULT_AURORA_RESUME_DELAY_MILLIS})
+         * @return this builder
+         */
+        public Builder auroraResumeDelayMillis(int auroraResumeDelayMillis) {
+            this.auroraResumeDelayMillis = auroraResumeDelayMillis;
             return this;
         }
 

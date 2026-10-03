@@ -354,7 +354,35 @@ class FlociContainerTest {
                     container.getOrganizationsConfig(),
                     container.getComprehendConfig(),
                     container.getRekognitionConfig(),
-                    container.getTranscribeConfig()
+                    container.getTranscribeConfig(),
+                    container.getRedshiftDataConfig(),
+                    container.getRedshiftServerlessConfig(),
+                    container.getBedrockConfig(),
+                    container.getTranslateConfig(),
+                    container.getOamConfig(),
+                    container.getBcmPricingCalculatorConfig(),
+                    container.getTimestreamInfluxDbConfig(),
+                    container.getSageMakerConfig(),
+                    container.getSsoOidcConfig(),
+                    container.getMacie2Config(),
+                    container.getAccountConfig(),
+                    container.getAccessAnalyzerConfig(),
+                    container.getIdentityStoreConfig(),
+                    container.getBudgetsConfig(),
+                    container.getInspector2Config(),
+                    container.getSecurityHubConfig(),
+                    container.getDetectiveConfig(),
+                    container.getVerifiedPermissionsConfig(),
+                    container.getControlCatalogConfig(),
+                    container.getAppIntegrationsConfig(),
+                    container.getDlmConfig(),
+                    container.getCognitoIdentityConfig(),
+                    container.getGlobalAcceleratorConfig(),
+                    container.getDataSyncConfig(),
+                    container.getCodeArtifactConfig(),
+                    container.getMarketplaceConfig(),
+                    container.getDmsConfig(),
+                    container.getElbConfig()
             )).noneMatch(AbstractServiceConfig::isEnabled);
         }
     }
@@ -491,6 +519,20 @@ class FlociContainerTest {
 
             // File mounts survive later, unrelated service-config changes.
             container.withS3Config(c -> c.enabled(true));
+            assertThat(TransferableCopyInspector.contentCopiedTo(container, containerPath)).contains(fileContent);
+        }
+    }
+
+    @Test
+    void shouldCopyEc2ImageCatalogIntoContainer() {
+        String fileContent = "images: []\n";
+
+        try (FlociContainer container = new FlociContainer()
+                .withEc2Config(c -> c.imageCatalog(fileContent))) {
+
+            String containerPath = container.getEc2Config().getImageCatalogFile().orElseThrow();
+
+            assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_EC2_IMAGE_CATALOG_PATH", containerPath);
             assertThat(TransferableCopyInspector.contentCopiedTo(container, containerPath)).contains(fileContent);
         }
     }

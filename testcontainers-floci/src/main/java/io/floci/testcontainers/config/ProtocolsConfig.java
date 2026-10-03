@@ -81,9 +81,9 @@ public class ProtocolsConfig {
     }
 
     /**
-     * Returns the maximum accepted request size, in bytes.
+     * Returns the maximum accepted HTTP request body size, in megabytes.
      *
-     * @return the maximum request size in bytes
+     * @return the maximum request size in megabytes
      */
     public int getMaxRequestSize() {
         return maxRequestSize;
@@ -98,7 +98,7 @@ public class ProtocolsConfig {
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_PROTOCOLS_STRICT_CLAIMING", String.valueOf(strictClaiming));
         container.withEnv("FLOCI_PROTOCOLS_REJECT_UNKNOWN_SERVICE_SCOPE", String.valueOf(rejectUnknownServiceScope));
-        container.withEnv("FLOCI_MAX_REQUEST_SIZE", String.valueOf(maxRequestSize)); // Env var is correct as the config is structured differently in Floci
+        container.withEnv("FLOCI_PROTOCOLS_MAX_REQUEST_SIZE", String.valueOf(maxRequestSize));
     }
 
     /**
@@ -148,9 +148,9 @@ public class ProtocolsConfig {
         }
 
         /**
-         * Sets the maximum accepted request size, in bytes.
+         * Sets the maximum accepted HTTP request body size, in megabytes.
          *
-         * @param maxRequestSize the maximum request size in bytes (default {@value DEFAULT_MAX_REQUEST_SIZE})
+         * @param maxRequestSize the maximum request size in megabytes (default {@value DEFAULT_MAX_REQUEST_SIZE})
          * @return this builder
          */
         public Builder maxRequestSize(int maxRequestSize) {

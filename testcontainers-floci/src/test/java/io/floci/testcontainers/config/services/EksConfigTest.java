@@ -24,6 +24,15 @@ class EksConfigTest {
         assertThat(config.isIamAuthWebhook()).isTrue();
         assertThat(config.isEcrRegistryMirror()).isTrue();
         assertThat(config.isDisableCni()).isFalse();
+        assertThat(config.getMaxMemoryMib()).isEqualTo(0);
+        assertThat(config.getMaxVcpus()).isEqualTo(0);
+        assertThat(config.getImageTemplate()).isEmpty();
+        assertThat(config.isImds()).isFalse();
+        assertThat(config.isImdsPodNetwork()).isFalse();
+        assertThat(config.isIrsaSigningKey()).isTrue();
+        assertThat(config.isPodIdentityWebhook()).isTrue();
+        assertThat(config.isEmbeddedDns()).isTrue();
+        assertThat(config.isVpcRouteProgramming()).isTrue();
     }
 
     @Test
@@ -39,6 +48,15 @@ class EksConfigTest {
                 .iamAuthWebhook(false)
                 .ecrRegistryMirror(false)
                 .disableCni(true)
+                .maxMemoryMib(2048)
+                .maxVcpus(2)
+                .imageTemplate("custom-registry.internal/k3s:v%s")
+                .imds(true)
+                .imdsPodNetwork(true)
+                .irsaSigningKey(false)
+                .podIdentityWebhook(false)
+                .embeddedDns(false)
+                .vpcRouteProgramming(false)
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.isMock()).isTrue();
@@ -52,6 +70,15 @@ class EksConfigTest {
         assertThat(config.isIamAuthWebhook()).isFalse();
         assertThat(config.isEcrRegistryMirror()).isFalse();
         assertThat(config.isDisableCni()).isTrue();
+        assertThat(config.getMaxMemoryMib()).isEqualTo(2048);
+        assertThat(config.getMaxVcpus()).isEqualTo(2);
+        assertThat(config.getImageTemplate()).contains("custom-registry.internal/k3s:v%s");
+        assertThat(config.isImds()).isTrue();
+        assertThat(config.isImdsPodNetwork()).isTrue();
+        assertThat(config.isIrsaSigningKey()).isFalse();
+        assertThat(config.isPodIdentityWebhook()).isFalse();
+        assertThat(config.isEmbeddedDns()).isFalse();
+        assertThat(config.isVpcRouteProgramming()).isFalse();
     }
 
     @Test
@@ -70,7 +97,16 @@ class EksConfigTest {
                 .containsEntry("FLOCI_SERVICES_EKS_IAM_AUTH_WEBHOOK", "true")
                 .containsEntry("FLOCI_SERVICES_EKS_ECR_REGISTRY_MIRROR", "true")
                 .containsEntry("FLOCI_SERVICES_EKS_DISABLE_CNI", "false")
-                .doesNotContainKey("FLOCI_SERVICES_EKS_DOCKER_NETWORK");
+                .doesNotContainKey("FLOCI_SERVICES_EKS_DOCKER_NETWORK")
+                .containsEntry("FLOCI_SERVICES_EKS_MAX_MEMORY_MIB", "0")
+                .containsEntry("FLOCI_SERVICES_EKS_MAX_VCPUS", "0")
+                .doesNotContainKey("FLOCI_SERVICES_EKS_IMAGE_TEMPLATE")
+                .containsEntry("FLOCI_SERVICES_EKS_IMDS", "false")
+                .containsEntry("FLOCI_SERVICES_EKS_IMDS_POD_NETWORK", "false")
+                .containsEntry("FLOCI_SERVICES_EKS_IRSA_SIGNING_KEY", "true")
+                .containsEntry("FLOCI_SERVICES_EKS_POD_IDENTITY_WEBHOOK", "true")
+                .containsEntry("FLOCI_SERVICES_EKS_EMBEDDED_DNS", "true")
+                .containsEntry("FLOCI_SERVICES_EKS_VPC_ROUTE_PROGRAMMING", "true");
     }
 
     @Test
@@ -87,6 +123,15 @@ class EksConfigTest {
                 .iamAuthWebhook(false)
                 .ecrRegistryMirror(false)
                 .disableCni(true)
+                .maxMemoryMib(2048)
+                .maxVcpus(2)
+                .imageTemplate("custom-registry.internal/k3s:v%s")
+                .imds(true)
+                .imdsPodNetwork(true)
+                .irsaSigningKey(false)
+                .podIdentityWebhook(false)
+                .embeddedDns(false)
+                .vpcRouteProgramming(false)
                 .build()
                 .applyEnvVarsToContainer(container);
 
@@ -101,7 +146,16 @@ class EksConfigTest {
                 .containsEntry("FLOCI_SERVICES_EKS_ENDPOINT_MODE", "network")
                 .containsEntry("FLOCI_SERVICES_EKS_IAM_AUTH_WEBHOOK", "false")
                 .containsEntry("FLOCI_SERVICES_EKS_ECR_REGISTRY_MIRROR", "false")
-                .containsEntry("FLOCI_SERVICES_EKS_DISABLE_CNI", "true");
+                .containsEntry("FLOCI_SERVICES_EKS_DISABLE_CNI", "true")
+                .containsEntry("FLOCI_SERVICES_EKS_MAX_MEMORY_MIB", "2048")
+                .containsEntry("FLOCI_SERVICES_EKS_MAX_VCPUS", "2")
+                .containsEntry("FLOCI_SERVICES_EKS_IMAGE_TEMPLATE", "custom-registry.internal/k3s:v%s")
+                .containsEntry("FLOCI_SERVICES_EKS_IMDS", "true")
+                .containsEntry("FLOCI_SERVICES_EKS_IMDS_POD_NETWORK", "true")
+                .containsEntry("FLOCI_SERVICES_EKS_IRSA_SIGNING_KEY", "false")
+                .containsEntry("FLOCI_SERVICES_EKS_POD_IDENTITY_WEBHOOK", "false")
+                .containsEntry("FLOCI_SERVICES_EKS_EMBEDDED_DNS", "false")
+                .containsEntry("FLOCI_SERVICES_EKS_VPC_ROUTE_PROGRAMMING", "false");
     }
 
     @Test
@@ -113,7 +167,16 @@ class EksConfigTest {
                 .containsEntry("FLOCI_SERVICES_EKS_ENABLED", "false")
                 .doesNotContainKey("FLOCI_SERVICES_EKS_MOCK")
                 .doesNotContainKey("FLOCI_SERVICES_EKS_PROVIDER")
-                .doesNotContainKey("FLOCI_SERVICES_EKS_DISABLE_CNI");
+                .doesNotContainKey("FLOCI_SERVICES_EKS_DISABLE_CNI")
+                .doesNotContainKey("FLOCI_SERVICES_EKS_MAX_MEMORY_MIB")
+                .doesNotContainKey("FLOCI_SERVICES_EKS_MAX_VCPUS")
+                .doesNotContainKey("FLOCI_SERVICES_EKS_IMAGE_TEMPLATE")
+                .doesNotContainKey("FLOCI_SERVICES_EKS_IMDS")
+                .doesNotContainKey("FLOCI_SERVICES_EKS_IMDS_POD_NETWORK")
+                .doesNotContainKey("FLOCI_SERVICES_EKS_IRSA_SIGNING_KEY")
+                .doesNotContainKey("FLOCI_SERVICES_EKS_POD_IDENTITY_WEBHOOK")
+                .doesNotContainKey("FLOCI_SERVICES_EKS_EMBEDDED_DNS")
+                .doesNotContainKey("FLOCI_SERVICES_EKS_VPC_ROUTE_PROGRAMMING");
     }
 
     @Test
@@ -140,6 +203,15 @@ class EksConfigTest {
                 .iamAuthWebhook(false)
                 .ecrRegistryMirror(false)
                 .disableCni(true)
+                .maxMemoryMib(2048)
+                .maxVcpus(2)
+                .imageTemplate("custom-registry.internal/k3s:v%s")
+                .imds(true)
+                .imdsPodNetwork(true)
+                .irsaSigningKey(false)
+                .podIdentityWebhook(false)
+                .embeddedDns(false)
+                .vpcRouteProgramming(false)
                 .build();
         EksConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
@@ -153,6 +225,15 @@ class EksConfigTest {
         assertThat(copy.isIamAuthWebhook()).isFalse();
         assertThat(copy.isEcrRegistryMirror()).isFalse();
         assertThat(copy.isDisableCni()).isTrue();
+        assertThat(copy.getMaxMemoryMib()).isEqualTo(2048);
+        assertThat(copy.getMaxVcpus()).isEqualTo(2);
+        assertThat(copy.getImageTemplate()).contains("custom-registry.internal/k3s:v%s");
+        assertThat(copy.isImds()).isTrue();
+        assertThat(copy.isImdsPodNetwork()).isTrue();
+        assertThat(copy.isIrsaSigningKey()).isFalse();
+        assertThat(copy.isPodIdentityWebhook()).isFalse();
+        assertThat(copy.isEmbeddedDns()).isFalse();
+        assertThat(copy.isVpcRouteProgramming()).isFalse();
     }
 
     @Test

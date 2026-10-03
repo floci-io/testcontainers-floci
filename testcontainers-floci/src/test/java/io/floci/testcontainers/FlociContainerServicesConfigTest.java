@@ -854,6 +854,230 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_SERVICES_TRANSCRIBE_ENABLED", "false");
     }
 
+    @Test
+    void shouldWireRedshiftDataConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withRedshiftDataConfig(cfg -> cfg.resultTtlHours(1)),
+                c -> c.getRedshiftDataConfig().getResultTtlHours(), 1,
+                "FLOCI_SERVICES_REDSHIFT_DATA_RESULT_TTL_HOURS", "1");
+    }
+
+    @Test
+    void shouldWireRedshiftServerlessConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withRedshiftServerlessConfig(cfg -> cfg.enabled(false)),
+                c -> c.getRedshiftServerlessConfig().isEnabled(), false,
+                "FLOCI_SERVICES_REDSHIFT_SERVERLESS_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireBedrockConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withBedrockConfig(cfg -> cfg.enabled(false)),
+                c -> c.getBedrockConfig().isEnabled(), false,
+                "FLOCI_SERVICES_BEDROCK_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireTranslateConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withTranslateConfig(cfg -> cfg.enabled(false)),
+                c -> c.getTranslateConfig().isEnabled(), false,
+                "FLOCI_SERVICES_TRANSLATE_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireOamConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withOamConfig(cfg -> cfg.enabled(false)),
+                c -> c.getOamConfig().isEnabled(), false,
+                "FLOCI_SERVICES_OAM_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireBcmPricingCalculatorConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withBcmPricingCalculatorConfig(cfg -> cfg.enabled(false)),
+                c -> c.getBcmPricingCalculatorConfig().isEnabled(), false,
+                "FLOCI_SERVICES_BCM_PRICING_CALCULATOR_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireTimestreamInfluxDbConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withTimestreamInfluxDbConfig(cfg -> cfg.defaultImage("influxdb:2.8")),
+                c -> c.getTimestreamInfluxDbConfig().getDefaultImage(), "influxdb:2.8",
+                "FLOCI_SERVICES_TIMESTREAM_INFLUXDB_DEFAULT_IMAGE", "influxdb:2.8");
+    }
+
+    @Test
+    void shouldWireSageMakerConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withSageMakerConfig(cfg -> cfg.gpuEnabled(true)),
+                c -> c.getSageMakerConfig().isGpuEnabled(), true,
+                "FLOCI_SERVICES_SAGEMAKER_GPU_ENABLED", "true");
+    }
+
+    @Test
+    void shouldWireSsoOidcConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withSsoOidcConfig(cfg -> cfg.localPrincipalId("user-1234")),
+                c -> c.getSsoOidcConfig().getLocalPrincipalId().orElseThrow(), "user-1234",
+                "FLOCI_SERVICES_SSOOIDC_LOCAL_PRINCIPAL_ID", "user-1234");
+    }
+
+    @Test
+    void shouldWireMacie2ConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withMacie2Config(cfg -> cfg.enabled(false)),
+                c -> c.getMacie2Config().isEnabled(), false,
+                "FLOCI_SERVICES_MACIE2_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireAccountConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withAccountConfig(cfg -> cfg.enabled(false)),
+                c -> c.getAccountConfig().isEnabled(), false,
+                "FLOCI_SERVICES_ACCOUNT_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireAccessAnalyzerConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withAccessAnalyzerConfig(cfg -> cfg.enabled(false)),
+                c -> c.getAccessAnalyzerConfig().isEnabled(), false,
+                "FLOCI_SERVICES_ACCESSANALYZER_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireIdentityStoreConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withIdentityStoreConfig(cfg -> cfg.scimBearerToken("my-scim-token")),
+                c -> c.getIdentityStoreConfig().getScimBearerToken(), "my-scim-token",
+                "FLOCI_SERVICES_IDENTITYSTORE_SCIM_BEARER_TOKEN", "my-scim-token");
+    }
+
+    @Test
+    void shouldWireBudgetsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withBudgetsConfig(cfg -> cfg.enabled(false)),
+                c -> c.getBudgetsConfig().isEnabled(), false,
+                "FLOCI_SERVICES_BUDGETS_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireInspector2ConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withInspector2Config(cfg -> cfg.enabled(false)),
+                c -> c.getInspector2Config().isEnabled(), false,
+                "FLOCI_SERVICES_INSPECTOR2_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireSecurityHubConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withSecurityHubConfig(cfg -> cfg.enabled(false)),
+                c -> c.getSecurityHubConfig().isEnabled(), false,
+                "FLOCI_SERVICES_SECURITYHUB_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireDetectiveConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withDetectiveConfig(cfg -> cfg.enabled(false)),
+                c -> c.getDetectiveConfig().isEnabled(), false,
+                "FLOCI_SERVICES_DETECTIVE_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireVerifiedPermissionsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withVerifiedPermissionsConfig(cfg -> cfg.cedarImage("floci/floci-sidecar-cedar:1.2.0")),
+                c -> c.getVerifiedPermissionsConfig().getCedarImage(), "floci/floci-sidecar-cedar:1.2.0",
+                "FLOCI_SERVICES_VERIFIEDPERMISSIONS_CEDAR_IMAGE", "floci/floci-sidecar-cedar:1.2.0");
+    }
+
+    @Test
+    void shouldWireControlCatalogConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withControlCatalogConfig(cfg -> cfg.enabled(false)),
+                c -> c.getControlCatalogConfig().isEnabled(), false,
+                "FLOCI_SERVICES_CONTROLCATALOG_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireAppIntegrationsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withAppIntegrationsConfig(cfg -> cfg.enabled(false)),
+                c -> c.getAppIntegrationsConfig().isEnabled(), false,
+                "FLOCI_SERVICES_APPINTEGRATIONS_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireDlmConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withDlmConfig(cfg -> cfg.enabled(false)),
+                c -> c.getDlmConfig().isEnabled(), false,
+                "FLOCI_SERVICES_DLM_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireCognitoIdentityConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withCognitoIdentityConfig(cfg -> cfg.enabled(false)),
+                c -> c.getCognitoIdentityConfig().isEnabled(), false,
+                "FLOCI_SERVICES_COGNITOIDENTITY_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireGlobalAcceleratorConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withGlobalAcceleratorConfig(cfg -> cfg.enabled(false)),
+                c -> c.getGlobalAcceleratorConfig().isEnabled(), false,
+                "FLOCI_SERVICES_GLOBALACCELERATOR_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireDataSyncConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withDataSyncConfig(cfg -> cfg.enabled(false)),
+                c -> c.getDataSyncConfig().isEnabled(), false,
+                "FLOCI_SERVICES_DATASYNC_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireCodeArtifactConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withCodeArtifactConfig(cfg -> cfg.mavenImage("dzikoysk/reposilite:3.7.0")),
+                c -> c.getCodeArtifactConfig().getMavenImage(), "dzikoysk/reposilite:3.7.0",
+                "FLOCI_SERVICES_CODEARTIFACT_MAVEN_IMAGE", "dzikoysk/reposilite:3.7.0");
+    }
+
+    @Test
+    void shouldWireMarketplaceConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withMarketplaceConfig(cfg -> cfg.enabled(false)),
+                c -> c.getMarketplaceConfig().isEnabled(), false,
+                "FLOCI_SERVICES_MARKETPLACE_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireDmsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withDmsConfig(cfg -> cfg.enabled(false)),
+                c -> c.getDmsConfig().isEnabled(), false,
+                "FLOCI_SERVICES_DMS_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireElbConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withElbConfig(cfg -> cfg.mock(true)),
+                c -> c.getElbConfig().isMock(), true,
+                "FLOCI_SERVICES_ELB_MOCK", "true");
+    }
+
     // --- Cross-cutting configs (config/) --------------------------------------------------------
 
     @Test
@@ -894,6 +1118,22 @@ class FlociContainerServicesConfigTest {
                 c -> c.withInitHooksConfig(cfg -> cfg.timeoutSeconds(60)),
                 c -> c.getInitHooksConfig().getTimeoutSeconds(), 60L,
                 "FLOCI_INIT_HOOKS_TIMEOUT_SECONDS", "60");
+    }
+
+    @Test
+    void shouldWirePartitionsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withPartitionsConfig(cfg -> cfg.strict(true)),
+                c -> c.getPartitionsConfig().isStrict(), true,
+                "FLOCI_PARTITIONS_STRICT", "true");
+    }
+
+    @Test
+    void shouldWireNetworkConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withNetworkConfig(cfg -> cfg.securityGroupEnforcementEnabled(true)),
+                c -> c.getNetworkConfig().isSecurityGroupEnforcementEnabled(), true,
+                "FLOCI_NETWORK_SECURITY_GROUP_ENFORCEMENT_ENABLED", "true");
     }
 
 }

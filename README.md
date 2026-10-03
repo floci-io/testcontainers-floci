@@ -155,16 +155,18 @@ class S3IntegrationTest {
 | `withDefaultAvailabilityZone(String)` | Sets the default availability zone (default: `us-east-1a`)                                                     |
 | `withDefaultAccountId(String)`        | Sets the default AWS account ID (default: `000000000000`)                                                      |
 | `withLogLevel(Level)`                 | Sets the Floci log level (`TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`)                                           |
-| `withAiMockConfigFile(String)`        | Points the fixed-stub AI services (Textract, Comprehend, Rekognition) at a mock-response file in the container |
+| `withAiMockConfigFile(String)`        | Points the fixed-stub AI services (Textract, Comprehend, Rekognition, Translate) at a container mock file      |
 | `withAiMockConfig(String)`            | Same, but takes the mock-response file content and copies it into the container for you                        |
 | `withDedicatedNetwork()`              | Creates a dedicated Docker network shared by Floci and its sibling containers (RDS, Lambda, ElastiCache, etc.) |
 | `withDockerSocket(boolean)`           | Overrides whether the host Docker socket is mounted, bypassing auto-detection (see below)                      |
 | `withTlsConfig(...)`                  | Configures TLS/HTTPS (self-signed by default; optionally provide cert/key paths)                               |
 | `withStorageConfig(...)`              | Configures persistent storage and volume behaviour                                                             |
-| `withSecurityConfig(...)`             | Configures CORS-related security settings                                                                      |
+| `withSecurityConfig(...)`             | Configures security settings (CORS, private JWT issuer targets, network exposure)                              |
 | `withProtocolsConfig(...)`            | Configures RPC wire-protocol handling (e.g. strict protocol claiming)                                          |
 | `withAuthConfig(...)`                 | Configures authentication settings (e.g. SigV4 signature validation, presign secret)                           |
 | `withInitHooksConfig(...)`            | Configures lifecycle init hook execution (shell, timeouts)                                                     |
+| `withPartitionsConfig(...)`           | Configures the served AWS partition and partition/region strictness                                            |
+| `withNetworkConfig(...)`              | Configures network settings (e.g. security-group enforcement for EC2/ECS containers)                           |
 | `with*Config(...)`                    | Configures service-specific settings                                                                           |
 
 Each AWS service emulated by Floci can be individually configured via a `with*Config(...)` method on
@@ -216,6 +218,8 @@ FlociContainer floci = new FlociContainer().withDockerSocket(true);
 | `getProtocolsConfig()`        | Current protocols configuration                                   | —                |
 | `getAuthConfig()`             | Current auth configuration                                        | —                |
 | `getInitHooksConfig()`        | Current init hooks configuration                                  | —                |
+| `getPartitionsConfig()`       | Current partitions configuration                                  | —                |
+| `getNetworkConfig()`          | Current network configuration                                     | —                |
 | `get*Config()`                | Current configuration of a service                                | —                |
 
 
