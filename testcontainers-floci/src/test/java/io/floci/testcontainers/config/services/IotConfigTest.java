@@ -1,5 +1,6 @@
 package io.floci.testcontainers.config.services;
 
+import io.floci.testcontainers.FlociContainer;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.GenericContainer;
 
@@ -56,12 +57,13 @@ class IotConfigTest {
                 .containsEntry("FLOCI_SERVICES_IOT_MQTT_PORT", "1883")
                 .containsEntry("FLOCI_SERVICES_IOT_RULE_SQL_STRICT", "false")
                 .doesNotContainKey("FLOCI_SERVICES_IOT_ENDPOINT_ADDRESS")
-                .containsEntry("FLOCI_SERVICES_IOT_MQTT_TLS_PORT", "8883");
+                .doesNotContainKey("FLOCI_SERVICES_IOT_MQTT_TLS_PORT");
     }
 
     @Test
     void shouldApplyCustomEnvVarsToContainer() {
-        GenericContainer<?> container = genericContainer();
+        // The MQTT over TLS port is only emitted while TLS is enabled
+        FlociContainer container = flociContainerWithoutIot(true);
         IotConfig.builder()
                 .mqttAutoStart(true)
                 .mqttHost("127.0.0.1")
@@ -147,14 +149,54 @@ class IotConfigTest {
     }
 
     @Test
-    void shouldExposeMqttTlsPort() {
-        GenericContainer<?> container = genericContainer();
-        IotConfig.builder().build().applyExposedPortsToContainer(container);
-        assertThat(container.getExposedPorts()).contains(1883, 8883);
+    void shouldExposeMqttTlsPortOnlyWhenTlsEnabled() {
+        IotConfig config = IotConfig.builder().build();
 
-        GenericContainer<?> disabledTlsContainer = genericContainer();
-        IotConfig.builder().mqttTlsPort(0).build().applyExposedPortsToContainer(disabledTlsContainer);
-        assertThat(disabledTlsContainer.getExposedPorts()).contains(1883).doesNotContain(0, 8883);
+        FlociContainer tlsContainer = applyToContainer(config, flociContainerWithoutIot(true));
+        assertThat(tlsContainer.getExposedPorts()).contains(1883, 8883);
+        assertThat(tlsContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_IOT_MQTT_TLS_PORT", "8883");
+
+        FlociContainer noTlsContainer = applyToContainer(config, flociContainerWithoutIot(false));
+        assertThat(noTlsContainer.getExposedPorts()).contains(1883).doesNotContain(8883);
+        assertThat(noTlsContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_IOT_MQTT_TLS_PORT");
+
+        GenericContainer<?> genericContainer = applyToContainer(config, genericContainer());
+        assertThat(genericContainer.getExposedPorts()).contains(1883).doesNotContain(8883);
+        assertThat(genericContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_IOT_MQTT_TLS_PORT");
+
+        FlociContainer disabledTlsPortContainer =
+                applyToContainer(IotConfig.builder().mqttTlsPort(0).build(), flociContainerWithoutIot(true));
+        assertThat(disabledTlsPortContainer.getExposedPorts()).contains(1883).doesNotContain(0, 8883);
+    }
+
+    private static <T extends GenericContainer<?>> T applyToContainer(IotConfig config, T container) {
+        config.applyExposedPortsToContainer(container);
+        config.applyEnvVarsToContainer(container);
+        return container;
+    }
+
+    /**
+     * Creates a {@link FlociContainer} whose own IoT config is disabled, so that only the ports of the config
+     * under test are exposed.
+     */
+    private static FlociContainer flociContainerWithoutIot(boolean tlsEnabled) {
+        return new FlociContainer()
+                .withIotConfig(iot -> iot.enabled(false))
+                .withTlsConfig(tls -> tls.enabled(tlsEnabled));
+    }
+
+    @Test
+    void shouldExposeMqttTlsPortWhenTlsEnabledAfterIotConfig() {
+        FlociContainer container = new FlociContainer().withIotConfig(iot -> iot.mqttTlsPort(8884));
+        assertThat(container.getExposedPorts()).doesNotContain(8884);
+        assertThat(container.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_IOT_MQTT_TLS_PORT");
+
+        container.withTlsConfig(tls -> tls.enabled(true));
+        assertThat(container.getExposedPorts()).contains(8884);
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_IOT_MQTT_TLS_PORT", "8884");
+
+        container.withTlsConfig(tls -> tls.enabled(false));
+        assertThat(container.getExposedPorts()).doesNotContain(8884);
     }
 
 }

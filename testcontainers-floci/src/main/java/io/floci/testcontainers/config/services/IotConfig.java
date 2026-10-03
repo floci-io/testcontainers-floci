@@ -1,5 +1,6 @@
 package io.floci.testcontainers.config.services;
 
+import io.floci.testcontainers.FlociContainer;
 import org.testcontainers.containers.Container;
 
 import java.util.Optional;
@@ -129,7 +130,9 @@ public class IotConfig extends AbstractServiceConfig<IotConfig.Builder> {
     /**
      * Returns the port of the MQTT over TLS listener, the port AWS IoT serves for X.509 device connections.
      *
-     * <p>The listener is only opened while Floci's TLS is enabled; {@code 0} disables it.
+     * <p>The listener is only opened while Floci's TLS is enabled; {@code 0} disables it. Accordingly, the
+     * port is only exposed, and its env var only set, on a {@link FlociContainer} whose
+     * {@link FlociContainer#getTlsConfig() TLS config} is enabled.
      *
      * @return the port of the MQTT over TLS listener, the port AWS IoT serves for X.509 device connections
      */
@@ -152,7 +155,10 @@ public class IotConfig extends AbstractServiceConfig<IotConfig.Builder> {
                 container.withEnv("FLOCI_SERVICES_IOT_ENDPOINT_ADDRESS", endpointAddress);
             }
 
-            container.withEnv("FLOCI_SERVICES_IOT_MQTT_TLS_PORT", String.valueOf(mqttTlsPort));
+            // Only used by Floci while TLS is enabled
+            if (isTlsEnabled(container)) {
+                container.withEnv("FLOCI_SERVICES_IOT_MQTT_TLS_PORT", String.valueOf(mqttTlsPort));
+            }
         }
     }
 
@@ -162,10 +168,14 @@ public class IotConfig extends AbstractServiceConfig<IotConfig.Builder> {
             container.addExposedPorts(mqttPort);
 
             // Only served by Floci while TLS is enabled
-            if (mqttTlsPort > 0) {
+            if (mqttTlsPort > 0 && isTlsEnabled(container)) {
                 container.addExposedPorts(mqttTlsPort);
             }
         }
+    }
+
+    private static boolean isTlsEnabled(Container<?> container) {
+        return container instanceof FlociContainer flociContainer && flociContainer.getTlsConfig().isEnabled();
     }
 
     /**
@@ -279,7 +289,9 @@ public class IotConfig extends AbstractServiceConfig<IotConfig.Builder> {
         /**
          * Sets the port of the MQTT over TLS listener, the port AWS IoT serves for X.509 device connections.
          *
-         * <p>The listener is only opened while Floci's TLS is enabled; {@code 0} disables it.
+         * <p>The listener is only opened while Floci's TLS is enabled; {@code 0} disables it. Accordingly, the
+         * port is only exposed, and its env var only set, on a {@link FlociContainer} whose
+         * {@link FlociContainer#getTlsConfig() TLS config} is enabled.
          *
          * @param mqttTlsPort the port of the MQTT over TLS listener, the port AWS IoT serves for X.509 device connections (default {@value DEFAULT_MQTT_TLS_PORT})
          * @return this builder

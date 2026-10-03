@@ -782,7 +782,9 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         TlsConfig.Builder builder = tlsConfig.toBuilder();
         configurer.accept(builder);
         this.tlsConfig = builder.build();
-        tlsConfig.applyEnvVarsToContainer(this);
+        // Some service ports and env vars (e.g. IoT's MQTT over TLS listener) only apply while TLS is enabled
+        configureExposedPorts();
+        configureEnvVars();
         return this;
     }
 
