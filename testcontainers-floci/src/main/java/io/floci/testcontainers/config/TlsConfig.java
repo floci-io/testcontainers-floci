@@ -86,10 +86,11 @@ public class TlsConfig {
     }
 
     /**
-     * Returns whether a self-signed certificate should be auto-generated when no
-     * {@code certPath}/{@code keyPath} is provided.
+     * Returns whether a server certificate should be auto-generated when no
+     * {@code certPath}/{@code keyPath} is provided. The leaf certificate is issued by Floci's local
+     * root CA; clients trust that CA (served at {@code GET /_floci/ca.pem}), not the leaf.
      *
-     * @return {@code true} if self-signed certificate generation is enabled
+     * @return {@code true} if server certificate generation is enabled
      */
     public boolean isSelfSigned() {
         return selfSigned;
@@ -198,11 +199,13 @@ public class TlsConfig {
         }
 
         /**
-         * Sets whether a self-signed certificate should be auto-generated when no
-         * {@code certPath}/{@code keyPath} is provided. The generated files are persisted
-         * to {@code {storage.persistent-path}/tls/} and reused across restarts.
+         * Sets whether a server certificate should be auto-generated when no
+         * {@code certPath}/{@code keyPath} is provided. The leaf certificate is issued by Floci's
+         * local root CA; both live under {@code {storage.persistent-path}/tls/} and survive
+         * restarts. Clients trust the CA (served at {@code GET /_floci/ca.pem}), not the leaf.
          *
-         * @param selfSigned {@code true} to auto-generate a self-signed certificate (default {@value DEFAULT_SELF_SIGNED})
+         * @param selfSigned {@code true} to auto-generate a server certificate issued by Floci's local root CA
+         *                   (default {@value DEFAULT_SELF_SIGNED})
          * @return this builder
          */
         public Builder selfSigned(boolean selfSigned) {

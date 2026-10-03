@@ -262,8 +262,8 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
     }
 
     /**
-     * Returns the base URI used to resolve ECR image references pulled by Lambda functions
-     * (e.g. for public Lambda base images).
+     * Returns the registry host (optionally with a path prefix) that Lambda runtime images are pulled
+     * from, e.g. {@code public.ecr.aws} produces {@code public.ecr.aws/lambda/python:3.12}.
      *
      * @return the ECR base URI (default {@value DEFAULT_ECR_BASE_URI})
      */
@@ -468,9 +468,9 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
         boolean enabled();
 
         /**
-         * Optional allow-list of absolute directories. When non-empty, the S3Key supplied to a
+         * Optional allow-list of absolute directories. When set, the S3Key supplied to a
          * hot-reload CreateFunction/UpdateFunctionCode must be one of these directories or inside
-         * one, compared after {@code .} and {@code ..} segments are resolved. Empty = all absolute
+         * one, compared after {@code .} and {@code ..} segments are resolved. Unset = all absolute
          * paths are accepted.
          *
          * @return the list of allowed directories, or empty if unrestricted
@@ -722,8 +722,9 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
         }
 
         /**
-         * Sets the base URI used to resolve ECR image references pulled by Lambda functions
-         * (e.g. for public Lambda base images).
+         * Sets the registry host (optionally with a path prefix) that Lambda runtime images are pulled
+         * from, e.g. {@code public.ecr.aws} produces {@code public.ecr.aws/lambda/python:3.12}. Point
+         * it at a private mirror to avoid depending on ECR Public.
          *
          * @param ecrBaseUri the ECR base URI (default {@value DEFAULT_ECR_BASE_URI})
          * @return this builder

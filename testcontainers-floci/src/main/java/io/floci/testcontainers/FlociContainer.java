@@ -762,19 +762,20 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     /**
      * Configures TLS/HTTPS for the Floci server.
      *
-     * <p>By default, a self-signed certificate is auto-generated. To use a custom certificate,
+     * <p>By default, a server certificate issued by Floci's local root CA is auto-generated; clients
+     * trust that CA (served at {@code GET /_floci/ca.pem}), not the leaf. To use a custom certificate,
      * provide paths to the PEM certificate and private key files:
      *
      * <pre>{@code
      * new FlociContainer()
-     *     .withTls(c -> c.enabled(true).certPath("/certs/server.crt").keyPath("/certs/server.key"));
+     *     .withTlsConfig(c -> c.enabled(true).certPath("/certs/server.crt").keyPath("/certs/server.key"));
      * }</pre>
      *
-     * <p>To enable TLS with a self-signed certificate:
+     * <p>To enable TLS with an auto-generated certificate:
      *
      * <pre>{@code
      * new FlociContainer()
-     *     .withTls(c -> c.enabled(true));
+     *     .withTlsConfig(c -> c.enabled(true));
      * }</pre>
      *
      * @param configurer a consumer that receives a {@link TlsConfig.Builder} to modify

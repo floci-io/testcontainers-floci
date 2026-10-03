@@ -48,7 +48,8 @@ public class CloudFrontConfig extends AbstractServiceConfig<CloudFrontConfig.Bui
     }
 
     /**
-     * Returns the domain suffix used for CloudFront distributions.
+     * Returns the domain suffix used for CloudFront distribution domain names. It is configurable
+     * because it differs by partition (Floci has no published source for the China CDN suffix).
      *
      * @return the domain suffix (default {@value DEFAULT_DOMAIN_SUFFIX})
      */
@@ -106,7 +107,8 @@ public class CloudFrontConfig extends AbstractServiceConfig<CloudFrontConfig.Bui
         }
 
         /**
-         * Sets the domain suffix used for CloudFront distribution domain names.
+         * Sets the domain suffix used for CloudFront distribution domain names. It is configurable
+         * because it differs by partition (Floci has no published source for the China CDN suffix).
          *
          * @param domainSuffix the domain suffix (default {@value DEFAULT_DOMAIN_SUFFIX})
          * @return this builder
