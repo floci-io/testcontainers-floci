@@ -207,6 +207,9 @@ them onto the new branch.)
    references) — **migrate** (step 5).
 2. **`ServiceStorageOverrides`** and the per-service `<Name>StorageConfig` interfaces it references — **ignore
    completely**. They are never migrated and need not even be mentioned in the summary.
+   The same applies to **`UiServiceConfig`** (`services().ui()`, the web console sidecar), even though it sits inside
+   `ServicesConfig`: it never gets a config class here, regardless of what changes in it, and is not listed as a known
+   gap either.
 3. **Everything else** — root properties (`port`, `baseUrl`, `defaultRegion`, …), and global sections such as `dns()`,
    `network()`, `auth()`, `security()`, `storage()` (except the overrides above), `tls()`, `protocols()`,
    `duckdb()`, `initHooks()`, `partitions()`, and `default` helper methods — **do not migrate**. Only summarize them
