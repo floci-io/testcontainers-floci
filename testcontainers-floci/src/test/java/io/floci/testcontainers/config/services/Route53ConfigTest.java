@@ -16,6 +16,7 @@ class Route53ConfigTest {
         assertThat(config.getDefaultNameserver2()).isEqualTo("ns-2.awsdns-02.net");
         assertThat(config.getDefaultNameserver3()).isEqualTo("ns-3.awsdns-03.com");
         assertThat(config.getDefaultNameserver4()).isEqualTo("ns-4.awsdns-04.co.uk");
+        assertThat(config.getVpcAssociationControlPlaneDelayMs()).isEqualTo(0L);
     }
 
     @Test
@@ -26,12 +27,14 @@ class Route53ConfigTest {
                 .defaultNameserver2("ns2.example.com")
                 .defaultNameserver3("ns3.example.com")
                 .defaultNameserver4("ns4.example.com")
+                .vpcAssociationControlPlaneDelayMs(2000L)
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.getDefaultNameserver1()).isEqualTo("ns1.example.com");
         assertThat(config.getDefaultNameserver2()).isEqualTo("ns2.example.com");
         assertThat(config.getDefaultNameserver3()).isEqualTo("ns3.example.com");
         assertThat(config.getDefaultNameserver4()).isEqualTo("ns4.example.com");
+        assertThat(config.getVpcAssociationControlPlaneDelayMs()).isEqualTo(2000L);
     }
 
     @Test
@@ -44,7 +47,8 @@ class Route53ConfigTest {
                 .containsEntry("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_1", "ns-1.awsdns-01.org")
                 .containsEntry("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_2", "ns-2.awsdns-02.net")
                 .containsEntry("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_3", "ns-3.awsdns-03.com")
-                .containsEntry("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_4", "ns-4.awsdns-04.co.uk");
+                .containsEntry("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_4", "ns-4.awsdns-04.co.uk")
+                .containsEntry("FLOCI_SERVICES_ROUTE53_VPC_ASSOCIATION_CONTROL_PLANE_DELAY_MS", "0");
     }
 
     @Test
@@ -55,6 +59,7 @@ class Route53ConfigTest {
                 .defaultNameserver2("ns2.example.com")
                 .defaultNameserver3("ns3.example.com")
                 .defaultNameserver4("ns4.example.com")
+                .vpcAssociationControlPlaneDelayMs(2000L)
                 .build()
                 .applyEnvVarsToContainer(container);
 
@@ -62,7 +67,8 @@ class Route53ConfigTest {
                 .containsEntry("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_1", "ns1.example.com")
                 .containsEntry("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_2", "ns2.example.com")
                 .containsEntry("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_3", "ns3.example.com")
-                .containsEntry("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_4", "ns4.example.com");
+                .containsEntry("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_4", "ns4.example.com")
+                .containsEntry("FLOCI_SERVICES_ROUTE53_VPC_ASSOCIATION_CONTROL_PLANE_DELAY_MS", "2000");
     }
 
     @Test
@@ -70,7 +76,9 @@ class Route53ConfigTest {
         GenericContainer<?> container = genericContainer();
         Route53Config.builder().enabled(false).build().applyEnvVarsToContainer(container);
 
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_ROUTE53_ENABLED", "false");
+        assertThat(container.getEnvMap())
+                .containsEntry("FLOCI_SERVICES_ROUTE53_ENABLED", "false")
+                .doesNotContainKey("FLOCI_SERVICES_ROUTE53_VPC_ASSOCIATION_CONTROL_PLANE_DELAY_MS");
     }
 
     @Test
@@ -81,6 +89,7 @@ class Route53ConfigTest {
                 .defaultNameserver2("ns2.example.com")
                 .defaultNameserver3("ns3.example.com")
                 .defaultNameserver4("ns4.example.com")
+                .vpcAssociationControlPlaneDelayMs(2000L)
                 .build();
         Route53Config copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
@@ -88,28 +97,7 @@ class Route53ConfigTest {
         assertThat(copy.getDefaultNameserver2()).isEqualTo("ns2.example.com");
         assertThat(copy.getDefaultNameserver3()).isEqualTo("ns3.example.com");
         assertThat(copy.getDefaultNameserver4()).isEqualTo("ns4.example.com");
-    }
-
-    @Test
-    void shouldApplyVpcAssociationControlPlaneDelayMs() {
-        Route53Config defaults = Route53Config.builder().build();
-        assertThat(defaults.getVpcAssociationControlPlaneDelayMs()).isEqualTo(0L);
-
-        Route53Config config = Route53Config.builder().vpcAssociationControlPlaneDelayMs(2000L).build();
-        assertThat(config.getVpcAssociationControlPlaneDelayMs()).isEqualTo(2000L);
-        assertThat(config.toBuilder().build().getVpcAssociationControlPlaneDelayMs()).isEqualTo(2000L);
-
-        GenericContainer<?> container = genericContainer();
-        config.applyEnvVarsToContainer(container);
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_ROUTE53_VPC_ASSOCIATION_CONTROL_PLANE_DELAY_MS", "2000");
-
-        GenericContainer<?> defaultContainer = genericContainer();
-        defaults.applyEnvVarsToContainer(defaultContainer);
-        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_ROUTE53_VPC_ASSOCIATION_CONTROL_PLANE_DELAY_MS", "0");
-
-        GenericContainer<?> disabledContainer = genericContainer();
-        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
-        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_ROUTE53_VPC_ASSOCIATION_CONTROL_PLANE_DELAY_MS");
+        assertThat(copy.getVpcAssociationControlPlaneDelayMs()).isEqualTo(2000L);
     }
 
 }

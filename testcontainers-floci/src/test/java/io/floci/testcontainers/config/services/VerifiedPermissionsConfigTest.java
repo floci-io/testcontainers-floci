@@ -12,14 +12,20 @@ class VerifiedPermissionsConfigTest {
     void shouldApplyDefaultVerifiedPermissionsConfig() {
         VerifiedPermissionsConfig config = VerifiedPermissionsConfig.builder().build();
         assertThat(config.isEnabled()).isTrue();
+        assertThat(config.getCedarUrl()).isEmpty();
+        assertThat(config.getCedarImage()).isEqualTo("floci/floci-sidecar-cedar:1.1.0");
     }
 
     @Test
     void shouldApplyCustomVerifiedPermissionsConfig() {
         VerifiedPermissionsConfig config = VerifiedPermissionsConfig.builder()
                 .enabled(false)
+                .cedarUrl("http://cedar-sidecar:8080")
+                .cedarImage("floci/floci-sidecar-cedar:1.2.0")
                 .build();
         assertThat(config.isEnabled()).isFalse();
+        assertThat(config.getCedarUrl()).contains("http://cedar-sidecar:8080");
+        assertThat(config.getCedarImage()).isEqualTo("floci/floci-sidecar-cedar:1.2.0");
     }
 
     @Test
@@ -27,7 +33,24 @@ class VerifiedPermissionsConfigTest {
         GenericContainer<?> container = genericContainer();
         VerifiedPermissionsConfig.builder().build().applyEnvVarsToContainer(container);
 
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_VERIFIEDPERMISSIONS_ENABLED", "true");
+        assertThat(container.getEnvMap())
+                .containsEntry("FLOCI_SERVICES_VERIFIEDPERMISSIONS_ENABLED", "true")
+                .doesNotContainKey("FLOCI_SERVICES_VERIFIEDPERMISSIONS_CEDAR_URL")
+                .containsEntry("FLOCI_SERVICES_VERIFIEDPERMISSIONS_CEDAR_IMAGE", "floci/floci-sidecar-cedar:1.1.0");
+    }
+
+    @Test
+    void shouldApplyCustomEnvVarsToContainer() {
+        GenericContainer<?> container = genericContainer();
+        VerifiedPermissionsConfig.builder()
+                .cedarUrl("http://cedar-sidecar:8080")
+                .cedarImage("floci/floci-sidecar-cedar:1.2.0")
+                .build()
+                .applyEnvVarsToContainer(container);
+
+        assertThat(container.getEnvMap())
+                .containsEntry("FLOCI_SERVICES_VERIFIEDPERMISSIONS_CEDAR_URL", "http://cedar-sidecar:8080")
+                .containsEntry("FLOCI_SERVICES_VERIFIEDPERMISSIONS_CEDAR_IMAGE", "floci/floci-sidecar-cedar:1.2.0");
     }
 
     @Test
@@ -35,60 +58,23 @@ class VerifiedPermissionsConfigTest {
         GenericContainer<?> container = genericContainer();
         VerifiedPermissionsConfig.builder().enabled(false).build().applyEnvVarsToContainer(container);
 
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_VERIFIEDPERMISSIONS_ENABLED", "false");
+        assertThat(container.getEnvMap())
+                .containsEntry("FLOCI_SERVICES_VERIFIEDPERMISSIONS_ENABLED", "false")
+                .doesNotContainKey("FLOCI_SERVICES_VERIFIEDPERMISSIONS_CEDAR_URL")
+                .doesNotContainKey("FLOCI_SERVICES_VERIFIEDPERMISSIONS_CEDAR_IMAGE");
     }
 
     @Test
     void shouldPreserveValuesOnToBuilder() {
         VerifiedPermissionsConfig config = VerifiedPermissionsConfig.builder()
                 .enabled(false)
+                .cedarUrl("http://cedar-sidecar:8080")
+                .cedarImage("floci/floci-sidecar-cedar:1.2.0")
                 .build();
         VerifiedPermissionsConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
-    }
-
-    @Test
-    void shouldApplyCedarUrl() {
-        VerifiedPermissionsConfig defaults = VerifiedPermissionsConfig.builder().build();
-        assertThat(defaults.getCedarUrl()).isEmpty();
-
-        VerifiedPermissionsConfig config = VerifiedPermissionsConfig.builder().cedarUrl("http://cedar-sidecar:8080").build();
-        assertThat(config.getCedarUrl()).contains("http://cedar-sidecar:8080");
-        assertThat(config.toBuilder().build().getCedarUrl()).contains("http://cedar-sidecar:8080");
-
-        GenericContainer<?> container = genericContainer();
-        config.applyEnvVarsToContainer(container);
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_VERIFIEDPERMISSIONS_CEDAR_URL", "http://cedar-sidecar:8080");
-
-        GenericContainer<?> defaultContainer = genericContainer();
-        defaults.applyEnvVarsToContainer(defaultContainer);
-        assertThat(defaultContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_VERIFIEDPERMISSIONS_CEDAR_URL");
-
-        GenericContainer<?> disabledContainer = genericContainer();
-        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
-        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_VERIFIEDPERMISSIONS_CEDAR_URL");
-    }
-
-    @Test
-    void shouldApplyCedarImage() {
-        VerifiedPermissionsConfig defaults = VerifiedPermissionsConfig.builder().build();
-        assertThat(defaults.getCedarImage()).isEqualTo("floci/floci-sidecar-cedar:1.1.0");
-
-        VerifiedPermissionsConfig config = VerifiedPermissionsConfig.builder().cedarImage("floci/floci-sidecar-cedar:1.2.0").build();
-        assertThat(config.getCedarImage()).isEqualTo("floci/floci-sidecar-cedar:1.2.0");
-        assertThat(config.toBuilder().build().getCedarImage()).isEqualTo("floci/floci-sidecar-cedar:1.2.0");
-
-        GenericContainer<?> container = genericContainer();
-        config.applyEnvVarsToContainer(container);
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_VERIFIEDPERMISSIONS_CEDAR_IMAGE", "floci/floci-sidecar-cedar:1.2.0");
-
-        GenericContainer<?> defaultContainer = genericContainer();
-        defaults.applyEnvVarsToContainer(defaultContainer);
-        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_VERIFIEDPERMISSIONS_CEDAR_IMAGE", "floci/floci-sidecar-cedar:1.1.0");
-
-        GenericContainer<?> disabledContainer = genericContainer();
-        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
-        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_VERIFIEDPERMISSIONS_CEDAR_IMAGE");
+        assertThat(copy.getCedarUrl()).contains("http://cedar-sidecar:8080");
+        assertThat(copy.getCedarImage()).isEqualTo("floci/floci-sidecar-cedar:1.2.0");
     }
 
     @Test

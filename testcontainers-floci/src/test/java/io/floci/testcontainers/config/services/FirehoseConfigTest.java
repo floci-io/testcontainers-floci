@@ -14,6 +14,7 @@ class FirehoseConfigTest {
         assertThat(config.isEnabled()).isTrue();
         assertThat(config.getTickIntervalSeconds()).isEqualTo(10);
         assertThat(config.getFlushRecordCount()).isEqualTo(0);
+        assertThat(config.getStagingBucket()).isEqualTo("floci-firehose-staging");
     }
 
     @Test
@@ -22,10 +23,12 @@ class FirehoseConfigTest {
                 .enabled(false)
                 .tickIntervalSeconds(5)
                 .flushRecordCount(1)
+                .stagingBucket("my-staging-bucket")
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.getTickIntervalSeconds()).isEqualTo(5);
         assertThat(config.getFlushRecordCount()).isEqualTo(1);
+        assertThat(config.getStagingBucket()).isEqualTo("my-staging-bucket");
     }
 
     @Test
@@ -36,7 +39,8 @@ class FirehoseConfigTest {
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_SERVICES_FIREHOSE_ENABLED", "true")
                 .containsEntry("FLOCI_SERVICES_FIREHOSE_TICK_INTERVAL_SECONDS", "10")
-                .containsEntry("FLOCI_SERVICES_FIREHOSE_FLUSH_RECORD_COUNT", "0");
+                .containsEntry("FLOCI_SERVICES_FIREHOSE_FLUSH_RECORD_COUNT", "0")
+                .containsEntry("FLOCI_SERVICES_FIREHOSE_STAGING_BUCKET", "floci-firehose-staging");
     }
 
     @Test
@@ -45,12 +49,14 @@ class FirehoseConfigTest {
         FirehoseConfig.builder()
                 .tickIntervalSeconds(5)
                 .flushRecordCount(1)
+                .stagingBucket("my-staging-bucket")
                 .build()
                 .applyEnvVarsToContainer(container);
 
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_SERVICES_FIREHOSE_TICK_INTERVAL_SECONDS", "5")
-                .containsEntry("FLOCI_SERVICES_FIREHOSE_FLUSH_RECORD_COUNT", "1");
+                .containsEntry("FLOCI_SERVICES_FIREHOSE_FLUSH_RECORD_COUNT", "1")
+                .containsEntry("FLOCI_SERVICES_FIREHOSE_STAGING_BUCKET", "my-staging-bucket");
     }
 
     @Test
@@ -61,7 +67,8 @@ class FirehoseConfigTest {
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_SERVICES_FIREHOSE_ENABLED", "false")
                 .doesNotContainKey("FLOCI_SERVICES_FIREHOSE_TICK_INTERVAL_SECONDS")
-                .doesNotContainKey("FLOCI_SERVICES_FIREHOSE_FLUSH_RECORD_COUNT");
+                .doesNotContainKey("FLOCI_SERVICES_FIREHOSE_FLUSH_RECORD_COUNT")
+                .doesNotContainKey("FLOCI_SERVICES_FIREHOSE_STAGING_BUCKET");
     }
 
     @Test
@@ -70,33 +77,13 @@ class FirehoseConfigTest {
                 .enabled(false)
                 .tickIntervalSeconds(5)
                 .flushRecordCount(1)
+                .stagingBucket("my-staging-bucket")
                 .build();
         FirehoseConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
         assertThat(copy.getTickIntervalSeconds()).isEqualTo(5);
         assertThat(copy.getFlushRecordCount()).isEqualTo(1);
-    }
-
-    @Test
-    void shouldApplyStagingBucket() {
-        FirehoseConfig defaults = FirehoseConfig.builder().build();
-        assertThat(defaults.getStagingBucket()).isEqualTo("floci-firehose-staging");
-
-        FirehoseConfig config = FirehoseConfig.builder().stagingBucket("my-staging-bucket").build();
-        assertThat(config.getStagingBucket()).isEqualTo("my-staging-bucket");
-        assertThat(config.toBuilder().build().getStagingBucket()).isEqualTo("my-staging-bucket");
-
-        GenericContainer<?> container = genericContainer();
-        config.applyEnvVarsToContainer(container);
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_FIREHOSE_STAGING_BUCKET", "my-staging-bucket");
-
-        GenericContainer<?> defaultContainer = genericContainer();
-        defaults.applyEnvVarsToContainer(defaultContainer);
-        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_FIREHOSE_STAGING_BUCKET", "floci-firehose-staging");
-
-        GenericContainer<?> disabledContainer = genericContainer();
-        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
-        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_FIREHOSE_STAGING_BUCKET");
+        assertThat(copy.getStagingBucket()).isEqualTo("my-staging-bucket");
     }
 
 }

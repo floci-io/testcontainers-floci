@@ -12,14 +12,17 @@ class IdentityStoreConfigTest {
     void shouldApplyDefaultIdentityStoreConfig() {
         IdentityStoreConfig config = IdentityStoreConfig.builder().build();
         assertThat(config.isEnabled()).isTrue();
+        assertThat(config.getScimBearerToken()).isEqualTo("floci-scim-token");
     }
 
     @Test
     void shouldApplyCustomIdentityStoreConfig() {
         IdentityStoreConfig config = IdentityStoreConfig.builder()
                 .enabled(false)
+                .scimBearerToken("my-scim-token")
                 .build();
         assertThat(config.isEnabled()).isFalse();
+        assertThat(config.getScimBearerToken()).isEqualTo("my-scim-token");
     }
 
     @Test
@@ -27,7 +30,20 @@ class IdentityStoreConfigTest {
         GenericContainer<?> container = genericContainer();
         IdentityStoreConfig.builder().build().applyEnvVarsToContainer(container);
 
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_IDENTITYSTORE_ENABLED", "true");
+        assertThat(container.getEnvMap())
+                .containsEntry("FLOCI_SERVICES_IDENTITYSTORE_ENABLED", "true")
+                .containsEntry("FLOCI_SERVICES_IDENTITYSTORE_SCIM_BEARER_TOKEN", "floci-scim-token");
+    }
+
+    @Test
+    void shouldApplyCustomEnvVarsToContainer() {
+        GenericContainer<?> container = genericContainer();
+        IdentityStoreConfig.builder()
+                .scimBearerToken("my-scim-token")
+                .build()
+                .applyEnvVarsToContainer(container);
+
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_IDENTITYSTORE_SCIM_BEARER_TOKEN", "my-scim-token");
     }
 
     @Test
@@ -35,38 +51,20 @@ class IdentityStoreConfigTest {
         GenericContainer<?> container = genericContainer();
         IdentityStoreConfig.builder().enabled(false).build().applyEnvVarsToContainer(container);
 
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_IDENTITYSTORE_ENABLED", "false");
+        assertThat(container.getEnvMap())
+                .containsEntry("FLOCI_SERVICES_IDENTITYSTORE_ENABLED", "false")
+                .doesNotContainKey("FLOCI_SERVICES_IDENTITYSTORE_SCIM_BEARER_TOKEN");
     }
 
     @Test
     void shouldPreserveValuesOnToBuilder() {
         IdentityStoreConfig config = IdentityStoreConfig.builder()
                 .enabled(false)
+                .scimBearerToken("my-scim-token")
                 .build();
         IdentityStoreConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
-    }
-
-    @Test
-    void shouldApplyScimBearerToken() {
-        IdentityStoreConfig defaults = IdentityStoreConfig.builder().build();
-        assertThat(defaults.getScimBearerToken()).isEqualTo("floci-scim-token");
-
-        IdentityStoreConfig config = IdentityStoreConfig.builder().scimBearerToken("my-scim-token").build();
-        assertThat(config.getScimBearerToken()).isEqualTo("my-scim-token");
-        assertThat(config.toBuilder().build().getScimBearerToken()).isEqualTo("my-scim-token");
-
-        GenericContainer<?> container = genericContainer();
-        config.applyEnvVarsToContainer(container);
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_IDENTITYSTORE_SCIM_BEARER_TOKEN", "my-scim-token");
-
-        GenericContainer<?> defaultContainer = genericContainer();
-        defaults.applyEnvVarsToContainer(defaultContainer);
-        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_IDENTITYSTORE_SCIM_BEARER_TOKEN", "floci-scim-token");
-
-        GenericContainer<?> disabledContainer = genericContainer();
-        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
-        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_IDENTITYSTORE_SCIM_BEARER_TOKEN");
+        assertThat(copy.getScimBearerToken()).isEqualTo("my-scim-token");
     }
 
 }

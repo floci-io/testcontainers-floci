@@ -24,6 +24,15 @@ class EksConfigTest {
         assertThat(config.isIamAuthWebhook()).isTrue();
         assertThat(config.isEcrRegistryMirror()).isTrue();
         assertThat(config.isDisableCni()).isFalse();
+        assertThat(config.getMaxMemoryMib()).isEqualTo(0);
+        assertThat(config.getMaxVcpus()).isEqualTo(0);
+        assertThat(config.getImageTemplate()).isEmpty();
+        assertThat(config.isImds()).isFalse();
+        assertThat(config.isImdsPodNetwork()).isFalse();
+        assertThat(config.isIrsaSigningKey()).isTrue();
+        assertThat(config.isPodIdentityWebhook()).isTrue();
+        assertThat(config.isEmbeddedDns()).isTrue();
+        assertThat(config.isVpcRouteProgramming()).isTrue();
     }
 
     @Test
@@ -39,6 +48,15 @@ class EksConfigTest {
                 .iamAuthWebhook(false)
                 .ecrRegistryMirror(false)
                 .disableCni(true)
+                .maxMemoryMib(2048)
+                .maxVcpus(2)
+                .imageTemplate("custom-registry.internal/k3s:v%s")
+                .imds(true)
+                .imdsPodNetwork(true)
+                .irsaSigningKey(false)
+                .podIdentityWebhook(false)
+                .embeddedDns(false)
+                .vpcRouteProgramming(false)
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.isMock()).isTrue();
@@ -52,6 +70,15 @@ class EksConfigTest {
         assertThat(config.isIamAuthWebhook()).isFalse();
         assertThat(config.isEcrRegistryMirror()).isFalse();
         assertThat(config.isDisableCni()).isTrue();
+        assertThat(config.getMaxMemoryMib()).isEqualTo(2048);
+        assertThat(config.getMaxVcpus()).isEqualTo(2);
+        assertThat(config.getImageTemplate()).contains("custom-registry.internal/k3s:v%s");
+        assertThat(config.isImds()).isTrue();
+        assertThat(config.isImdsPodNetwork()).isTrue();
+        assertThat(config.isIrsaSigningKey()).isFalse();
+        assertThat(config.isPodIdentityWebhook()).isFalse();
+        assertThat(config.isEmbeddedDns()).isFalse();
+        assertThat(config.isVpcRouteProgramming()).isFalse();
     }
 
     @Test
@@ -70,7 +97,16 @@ class EksConfigTest {
                 .containsEntry("FLOCI_SERVICES_EKS_IAM_AUTH_WEBHOOK", "true")
                 .containsEntry("FLOCI_SERVICES_EKS_ECR_REGISTRY_MIRROR", "true")
                 .containsEntry("FLOCI_SERVICES_EKS_DISABLE_CNI", "false")
-                .doesNotContainKey("FLOCI_SERVICES_EKS_DOCKER_NETWORK");
+                .doesNotContainKey("FLOCI_SERVICES_EKS_DOCKER_NETWORK")
+                .containsEntry("FLOCI_SERVICES_EKS_MAX_MEMORY_MIB", "0")
+                .containsEntry("FLOCI_SERVICES_EKS_MAX_VCPUS", "0")
+                .doesNotContainKey("FLOCI_SERVICES_EKS_IMAGE_TEMPLATE")
+                .containsEntry("FLOCI_SERVICES_EKS_IMDS", "false")
+                .containsEntry("FLOCI_SERVICES_EKS_IMDS_POD_NETWORK", "false")
+                .containsEntry("FLOCI_SERVICES_EKS_IRSA_SIGNING_KEY", "true")
+                .containsEntry("FLOCI_SERVICES_EKS_POD_IDENTITY_WEBHOOK", "true")
+                .containsEntry("FLOCI_SERVICES_EKS_EMBEDDED_DNS", "true")
+                .containsEntry("FLOCI_SERVICES_EKS_VPC_ROUTE_PROGRAMMING", "true");
     }
 
     @Test
@@ -87,6 +123,15 @@ class EksConfigTest {
                 .iamAuthWebhook(false)
                 .ecrRegistryMirror(false)
                 .disableCni(true)
+                .maxMemoryMib(2048)
+                .maxVcpus(2)
+                .imageTemplate("custom-registry.internal/k3s:v%s")
+                .imds(true)
+                .imdsPodNetwork(true)
+                .irsaSigningKey(false)
+                .podIdentityWebhook(false)
+                .embeddedDns(false)
+                .vpcRouteProgramming(false)
                 .build()
                 .applyEnvVarsToContainer(container);
 
@@ -101,7 +146,16 @@ class EksConfigTest {
                 .containsEntry("FLOCI_SERVICES_EKS_ENDPOINT_MODE", "network")
                 .containsEntry("FLOCI_SERVICES_EKS_IAM_AUTH_WEBHOOK", "false")
                 .containsEntry("FLOCI_SERVICES_EKS_ECR_REGISTRY_MIRROR", "false")
-                .containsEntry("FLOCI_SERVICES_EKS_DISABLE_CNI", "true");
+                .containsEntry("FLOCI_SERVICES_EKS_DISABLE_CNI", "true")
+                .containsEntry("FLOCI_SERVICES_EKS_MAX_MEMORY_MIB", "2048")
+                .containsEntry("FLOCI_SERVICES_EKS_MAX_VCPUS", "2")
+                .containsEntry("FLOCI_SERVICES_EKS_IMAGE_TEMPLATE", "custom-registry.internal/k3s:v%s")
+                .containsEntry("FLOCI_SERVICES_EKS_IMDS", "true")
+                .containsEntry("FLOCI_SERVICES_EKS_IMDS_POD_NETWORK", "true")
+                .containsEntry("FLOCI_SERVICES_EKS_IRSA_SIGNING_KEY", "false")
+                .containsEntry("FLOCI_SERVICES_EKS_POD_IDENTITY_WEBHOOK", "false")
+                .containsEntry("FLOCI_SERVICES_EKS_EMBEDDED_DNS", "false")
+                .containsEntry("FLOCI_SERVICES_EKS_VPC_ROUTE_PROGRAMMING", "false");
     }
 
     @Test
@@ -113,7 +167,16 @@ class EksConfigTest {
                 .containsEntry("FLOCI_SERVICES_EKS_ENABLED", "false")
                 .doesNotContainKey("FLOCI_SERVICES_EKS_MOCK")
                 .doesNotContainKey("FLOCI_SERVICES_EKS_PROVIDER")
-                .doesNotContainKey("FLOCI_SERVICES_EKS_DISABLE_CNI");
+                .doesNotContainKey("FLOCI_SERVICES_EKS_DISABLE_CNI")
+                .doesNotContainKey("FLOCI_SERVICES_EKS_MAX_MEMORY_MIB")
+                .doesNotContainKey("FLOCI_SERVICES_EKS_MAX_VCPUS")
+                .doesNotContainKey("FLOCI_SERVICES_EKS_IMAGE_TEMPLATE")
+                .doesNotContainKey("FLOCI_SERVICES_EKS_IMDS")
+                .doesNotContainKey("FLOCI_SERVICES_EKS_IMDS_POD_NETWORK")
+                .doesNotContainKey("FLOCI_SERVICES_EKS_IRSA_SIGNING_KEY")
+                .doesNotContainKey("FLOCI_SERVICES_EKS_POD_IDENTITY_WEBHOOK")
+                .doesNotContainKey("FLOCI_SERVICES_EKS_EMBEDDED_DNS")
+                .doesNotContainKey("FLOCI_SERVICES_EKS_VPC_ROUTE_PROGRAMMING");
     }
 
     @Test
@@ -140,6 +203,15 @@ class EksConfigTest {
                 .iamAuthWebhook(false)
                 .ecrRegistryMirror(false)
                 .disableCni(true)
+                .maxMemoryMib(2048)
+                .maxVcpus(2)
+                .imageTemplate("custom-registry.internal/k3s:v%s")
+                .imds(true)
+                .imdsPodNetwork(true)
+                .irsaSigningKey(false)
+                .podIdentityWebhook(false)
+                .embeddedDns(false)
+                .vpcRouteProgramming(false)
                 .build();
         EksConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
@@ -153,6 +225,15 @@ class EksConfigTest {
         assertThat(copy.isIamAuthWebhook()).isFalse();
         assertThat(copy.isEcrRegistryMirror()).isFalse();
         assertThat(copy.isDisableCni()).isTrue();
+        assertThat(copy.getMaxMemoryMib()).isEqualTo(2048);
+        assertThat(copy.getMaxVcpus()).isEqualTo(2);
+        assertThat(copy.getImageTemplate()).contains("custom-registry.internal/k3s:v%s");
+        assertThat(copy.isImds()).isTrue();
+        assertThat(copy.isImdsPodNetwork()).isTrue();
+        assertThat(copy.isIrsaSigningKey()).isFalse();
+        assertThat(copy.isPodIdentityWebhook()).isFalse();
+        assertThat(copy.isEmbeddedDns()).isFalse();
+        assertThat(copy.isVpcRouteProgramming()).isFalse();
     }
 
     @Test
@@ -160,204 +241,6 @@ class EksConfigTest {
         assertThat(EksConfig.builder().build().requiresDockerSocket()).isTrue();
         assertThat(EksConfig.builder().enabled(false).build().requiresDockerSocket()).isFalse();
         assertThat(EksConfig.builder().mock(true).build().requiresDockerSocket()).isFalse();
-    }
-
-    @Test
-    void shouldApplyMaxMemoryMib() {
-        EksConfig defaults = EksConfig.builder().build();
-        assertThat(defaults.getMaxMemoryMib()).isEqualTo(0);
-
-        EksConfig config = EksConfig.builder().maxMemoryMib(2048).build();
-        assertThat(config.getMaxMemoryMib()).isEqualTo(2048);
-        assertThat(config.toBuilder().build().getMaxMemoryMib()).isEqualTo(2048);
-
-        GenericContainer<?> container = genericContainer();
-        config.applyEnvVarsToContainer(container);
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_EKS_MAX_MEMORY_MIB", "2048");
-
-        GenericContainer<?> defaultContainer = genericContainer();
-        defaults.applyEnvVarsToContainer(defaultContainer);
-        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_EKS_MAX_MEMORY_MIB", "0");
-
-        GenericContainer<?> disabledContainer = genericContainer();
-        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
-        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_EKS_MAX_MEMORY_MIB");
-    }
-
-    @Test
-    void shouldApplyMaxVcpus() {
-        EksConfig defaults = EksConfig.builder().build();
-        assertThat(defaults.getMaxVcpus()).isEqualTo(0);
-
-        EksConfig config = EksConfig.builder().maxVcpus(2).build();
-        assertThat(config.getMaxVcpus()).isEqualTo(2);
-        assertThat(config.toBuilder().build().getMaxVcpus()).isEqualTo(2);
-
-        GenericContainer<?> container = genericContainer();
-        config.applyEnvVarsToContainer(container);
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_EKS_MAX_VCPUS", "2");
-
-        GenericContainer<?> defaultContainer = genericContainer();
-        defaults.applyEnvVarsToContainer(defaultContainer);
-        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_EKS_MAX_VCPUS", "0");
-
-        GenericContainer<?> disabledContainer = genericContainer();
-        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
-        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_EKS_MAX_VCPUS");
-    }
-
-    @Test
-    void shouldApplyImageTemplate() {
-        EksConfig defaults = EksConfig.builder().build();
-        assertThat(defaults.getImageTemplate()).isEmpty();
-
-        EksConfig config = EksConfig.builder().imageTemplate("custom-registry.internal/k3s:v%s").build();
-        assertThat(config.getImageTemplate()).contains("custom-registry.internal/k3s:v%s");
-        assertThat(config.toBuilder().build().getImageTemplate()).contains("custom-registry.internal/k3s:v%s");
-
-        GenericContainer<?> container = genericContainer();
-        config.applyEnvVarsToContainer(container);
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_EKS_IMAGE_TEMPLATE", "custom-registry.internal/k3s:v%s");
-
-        GenericContainer<?> defaultContainer = genericContainer();
-        defaults.applyEnvVarsToContainer(defaultContainer);
-        assertThat(defaultContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_EKS_IMAGE_TEMPLATE");
-
-        GenericContainer<?> disabledContainer = genericContainer();
-        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
-        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_EKS_IMAGE_TEMPLATE");
-    }
-
-    @Test
-    void shouldApplyImds() {
-        EksConfig defaults = EksConfig.builder().build();
-        assertThat(defaults.isImds()).isEqualTo(false);
-
-        EksConfig config = EksConfig.builder().imds(true).build();
-        assertThat(config.isImds()).isEqualTo(true);
-        assertThat(config.toBuilder().build().isImds()).isEqualTo(true);
-
-        GenericContainer<?> container = genericContainer();
-        config.applyEnvVarsToContainer(container);
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_EKS_IMDS", "true");
-
-        GenericContainer<?> defaultContainer = genericContainer();
-        defaults.applyEnvVarsToContainer(defaultContainer);
-        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_EKS_IMDS", "false");
-
-        GenericContainer<?> disabledContainer = genericContainer();
-        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
-        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_EKS_IMDS");
-    }
-
-    @Test
-    void shouldApplyImdsPodNetwork() {
-        EksConfig defaults = EksConfig.builder().build();
-        assertThat(defaults.isImdsPodNetwork()).isEqualTo(false);
-
-        EksConfig config = EksConfig.builder().imdsPodNetwork(true).build();
-        assertThat(config.isImdsPodNetwork()).isEqualTo(true);
-        assertThat(config.toBuilder().build().isImdsPodNetwork()).isEqualTo(true);
-
-        GenericContainer<?> container = genericContainer();
-        config.applyEnvVarsToContainer(container);
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_EKS_IMDS_POD_NETWORK", "true");
-
-        GenericContainer<?> defaultContainer = genericContainer();
-        defaults.applyEnvVarsToContainer(defaultContainer);
-        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_EKS_IMDS_POD_NETWORK", "false");
-
-        GenericContainer<?> disabledContainer = genericContainer();
-        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
-        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_EKS_IMDS_POD_NETWORK");
-    }
-
-    @Test
-    void shouldApplyIrsaSigningKey() {
-        EksConfig defaults = EksConfig.builder().build();
-        assertThat(defaults.isIrsaSigningKey()).isEqualTo(true);
-
-        EksConfig config = EksConfig.builder().irsaSigningKey(false).build();
-        assertThat(config.isIrsaSigningKey()).isEqualTo(false);
-        assertThat(config.toBuilder().build().isIrsaSigningKey()).isEqualTo(false);
-
-        GenericContainer<?> container = genericContainer();
-        config.applyEnvVarsToContainer(container);
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_EKS_IRSA_SIGNING_KEY", "false");
-
-        GenericContainer<?> defaultContainer = genericContainer();
-        defaults.applyEnvVarsToContainer(defaultContainer);
-        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_EKS_IRSA_SIGNING_KEY", "true");
-
-        GenericContainer<?> disabledContainer = genericContainer();
-        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
-        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_EKS_IRSA_SIGNING_KEY");
-    }
-
-    @Test
-    void shouldApplyPodIdentityWebhook() {
-        EksConfig defaults = EksConfig.builder().build();
-        assertThat(defaults.isPodIdentityWebhook()).isEqualTo(true);
-
-        EksConfig config = EksConfig.builder().podIdentityWebhook(false).build();
-        assertThat(config.isPodIdentityWebhook()).isEqualTo(false);
-        assertThat(config.toBuilder().build().isPodIdentityWebhook()).isEqualTo(false);
-
-        GenericContainer<?> container = genericContainer();
-        config.applyEnvVarsToContainer(container);
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_EKS_POD_IDENTITY_WEBHOOK", "false");
-
-        GenericContainer<?> defaultContainer = genericContainer();
-        defaults.applyEnvVarsToContainer(defaultContainer);
-        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_EKS_POD_IDENTITY_WEBHOOK", "true");
-
-        GenericContainer<?> disabledContainer = genericContainer();
-        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
-        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_EKS_POD_IDENTITY_WEBHOOK");
-    }
-
-    @Test
-    void shouldApplyEmbeddedDns() {
-        EksConfig defaults = EksConfig.builder().build();
-        assertThat(defaults.isEmbeddedDns()).isEqualTo(true);
-
-        EksConfig config = EksConfig.builder().embeddedDns(false).build();
-        assertThat(config.isEmbeddedDns()).isEqualTo(false);
-        assertThat(config.toBuilder().build().isEmbeddedDns()).isEqualTo(false);
-
-        GenericContainer<?> container = genericContainer();
-        config.applyEnvVarsToContainer(container);
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_EKS_EMBEDDED_DNS", "false");
-
-        GenericContainer<?> defaultContainer = genericContainer();
-        defaults.applyEnvVarsToContainer(defaultContainer);
-        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_EKS_EMBEDDED_DNS", "true");
-
-        GenericContainer<?> disabledContainer = genericContainer();
-        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
-        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_EKS_EMBEDDED_DNS");
-    }
-
-    @Test
-    void shouldApplyVpcRouteProgramming() {
-        EksConfig defaults = EksConfig.builder().build();
-        assertThat(defaults.isVpcRouteProgramming()).isEqualTo(true);
-
-        EksConfig config = EksConfig.builder().vpcRouteProgramming(false).build();
-        assertThat(config.isVpcRouteProgramming()).isEqualTo(false);
-        assertThat(config.toBuilder().build().isVpcRouteProgramming()).isEqualTo(false);
-
-        GenericContainer<?> container = genericContainer();
-        config.applyEnvVarsToContainer(container);
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_EKS_VPC_ROUTE_PROGRAMMING", "false");
-
-        GenericContainer<?> defaultContainer = genericContainer();
-        defaults.applyEnvVarsToContainer(defaultContainer);
-        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_EKS_VPC_ROUTE_PROGRAMMING", "true");
-
-        GenericContainer<?> disabledContainer = genericContainer();
-        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
-        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_EKS_VPC_ROUTE_PROGRAMMING");
     }
 
 }

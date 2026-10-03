@@ -13,6 +13,8 @@ class SecretsManagerConfigTest {
         SecretsManagerConfig config = SecretsManagerConfig.builder().build();
         assertThat(config.isEnabled()).isTrue();
         assertThat(config.getDefaultRecoveryWindowDays()).isEqualTo(30);
+        assertThat(config.isScheduledRotationEnabled()).isTrue();
+        assertThat(config.getRotationTickSeconds()).isEqualTo(60L);
     }
 
     @Test
@@ -20,9 +22,13 @@ class SecretsManagerConfigTest {
         SecretsManagerConfig config = SecretsManagerConfig.builder()
                 .enabled(false)
                 .defaultRecoveryWindowDays(7)
+                .scheduledRotationEnabled(false)
+                .rotationTickSeconds(5L)
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.getDefaultRecoveryWindowDays()).isEqualTo(7);
+        assertThat(config.isScheduledRotationEnabled()).isFalse();
+        assertThat(config.getRotationTickSeconds()).isEqualTo(5L);
     }
 
     @Test
@@ -32,7 +38,9 @@ class SecretsManagerConfigTest {
 
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_SERVICES_SECRETSMANAGER_ENABLED", "true")
-                .containsEntry("FLOCI_SERVICES_SECRETSMANAGER_DEFAULT_RECOVERY_WINDOW_DAYS", "30");
+                .containsEntry("FLOCI_SERVICES_SECRETSMANAGER_DEFAULT_RECOVERY_WINDOW_DAYS", "30")
+                .containsEntry("FLOCI_SERVICES_SECRETSMANAGER_SCHEDULED_ROTATION_ENABLED", "true")
+                .containsEntry("FLOCI_SERVICES_SECRETSMANAGER_ROTATION_TICK_SECONDS", "60");
     }
 
     @Test
@@ -40,10 +48,15 @@ class SecretsManagerConfigTest {
         GenericContainer<?> container = genericContainer();
         SecretsManagerConfig.builder()
                 .defaultRecoveryWindowDays(7)
+                .scheduledRotationEnabled(false)
+                .rotationTickSeconds(5L)
                 .build()
                 .applyEnvVarsToContainer(container);
 
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_SECRETSMANAGER_DEFAULT_RECOVERY_WINDOW_DAYS", "7");
+        assertThat(container.getEnvMap())
+                .containsEntry("FLOCI_SERVICES_SECRETSMANAGER_DEFAULT_RECOVERY_WINDOW_DAYS", "7")
+                .containsEntry("FLOCI_SERVICES_SECRETSMANAGER_SCHEDULED_ROTATION_ENABLED", "false")
+                .containsEntry("FLOCI_SERVICES_SECRETSMANAGER_ROTATION_TICK_SECONDS", "5");
     }
 
     @Test
@@ -51,7 +64,10 @@ class SecretsManagerConfigTest {
         GenericContainer<?> container = genericContainer();
         SecretsManagerConfig.builder().enabled(false).build().applyEnvVarsToContainer(container);
 
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_SECRETSMANAGER_ENABLED", "false");
+        assertThat(container.getEnvMap())
+                .containsEntry("FLOCI_SERVICES_SECRETSMANAGER_ENABLED", "false")
+                .doesNotContainKey("FLOCI_SERVICES_SECRETSMANAGER_SCHEDULED_ROTATION_ENABLED")
+                .doesNotContainKey("FLOCI_SERVICES_SECRETSMANAGER_ROTATION_TICK_SECONDS");
     }
 
     @Test
@@ -59,54 +75,14 @@ class SecretsManagerConfigTest {
         SecretsManagerConfig config = SecretsManagerConfig.builder()
                 .enabled(false)
                 .defaultRecoveryWindowDays(14)
+                .scheduledRotationEnabled(false)
+                .rotationTickSeconds(5L)
                 .build();
         SecretsManagerConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
         assertThat(copy.getDefaultRecoveryWindowDays()).isEqualTo(14);
-    }
-
-    @Test
-    void shouldApplyScheduledRotationEnabled() {
-        SecretsManagerConfig defaults = SecretsManagerConfig.builder().build();
-        assertThat(defaults.isScheduledRotationEnabled()).isEqualTo(true);
-
-        SecretsManagerConfig config = SecretsManagerConfig.builder().scheduledRotationEnabled(false).build();
-        assertThat(config.isScheduledRotationEnabled()).isEqualTo(false);
-        assertThat(config.toBuilder().build().isScheduledRotationEnabled()).isEqualTo(false);
-
-        GenericContainer<?> container = genericContainer();
-        config.applyEnvVarsToContainer(container);
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_SECRETSMANAGER_SCHEDULED_ROTATION_ENABLED", "false");
-
-        GenericContainer<?> defaultContainer = genericContainer();
-        defaults.applyEnvVarsToContainer(defaultContainer);
-        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_SECRETSMANAGER_SCHEDULED_ROTATION_ENABLED", "true");
-
-        GenericContainer<?> disabledContainer = genericContainer();
-        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
-        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_SECRETSMANAGER_SCHEDULED_ROTATION_ENABLED");
-    }
-
-    @Test
-    void shouldApplyRotationTickSeconds() {
-        SecretsManagerConfig defaults = SecretsManagerConfig.builder().build();
-        assertThat(defaults.getRotationTickSeconds()).isEqualTo(60L);
-
-        SecretsManagerConfig config = SecretsManagerConfig.builder().rotationTickSeconds(5L).build();
-        assertThat(config.getRotationTickSeconds()).isEqualTo(5L);
-        assertThat(config.toBuilder().build().getRotationTickSeconds()).isEqualTo(5L);
-
-        GenericContainer<?> container = genericContainer();
-        config.applyEnvVarsToContainer(container);
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_SECRETSMANAGER_ROTATION_TICK_SECONDS", "5");
-
-        GenericContainer<?> defaultContainer = genericContainer();
-        defaults.applyEnvVarsToContainer(defaultContainer);
-        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_SECRETSMANAGER_ROTATION_TICK_SECONDS", "60");
-
-        GenericContainer<?> disabledContainer = genericContainer();
-        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
-        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_SECRETSMANAGER_ROTATION_TICK_SECONDS");
+        assertThat(copy.isScheduledRotationEnabled()).isFalse();
+        assertThat(copy.getRotationTickSeconds()).isEqualTo(5L);
     }
 
 }

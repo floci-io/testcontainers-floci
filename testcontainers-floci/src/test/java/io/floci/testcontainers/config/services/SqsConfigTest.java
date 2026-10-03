@@ -15,6 +15,7 @@ class SqsConfigTest {
         assertThat(config.getDefaultVisibilityTimeout()).isEqualTo(30);
         assertThat(config.getMaxMessageSize()).isEqualTo(1048576);
         assertThat(config.isClearFifoDeduplicationCacheOnPurge()).isTrue();
+        assertThat(config.getReceiptHandleSecret()).isEqualTo("local-emulator-secret");
     }
 
     @Test
@@ -24,11 +25,13 @@ class SqsConfigTest {
                 .defaultVisibilityTimeout(60)
                 .maxMessageSize(131072)
                 .clearFifoDeduplicationCacheOnPurge(false)
+                .receiptHandleSecret("my-secret")
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.getDefaultVisibilityTimeout()).isEqualTo(60);
         assertThat(config.getMaxMessageSize()).isEqualTo(131072);
         assertThat(config.isClearFifoDeduplicationCacheOnPurge()).isFalse();
+        assertThat(config.getReceiptHandleSecret()).isEqualTo("my-secret");
     }
 
     @Test
@@ -40,7 +43,8 @@ class SqsConfigTest {
                 .containsEntry("FLOCI_SERVICES_SQS_ENABLED", "true")
                 .containsEntry("FLOCI_SERVICES_SQS_DEFAULT_VISIBILITY_TIMEOUT", "30")
                 .containsEntry("FLOCI_SERVICES_SQS_MAX_MESSAGE_SIZE", "1048576")
-                .containsEntry("FLOCI_SERVICES_SQS_CLEAR_FIFO_DEDUPLICATION_CACHE_ON_PURGE", "true");
+                .containsEntry("FLOCI_SERVICES_SQS_CLEAR_FIFO_DEDUPLICATION_CACHE_ON_PURGE", "true")
+                .containsEntry("FLOCI_SERVICES_SQS_RECEIPT_HANDLE_SECRET", "local-emulator-secret");
     }
 
     @Test
@@ -50,13 +54,15 @@ class SqsConfigTest {
                 .defaultVisibilityTimeout(60)
                 .maxMessageSize(131072)
                 .clearFifoDeduplicationCacheOnPurge(false)
+                .receiptHandleSecret("my-secret")
                 .build()
                 .applyEnvVarsToContainer(container);
 
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_SERVICES_SQS_DEFAULT_VISIBILITY_TIMEOUT", "60")
                 .containsEntry("FLOCI_SERVICES_SQS_MAX_MESSAGE_SIZE", "131072")
-                .containsEntry("FLOCI_SERVICES_SQS_CLEAR_FIFO_DEDUPLICATION_CACHE_ON_PURGE", "false");
+                .containsEntry("FLOCI_SERVICES_SQS_CLEAR_FIFO_DEDUPLICATION_CACHE_ON_PURGE", "false")
+                .containsEntry("FLOCI_SERVICES_SQS_RECEIPT_HANDLE_SECRET", "my-secret");
     }
 
     @Test
@@ -64,7 +70,9 @@ class SqsConfigTest {
         GenericContainer<?> container = genericContainer();
         SqsConfig.builder().enabled(false).build().applyEnvVarsToContainer(container);
 
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_SQS_ENABLED", "false");
+        assertThat(container.getEnvMap())
+                .containsEntry("FLOCI_SERVICES_SQS_ENABLED", "false")
+                .doesNotContainKey("FLOCI_SERVICES_SQS_RECEIPT_HANDLE_SECRET");
     }
 
     @Test
@@ -74,34 +82,14 @@ class SqsConfigTest {
                 .defaultVisibilityTimeout(60)
                 .maxMessageSize(65536)
                 .clearFifoDeduplicationCacheOnPurge(false)
+                .receiptHandleSecret("my-secret")
                 .build();
         SqsConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
         assertThat(copy.getDefaultVisibilityTimeout()).isEqualTo(60);
         assertThat(copy.getMaxMessageSize()).isEqualTo(65536);
         assertThat(copy.isClearFifoDeduplicationCacheOnPurge()).isFalse();
-    }
-
-    @Test
-    void shouldApplyReceiptHandleSecret() {
-        SqsConfig defaults = SqsConfig.builder().build();
-        assertThat(defaults.getReceiptHandleSecret()).isEqualTo("local-emulator-secret");
-
-        SqsConfig config = SqsConfig.builder().receiptHandleSecret("my-secret").build();
-        assertThat(config.getReceiptHandleSecret()).isEqualTo("my-secret");
-        assertThat(config.toBuilder().build().getReceiptHandleSecret()).isEqualTo("my-secret");
-
-        GenericContainer<?> container = genericContainer();
-        config.applyEnvVarsToContainer(container);
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_SQS_RECEIPT_HANDLE_SECRET", "my-secret");
-
-        GenericContainer<?> defaultContainer = genericContainer();
-        defaults.applyEnvVarsToContainer(defaultContainer);
-        assertThat(defaultContainer.getEnvMap()).containsEntry("FLOCI_SERVICES_SQS_RECEIPT_HANDLE_SECRET", "local-emulator-secret");
-
-        GenericContainer<?> disabledContainer = genericContainer();
-        config.toBuilder().enabled(false).build().applyEnvVarsToContainer(disabledContainer);
-        assertThat(disabledContainer.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_SQS_RECEIPT_HANDLE_SECRET");
+        assertThat(copy.getReceiptHandleSecret()).isEqualTo("my-secret");
     }
 
 }
