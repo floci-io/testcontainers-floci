@@ -210,6 +210,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private OamConfig oamConfig = OamConfig.builder().build();
     private BcmPricingCalculatorConfig bcmPricingCalculatorConfig = BcmPricingCalculatorConfig.builder().build();
     private TimestreamInfluxDbConfig timestreamInfluxDbConfig = TimestreamInfluxDbConfig.builder().build();
+    private SageMakerConfig sageMakerConfig = SageMakerConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -316,7 +317,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> translateConfig, c -> translateConfig = c),
             new ServiceConfigAccessor<>(() -> oamConfig, c -> oamConfig = c),
             new ServiceConfigAccessor<>(() -> bcmPricingCalculatorConfig, c -> bcmPricingCalculatorConfig = c),
-            new ServiceConfigAccessor<>(() -> timestreamInfluxDbConfig, c -> timestreamInfluxDbConfig = c)
+            new ServiceConfigAccessor<>(() -> timestreamInfluxDbConfig, c -> timestreamInfluxDbConfig = c),
+            new ServiceConfigAccessor<>(() -> sageMakerConfig, c -> sageMakerConfig = c)
     );
 
     /**
@@ -3924,6 +3926,34 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.timestreamInfluxDbConfig = builder.build();
         timestreamInfluxDbConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * SageMaker-specific settings.
+     *
+     * @return the SageMaker configuration
+     */
+    public SageMakerConfig getSageMakerConfig() {
+        return sageMakerConfig;
+    }
+
+    /**
+     * Configures SageMaker-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withSageMakerConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link SageMakerConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withSageMakerConfig(Consumer<SageMakerConfig.Builder> configurer) {
+        SageMakerConfig.Builder builder = sageMakerConfig.toBuilder();
+        configurer.accept(builder);
+        this.sageMakerConfig = builder.build();
+        sageMakerConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
