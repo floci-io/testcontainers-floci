@@ -221,6 +221,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private SecurityHubConfig securityHubConfig = SecurityHubConfig.builder().build();
     private DetectiveConfig detectiveConfig = DetectiveConfig.builder().build();
     private VerifiedPermissionsConfig verifiedPermissionsConfig = VerifiedPermissionsConfig.builder().build();
+    private ControlCatalogConfig controlCatalogConfig = ControlCatalogConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -338,7 +339,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> inspector2Config, c -> inspector2Config = c),
             new ServiceConfigAccessor<>(() -> securityHubConfig, c -> securityHubConfig = c),
             new ServiceConfigAccessor<>(() -> detectiveConfig, c -> detectiveConfig = c),
-            new ServiceConfigAccessor<>(() -> verifiedPermissionsConfig, c -> verifiedPermissionsConfig = c)
+            new ServiceConfigAccessor<>(() -> verifiedPermissionsConfig, c -> verifiedPermissionsConfig = c),
+            new ServiceConfigAccessor<>(() -> controlCatalogConfig, c -> controlCatalogConfig = c)
     );
 
     /**
@@ -4254,6 +4256,34 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.verifiedPermissionsConfig = builder.build();
         verifiedPermissionsConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Control Catalog-specific settings.
+     *
+     * @return the Control Catalog configuration
+     */
+    public ControlCatalogConfig getControlCatalogConfig() {
+        return controlCatalogConfig;
+    }
+
+    /**
+     * Configures Control Catalog-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withControlCatalogConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link ControlCatalogConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withControlCatalogConfig(Consumer<ControlCatalogConfig.Builder> configurer) {
+        ControlCatalogConfig.Builder builder = controlCatalogConfig.toBuilder();
+        configurer.accept(builder);
+        this.controlCatalogConfig = builder.build();
+        controlCatalogConfig.applyEnvVarsToContainer(this);
         return this;
     }
 

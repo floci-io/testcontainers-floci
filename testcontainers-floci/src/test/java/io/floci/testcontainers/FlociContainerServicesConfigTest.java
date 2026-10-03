@@ -998,6 +998,14 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_SERVICES_VERIFIEDPERMISSIONS_CEDAR_IMAGE", "floci/floci-sidecar-cedar:1.2.0");
     }
 
+    @Test
+    void shouldWireControlCatalogConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withControlCatalogConfig(cfg -> cfg.enabled(false)),
+                c -> c.getControlCatalogConfig().isEnabled(), false,
+                "FLOCI_SERVICES_CONTROLCATALOG_ENABLED", "false");
+    }
+
     // --- Cross-cutting configs (config/) --------------------------------------------------------
 
     @Test
