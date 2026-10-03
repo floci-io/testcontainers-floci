@@ -1006,6 +1006,14 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_SERVICES_CONTROLCATALOG_ENABLED", "false");
     }
 
+    @Test
+    void shouldWireAppIntegrationsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withAppIntegrationsConfig(cfg -> cfg.enabled(false)),
+                c -> c.getAppIntegrationsConfig().isEnabled(), false,
+                "FLOCI_SERVICES_APPINTEGRATIONS_ENABLED", "false");
+    }
+
     // --- Cross-cutting configs (config/) --------------------------------------------------------
 
     @Test
