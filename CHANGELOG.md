@@ -1,5 +1,26 @@
 # Changelog
 
+## [2.17.0](https://github.com/floci-io/testcontainers-floci/compare/v2.16.1...v2.17.0) (2026-10-03)
+
+
+### Features
+
+* remove spring-boot-testcontainers-floci module ([#405](https://github.com/floci-io/testcontainers-floci/issues/405)) ([96b92fa](https://github.com/floci-io/testcontainers-floci/commit/96b92fa38c101f424d022cbb4fbc0e3d958447ed))
+
+
+### Bug Fixes
+
+* **controltower:** create a landing zone in ControlTowerServiceTest ([49d503c](https://github.com/floci-io/testcontainers-floci/commit/49d503c3f4ec7399602b6e50ffabe02c85f3e53a))
+* create a real Secrets Manager secret in RdsDataServiceTest ([d54016a](https://github.com/floci-io/testcontainers-floci/commit/d54016acf7e267a182e3169bc353cafd9e55d3c3))
+* **eks:** make EksServiceTest's bearer token pass Floci's IAM auth webhook ([deeb287](https://github.com/floci-io/testcontainers-floci/commit/deeb2872011b250683e6971649746d897566fdf9))
+
+
+### Documentation
+
+* **agents:** add step to re-check disabled tests during Floci migration ([81f8db9](https://github.com/floci-io/testcontainers-floci/commit/81f8db9eb160f6071df95b0df9b054a05f210219))
+* **agents:** document the Floci config migration process ([e267e31](https://github.com/floci-io/testcontainers-floci/commit/e267e31c4de33fe472fa8930390b523b8d36cfd8))
+* **agents:** reinforce no AI attribution trailers in commits/PRs ([29f1e96](https://github.com/floci-io/testcontainers-floci/commit/29f1e96e00ab30b96d304b1cf8655d3469d3650d))
+
 ## [2.16.1](https://github.com/floci-io/testcontainers-floci/compare/v2.16.0...v2.16.1) (2026-09-02)
 
 
