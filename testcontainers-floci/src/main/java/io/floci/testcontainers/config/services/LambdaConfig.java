@@ -296,7 +296,7 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
             container.withEnv("FLOCI_SERVICES_LAMBDA_CONTAINER_IDLE_TIMEOUT_SECONDS", String.valueOf(containerIdleTimeoutSeconds));
             container.withEnv("FLOCI_SERVICES_LAMBDA_REGION_CONCURRENCY_LIMIT", String.valueOf(regionConcurrencyLimit));
             container.withEnv("FLOCI_SERVICES_LAMBDA_UNRESERVED_CONCURRENCY_MIN", String.valueOf(unreservedConcurrencyMin));
-            container.withEnv("FLOCI_ECR_BASE_URI", ecrBaseUri);
+            container.withEnv("FLOCI_SERVICES_LAMBDA_ECR_BASE_URI", ecrBaseUri);
 
             container.withEnv("FLOCI_SERVICES_LAMBDA_HOT_RELOAD_ENABLED", String.valueOf(hotReload.enabled()));
             if (hotReload.allowedPaths().isPresent() && !hotReload.allowedPaths().get().isEmpty()) {
