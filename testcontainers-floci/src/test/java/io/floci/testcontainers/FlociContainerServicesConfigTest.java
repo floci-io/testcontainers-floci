@@ -1062,6 +1062,14 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_SERVICES_MARKETPLACE_ENABLED", "false");
     }
 
+    @Test
+    void shouldWireDmsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withDmsConfig(cfg -> cfg.enabled(false)),
+                c -> c.getDmsConfig().isEnabled(), false,
+                "FLOCI_SERVICES_DMS_ENABLED", "false");
+    }
+
     // --- Cross-cutting configs (config/) --------------------------------------------------------
 
     @Test
