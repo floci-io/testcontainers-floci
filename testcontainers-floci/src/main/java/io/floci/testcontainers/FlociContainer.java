@@ -224,6 +224,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private ControlCatalogConfig controlCatalogConfig = ControlCatalogConfig.builder().build();
     private AppIntegrationsConfig appIntegrationsConfig = AppIntegrationsConfig.builder().build();
     private DlmConfig dlmConfig = DlmConfig.builder().build();
+    private CognitoIdentityConfig cognitoIdentityConfig = CognitoIdentityConfig.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -344,7 +345,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> verifiedPermissionsConfig, c -> verifiedPermissionsConfig = c),
             new ServiceConfigAccessor<>(() -> controlCatalogConfig, c -> controlCatalogConfig = c),
             new ServiceConfigAccessor<>(() -> appIntegrationsConfig, c -> appIntegrationsConfig = c),
-            new ServiceConfigAccessor<>(() -> dlmConfig, c -> dlmConfig = c)
+            new ServiceConfigAccessor<>(() -> dlmConfig, c -> dlmConfig = c),
+            new ServiceConfigAccessor<>(() -> cognitoIdentityConfig, c -> cognitoIdentityConfig = c)
     );
 
     /**
@@ -4344,6 +4346,34 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.dlmConfig = builder.build();
         dlmConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Cognito Identity-specific settings.
+     *
+     * @return the Cognito Identity configuration
+     */
+    public CognitoIdentityConfig getCognitoIdentityConfig() {
+        return cognitoIdentityConfig;
+    }
+
+    /**
+     * Configures Cognito Identity-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withCognitoIdentityConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link CognitoIdentityConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withCognitoIdentityConfig(Consumer<CognitoIdentityConfig.Builder> configurer) {
+        CognitoIdentityConfig.Builder builder = cognitoIdentityConfig.toBuilder();
+        configurer.accept(builder);
+        this.cognitoIdentityConfig = builder.build();
+        cognitoIdentityConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
