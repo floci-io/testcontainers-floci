@@ -363,7 +363,8 @@ class FlociContainerTest {
                     container.getBcmPricingCalculatorConfig(),
                     container.getTimestreamInfluxDbConfig(),
                     container.getSageMakerConfig(),
-                    container.getSsoOidcConfig()
+                    container.getSsoOidcConfig(),
+                    container.getMacie2Config()
             )).noneMatch(AbstractServiceConfig::isEnabled);
         }
     }

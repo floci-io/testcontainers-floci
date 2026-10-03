@@ -212,6 +212,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private TimestreamInfluxDbConfig timestreamInfluxDbConfig = TimestreamInfluxDbConfig.builder().build();
     private SageMakerConfig sageMakerConfig = SageMakerConfig.builder().build();
     private SsoOidcConfig ssoOidcConfig = SsoOidcConfig.builder().build();
+    private Macie2Config macie2Config = Macie2Config.builder().build();
 
     private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
             new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
@@ -320,7 +321,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
             new ServiceConfigAccessor<>(() -> bcmPricingCalculatorConfig, c -> bcmPricingCalculatorConfig = c),
             new ServiceConfigAccessor<>(() -> timestreamInfluxDbConfig, c -> timestreamInfluxDbConfig = c),
             new ServiceConfigAccessor<>(() -> sageMakerConfig, c -> sageMakerConfig = c),
-            new ServiceConfigAccessor<>(() -> ssoOidcConfig, c -> ssoOidcConfig = c)
+            new ServiceConfigAccessor<>(() -> ssoOidcConfig, c -> ssoOidcConfig = c),
+            new ServiceConfigAccessor<>(() -> macie2Config, c -> macie2Config = c)
     );
 
     /**
@@ -3984,6 +3986,34 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.ssoOidcConfig = builder.build();
         ssoOidcConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Macie-specific settings.
+     *
+     * @return the Macie configuration
+     */
+    public Macie2Config getMacie2Config() {
+        return macie2Config;
+    }
+
+    /**
+     * Configures Macie-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withMacie2Config(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link Macie2Config.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withMacie2Config(Consumer<Macie2Config.Builder> configurer) {
+        Macie2Config.Builder builder = macie2Config.toBuilder();
+        configurer.accept(builder);
+        this.macie2Config = builder.build();
+        macie2Config.applyEnvVarsToContainer(this);
         return this;
     }
 
