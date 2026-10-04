@@ -63,6 +63,7 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
 
     // Service configs
     private final ServiceConfigRef<ComputeConfig> computeConfig = registerServiceConfig(ComputeConfig.builder().build());
+    private final ServiceConfigRef<GcsConfig> gcsConfig = registerServiceConfig(GcsConfig.builder().build());
     private final ServiceConfigRef<PubSubConfig> pubSubConfig = registerServiceConfig(PubSubConfig.builder().build());
     private final ServiceConfigRef<FirestoreConfig> firestoreConfig = registerServiceConfig(FirestoreConfig.builder().build());
     private final ServiceConfigRef<DatastoreConfig> datastoreConfig = registerServiceConfig(DatastoreConfig.builder().build());
@@ -237,6 +238,30 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
      */
     public FlociGcpContainer withComputeConfig(Consumer<ComputeConfig.Builder> configurer) {
         return updateServiceConfig(computeConfig, configurer);
+    }
+
+    /**
+     * Returns the Cloud Storage configuration.
+     *
+     * @return the Cloud Storage configuration
+     */
+    public GcsConfig getGcsConfig() {
+        return gcsConfig.get();
+    }
+
+    /**
+     * Configures Cloud Storage.
+     *
+     * <pre>{@code
+     * new FlociGcpContainer()
+     *     .withGcsConfig(c -> c.uploadSessionIdleTimeoutSeconds(3600));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link GcsConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociGcpContainer withGcsConfig(Consumer<GcsConfig.Builder> configurer) {
+        return updateServiceConfig(gcsConfig, configurer);
     }
 
     /**

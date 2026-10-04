@@ -62,6 +62,7 @@ class FlociGcpContainerTest {
         try (FlociGcpContainer container = new FlociGcpContainer().disableAllServices()) {
             assertThat(List.<AbstractServiceConfig<?>>of(
                     container.getComputeConfig(),
+                    container.getGcsConfig(),
                     container.getPubSubConfig(),
                     container.getFirestoreConfig(),
                     container.getDatastoreConfig(),
