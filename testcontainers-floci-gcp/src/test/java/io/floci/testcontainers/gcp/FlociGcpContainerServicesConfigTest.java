@@ -147,6 +147,14 @@ class FlociGcpContainerServicesConfigTest {
     }
 
     @Test
+    void shouldWireCloudSqlConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withCloudSqlConfig(cfg -> cfg.mock(true)),
+                c -> c.getCloudSqlConfig().isMock(), true,
+                "FLOCI_GCP_SERVICES_CLOUDSQL_MOCK", "true");
+    }
+
+    @Test
     void shouldWireCloudTasksConfigIntoContainer() {
         assertConfigWired(
                 c -> c.withCloudTasksConfig(cfg -> cfg.enabled(false)),
