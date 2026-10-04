@@ -66,6 +66,7 @@ class FlociGcpContainerTest {
                     container.getPubSubConfig(),
                     container.getFirestoreConfig(),
                     container.getDatastoreConfig(),
+                    container.getIamConfig(),
                     container.getIamCredentialsConfig(),
                     container.getStsConfig(),
                     container.getSecretManagerConfig(),
