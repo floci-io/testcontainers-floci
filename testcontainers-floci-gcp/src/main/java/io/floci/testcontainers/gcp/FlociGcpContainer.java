@@ -65,6 +65,11 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
     private final ServiceConfigRef<PubSubConfig> pubSubConfig = registerServiceConfig(PubSubConfig.builder().build());
     private final ServiceConfigRef<FirestoreConfig> firestoreConfig = registerServiceConfig(FirestoreConfig.builder().build());
     private final ServiceConfigRef<DatastoreConfig> datastoreConfig = registerServiceConfig(DatastoreConfig.builder().build());
+    private final ServiceConfigRef<IamCredentialsConfig> iamCredentialsConfig = registerServiceConfig(IamCredentialsConfig.builder().build());
+    private final ServiceConfigRef<StsConfig> stsConfig = registerServiceConfig(StsConfig.builder().build());
+    private final ServiceConfigRef<SecretManagerConfig> secretManagerConfig = registerServiceConfig(SecretManagerConfig.builder().build());
+    private final ServiceConfigRef<KmsConfig> kmsConfig = registerServiceConfig(KmsConfig.builder().build());
+    private final ServiceConfigRef<FirebaseAuthConfig> firebaseAuthConfig = registerServiceConfig(FirebaseAuthConfig.builder().build());
 
     /**
      * Creates a new Floci GCP container with the default image ({@code floci/floci-gcp:latest}).
@@ -273,5 +278,125 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
      */
     public FlociGcpContainer withDatastoreConfig(Consumer<DatastoreConfig.Builder> configurer) {
         return updateServiceConfig(datastoreConfig, configurer);
+    }
+
+    /**
+     * Returns the IAM Service Account Credentials configuration.
+     *
+     * @return the IAM Service Account Credentials configuration
+     */
+    public IamCredentialsConfig getIamCredentialsConfig() {
+        return iamCredentialsConfig.get();
+    }
+
+    /**
+     * Configures IAM Service Account Credentials.
+     *
+     * <pre>{@code
+     * new FlociGcpContainer()
+     *     .withIamCredentialsConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link IamCredentialsConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociGcpContainer withIamCredentialsConfig(Consumer<IamCredentialsConfig.Builder> configurer) {
+        return updateServiceConfig(iamCredentialsConfig, configurer);
+    }
+
+    /**
+     * Returns the Security Token Service configuration.
+     *
+     * @return the Security Token Service configuration
+     */
+    public StsConfig getStsConfig() {
+        return stsConfig.get();
+    }
+
+    /**
+     * Configures Security Token Service.
+     *
+     * <pre>{@code
+     * new FlociGcpContainer()
+     *     .withStsConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link StsConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociGcpContainer withStsConfig(Consumer<StsConfig.Builder> configurer) {
+        return updateServiceConfig(stsConfig, configurer);
+    }
+
+    /**
+     * Returns the Secret Manager configuration.
+     *
+     * @return the Secret Manager configuration
+     */
+    public SecretManagerConfig getSecretManagerConfig() {
+        return secretManagerConfig.get();
+    }
+
+    /**
+     * Configures Secret Manager.
+     *
+     * <pre>{@code
+     * new FlociGcpContainer()
+     *     .withSecretManagerConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link SecretManagerConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociGcpContainer withSecretManagerConfig(Consumer<SecretManagerConfig.Builder> configurer) {
+        return updateServiceConfig(secretManagerConfig, configurer);
+    }
+
+    /**
+     * Returns the Cloud KMS configuration.
+     *
+     * @return the Cloud KMS configuration
+     */
+    public KmsConfig getKmsConfig() {
+        return kmsConfig.get();
+    }
+
+    /**
+     * Configures Cloud KMS.
+     *
+     * <pre>{@code
+     * new FlociGcpContainer()
+     *     .withKmsConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link KmsConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociGcpContainer withKmsConfig(Consumer<KmsConfig.Builder> configurer) {
+        return updateServiceConfig(kmsConfig, configurer);
+    }
+
+    /**
+     * Returns the Firebase Authentication configuration.
+     *
+     * @return the Firebase Authentication configuration
+     */
+    public FirebaseAuthConfig getFirebaseAuthConfig() {
+        return firebaseAuthConfig.get();
+    }
+
+    /**
+     * Configures Firebase Authentication.
+     *
+     * <pre>{@code
+     * new FlociGcpContainer()
+     *     .withFirebaseAuthConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link FirebaseAuthConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociGcpContainer withFirebaseAuthConfig(Consumer<FirebaseAuthConfig.Builder> configurer) {
+        return updateServiceConfig(firebaseAuthConfig, configurer);
     }
 }
