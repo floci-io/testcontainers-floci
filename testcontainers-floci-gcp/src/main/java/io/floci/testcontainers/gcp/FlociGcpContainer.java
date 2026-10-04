@@ -74,6 +74,7 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
     private final ServiceConfigRef<LoggingConfig> loggingConfig = registerServiceConfig(LoggingConfig.builder().build());
     private final ServiceConfigRef<KmsConfig> kmsConfig = registerServiceConfig(KmsConfig.builder().build());
     private final ServiceConfigRef<KafkaConfig> kafkaConfig = registerServiceConfig(KafkaConfig.builder().build());
+    private final ServiceConfigRef<CloudSqlConfig> cloudSqlConfig = registerServiceConfig(CloudSqlConfig.builder().build());
     private final ServiceConfigRef<CloudTasksConfig> cloudTasksConfig = registerServiceConfig(CloudTasksConfig.builder().build());
     private final ServiceConfigRef<MonitoringConfig> monitoringConfig = registerServiceConfig(MonitoringConfig.builder().build());
     private final ServiceConfigRef<EventarcConfig> eventarcConfig = registerServiceConfig(EventarcConfig.builder().build());
@@ -505,6 +506,31 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
      */
     public FlociGcpContainer withKafkaConfig(Consumer<KafkaConfig.Builder> configurer) {
         return updateServiceConfig(kafkaConfig, configurer);
+    }
+
+    /**
+     * Returns the Cloud SQL configuration.
+     *
+     * @return the Cloud SQL configuration
+     */
+    public CloudSqlConfig getCloudSqlConfig() {
+        return cloudSqlConfig.get();
+    }
+
+    /**
+     * Configures Cloud SQL, which runs PostgreSQL and MySQL instances in sibling containers and therefore requires
+     * the Docker socket unless mocked.
+     *
+     * <pre>{@code
+     * new FlociGcpContainer()
+     *     .withCloudSqlConfig(c -> c.mock(true));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link CloudSqlConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociGcpContainer withCloudSqlConfig(Consumer<CloudSqlConfig.Builder> configurer) {
+        return updateServiceConfig(cloudSqlConfig, configurer);
     }
 
     /**
