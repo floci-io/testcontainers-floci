@@ -8,7 +8,7 @@
     <packaging>pom</packaging>
 
     <name>Testcontainers Floci Parent</name>
-    <description>Parent of Testcontainers modules for Floci — free, open-source local cloud emulators (AWS, Azure)</description>
+    <description>Parent of Testcontainers modules for Floci — free, open-source local cloud emulators (AWS, Azure, GCP)</description>
     <url>https://github.com/floci-io/testcontainers-floci</url>
 
     <licenses>
@@ -36,6 +36,7 @@
         <module>testcontainers-floci-core</module>
         <module>testcontainers-floci</module>
         <module>testcontainers-floci-az</module>
+        <module>testcontainers-floci-gcp</module>
     </modules>
 
     <properties>
@@ -47,6 +48,7 @@
         <testcontainers.version>2.0.5</testcontainers.version>
         <aws-sdk.version>2.55.11</aws-sdk.version>
         <azure-sdk.version>1.3.8</azure-sdk.version>
+        <google-cloud-libraries-bom.version>26.87.0</google-cloud-libraries-bom.version>
         <junit.version>6.1.3</junit.version>
         <assertj.version>3.27.7</assertj.version>
         <slf4j.version>1.7.36</slf4j.version>
@@ -74,6 +76,11 @@
             <dependency>
                 <groupId>io.floci</groupId>
                 <artifactId>testcontainers-floci-az</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.floci</groupId>
+                <artifactId>testcontainers-floci-gcp</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
