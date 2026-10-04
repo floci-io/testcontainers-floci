@@ -66,6 +66,14 @@ testcontainers-floci-az/          Azure module — FlociAzContainer (extends Abs
       config/services/            Per-service config classes (one per Floci Azure service)
   src/test/java/                  Same layout as the AWS module (FlociAzContainerServicesConfigTest, config/services/,
                                   services/ with a TLS-enabled AbstractServiceTest)
+testcontainers-floci-gcp/         GCP module — FlociGcpContainer (extends AbstractFlociContainer)
+  src/main/java/
+    io/floci/testcontainers/gcp/
+      FlociGcpContainer.java      Main container class
+      config/                     TlsConfig
+      config/services/            Per-service config classes (one per Floci GCP service)
+  src/test/java/                  Same layout as the AWS module (FlociGcpContainerServicesConfigTest, config/services/,
+                                  services/ with gRPC/REST client helpers in AbstractServiceTest)
 ```
 
 The AWS module does not use `testcontainers-floci-core` (yet); the other provider modules build on it.
@@ -172,6 +180,13 @@ MIT stays under MIT: free to use, fork, and build on, for anyone, permanently.
 Changes to this policy are reserved to the Lead Maintainer under
 [GOVERNANCE.md](https://github.com/floci-io/.github/blob/main/GOVERNANCE.md).
 
+
+### Adding support for a new Floci GCP service
+
+Same steps as for Azure, in `testcontainers-floci-gcp`, with env vars named `FLOCI_GCP_SERVICES_<ACCESSOR>_<PROPERTY>`
+(Floci GCP's accessors are single lower-case words, e.g. `secretmanager()` → `SECRETMANAGER`) and the docker-less mode
+called `mock`. Nested Floci groups that occur only once (e.g. `cloudrun.execution`, `bigquery.duck`) are flattened into
+plain properties.
 
 ## Commit Messages
 

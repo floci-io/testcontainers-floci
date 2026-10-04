@@ -32,12 +32,13 @@ local cloud emulators. Each module starts a Floci emulator container for your in
 endpoint and credentials to point the cloud SDK at, plus a typed, per-service configuration API over the emulator's
 environment variables. No cloud account, no auth token.
 
-| Module                                                                                                    | Description                                                  |
-|-----------------------------------------------------------------------------------------------------------|--------------------------------------------------------------|
-| [`testcontainers-floci`](#aws-testcontainers-floci)                                                       | Starts a Floci (AWS) container: `FlociContainer`             |
-| [`testcontainers-floci-az`](#azure-testcontainers-floci-az)                                               | Starts a Floci Azure container: `FlociAzContainer`           |
+| Module                                                                                                  | Description                                                |
+|-----------------------------------------------------------------------------------------------------------|-------------------------------------------------------------|
+| [`testcontainers-floci`](#module-testcontainers-floci)                                                    | Testcontainers module for starting a Floci (AWS) container  |
+| [`testcontainers-floci-az`](#module-testcontainers-floci-az)                                              | Testcontainers module for starting a Floci Azure container  |
+| [`testcontainers-floci-gcp`](#module-testcontainers-floci-gcp)                                            | Testcontainers module for starting a Floci GCP container    |
 | `testcontainers-floci-core`                                                                               | Shared base classes of the modules above (not used directly) |
-| [`spring-boot-testcontainers-floci`](#spring-boot-integration) (decommissioned)                           | Superseded by Spring Cloud AWS's own testcontainers module   |
+| [`spring-boot-testcontainers-floci`](#module-spring-boot-testcontainers-floci-decommissioned) (decommissioned) | Superseded by Spring Cloud AWS's own testcontainers module |
 
 ### The Floci emulators
 
@@ -48,8 +49,9 @@ named after [floccus](https://en.wikipedia.org/wiki/Cirrocumulus_floccus), the c
 |--------------------------------------------------|-------|:----:|:-----------------------------------------------------------:|
 | [floci](https://github.com/floci-io/floci)       | AWS   | 4566 | ✅ [`testcontainers-floci`](#aws-testcontainers-floci)       |
 | [floci-az](https://github.com/floci-io/floci-az) | Azure | 4577 | ✅ [`testcontainers-floci-az`](#azure-testcontainers-floci-az) |
-| [floci-gcp](https://github.com/floci-io/floci-gcp) | GCP | 4588 | Planned                                                     |
+| [floci-gcp](https://github.com/floci-io/floci-gcp) | GCP | 4588 | ✅ [`testcontainers-floci-gcp`](#azure-testcontainers-floci-gcp) |
 | [floci-oci](https://github.com/floci-io/floci-oci) | OCI | 4599 | Planned                                                     |
+
 
 ## Installation
 
@@ -57,7 +59,7 @@ named after [floccus](https://en.wikipedia.org/wiki/Cirrocumulus_floccus), the c
 
 | testcontainers-floci | Spring Boot integration                                     | Testcontainers | Release badges                                                                                                                                                                       |
 |-----------------------|-------------------------------------------------------------|----------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **2.x**               | via [`spring-cloud-aws-testcontainers`](#spring-boot-integration) (4.1.0+) | 2.x            | [![Maven Central](https://img.shields.io/maven-central/v/io.floci/testcontainers-floci)](https://central.sonatype.com/artifact/io.floci/testcontainers-floci)                        |
+| **2.x**               | via [`spring-cloud-aws-testcontainers`](#module-spring-boot-testcontainers-floci-decommissioned) (4.1.0+) | 2.x            | [![Maven Central](https://img.shields.io/maven-central/v/io.floci/testcontainers-floci)](https://central.sonatype.com/artifact/io.floci/testcontainers-floci)                        |
 | **1.x**               | `spring-boot-testcontainers-floci` (Spring Boot 3.5.x / Spring Cloud AWS 3.4.x) | 1.x            | [![Maven Central](https://img.shields.io/maven-central/v/io.floci/testcontainers-floci?filter=1.*)](https://img.shields.io/maven-central/v/io.floci/testcontainers-floci?filter=1.*) |
 
 ### AWS: testcontainers-floci
@@ -91,6 +93,17 @@ testImplementation "io.floci:testcontainers-floci:${testcontainersFlociVersion}"
 <dependency>
     <groupId>io.floci</groupId>
     <artifactId>testcontainers-floci-az</artifactId>
+    <version>${testcontainers-floci.version}</version>
+    <scope>test</scope>
+</dependency>
+```
+
+### GCP: testcontainers-floci-gcp
+
+```xml
+<dependency>
+    <groupId>io.floci</groupId>
+    <artifactId>testcontainers-floci-gcp</artifactId>
     <version>${testcontainers-floci.version}</version>
     <scope>test</scope>
 </dependency>
@@ -232,6 +245,33 @@ Storage data planes live under account-prefixed paths of the default account `de
 (`getBlobEndpoint()`, `getQueueEndpoint()`, `getTableEndpoint()`); ARM management calls go to
 `getEndpoint() + "/subscriptions/" + getSubscriptionId() + ...`.
 
+### GCP
+
+```java
+@Testcontainers
+class StorageTest {
+
+    @Container
+    static FlociGcpContainer floci = new FlociGcpContainer();
+
+    @Test
+    void shouldUploadObject() {
+        Storage storage = StorageOptions.newBuilder()
+                .setHost(floci.getEndpoint())
+                .setProjectId(floci.getProjectId())
+                .setCredentials(NoCredentials.getInstance())
+                .build()
+                .getService();
+
+        String bucket = storage.create(BucketInfo.of("my-bucket")).getName();
+        storage.create(BlobInfo.newBuilder(bucket, "hello.txt").build(), "hello".getBytes(UTF_8));
+
+        assertThat(storage.readAllBytes(bucket, "hello.txt")).asString(UTF_8).isEqualTo("hello");
+    }
+}
+```
+REST-based clients such as Cloud Storage or BigQuery take `getEndpoint()` as host.
+
 ## Service configuration
 
 ### AWS
@@ -329,6 +369,54 @@ SecretClient secrets = new SecretClientBuilder()
 > URL `http://localhost:4577`, which does not match the randomly mapped host port of the container. Clients following
 > such URLs need to rewrite them to `getEndpoint()`/`getHttpsEndpoint()`.
 
+### GCP
+
+| Method                      | Description                                                                                         |
+|-----------------------------|-----------------------------------------------------------------------------------------------------|
+| `FlociGcpContainer()`       | Creates a container with the default image (`floci/floci-gcp:latest`)                               |
+| `FlociGcpContainer(String)` | Creates a container with a custom image tag                                                         |
+| `withProjectId(String)`     | Sets the default project id                                                                         |
+| `withLogLevel(Level)`       | Sets the Floci GCP log level (`TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`)                            |
+| `withDedicatedNetwork()`    | Creates a dedicated Docker network shared by Floci GCP and the containers it spawns                 |
+| `withDockerSocket(boolean)` | Overrides whether the host Docker socket is mounted, bypassing auto-detection                       |
+| `withTlsConfig(...)`        | Configures TLS/HTTPS (self-signed by default; optionally provide cert/key paths)                    |
+| `with*Config(...)`          | Configures service-specific settings, e.g. `withCloudSqlConfig(c -> c.mock(true))`                  |
+
+Docker-backed services (Managed Kafka, Cloud SQL, Cloud Run, GKE and the DuckDB query engine of BigQuery) mount the
+host Docker socket automatically while they are enabled and not `mock`ed, exactly like the other modules. Their
+sidecar containers publish their ports directly on the Docker host (e.g. the IP address and port of a Cloud SQL
+instance are reachable from the test); the GKE API server port range defaults to 10 ports
+(`withGkeConfig(c -> c.apiServerPortRange(6550, 10))`). Cloud Run services are invoked through the main port, addressed
+by the `Host` header of the service URL.
+
+gRPC-based clients (Pub/Sub, Secret Manager, KMS, Logging, ...) connect to `getEmulatorHost()` (`host:port`) via a
+plaintext channel; the same value can be used for `PUBSUB_EMULATOR_HOST`-style settings:
+
+```java
+TopicAdminClient topics = TopicAdminClient.create(TopicAdminSettings.newBuilder()
+        .setTransportChannelProvider(InstantiatingGrpcChannelProvider.newBuilder()
+                .setEndpoint(floci.getEmulatorHost())
+                .setChannelConfigurator(ManagedChannelBuilder::usePlaintext)
+                .build())
+        .setCredentialsProvider(NoCredentialsProvider.create())
+        .build());
+topics.createTopic(TopicName.of(floci.getProjectId(), "my-topic"));
+```
+
+#### HTTPS
+
+Enable TLS for clients that insist on HTTPS and let them trust the certificate Floci GCP serves; HTTP and HTTPS share
+the same port:
+
+```java
+FlociGcpContainer floci = new FlociGcpContainer().withTlsConfig(c -> c.enabled(true));
+floci.start();
+
+String certificatePem = floci.getTlsCertificate();      // add it to the trust store of your HTTP or gRPC client
+String endpoint = floci.getHttpsEndpoint();
+```
+
+
 ## Container options
 
 ### AWS
@@ -370,6 +458,19 @@ SecretClient secrets = new SecretClientBuilder()
 | `getTenantId()`               | Default Microsoft Entra ID tenant id (`withEntraConfig(...)`)     | `00000000-0000-0000-0000-000000000002` |
 | `getLogLevel()`               | Configured log level                                              | `WARN`                                 |
 | `get*Config()`                | Current configuration of a service or of TLS/auth                 | —                                      |
+
+### GCP
+
+| Method                        | Description                                                       | Default                                |
+|-------------------------------|-------------------------------------------------------------------|----------------------------------------|
+| `getEndpoint()`               | HTTP endpoint URL (e.g. `http://localhost:32781`)                 | —                                      |
+| `getEmulatorHost()`           | `host:port` for gRPC channels and `*_EMULATOR_HOST` settings      | —                                      |
+| `getHttpsEndpoint()`          | HTTPS endpoint URL (requires TLS to be enabled)                   | —                                      |
+| `getTlsCertificate()`         | PEM certificate served for HTTPS (requires TLS to be enabled)     | —                                      |
+| `getProjectId()`              | Default project id                                                | `floci-local`                          |
+| `getLogLevel()`               | Configured log level                                              | `WARN`                                 |
+| `get*Config()`                | Current configuration of a service or of TLS                      | —                                      |
+
 
 ## Docker image tags
 
