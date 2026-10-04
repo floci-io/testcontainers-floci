@@ -49,6 +49,30 @@ class FlociOciContainerServicesConfigTest {
 
     // --- Service configs (config/services/) -------------------------------------------------------
 
+    @Test
+    void shouldWireObjectStorageConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withObjectStorageConfig(cfg -> cfg.enabled(false)),
+                c -> c.getObjectStorageConfig().isEnabled(), false,
+                "FLOCI_OCI_SERVICES_OBJECTSTORAGE_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireQueueConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withQueueConfig(cfg -> cfg.enabled(false)),
+                c -> c.getQueueConfig().isEnabled(), false,
+                "FLOCI_OCI_SERVICES_QUEUE_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireStreamingConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withStreamingConfig(cfg -> cfg.enabled(false)),
+                c -> c.getStreamingConfig().isEnabled(), false,
+                "FLOCI_OCI_SERVICES_STREAMING_ENABLED", "false");
+    }
+
     // --- Cross-cutting configs (config/) ----------------------------------------------------------
 
     @Test

@@ -3,6 +3,7 @@ package io.floci.testcontainers.oci;
 import io.floci.testcontainers.core.AbstractFlociContainer;
 import io.floci.testcontainers.oci.config.AuthConfig;
 import io.floci.testcontainers.oci.config.TlsConfig;
+import io.floci.testcontainers.oci.config.services.*;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
 
@@ -60,6 +61,11 @@ public class FlociOciContainer extends AbstractFlociContainer<FlociOciContainer>
 
     private TlsConfig tlsConfig = TlsConfig.builder().build();
     private AuthConfig authConfig = AuthConfig.builder().build();
+
+    // Service configs
+    private final ServiceConfigRef<ObjectStorageConfig> objectStorageConfig = registerServiceConfig(ObjectStorageConfig.builder().build());
+    private final ServiceConfigRef<QueueConfig> queueConfig = registerServiceConfig(QueueConfig.builder().build());
+    private final ServiceConfigRef<StreamingConfig> streamingConfig = registerServiceConfig(StreamingConfig.builder().build());
 
     /**
      * Creates a new Floci OCI container with the default image ({@code floci/floci-oci:latest}).
@@ -275,5 +281,77 @@ public class FlociOciContainer extends AbstractFlociContainer<FlociOciContainer>
         this.authConfig = builder.build();
         authConfig.applyEnvVarsToContainer(this);
         return this;
+    }
+
+    /**
+     * Returns the OCI Object Storage configuration.
+     *
+     * @return the OCI Object Storage configuration
+     */
+    public ObjectStorageConfig getObjectStorageConfig() {
+        return objectStorageConfig.get();
+    }
+
+    /**
+     * Configures OCI Object Storage.
+     *
+     * <pre>{@code
+     * new FlociOciContainer()
+     *     .withObjectStorageConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link ObjectStorageConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociOciContainer withObjectStorageConfig(Consumer<ObjectStorageConfig.Builder> configurer) {
+        return updateServiceConfig(objectStorageConfig, configurer);
+    }
+
+    /**
+     * Returns the OCI Queue configuration.
+     *
+     * @return the OCI Queue configuration
+     */
+    public QueueConfig getQueueConfig() {
+        return queueConfig.get();
+    }
+
+    /**
+     * Configures OCI Queue.
+     *
+     * <pre>{@code
+     * new FlociOciContainer()
+     *     .withQueueConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link QueueConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociOciContainer withQueueConfig(Consumer<QueueConfig.Builder> configurer) {
+        return updateServiceConfig(queueConfig, configurer);
+    }
+
+    /**
+     * Returns the OCI Streaming configuration.
+     *
+     * @return the OCI Streaming configuration
+     */
+    public StreamingConfig getStreamingConfig() {
+        return streamingConfig.get();
+    }
+
+    /**
+     * Configures OCI Streaming.
+     *
+     * <pre>{@code
+     * new FlociOciContainer()
+     *     .withStreamingConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link StreamingConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociOciContainer withStreamingConfig(Consumer<StreamingConfig.Builder> configurer) {
+        return updateServiceConfig(streamingConfig, configurer);
     }
 }
