@@ -77,6 +77,7 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
     private final ServiceConfigRef<CloudSqlConfig> cloudSqlConfig = registerServiceConfig(CloudSqlConfig.builder().build());
     private final ServiceConfigRef<CloudTasksConfig> cloudTasksConfig = registerServiceConfig(CloudTasksConfig.builder().build());
     private final ServiceConfigRef<CloudRunConfig> cloudRunConfig = registerServiceConfig(CloudRunConfig.builder().build());
+    private final ServiceConfigRef<CloudFunctionsConfig> cloudFunctionsConfig = registerServiceConfig(CloudFunctionsConfig.builder().build());
     private final ServiceConfigRef<MonitoringConfig> monitoringConfig = registerServiceConfig(MonitoringConfig.builder().build());
     private final ServiceConfigRef<EventarcConfig> eventarcConfig = registerServiceConfig(EventarcConfig.builder().build());
     private final ServiceConfigRef<ServiceUsageConfig> serviceUsageConfig = registerServiceConfig(ServiceUsageConfig.builder().build());
@@ -581,6 +582,30 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
      */
     public FlociGcpContainer withCloudRunConfig(Consumer<CloudRunConfig.Builder> configurer) {
         return updateServiceConfig(cloudRunConfig, configurer);
+    }
+
+    /**
+     * Returns the Cloud Functions configuration.
+     *
+     * @return the Cloud Functions configuration
+     */
+    public CloudFunctionsConfig getCloudFunctionsConfig() {
+        return cloudFunctionsConfig.get();
+    }
+
+    /**
+     * Configures Cloud Functions.
+     *
+     * <pre>{@code
+     * new FlociGcpContainer()
+     *     .withCloudFunctionsConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link CloudFunctionsConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociGcpContainer withCloudFunctionsConfig(Consumer<CloudFunctionsConfig.Builder> configurer) {
+        return updateServiceConfig(cloudFunctionsConfig, configurer);
     }
 
     /**
