@@ -139,6 +139,14 @@ class FlociGcpContainerServicesConfigTest {
     }
 
     @Test
+    void shouldWireKafkaConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withKafkaConfig(cfg -> cfg.mock(true)),
+                c -> c.getKafkaConfig().isMock(), true,
+                "FLOCI_GCP_SERVICES_KAFKA_MOCK", "true");
+    }
+
+    @Test
     void shouldWireCloudTasksConfigIntoContainer() {
         assertConfigWired(
                 c -> c.withCloudTasksConfig(cfg -> cfg.enabled(false)),
