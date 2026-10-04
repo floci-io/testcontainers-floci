@@ -72,6 +72,8 @@ class FlociGcpContainerTest {
                     container.getCloudTasksConfig(),
                     container.getMonitoringConfig(),
                     container.getEventarcConfig(),
+                    container.getServiceUsageConfig(),
+                    container.getResourceManagerConfig(),
                     container.getFirebaseAuthConfig()
             )).noneMatch(AbstractServiceConfig::isEnabled);
         }
