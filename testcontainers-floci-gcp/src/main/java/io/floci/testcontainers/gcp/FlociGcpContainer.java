@@ -73,6 +73,8 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
     private final ServiceConfigRef<CloudTasksConfig> cloudTasksConfig = registerServiceConfig(CloudTasksConfig.builder().build());
     private final ServiceConfigRef<MonitoringConfig> monitoringConfig = registerServiceConfig(MonitoringConfig.builder().build());
     private final ServiceConfigRef<EventarcConfig> eventarcConfig = registerServiceConfig(EventarcConfig.builder().build());
+    private final ServiceConfigRef<ServiceUsageConfig> serviceUsageConfig = registerServiceConfig(ServiceUsageConfig.builder().build());
+    private final ServiceConfigRef<ResourceManagerConfig> resourceManagerConfig = registerServiceConfig(ResourceManagerConfig.builder().build());
     private final ServiceConfigRef<FirebaseAuthConfig> firebaseAuthConfig = registerServiceConfig(FirebaseAuthConfig.builder().build());
 
     /**
@@ -474,6 +476,54 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
      */
     public FlociGcpContainer withEventarcConfig(Consumer<EventarcConfig.Builder> configurer) {
         return updateServiceConfig(eventarcConfig, configurer);
+    }
+
+    /**
+     * Returns the Service Usage configuration.
+     *
+     * @return the Service Usage configuration
+     */
+    public ServiceUsageConfig getServiceUsageConfig() {
+        return serviceUsageConfig.get();
+    }
+
+    /**
+     * Configures Service Usage.
+     *
+     * <pre>{@code
+     * new FlociGcpContainer()
+     *     .withServiceUsageConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link ServiceUsageConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociGcpContainer withServiceUsageConfig(Consumer<ServiceUsageConfig.Builder> configurer) {
+        return updateServiceConfig(serviceUsageConfig, configurer);
+    }
+
+    /**
+     * Returns the Resource Manager configuration.
+     *
+     * @return the Resource Manager configuration
+     */
+    public ResourceManagerConfig getResourceManagerConfig() {
+        return resourceManagerConfig.get();
+    }
+
+    /**
+     * Configures Resource Manager.
+     *
+     * <pre>{@code
+     * new FlociGcpContainer()
+     *     .withResourceManagerConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link ResourceManagerConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociGcpContainer withResourceManagerConfig(Consumer<ResourceManagerConfig.Builder> configurer) {
+        return updateServiceConfig(resourceManagerConfig, configurer);
     }
 
     /**

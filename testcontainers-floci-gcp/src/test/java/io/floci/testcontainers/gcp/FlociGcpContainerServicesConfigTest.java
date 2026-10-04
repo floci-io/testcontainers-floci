@@ -138,6 +138,22 @@ class FlociGcpContainerServicesConfigTest {
     }
 
     @Test
+    void shouldWireServiceUsageConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withServiceUsageConfig(cfg -> cfg.enabled(false)),
+                c -> c.getServiceUsageConfig().isEnabled(), false,
+                "FLOCI_GCP_SERVICES_SERVICEUSAGE_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireResourceManagerConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withResourceManagerConfig(cfg -> cfg.enabled(false)),
+                c -> c.getResourceManagerConfig().isEnabled(), false,
+                "FLOCI_GCP_SERVICES_RESOURCEMANAGER_ENABLED", "false");
+    }
+
+    @Test
     void shouldWireFirebaseAuthConfigIntoContainer() {
         assertConfigWired(
                 c -> c.withFirebaseAuthConfig(cfg -> cfg.enabled(false)),
