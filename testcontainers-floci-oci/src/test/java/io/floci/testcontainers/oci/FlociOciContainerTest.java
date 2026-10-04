@@ -79,8 +79,11 @@ class FlociOciContainerTest {
     void shouldDisableAllServices() {
         try (FlociOciContainer container = new FlociOciContainer().disableAllServices()) {
             assertThat(List.<AbstractServiceConfig<?>>of(
+                    container.getIdentityConfig(),
                     container.getObjectStorageConfig(),
                     container.getQueueConfig(),
+                    container.getKmsConfig(),
+                    container.getVaultConfig(),
                     container.getStreamingConfig()
             )).noneMatch(AbstractServiceConfig::isEnabled);
         }

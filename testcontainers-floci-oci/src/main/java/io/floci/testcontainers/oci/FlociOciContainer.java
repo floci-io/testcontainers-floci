@@ -63,8 +63,11 @@ public class FlociOciContainer extends AbstractFlociContainer<FlociOciContainer>
     private AuthConfig authConfig = AuthConfig.builder().build();
 
     // Service configs
+    private final ServiceConfigRef<IdentityConfig> identityConfig = registerServiceConfig(IdentityConfig.builder().build());
     private final ServiceConfigRef<ObjectStorageConfig> objectStorageConfig = registerServiceConfig(ObjectStorageConfig.builder().build());
     private final ServiceConfigRef<QueueConfig> queueConfig = registerServiceConfig(QueueConfig.builder().build());
+    private final ServiceConfigRef<KmsConfig> kmsConfig = registerServiceConfig(KmsConfig.builder().build());
+    private final ServiceConfigRef<VaultConfig> vaultConfig = registerServiceConfig(VaultConfig.builder().build());
     private final ServiceConfigRef<StreamingConfig> streamingConfig = registerServiceConfig(StreamingConfig.builder().build());
 
     /**
@@ -284,6 +287,30 @@ public class FlociOciContainer extends AbstractFlociContainer<FlociOciContainer>
     }
 
     /**
+     * Returns the OCI Identity and Access Management configuration.
+     *
+     * @return the OCI Identity and Access Management configuration
+     */
+    public IdentityConfig getIdentityConfig() {
+        return identityConfig.get();
+    }
+
+    /**
+     * Configures OCI Identity and Access Management.
+     *
+     * <pre>{@code
+     * new FlociOciContainer()
+     *     .withIdentityConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link IdentityConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociOciContainer withIdentityConfig(Consumer<IdentityConfig.Builder> configurer) {
+        return updateServiceConfig(identityConfig, configurer);
+    }
+
+    /**
      * Returns the OCI Object Storage configuration.
      *
      * @return the OCI Object Storage configuration
@@ -329,6 +356,54 @@ public class FlociOciContainer extends AbstractFlociContainer<FlociOciContainer>
      */
     public FlociOciContainer withQueueConfig(Consumer<QueueConfig.Builder> configurer) {
         return updateServiceConfig(queueConfig, configurer);
+    }
+
+    /**
+     * Returns the OCI Key Management configuration.
+     *
+     * @return the OCI Key Management configuration
+     */
+    public KmsConfig getKmsConfig() {
+        return kmsConfig.get();
+    }
+
+    /**
+     * Configures OCI Key Management.
+     *
+     * <pre>{@code
+     * new FlociOciContainer()
+     *     .withKmsConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link KmsConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociOciContainer withKmsConfig(Consumer<KmsConfig.Builder> configurer) {
+        return updateServiceConfig(kmsConfig, configurer);
+    }
+
+    /**
+     * Returns the OCI Vault secrets configuration.
+     *
+     * @return the OCI Vault secrets configuration
+     */
+    public VaultConfig getVaultConfig() {
+        return vaultConfig.get();
+    }
+
+    /**
+     * Configures OCI Vault secrets.
+     *
+     * <pre>{@code
+     * new FlociOciContainer()
+     *     .withVaultConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link VaultConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociOciContainer withVaultConfig(Consumer<VaultConfig.Builder> configurer) {
+        return updateServiceConfig(vaultConfig, configurer);
     }
 
     /**
