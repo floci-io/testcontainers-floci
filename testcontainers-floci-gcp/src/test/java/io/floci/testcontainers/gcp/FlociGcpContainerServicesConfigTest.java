@@ -187,6 +187,14 @@ class FlociGcpContainerServicesConfigTest {
     }
 
     @Test
+    void shouldWireSchedulerConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withSchedulerConfig(cfg -> cfg.invocationEnabled(false)),
+                c -> c.getSchedulerConfig().isInvocationEnabled(), false,
+                "FLOCI_GCP_SERVICES_SCHEDULER_INVOCATION_ENABLED", "false");
+    }
+
+    @Test
     void shouldWireEventarcConfigIntoContainer() {
         assertConfigWired(
                 c -> c.withEventarcConfig(cfg -> cfg.enabled(false)),
