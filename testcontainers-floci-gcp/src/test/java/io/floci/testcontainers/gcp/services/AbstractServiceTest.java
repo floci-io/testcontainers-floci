@@ -43,6 +43,9 @@ abstract class AbstractServiceTest {
         }
 
         floci.start();
+        // Stop gracefully (instead of being killed by Ryuk) so that Floci GCP removes the sidecar containers it
+        // started, e.g. the BigQuery floci-duck container
+        Runtime.getRuntime().addShutdownHook(new Thread(floci::stop));
     }
 
     /**
