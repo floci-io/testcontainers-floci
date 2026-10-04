@@ -13,6 +13,8 @@ Testcontainers module for [Floci](https://github.com/floci-io/floci) — a local
 - `testcontainers-floci/` — AWS module: `FlociContainer` extending `GenericContainer`
 - `testcontainers-floci-az/` — Azure module: `FlociAzContainer` extending `AbstractFlociContainer`, for
   [Floci Azure](https://github.com/floci-io/floci-az) (`floci/floci-az`, port 4577)
+- `testcontainers-floci-gcp/` — GCP module: `FlociGcpContainer` extending `AbstractFlociContainer`, for
+  [Floci GCP](https://github.com/floci-io/floci-gcp) (`floci/floci-gcp`, port 4588, gRPC and REST on the same port)
 
 `spring-boot-testcontainers-floci` (Spring Boot integration via `@ServiceConnection`) was removed on `main` — the
 same functionality is now provided by Spring Cloud AWS's own `spring-cloud-aws-testcontainers` module (from Spring
@@ -131,6 +133,31 @@ Mirrors the AWS module, with these differences:
 ```
 mvn -pl testcontainers-floci-core,testcontainers-floci-az test
 mvn -pl testcontainers-floci-az test -Dtest=BlobServiceTest
+```
+
+## GCP module (`testcontainers-floci-gcp`)
+
+Built like the Azure module (`registerServiceConfig(...)`/`updateServiceConfig(...)`, `super(builder)`, six-aspect
+`*ConfigTest`s, `FlociGcpContainerServicesConfigTest`, explicit `FlociGcpContainerTest.shouldDisableAllServices()`
+list), with these differences:
+
+- The only migrated cross-cutting config is `config/TlsConfig` (Floci GCP has no `auth` section). The root property
+  `default-project-id` is exposed as `withProjectId(...)`/`getProjectId()` on the container. `getEmulatorHost()`
+  returns `host:port` for gRPC channels and `*_EMULATOR_HOST`-style settings.
+- Naming follows Floci GCP (`mock`, not `mocked`). Nested groups that occur only once are flattened into plain
+  properties (`cloudrun.execution.*` → `CloudRunConfig.startupTimeout(...)` etc., `bigquery.duck.*` →
+  `BigQueryConfig.duckUrl(...)` etc.). `java.time.Duration` properties stay `Duration` and are emitted as `<n>s`
+  (or `<n>ms`). Enums (`iam.authorization-mode`) are public nested enums emitted in lower case. Port ranges and
+  sidecar ports work as in the Azure module (default count 10, nothing exposed on the Floci container).
+- The shared `AbstractServiceTest` container runs without TLS and offers `grpcChannelProvider()` (plaintext gRPC
+  channel to `getEmulatorHost()`), `noCredentials()` and a plain `rest(...)` helper; HttpJson clients use
+  `setEndpoint(floci.getEndpoint())`. A shutdown hook stops it gracefully so Floci GCP removes its sidecars.
+  Docker-backed services (Kafka, Cloud SQL, Cloud Run, BigQuery) are tested for real against the shared container;
+  GKE (privileged k3s) is tested against a dedicated `mock` container.
+
+```
+mvn -pl testcontainers-floci-core,testcontainers-floci-gcp test
+mvn -pl testcontainers-floci-gcp test -Dtest=PubSubServiceTest
 ```
 
 ## Keeping up to date with Floci (config migration process)
@@ -368,6 +395,24 @@ Initial migration: `3d2d06c7508ce82362f42921c51b63f197b94089` (floci-az `main`, 
 AWS: migrate `ServicesConfig`; `TlsConfig` and `AuthConfig` are migrated cross-cutting classes and must be kept in sync
 too; ignore `StorageConfig.services` (per-service storage overrides); only summarize everything else (`dns`, `storage`,
 `docker`, root properties). Commit scope is `az` (e.g. `feat(az): add <property> config property`).
+
+### Floci GCP
+
+The same process applies to `testcontainers-floci-gcp`, with these values:
+
+| What                     | Where                                                                                     |
+|--------------------------|-------------------------------------------------------------------------------------------|
+| Upstream                 | https://github.com/floci-io/floci-gcp                                                     |
+| The user's fork          | `cfranzen/floci-gcp` (to be created by the user), tag `migrated-to-testcontainers`        |
+| The file to diff         | `src/main/java/io/floci/gcp/config/EmulatorConfig.java` (`@ConfigMapping(prefix = "floci-gcp")`) |
+| Env-var prefix           | `FLOCI_GCP_…`, services `FLOCI_GCP_SERVICES_<ACCESSOR>_<PROPERTY>` (accessors are single lower-case words: `secretmanager()` → `SECRETMANAGER`; digits are not separated: `postgres15Image()` → `POSTGRES15_IMAGE`) |
+| Image for service tests  | `floci/floci-gcp:nightly`                                                                 |
+
+Initial migration: `1bb0845c38b163ed28d58b5ff930f25cf90ab634` (floci-gcp `main`, 2026-10-04). Classify the diff as for
+AWS: migrate `ServicesConfig` (the shared `dockerNetwork()` is covered by `withDedicatedNetwork()`); `TlsConfig` is a
+migrated cross-cutting class and must be kept in sync too; `defaultProjectId` maps to `withProjectId(...)`; only
+summarize everything else (`dns`, `storage`, `docker`, `init-hooks`, `locations`, other root properties). Commit scope
+is `gcp` (e.g. `feat(gcp): add <property> config property`).
 
 ## Key Tech
 
