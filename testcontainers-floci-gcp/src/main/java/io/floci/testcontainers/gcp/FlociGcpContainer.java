@@ -1,10 +1,18 @@
 package io.floci.testcontainers.gcp;
 
 import io.floci.testcontainers.core.AbstractFlociContainer;
+import io.floci.testcontainers.gcp.config.TlsConfig;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.function.Consumer;
 
 /**
  * Testcontainers module for <a href="https://github.com/floci-io/floci-gcp">Floci GCP</a> — a
@@ -46,8 +54,11 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
     private static final String DOCKER_NETWORK_ENV_VAR = "FLOCI_GCP_SERVICES_DOCKER_NETWORK";
     private static final String PROJECT_ID_ENV_VAR = "FLOCI_GCP_DEFAULT_PROJECT_ID";
     private static final String HEALTH_PATH = "/_floci-gcp/health";
+    private static final String TLS_CERT_PATH = "/_floci-gcp/tls-cert";
 
     private static final String DEFAULT_PROJECT_ID = "floci-local";
+
+    private TlsConfig tlsConfig = TlsConfig.builder().build();
 
     /**
      * Creates a new Floci GCP container with the default image ({@code floci/floci-gcp:latest}).
@@ -81,6 +92,11 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
         applyAllConfigs();
     }
 
+    @Override
+    protected void applyGlobalEnvVars() {
+        tlsConfig.applyEnvVarsToContainer(this);
+    }
+
     /**
      * Returns the {@code host:port} pair of the Floci GCP container (e.g. {@code localhost:32781}), without a
      * scheme. Use it for clients that are configured via an emulator host, such as the
@@ -112,5 +128,72 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
      */
     public FlociGcpContainer withProjectId(String projectId) {
         return withEnv(PROJECT_ID_ENV_VAR, projectId);
+    }
+
+    /**
+     * Returns the HTTPS endpoint URL for connecting to Floci GCP (e.g. {@code https://localhost:32781}).
+     * Floci GCP serves HTTPS on the same port as plain HTTP, but only while TLS is enabled via
+     * {@link #withTlsConfig(Consumer)}. Clients have to trust the certificate returned by
+     * {@link #getTlsCertificate()}.
+     *
+     * @return the HTTPS endpoint URL
+     */
+    public String getHttpsEndpoint() {
+        return String.format("https://%s:%d", getHost(), getMappedPort(PORT));
+    }
+
+    /**
+     * Fetches the PEM-encoded certificate Floci GCP currently serves HTTPS with (either the
+     * auto-generated one or the one configured via {@link TlsConfig.Builder#certPath(String)}).
+     * Import it into the trust store of HTTPS or TLS-secured gRPC clients.
+     *
+     * @return the PEM-encoded TLS certificate
+     * @throws IllegalStateException if TLS is not enabled or the certificate is not available
+     */
+    public String getTlsCertificate() {
+        try {
+            HttpResponse<String> response = HttpClient.newHttpClient().send(
+                    HttpRequest.newBuilder(URI.create(getEndpoint() + TLS_CERT_PATH)).build(),
+                    HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() != 200) {
+                throw new IllegalStateException("TLS certificate not available (HTTP " + response.statusCode()
+                        + "): " + response.body());
+            }
+            return response.body();
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to fetch the TLS certificate of Floci GCP", e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted while fetching the TLS certificate of Floci GCP", e);
+        }
+    }
+
+    /**
+     * Returns the TLS configuration.
+     *
+     * @return the TLS configuration
+     */
+    public TlsConfig getTlsConfig() {
+        return tlsConfig;
+    }
+
+    /**
+     * Configures TLS/HTTPS for the Floci GCP server. When enabled, HTTP and HTTPS are served on the same
+     * port; use {@link #getHttpsEndpoint()} and trust {@link #getTlsCertificate()} in HTTPS clients.
+     *
+     * <pre>{@code
+     * new FlociGcpContainer()
+     *     .withTlsConfig(c -> c.enabled(true));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link TlsConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociGcpContainer withTlsConfig(Consumer<TlsConfig.Builder> configurer) {
+        TlsConfig.Builder builder = tlsConfig.toBuilder();
+        configurer.accept(builder);
+        this.tlsConfig = builder.build();
+        tlsConfig.applyEnvVarsToContainer(this);
+        return this;
     }
 }

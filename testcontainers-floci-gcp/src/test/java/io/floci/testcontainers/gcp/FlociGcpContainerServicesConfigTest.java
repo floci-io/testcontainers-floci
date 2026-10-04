@@ -1,5 +1,7 @@
 package io.floci.testcontainers.gcp;
 
+import org.junit.jupiter.api.Test;
+
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -46,4 +48,14 @@ class FlociGcpContainerServicesConfigTest {
     }
 
     // --- Service configs (config/services/) -------------------------------------------------------
+
+    // --- Cross-cutting configs (config/) -----------------------------------------------------------
+
+    @Test
+    void shouldWireTlsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withTlsConfig(cfg -> cfg.enabled(true)),
+                c -> c.getTlsConfig().isEnabled(), true,
+                "FLOCI_GCP_TLS_ENABLED", "true");
+    }
 }
