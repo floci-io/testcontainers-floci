@@ -84,7 +84,8 @@ class FlociOciContainerTest {
                     container.getQueueConfig(),
                     container.getKmsConfig(),
                     container.getVaultConfig(),
-                    container.getStreamingConfig()
+                    container.getStreamingConfig(),
+                    container.getFunctionsConfig()
             )).noneMatch(AbstractServiceConfig::isEnabled);
         }
     }
