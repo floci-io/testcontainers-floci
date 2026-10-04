@@ -2,6 +2,7 @@ package io.floci.testcontainers.gcp;
 
 import io.floci.testcontainers.core.AbstractFlociContainer;
 import io.floci.testcontainers.gcp.config.TlsConfig;
+import io.floci.testcontainers.gcp.config.services.*;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
 
@@ -59,6 +60,11 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
     private static final String DEFAULT_PROJECT_ID = "floci-local";
 
     private TlsConfig tlsConfig = TlsConfig.builder().build();
+
+    // Service configs
+    private final ServiceConfigRef<PubSubConfig> pubSubConfig = registerServiceConfig(PubSubConfig.builder().build());
+    private final ServiceConfigRef<FirestoreConfig> firestoreConfig = registerServiceConfig(FirestoreConfig.builder().build());
+    private final ServiceConfigRef<DatastoreConfig> datastoreConfig = registerServiceConfig(DatastoreConfig.builder().build());
 
     /**
      * Creates a new Floci GCP container with the default image ({@code floci/floci-gcp:latest}).
@@ -195,5 +201,77 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
         this.tlsConfig = builder.build();
         tlsConfig.applyEnvVarsToContainer(this);
         return this;
+    }
+
+    /**
+     * Returns the Pub/Sub configuration.
+     *
+     * @return the Pub/Sub configuration
+     */
+    public PubSubConfig getPubSubConfig() {
+        return pubSubConfig.get();
+    }
+
+    /**
+     * Configures Pub/Sub.
+     *
+     * <pre>{@code
+     * new FlociGcpContainer()
+     *     .withPubSubConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link PubSubConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociGcpContainer withPubSubConfig(Consumer<PubSubConfig.Builder> configurer) {
+        return updateServiceConfig(pubSubConfig, configurer);
+    }
+
+    /**
+     * Returns the Firestore configuration.
+     *
+     * @return the Firestore configuration
+     */
+    public FirestoreConfig getFirestoreConfig() {
+        return firestoreConfig.get();
+    }
+
+    /**
+     * Configures Firestore.
+     *
+     * <pre>{@code
+     * new FlociGcpContainer()
+     *     .withFirestoreConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link FirestoreConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociGcpContainer withFirestoreConfig(Consumer<FirestoreConfig.Builder> configurer) {
+        return updateServiceConfig(firestoreConfig, configurer);
+    }
+
+    /**
+     * Returns the Datastore configuration.
+     *
+     * @return the Datastore configuration
+     */
+    public DatastoreConfig getDatastoreConfig() {
+        return datastoreConfig.get();
+    }
+
+    /**
+     * Configures Datastore.
+     *
+     * <pre>{@code
+     * new FlociGcpContainer()
+     *     .withDatastoreConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link DatastoreConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociGcpContainer withDatastoreConfig(Consumer<DatastoreConfig.Builder> configurer) {
+        return updateServiceConfig(datastoreConfig, configurer);
     }
 }

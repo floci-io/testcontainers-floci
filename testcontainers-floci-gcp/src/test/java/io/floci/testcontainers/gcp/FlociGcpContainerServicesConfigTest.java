@@ -49,6 +49,30 @@ class FlociGcpContainerServicesConfigTest {
 
     // --- Service configs (config/services/) -------------------------------------------------------
 
+    @Test
+    void shouldWirePubSubConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withPubSubConfig(cfg -> cfg.enabled(false)),
+                c -> c.getPubSubConfig().isEnabled(), false,
+                "FLOCI_GCP_SERVICES_PUBSUB_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireFirestoreConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withFirestoreConfig(cfg -> cfg.enabled(false)),
+                c -> c.getFirestoreConfig().isEnabled(), false,
+                "FLOCI_GCP_SERVICES_FIRESTORE_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireDatastoreConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withDatastoreConfig(cfg -> cfg.enabled(false)),
+                c -> c.getDatastoreConfig().isEnabled(), false,
+                "FLOCI_GCP_SERVICES_DATASTORE_ENABLED", "false");
+    }
+
     // --- Cross-cutting configs (config/) -----------------------------------------------------------
 
     @Test
