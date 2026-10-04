@@ -1,5 +1,6 @@
 package io.floci.testcontainers.oci;
 
+import io.floci.testcontainers.core.config.services.AbstractServiceConfig;
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 import org.testcontainers.utility.DockerImageName;
@@ -8,6 +9,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -70,6 +72,17 @@ class FlociOciContainerTest {
                     .containsEntry("FLOCI_OCI_DEFAULT_REALM", "oc2")
                     .containsEntry("FLOCI_OCI_DEFAULT_TENANCY_ID", "ocid1.tenancy.oc2..mytenancy")
                     .containsEntry("FLOCI_OCI_DEFAULT_NAMESPACE", "my-namespace");
+        }
+    }
+
+    @Test
+    void shouldDisableAllServices() {
+        try (FlociOciContainer container = new FlociOciContainer().disableAllServices()) {
+            assertThat(List.<AbstractServiceConfig<?>>of(
+                    container.getObjectStorageConfig(),
+                    container.getQueueConfig(),
+                    container.getStreamingConfig()
+            )).noneMatch(AbstractServiceConfig::isEnabled);
         }
     }
 
