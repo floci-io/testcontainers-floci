@@ -58,6 +58,14 @@ class FlociGcpContainerServicesConfigTest {
     }
 
     @Test
+    void shouldWireGcsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withGcsConfig(cfg -> cfg.uploadSessionIdleTimeoutSeconds(3600)),
+                c -> c.getGcsConfig().getUploadSessionIdleTimeoutSeconds(), 3600L,
+                "FLOCI_GCP_SERVICES_GCS_UPLOAD_SESSION_IDLE_TIMEOUT_SECONDS", "3600");
+    }
+
+    @Test
     void shouldWirePubSubConfigIntoContainer() {
         assertConfigWired(
                 c -> c.withPubSubConfig(cfg -> cfg.enabled(false)),
