@@ -73,6 +73,46 @@ class FlociGcpContainerServicesConfigTest {
                 "FLOCI_GCP_SERVICES_DATASTORE_ENABLED", "false");
     }
 
+    @Test
+    void shouldWireIamCredentialsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withIamCredentialsConfig(cfg -> cfg.enabled(false)),
+                c -> c.getIamCredentialsConfig().isEnabled(), false,
+                "FLOCI_GCP_SERVICES_IAMCREDENTIALS_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireStsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withStsConfig(cfg -> cfg.enabled(false)),
+                c -> c.getStsConfig().isEnabled(), false,
+                "FLOCI_GCP_SERVICES_STS_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireSecretManagerConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withSecretManagerConfig(cfg -> cfg.enabled(false)),
+                c -> c.getSecretManagerConfig().isEnabled(), false,
+                "FLOCI_GCP_SERVICES_SECRETMANAGER_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireKmsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withKmsConfig(cfg -> cfg.enabled(false)),
+                c -> c.getKmsConfig().isEnabled(), false,
+                "FLOCI_GCP_SERVICES_KMS_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireFirebaseAuthConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withFirebaseAuthConfig(cfg -> cfg.enabled(false)),
+                c -> c.getFirebaseAuthConfig().isEnabled(), false,
+                "FLOCI_GCP_SERVICES_FIREBASEAUTH_ENABLED", "false");
+    }
+
     // --- Cross-cutting configs (config/) -----------------------------------------------------------
 
     @Test

@@ -63,7 +63,12 @@ class FlociGcpContainerTest {
             assertThat(List.<AbstractServiceConfig<?>>of(
                     container.getPubSubConfig(),
                     container.getFirestoreConfig(),
-                    container.getDatastoreConfig()
+                    container.getDatastoreConfig(),
+                    container.getIamCredentialsConfig(),
+                    container.getStsConfig(),
+                    container.getSecretManagerConfig(),
+                    container.getKmsConfig(),
+                    container.getFirebaseAuthConfig()
             )).noneMatch(AbstractServiceConfig::isEnabled);
         }
     }
