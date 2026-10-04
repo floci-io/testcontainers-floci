@@ -50,6 +50,14 @@ class FlociOciContainerServicesConfigTest {
     // --- Service configs (config/services/) -------------------------------------------------------
 
     @Test
+    void shouldWireIdentityConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withIdentityConfig(cfg -> cfg.enabled(false)),
+                c -> c.getIdentityConfig().isEnabled(), false,
+                "FLOCI_OCI_SERVICES_IDENTITY_ENABLED", "false");
+    }
+
+    @Test
     void shouldWireObjectStorageConfigIntoContainer() {
         assertConfigWired(
                 c -> c.withObjectStorageConfig(cfg -> cfg.enabled(false)),
@@ -63,6 +71,22 @@ class FlociOciContainerServicesConfigTest {
                 c -> c.withQueueConfig(cfg -> cfg.enabled(false)),
                 c -> c.getQueueConfig().isEnabled(), false,
                 "FLOCI_OCI_SERVICES_QUEUE_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireKmsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withKmsConfig(cfg -> cfg.enabled(false)),
+                c -> c.getKmsConfig().isEnabled(), false,
+                "FLOCI_OCI_SERVICES_KMS_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireVaultConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withVaultConfig(cfg -> cfg.enabled(false)),
+                c -> c.getVaultConfig().isEnabled(), false,
+                "FLOCI_OCI_SERVICES_VAULT_ENABLED", "false");
     }
 
     @Test
