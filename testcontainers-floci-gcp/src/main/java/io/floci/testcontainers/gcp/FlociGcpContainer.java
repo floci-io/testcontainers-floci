@@ -73,6 +73,7 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
     private final ServiceConfigRef<SecretManagerConfig> secretManagerConfig = registerServiceConfig(SecretManagerConfig.builder().build());
     private final ServiceConfigRef<LoggingConfig> loggingConfig = registerServiceConfig(LoggingConfig.builder().build());
     private final ServiceConfigRef<KmsConfig> kmsConfig = registerServiceConfig(KmsConfig.builder().build());
+    private final ServiceConfigRef<KafkaConfig> kafkaConfig = registerServiceConfig(KafkaConfig.builder().build());
     private final ServiceConfigRef<CloudTasksConfig> cloudTasksConfig = registerServiceConfig(CloudTasksConfig.builder().build());
     private final ServiceConfigRef<MonitoringConfig> monitoringConfig = registerServiceConfig(MonitoringConfig.builder().build());
     private final ServiceConfigRef<EventarcConfig> eventarcConfig = registerServiceConfig(EventarcConfig.builder().build());
@@ -479,6 +480,31 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
      */
     public FlociGcpContainer withKmsConfig(Consumer<KmsConfig.Builder> configurer) {
         return updateServiceConfig(kmsConfig, configurer);
+    }
+
+    /**
+     * Returns the Managed Service for Apache Kafka configuration.
+     *
+     * @return the Managed Service for Apache Kafka configuration
+     */
+    public KafkaConfig getKafkaConfig() {
+        return kafkaConfig.get();
+    }
+
+    /**
+     * Configures Managed Service for Apache Kafka, which runs its brokers (Redpanda) and Kafka Connect workers in
+     * sibling containers and therefore requires the Docker socket unless mocked.
+     *
+     * <pre>{@code
+     * new FlociGcpContainer()
+     *     .withKafkaConfig(c -> c.mock(true));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link KafkaConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociGcpContainer withKafkaConfig(Consumer<KafkaConfig.Builder> configurer) {
+        return updateServiceConfig(kafkaConfig, configurer);
     }
 
     /**
