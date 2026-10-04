@@ -163,6 +163,14 @@ class FlociGcpContainerServicesConfigTest {
     }
 
     @Test
+    void shouldWireCloudRunConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withCloudRunConfig(cfg -> cfg.mock(true)),
+                c -> c.getCloudRunConfig().isMock(), true,
+                "FLOCI_GCP_SERVICES_CLOUDRUN_MOCK", "true");
+    }
+
+    @Test
     void shouldWireMonitoringConfigIntoContainer() {
         assertConfigWired(
                 c -> c.withMonitoringConfig(cfg -> cfg.enabled(false)),

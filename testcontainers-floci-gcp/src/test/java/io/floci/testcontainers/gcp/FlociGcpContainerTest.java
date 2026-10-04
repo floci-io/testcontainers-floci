@@ -75,6 +75,7 @@ class FlociGcpContainerTest {
                     container.getKafkaConfig(),
                     container.getCloudSqlConfig(),
                     container.getCloudTasksConfig(),
+                    container.getCloudRunConfig(),
                     container.getMonitoringConfig(),
                     container.getEventarcConfig(),
                     container.getServiceUsageConfig(),
