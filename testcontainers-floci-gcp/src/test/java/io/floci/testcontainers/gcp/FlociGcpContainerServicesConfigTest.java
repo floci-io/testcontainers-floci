@@ -50,6 +50,14 @@ class FlociGcpContainerServicesConfigTest {
     // --- Service configs (config/services/) -------------------------------------------------------
 
     @Test
+    void shouldWireComputeConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withComputeConfig(cfg -> cfg.operationDelayMs(0)),
+                c -> c.getComputeConfig().getOperationDelayMs(), 0L,
+                "FLOCI_GCP_SERVICES_COMPUTE_OPERATION_DELAY_MS", "0");
+    }
+
+    @Test
     void shouldWirePubSubConfigIntoContainer() {
         assertConfigWired(
                 c -> c.withPubSubConfig(cfg -> cfg.enabled(false)),
