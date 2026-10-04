@@ -37,6 +37,7 @@ environment variables. No cloud account, no auth token.
 | [`testcontainers-floci`](#aws-testcontainers-floci)                             | Testcontainers module for starting a Floci (AWS) container   |
 | [`testcontainers-floci-az`](#azure-testcontainers-floci-az)                     | Testcontainers module for starting a Floci Azure container   |
 | [`testcontainers-floci-gcp`](#gcp-testcontainers-floci-gcp)                     | Testcontainers module for starting a Floci GCP container     |
+| [`testcontainers-floci-oci`](#module-testcontainers-floci-oci)                  | Testcontainers module for starting a Floci OCI container     |
 | `testcontainers-floci-core`                                                     | Shared base classes of the modules above (not used directly) |
 | [`spring-boot-testcontainers-floci`](#spring-boot-integration) (decommissioned) | Superseded by Spring Cloud AWS's own testcontainers module   |
 
@@ -50,7 +51,7 @@ named after [floccus](https://en.wikipedia.org/wiki/Cirrocumulus_floccus), the c
 | [floci](https://github.com/floci-io/floci)         | AWS   | 4566 |     ✅ [`testcontainers-floci`](#aws-testcontainers-floci)     |
 | [floci-az](https://github.com/floci-io/floci-az)   | Azure | 4577 | ✅ [`testcontainers-floci-az`](#azure-testcontainers-floci-az) |
 | [floci-gcp](https://github.com/floci-io/floci-gcp) | GCP   | 4588 | ✅ [`testcontainers-floci-gcp`](#gcp-testcontainers-floci-gcp) |
-| [floci-oci](https://github.com/floci-io/floci-oci) | OCI   | 4599 |                            Planned                             |
+| [floci-oci](https://github.com/floci-io/floci-oci) | OCI   | 4599 | ✅ [`testcontainers-floci-oci`](#oci-testcontainers-floci-oci) |
 
 ## Installation
 
@@ -103,6 +104,17 @@ testImplementation "io.floci:testcontainers-floci:${testcontainersFlociVersion}"
 <dependency>
     <groupId>io.floci</groupId>
     <artifactId>testcontainers-floci-gcp</artifactId>
+    <version>${testcontainers-floci.version}</version>
+    <scope>test</scope>
+</dependency>
+```
+
+### OCI: testcontainers-floci-oci
+
+```xml
+<dependency>
+    <groupId>io.floci</groupId>
+    <artifactId>testcontainers-floci-oci</artifactId>
     <version>${testcontainers-floci.version}</version>
     <scope>test</scope>
 </dependency>
@@ -273,6 +285,51 @@ class StorageTest {
 
 REST-based clients such as Cloud Storage or BigQuery take `getEndpoint()` as host.
 
+### OCI
+
+OCI SDK clients sign every request. Floci OCI parses the signature for tenancy and user context but never verifies it,
+so an authentication provider with any locally generated RSA key works:
+
+```java
+@Testcontainers
+class ObjectStorageTest {
+
+    @Container
+    static FlociOciContainer floci = new FlociOciContainer();
+
+    @Test
+    void shouldCreateBucket() throws Exception {
+        ObjectStorageClient objectStorage = ObjectStorageClient.builder()
+                .endpoint(floci.getEndpoint())
+                .build(authProvider(floci));
+
+        objectStorage.createBucket(CreateBucketRequest.builder()
+                .namespaceName(floci.getNamespace())
+                .createBucketDetails(CreateBucketDetails.builder()
+                        .name("my-bucket")
+                        .compartmentId(floci.getTenancyId())
+                        .build())
+                .build());
+    }
+
+    static SimpleAuthenticationDetailsProvider authProvider(FlociOciContainer floci) throws Exception {
+        KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
+        generator.initialize(2048);
+        String privateKeyPem = "-----BEGIN PRIVATE KEY-----\n"
+                + Base64.getMimeEncoder().encodeToString(generator.generateKeyPair().getPrivate().getEncoded())
+                + "\n-----END PRIVATE KEY-----\n";
+
+        return SimpleAuthenticationDetailsProvider.builder()
+                .tenantId(floci.getTenancyId())
+                .userId("ocid1.user.oc1..test")
+                .fingerprint("aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99")
+                .privateKeySupplier(() -> new ByteArrayInputStream(privateKeyPem.getBytes(StandardCharsets.UTF_8)))
+                .region(Region.fromRegionId(floci.getRegion()))
+                .build();
+    }
+}
+```
+
 ## Service configuration
 
 ### AWS
@@ -417,6 +474,51 @@ String certificatePem = floci.getTlsCertificate();      // add it to the trust s
 String endpoint = floci.getHttpsEndpoint();
 ```
 
+### OCI
+
+| Method                      | Description                                                                                         |
+|-----------------------------|-----------------------------------------------------------------------------------------------------|
+| `FlociOciContainer()`       | Creates a container with the default image (`floci/floci-oci:latest`)                               |
+| `FlociOciContainer(String)` | Creates a container with a custom image tag                                                         |
+| `withRegion(String)`        | Sets the default region (`FLOCI_OCI_DEFAULT_REGION`)                                                |
+| `withRealm(String)`         | Sets the realm used in minted OCIDs (`FLOCI_OCI_DEFAULT_REALM`)                                     |
+| `withTenancyId(String)`     | Sets the tenancy used for unsigned requests (`FLOCI_OCI_DEFAULT_TENANCY_ID`)                        |
+| `withNamespace(String)`     | Sets the Object Storage namespace (`FLOCI_OCI_DEFAULT_NAMESPACE`)                                   |
+| `withLogLevel(Level)`       | Sets the Floci OCI log level (`TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`)                            |
+| `withDedicatedNetwork()`    | Creates a dedicated Docker network shared by Floci OCI and the containers it spawns                 |
+| `withDockerSocket(boolean)` | Overrides whether the host Docker socket is mounted, bypassing auto-detection                       |
+| `withTlsConfig(...)`        | Configures TLS/HTTPS (self-signed by default; optionally provide cert/key paths)                    |
+| `withAuthConfig(...)`       | Configures authentication, i.e. whether requests have to be signed                                  |
+| `with*Config(...)`          | Configures service-specific settings, e.g. `withFunctionsConfig(c -> c.mock(true))`                 |
+
+Functions (Fn server) and OKE (k3s) mount the host Docker socket automatically while they are enabled and not `mock`.
+Their sidecar containers publish their ports directly on the Docker host; the port ranges default to 10 ports each
+(`withFunctionsConfig(c -> c.serverPortRange(8085, 10))`, `withOkeConfig(c -> c.apiServerPortRange(6443, 10))`).
+Floci OCI reaches the Fn server by its container name, so real (non-mocked) function invocations need
+`withDedicatedNetwork()` and a function image built with a current Fn FDK.
+
+> **Note:** The endpoints Floci OCI returns in responses (e.g. a queue's or stream's `messagesEndpoint`, a vault's
+> `managementEndpoint`/`cryptoEndpoint`, the Functions invoke endpoint) are its own base URL `http://localhost:4599`,
+> which does not match the randomly mapped host port of the container. Point those clients at `getEndpoint()` instead.
+
+#### HTTPS
+
+Enable TLS to serve HTTPS (HTTP keeps working on the same port). `getEndpoint()` then returns an `https://` URL, and
+clients have to trust the self-signed certificate, which `getTlsCertificate()` reads from the container:
+
+```java
+FlociOciContainer floci = new FlociOciContainer().withTlsConfig(c -> c.enabled(true));
+floci.start();
+
+String certificatePem = floci.getTlsCertificate();      // add it to the trust store of your HTTP client
+```
+
+#### Authentication
+
+By default Floci OCI accepts unsigned requests. `withAuthConfig(c -> c.requireSignature(true))` rejects requests
+without a structurally valid OCI signature with `401`; the signature is still never verified.
+
+
 ## Container options
 
 ### AWS
@@ -470,6 +572,24 @@ String endpoint = floci.getHttpsEndpoint();
 | `getProjectId()`      | Default project id                                            | `floci-local` |
 | `getLogLevel()`       | Configured log level                                          | `WARN`        |
 | `get*Config()`        | Current configuration of a service or of TLS                  | —             |
+
+### OCI
+
+| Method                        | Description                                                       | Default                                |
+|-------------------------------|-------------------------------------------------------------------|----------------------------------------|
+| `getEndpoint()`               | HTTP endpoint URL (e.g. `http://localhost:32781`)                 | —                                      |
+| `getHttpsEndpoint()`          | HTTPS endpoint URL (requires TLS to be enabled)                   | —                                      |
+| `getTlsCertificate()`         | PEM certificate served for HTTPS (requires TLS to be enabled)     | —                                      |
+| `getAccountName()`            | Default storage account                                           | `devstoreaccount1`                     |
+| `getAccountKey()`             | Key of the default storage account                                | well-known development storage key     |
+| `getBlobEndpoint()`           | Blob Storage endpoint of the default account                      | —                                      |
+| `getQueueEndpoint()`          | Queue Storage endpoint of the default account                     | —                                      |
+| `getTableEndpoint()`          | Table Storage endpoint of the default account                     | —                                      |
+| `getStorageConnectionString()`| Connection string for Blob, Queue and Table Storage               | —                                      |
+| `getSubscriptionId()`         | Default subscription id (`withArmConfig(...)`)                    | `00000000-0000-0000-0000-000000000001` |
+| `getTenantId()`               | Default Microsoft Entra ID tenant id (`withEntraConfig(...)`)     | `00000000-0000-0000-0000-000000000002` |
+| `getLogLevel()`               | Configured log level                                              | `WARN`                                 |
+| `get*Config()`                | Current configuration of a service or of TLS/auth                 | —                                      |
 
 ## Docker image tags
 

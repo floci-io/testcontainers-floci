@@ -15,6 +15,8 @@ Testcontainers module for [Floci](https://github.com/floci-io/floci) — a local
   [Floci Azure](https://github.com/floci-io/floci-az) (`floci/floci-az`, port 4577)
 - `testcontainers-floci-gcp/` — GCP module: `FlociGcpContainer` extending `AbstractFlociContainer`, for
   [Floci GCP](https://github.com/floci-io/floci-gcp) (`floci/floci-gcp`, port 4588, gRPC and REST on the same port)
+- `testcontainers-floci-oci/` — OCI module: `FlociOciContainer` extending `AbstractFlociContainer`, for
+  [Floci OCI](https://github.com/floci-io/floci-oci) (`floci/floci-oci`, port 4599)
 
 `spring-boot-testcontainers-floci` (Spring Boot integration via `@ServiceConnection`) was removed on `main` — the
 same functionality is now provided by Spring Cloud AWS's own `spring-cloud-aws-testcontainers` module (from Spring
@@ -158,6 +160,31 @@ list), with these differences:
 ```
 mvn -pl testcontainers-floci-core,testcontainers-floci-gcp test
 mvn -pl testcontainers-floci-gcp test -Dtest=PubSubServiceTest
+```
+
+## OCI module (`testcontainers-floci-oci`)
+
+Built exactly like the Azure module (`registerServiceConfig(...)`/`updateServiceConfig(...)`, `config/TlsConfig` and
+`config/AuthConfig` applied in `applyGlobalEnvVars()`, port ranges with a default count of 10, nothing exposed for
+sidecars), with these differences:
+
+- Naming follows Floci OCI (`mock`, not `mocked`). The root `default-*` properties are container methods
+  (`withRegion`/`withRealm`/`withTenancyId`/`withNamespace`, env vars `FLOCI_OCI_DEFAULT_*`), not a config class.
+- The wait strategy polls `/_floci-oci/init` for `"ready": true`. While `AuthConfig.requireSignature` is on, Floci OCI
+  also rejects unsigned requests to its own `/_floci-oci` endpoints, so a `401 NotAuthenticated` counts as ready.
+- `getEndpoint()` switches to `https://` while TLS is enabled; there is no cert endpoint, so `getTlsCertificate()`
+  copies the certificate out of the container (`/app/data/tls/floci-selfsigned.crt`).
+- There is no OCI SDK in main scope. The shared `AbstractServiceTest` signs requests with a random RSA key
+  (`TestAuthenticationProviders`) and offers `client(<X>Client.builder())`. The endpoints Floci OCI returns (queue/stream
+  `messagesEndpoint`, vault management/crypto endpoints, Functions invoke endpoint) are its base URL, so tests point
+  all clients at `getEndpoint()`. The test OCI SDK is pinned to the version of Floci OCI's
+  `compatibility-tests/sdk-test-java` (newer SDKs may call API versions Floci does not serve, e.g. Functions in 3.97).
+- Real Functions invocations need `withDedicatedNetwork()` (Floci reaches the Fn server by container name) and an
+  image built with a current Fn FDK (`src/test/resources/fn-hello`, skipped when it cannot be built).
+
+```
+mvn -pl testcontainers-floci-core,testcontainers-floci-oci test
+mvn -pl testcontainers-floci-oci test -Dtest=ObjectStorageServiceTest
 ```
 
 ## Keeping up to date with Floci (config migration process)
@@ -413,6 +440,26 @@ AWS: migrate `ServicesConfig` (the shared `dockerNetwork()` is covered by `withD
 migrated cross-cutting class and must be kept in sync too; `defaultProjectId` maps to `withProjectId(...)`; only
 summarize everything else (`dns`, `storage`, `docker`, `init-hooks`, `locations`, other root properties). Commit scope
 is `gcp` (e.g. `feat(gcp): add <property> config property`).
+
+### Floci OCI
+
+The same process applies to `testcontainers-floci-oci`, with these values:
+
+| What                     | Where                                                                                       |
+|--------------------------|---------------------------------------------------------------------------------------------|
+| Upstream                 | https://github.com/floci-io/floci-oci                                                       |
+| The user's fork          | `cfranzen/floci-oci` (to be created by the user), tag `migrated-to-testcontainers`          |
+| The file to diff         | `src/main/java/io/floci/oci/config/EmulatorConfig.java` (`@ConfigMapping(prefix = "floci-oci")`) |
+| Env-var prefix           | `FLOCI_OCI_…`, services `FLOCI_OCI_SERVICES_<ACCESSOR>_<PROPERTY>` (accessors are lowercase: `objectstorage()` → `OBJECTSTORAGE`) |
+| Image for service tests  | `floci/floci-oci:nightly`                                                                   |
+
+Initial migration: `c0dea6f2d6a8256f39564d08cda40ea9d443ea27` (floci-oci `main`, 2026-10-02). Classify the diff as for
+Azure: migrate `ServicesConfig`; `TlsConfig` and `AuthConfig` are migrated cross-cutting classes and must be kept in
+sync too, as must the root `default-region`/`-realm`/`-tenancy-id`/`-namespace` properties exposed on
+`FlociOciContainer`; ignore `StorageConfig.services` (per-service storage overrides); only summarize everything else
+(`dns`, `security`, `storage`, `docker`, `init-hooks`, other root properties). When bumping the test OCI SDK, follow
+the version of Floci OCI's `compatibility-tests/sdk-test-java/pom.xml`. Commit scope is `oci` (e.g.
+`feat(oci): add <property> config property`).
 
 ## Key Tech
 

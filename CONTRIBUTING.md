@@ -74,6 +74,14 @@ testcontainers-floci-gcp/         GCP module — FlociGcpContainer (extends Abst
       config/services/            Per-service config classes (one per Floci GCP service)
   src/test/java/                  Same layout as the AWS module (FlociGcpContainerServicesConfigTest, config/services/,
                                   services/ with gRPC/REST client helpers in AbstractServiceTest)
+testcontainers-floci-oci/         OCI module — FlociOciContainer (extends AbstractFlociContainer)
+  src/main/java/
+    io/floci/testcontainers/oci/
+      FlociOciContainer.java      Main container class (incl. default region/realm/tenancy/namespace)
+      config/                     TlsConfig, AuthConfig
+      config/services/            Per-service config classes (one per Floci OCI service)
+  src/test/java/                  Same layout as the AWS module (FlociOciContainerServicesConfigTest, config/services/,
+                                  services/ with an AbstractServiceTest that signs OCI SDK requests with a random key)
 ```
 
 The AWS module does not use `testcontainers-floci-core` (yet); the other provider modules build on it.
@@ -187,6 +195,13 @@ Same steps as for Azure, in `testcontainers-floci-gcp`, with env vars named `FLO
 (Floci GCP's accessors are single lower-case words, e.g. `secretmanager()` → `SECRETMANAGER`) and the docker-less mode
 called `mock`. Nested Floci groups that occur only once (e.g. `cloudrun.execution`, `bigquery.duck`) are flattened into
 plain properties.
+
+### Adding support for a new Floci OCI service
+
+Same steps as for Floci Azure, in `testcontainers-floci-oci`, with env vars named
+`FLOCI_OCI_SERVICES_<ACCESSOR>_<PROPERTY>` (Floci OCI calls the docker-less mode `mock`) and the `FlociOciContainer*`
+test classes. Service tests build OCI SDK clients via `client(<X>Client.builder())` of `AbstractServiceTest`; add the
+OCI SDK artifact of the service as a test dependency in `testcontainers-floci-oci/pom.xml`.
 
 ## Commit Messages
 

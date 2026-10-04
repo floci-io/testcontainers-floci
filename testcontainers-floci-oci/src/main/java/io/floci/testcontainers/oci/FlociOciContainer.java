@@ -21,6 +21,10 @@ import java.util.regex.Pattern;
  * Floci OCI parses, but never verifies, request signatures, so an authentication provider with any
  * locally generated RSA key works.
  *
+ * <p>Container-based services (Functions and OKE) require access to the Docker daemon. This module automatically
+ * mounts the Docker socket only when at least one currently enabled service actually needs it. Use
+ * {@link #withDockerSocket(boolean)} to override this auto-detection.
+ *
  * <pre>{@code
  * try (FlociOciContainer floci = new FlociOciContainer()) {
  *     floci.start();
