@@ -171,6 +171,14 @@ class FlociGcpContainerServicesConfigTest {
     }
 
     @Test
+    void shouldWireCloudFunctionsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withCloudFunctionsConfig(cfg -> cfg.enabled(false)),
+                c -> c.getCloudFunctionsConfig().isEnabled(), false,
+                "FLOCI_GCP_SERVICES_CLOUDFUNCTIONS_ENABLED", "false");
+    }
+
+    @Test
     void shouldWireMonitoringConfigIntoContainer() {
         assertConfigWired(
                 c -> c.withMonitoringConfig(cfg -> cfg.enabled(false)),

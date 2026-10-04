@@ -76,6 +76,7 @@ class FlociGcpContainerTest {
                     container.getCloudSqlConfig(),
                     container.getCloudTasksConfig(),
                     container.getCloudRunConfig(),
+                    container.getCloudFunctionsConfig(),
                     container.getMonitoringConfig(),
                     container.getEventarcConfig(),
                     container.getServiceUsageConfig(),
