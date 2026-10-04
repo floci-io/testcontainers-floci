@@ -61,6 +61,9 @@ class FlociGcpContainerTest {
     void shouldDisableAllServices() {
         try (FlociGcpContainer container = new FlociGcpContainer().disableAllServices()) {
             assertThat(List.<AbstractServiceConfig<?>>of(
+                    container.getPubSubConfig(),
+                    container.getFirestoreConfig(),
+                    container.getDatastoreConfig()
             )).noneMatch(AbstractServiceConfig::isEnabled);
         }
     }
