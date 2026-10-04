@@ -1,10 +1,13 @@
 package io.floci.testcontainers.oci;
 
 import io.floci.testcontainers.core.AbstractFlociContainer;
+import io.floci.testcontainers.oci.config.TlsConfig;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 /**
@@ -40,6 +43,7 @@ public class FlociOciContainer extends AbstractFlociContainer<FlociOciContainer>
     private static final String DOCKER_NETWORK_ENV_VAR = "FLOCI_OCI_SERVICES_DOCKER_NETWORK";
     private static final String INIT_PATH = "/_floci-oci/init";
     private static final Pattern READY_PATTERN = Pattern.compile("\"ready\"\\s*:\\s*true");
+    private static final String SELF_SIGNED_CERT_PATH = "/app/data/tls/floci-selfsigned.crt";
 
     private static final String REGION_ENV_VAR = "FLOCI_OCI_DEFAULT_REGION";
     private static final String REALM_ENV_VAR = "FLOCI_OCI_DEFAULT_REALM";
@@ -51,6 +55,8 @@ public class FlociOciContainer extends AbstractFlociContainer<FlociOciContainer>
     private static final String DEFAULT_TENANCY_ID =
             "ocid1.tenancy.oc1..flocilocaltenancy0000000000000000000000000000000000000000";
     private static final String DEFAULT_NAMESPACE = "floci-local";
+
+    private TlsConfig tlsConfig = TlsConfig.builder().build();
 
     /**
      * Creates a new Floci OCI container with the default image ({@code floci/floci-oci:latest}).
@@ -89,6 +95,71 @@ public class FlociOciContainer extends AbstractFlociContainer<FlociOciContainer>
         withNamespace(DEFAULT_NAMESPACE);
 
         applyAllConfigs();
+    }
+
+    @Override
+    protected void applyGlobalEnvVars() {
+        tlsConfig.applyEnvVarsToContainer(this);
+    }
+
+    /**
+     * Returns the endpoint URL for connecting to Floci OCI (e.g. {@code http://localhost:32781}). While TLS is
+     * enabled via {@link #withTlsConfig(Consumer)}, this is an {@code https://} URL, matching the URLs Floci OCI
+     * returns in API responses; clients then have to trust the certificate returned by
+     * {@link #getTlsCertificate()}. Plain HTTP keeps working on the same port.
+     *
+     * @return the endpoint URL
+     */
+    @Override
+    public String getEndpoint() {
+        return String.format("%s://%s:%d", tlsConfig.isEnabled() ? "https" : "http", getHost(), getMappedPort(PORT));
+    }
+
+    /**
+     * Reads the PEM-encoded certificate Floci OCI serves HTTPS with from the running container: either the one
+     * configured via {@link TlsConfig.Builder#certPath(String)}, or the auto-generated self-signed one. Import it
+     * into the trust store of HTTPS clients.
+     *
+     * @return the PEM-encoded TLS certificate
+     * @throws IllegalStateException if TLS is not enabled
+     */
+    public String getTlsCertificate() {
+        if (!tlsConfig.isEnabled()) {
+            throw new IllegalStateException("TLS is not enabled, see withTlsConfig(...)");
+        }
+
+        String certPath = tlsConfig.getCertPath().orElse(SELF_SIGNED_CERT_PATH);
+        return copyFileFromContainer(certPath, in -> new String(in.readAllBytes(), StandardCharsets.UTF_8));
+    }
+
+    /**
+     * Returns the TLS configuration.
+     *
+     * @return the TLS configuration
+     */
+    public TlsConfig getTlsConfig() {
+        return tlsConfig;
+    }
+
+    /**
+     * Configures TLS/HTTPS for the Floci OCI server. When enabled, HTTP and HTTPS are served on the same port;
+     * {@link #getEndpoint()} returns an {@code https://} URL and HTTPS clients have to trust
+     * {@link #getTlsCertificate()}.
+     *
+     * <pre>{@code
+     * new FlociOciContainer()
+     *     .withTlsConfig(c -> c.enabled(true));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link TlsConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociOciContainer withTlsConfig(Consumer<TlsConfig.Builder> configurer) {
+        TlsConfig.Builder builder = tlsConfig.toBuilder();
+        configurer.accept(builder);
+        this.tlsConfig = builder.build();
+        tlsConfig.applyEnvVarsToContainer(this);
+        return this;
     }
 
     /**
