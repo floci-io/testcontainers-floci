@@ -1,6 +1,7 @@
 package io.floci.testcontainers.oci;
 
 import io.floci.testcontainers.core.AbstractFlociContainer;
+import io.floci.testcontainers.oci.config.AuthConfig;
 import io.floci.testcontainers.oci.config.TlsConfig;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
@@ -43,6 +44,7 @@ public class FlociOciContainer extends AbstractFlociContainer<FlociOciContainer>
     private static final String DOCKER_NETWORK_ENV_VAR = "FLOCI_OCI_SERVICES_DOCKER_NETWORK";
     private static final String INIT_PATH = "/_floci-oci/init";
     private static final Pattern READY_PATTERN = Pattern.compile("\"ready\"\\s*:\\s*true");
+    private static final String NOT_AUTHENTICATED_CODE = "\"NotAuthenticated\"";
     private static final String SELF_SIGNED_CERT_PATH = "/app/data/tls/floci-selfsigned.crt";
 
     private static final String REGION_ENV_VAR = "FLOCI_OCI_DEFAULT_REGION";
@@ -57,6 +59,7 @@ public class FlociOciContainer extends AbstractFlociContainer<FlociOciContainer>
     private static final String DEFAULT_NAMESPACE = "floci-local";
 
     private TlsConfig tlsConfig = TlsConfig.builder().build();
+    private AuthConfig authConfig = AuthConfig.builder().build();
 
     /**
      * Creates a new Floci OCI container with the default image ({@code floci/floci-oci:latest}).
@@ -82,11 +85,14 @@ public class FlociOciContainer extends AbstractFlociContainer<FlociOciContainer>
     public FlociOciContainer(DockerImageName dockerImageName) {
         super(dockerImageName, DEFAULT_IMAGE_NAME, PORT, LOG_LEVEL_ENV_VAR, DOCKER_NETWORK_ENV_VAR);
 
-        // /_floci-oci/init reports "ready": true once all startup hooks have completed
+        // /_floci-oci/init reports "ready": true once all startup hooks have completed. While signatures are
+        // required (AuthConfig#requireSignature), Floci OCI also rejects unsigned requests to its own
+        // /_floci-oci endpoints with 401 NotAuthenticated, which is then the best readiness signal available.
         waitingFor(Wait.forHttp(INIT_PATH)
                 .forPort(PORT)
-                .forStatusCode(200)
-                .forResponsePredicate(body -> READY_PATTERN.matcher(body).find())
+                .forStatusCodeMatching(status -> status == 200 || status == 401)
+                .forResponsePredicate(body -> READY_PATTERN.matcher(body).find()
+                        || body.contains(NOT_AUTHENTICATED_CODE))
                 .withStartupTimeout(Duration.ofSeconds(60)));
 
         withRegion(DEFAULT_REGION);
@@ -100,6 +106,7 @@ public class FlociOciContainer extends AbstractFlociContainer<FlociOciContainer>
     @Override
     protected void applyGlobalEnvVars() {
         tlsConfig.applyEnvVarsToContainer(this);
+        authConfig.applyEnvVarsToContainer(this);
     }
 
     /**
@@ -240,5 +247,33 @@ public class FlociOciContainer extends AbstractFlociContainer<FlociOciContainer>
      */
     public FlociOciContainer withNamespace(String namespace) {
         return withEnv(NAMESPACE_ENV_VAR, namespace);
+    }
+
+    /**
+     * Returns the authentication configuration.
+     *
+     * @return the authentication configuration
+     */
+    public AuthConfig getAuthConfig() {
+        return authConfig;
+    }
+
+    /**
+     * Configures authentication of the Floci OCI server, e.g. to reject unsigned requests:
+     *
+     * <pre>{@code
+     * new FlociOciContainer()
+     *     .withAuthConfig(c -> c.requireSignature(true));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link AuthConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociOciContainer withAuthConfig(Consumer<AuthConfig.Builder> configurer) {
+        AuthConfig.Builder builder = authConfig.toBuilder();
+        configurer.accept(builder);
+        this.authConfig = builder.build();
+        authConfig.applyEnvVarsToContainer(this);
+        return this;
     }
 }
