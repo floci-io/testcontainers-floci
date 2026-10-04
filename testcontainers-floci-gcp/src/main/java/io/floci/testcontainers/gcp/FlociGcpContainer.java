@@ -81,6 +81,7 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
     private final ServiceConfigRef<MonitoringConfig> monitoringConfig = registerServiceConfig(MonitoringConfig.builder().build());
     private final ServiceConfigRef<SchedulerConfig> schedulerConfig = registerServiceConfig(SchedulerConfig.builder().build());
     private final ServiceConfigRef<EventarcConfig> eventarcConfig = registerServiceConfig(EventarcConfig.builder().build());
+    private final ServiceConfigRef<GkeConfig> gkeConfig = registerServiceConfig(GkeConfig.builder().build());
     private final ServiceConfigRef<ServiceUsageConfig> serviceUsageConfig = registerServiceConfig(ServiceUsageConfig.builder().build());
     private final ServiceConfigRef<ResourceManagerConfig> resourceManagerConfig = registerServiceConfig(ResourceManagerConfig.builder().build());
     private final ServiceConfigRef<FirebaseAuthConfig> firebaseAuthConfig = registerServiceConfig(FirebaseAuthConfig.builder().build());
@@ -679,6 +680,31 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
      */
     public FlociGcpContainer withEventarcConfig(Consumer<EventarcConfig.Builder> configurer) {
         return updateServiceConfig(eventarcConfig, configurer);
+    }
+
+    /**
+     * Returns the Google Kubernetes Engine (GKE) configuration.
+     *
+     * @return the Google Kubernetes Engine (GKE) configuration
+     */
+    public GkeConfig getGkeConfig() {
+        return gkeConfig.get();
+    }
+
+    /**
+     * Configures Google Kubernetes Engine (GKE), which runs clusters in sibling (k3s) containers and therefore
+     * requires the Docker socket unless mocked.
+     *
+     * <pre>{@code
+     * new FlociGcpContainer()
+     *     .withGkeConfig(c -> c.mock(true));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link GkeConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociGcpContainer withGkeConfig(Consumer<GkeConfig.Builder> configurer) {
+        return updateServiceConfig(gkeConfig, configurer);
     }
 
     /**

@@ -80,6 +80,7 @@ class FlociGcpContainerTest {
                     container.getMonitoringConfig(),
                     container.getSchedulerConfig(),
                     container.getEventarcConfig(),
+                    container.getGkeConfig(),
                     container.getServiceUsageConfig(),
                     container.getResourceManagerConfig(),
                     container.getFirebaseAuthConfig()
