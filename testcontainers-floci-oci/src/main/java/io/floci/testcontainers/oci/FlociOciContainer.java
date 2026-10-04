@@ -70,6 +70,7 @@ public class FlociOciContainer extends AbstractFlociContainer<FlociOciContainer>
     private final ServiceConfigRef<VaultConfig> vaultConfig = registerServiceConfig(VaultConfig.builder().build());
     private final ServiceConfigRef<StreamingConfig> streamingConfig = registerServiceConfig(StreamingConfig.builder().build());
     private final ServiceConfigRef<FunctionsConfig> functionsConfig = registerServiceConfig(FunctionsConfig.builder().build());
+    private final ServiceConfigRef<OkeConfig> okeConfig = registerServiceConfig(OkeConfig.builder().build());
 
     /**
      * Creates a new Floci OCI container with the default image ({@code floci/floci-oci:latest}).
@@ -454,5 +455,30 @@ public class FlociOciContainer extends AbstractFlociContainer<FlociOciContainer>
      */
     public FlociOciContainer withFunctionsConfig(Consumer<FunctionsConfig.Builder> configurer) {
         return updateServiceConfig(functionsConfig, configurer);
+    }
+
+    /**
+     * Returns the Oracle Container Engine for Kubernetes (OKE) configuration.
+     *
+     * @return the Oracle Container Engine for Kubernetes (OKE) configuration
+     */
+    public OkeConfig getOkeConfig() {
+        return okeConfig.get();
+    }
+
+    /**
+     * Configures Oracle Container Engine for Kubernetes (OKE), which runs clusters in sibling k3s containers and
+     * therefore requires the Docker socket unless mocked.
+     *
+     * <pre>{@code
+     * new FlociOciContainer()
+     *     .withOkeConfig(c -> c.mock(true));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link OkeConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociOciContainer withOkeConfig(Consumer<OkeConfig.Builder> configurer) {
+        return updateServiceConfig(okeConfig, configurer);
     }
 }
