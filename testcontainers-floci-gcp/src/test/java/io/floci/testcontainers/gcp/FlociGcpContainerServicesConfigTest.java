@@ -98,11 +98,43 @@ class FlociGcpContainerServicesConfigTest {
     }
 
     @Test
+    void shouldWireLoggingConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withLoggingConfig(cfg -> cfg.enabled(false)),
+                c -> c.getLoggingConfig().isEnabled(), false,
+                "FLOCI_GCP_SERVICES_LOGGING_ENABLED", "false");
+    }
+
+    @Test
     void shouldWireKmsConfigIntoContainer() {
         assertConfigWired(
                 c -> c.withKmsConfig(cfg -> cfg.enabled(false)),
                 c -> c.getKmsConfig().isEnabled(), false,
                 "FLOCI_GCP_SERVICES_KMS_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireCloudTasksConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withCloudTasksConfig(cfg -> cfg.enabled(false)),
+                c -> c.getCloudTasksConfig().isEnabled(), false,
+                "FLOCI_GCP_SERVICES_CLOUDTASKS_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireMonitoringConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withMonitoringConfig(cfg -> cfg.enabled(false)),
+                c -> c.getMonitoringConfig().isEnabled(), false,
+                "FLOCI_GCP_SERVICES_MONITORING_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireEventarcConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withEventarcConfig(cfg -> cfg.enabled(false)),
+                c -> c.getEventarcConfig().isEnabled(), false,
+                "FLOCI_GCP_SERVICES_EVENTARC_ENABLED", "false");
     }
 
     @Test
