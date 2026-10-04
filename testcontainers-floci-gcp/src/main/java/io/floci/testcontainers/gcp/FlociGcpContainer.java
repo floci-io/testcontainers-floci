@@ -76,6 +76,7 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
     private final ServiceConfigRef<KafkaConfig> kafkaConfig = registerServiceConfig(KafkaConfig.builder().build());
     private final ServiceConfigRef<CloudSqlConfig> cloudSqlConfig = registerServiceConfig(CloudSqlConfig.builder().build());
     private final ServiceConfigRef<CloudTasksConfig> cloudTasksConfig = registerServiceConfig(CloudTasksConfig.builder().build());
+    private final ServiceConfigRef<CloudRunConfig> cloudRunConfig = registerServiceConfig(CloudRunConfig.builder().build());
     private final ServiceConfigRef<MonitoringConfig> monitoringConfig = registerServiceConfig(MonitoringConfig.builder().build());
     private final ServiceConfigRef<EventarcConfig> eventarcConfig = registerServiceConfig(EventarcConfig.builder().build());
     private final ServiceConfigRef<ServiceUsageConfig> serviceUsageConfig = registerServiceConfig(ServiceUsageConfig.builder().build());
@@ -555,6 +556,31 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
      */
     public FlociGcpContainer withCloudTasksConfig(Consumer<CloudTasksConfig.Builder> configurer) {
         return updateServiceConfig(cloudTasksConfig, configurer);
+    }
+
+    /**
+     * Returns the Cloud Run configuration.
+     *
+     * @return the Cloud Run configuration
+     */
+    public CloudRunConfig getCloudRunConfig() {
+        return cloudRunConfig.get();
+    }
+
+    /**
+     * Configures Cloud Run, which runs services, jobs and worker pools in sibling containers and therefore requires
+     * the Docker socket unless mocked.
+     *
+     * <pre>{@code
+     * new FlociGcpContainer()
+     *     .withCloudRunConfig(c -> c.mock(true));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link CloudRunConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociGcpContainer withCloudRunConfig(Consumer<CloudRunConfig.Builder> configurer) {
+        return updateServiceConfig(cloudRunConfig, configurer);
     }
 
     /**
