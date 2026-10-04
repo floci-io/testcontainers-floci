@@ -68,7 +68,11 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
     private final ServiceConfigRef<IamCredentialsConfig> iamCredentialsConfig = registerServiceConfig(IamCredentialsConfig.builder().build());
     private final ServiceConfigRef<StsConfig> stsConfig = registerServiceConfig(StsConfig.builder().build());
     private final ServiceConfigRef<SecretManagerConfig> secretManagerConfig = registerServiceConfig(SecretManagerConfig.builder().build());
+    private final ServiceConfigRef<LoggingConfig> loggingConfig = registerServiceConfig(LoggingConfig.builder().build());
     private final ServiceConfigRef<KmsConfig> kmsConfig = registerServiceConfig(KmsConfig.builder().build());
+    private final ServiceConfigRef<CloudTasksConfig> cloudTasksConfig = registerServiceConfig(CloudTasksConfig.builder().build());
+    private final ServiceConfigRef<MonitoringConfig> monitoringConfig = registerServiceConfig(MonitoringConfig.builder().build());
+    private final ServiceConfigRef<EventarcConfig> eventarcConfig = registerServiceConfig(EventarcConfig.builder().build());
     private final ServiceConfigRef<FirebaseAuthConfig> firebaseAuthConfig = registerServiceConfig(FirebaseAuthConfig.builder().build());
 
     /**
@@ -353,6 +357,30 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
     }
 
     /**
+     * Returns the Cloud Logging configuration.
+     *
+     * @return the Cloud Logging configuration
+     */
+    public LoggingConfig getLoggingConfig() {
+        return loggingConfig.get();
+    }
+
+    /**
+     * Configures Cloud Logging.
+     *
+     * <pre>{@code
+     * new FlociGcpContainer()
+     *     .withLoggingConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link LoggingConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociGcpContainer withLoggingConfig(Consumer<LoggingConfig.Builder> configurer) {
+        return updateServiceConfig(loggingConfig, configurer);
+    }
+
+    /**
      * Returns the Cloud KMS configuration.
      *
      * @return the Cloud KMS configuration
@@ -374,6 +402,78 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
      */
     public FlociGcpContainer withKmsConfig(Consumer<KmsConfig.Builder> configurer) {
         return updateServiceConfig(kmsConfig, configurer);
+    }
+
+    /**
+     * Returns the Cloud Tasks configuration.
+     *
+     * @return the Cloud Tasks configuration
+     */
+    public CloudTasksConfig getCloudTasksConfig() {
+        return cloudTasksConfig.get();
+    }
+
+    /**
+     * Configures Cloud Tasks.
+     *
+     * <pre>{@code
+     * new FlociGcpContainer()
+     *     .withCloudTasksConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link CloudTasksConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociGcpContainer withCloudTasksConfig(Consumer<CloudTasksConfig.Builder> configurer) {
+        return updateServiceConfig(cloudTasksConfig, configurer);
+    }
+
+    /**
+     * Returns the Cloud Monitoring configuration.
+     *
+     * @return the Cloud Monitoring configuration
+     */
+    public MonitoringConfig getMonitoringConfig() {
+        return monitoringConfig.get();
+    }
+
+    /**
+     * Configures Cloud Monitoring.
+     *
+     * <pre>{@code
+     * new FlociGcpContainer()
+     *     .withMonitoringConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link MonitoringConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociGcpContainer withMonitoringConfig(Consumer<MonitoringConfig.Builder> configurer) {
+        return updateServiceConfig(monitoringConfig, configurer);
+    }
+
+    /**
+     * Returns the Eventarc configuration.
+     *
+     * @return the Eventarc configuration
+     */
+    public EventarcConfig getEventarcConfig() {
+        return eventarcConfig.get();
+    }
+
+    /**
+     * Configures Eventarc.
+     *
+     * <pre>{@code
+     * new FlociGcpContainer()
+     *     .withEventarcConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link EventarcConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociGcpContainer withEventarcConfig(Consumer<EventarcConfig.Builder> configurer) {
+        return updateServiceConfig(eventarcConfig, configurer);
     }
 
     /**

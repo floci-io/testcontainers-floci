@@ -67,7 +67,11 @@ class FlociGcpContainerTest {
                     container.getIamCredentialsConfig(),
                     container.getStsConfig(),
                     container.getSecretManagerConfig(),
+                    container.getLoggingConfig(),
                     container.getKmsConfig(),
+                    container.getCloudTasksConfig(),
+                    container.getMonitoringConfig(),
+                    container.getEventarcConfig(),
                     container.getFirebaseAuthConfig()
             )).noneMatch(AbstractServiceConfig::isEnabled);
         }
