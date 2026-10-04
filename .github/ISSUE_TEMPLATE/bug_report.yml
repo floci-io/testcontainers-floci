@@ -19,8 +19,8 @@ body:
     id: floci-image
     attributes:
       label: Floci Docker image
-      description: The Floci image tag in use (`floci/floci`, `floci/floci-az` or `floci/floci-gcp`), if you overrode the default.
-      placeholder: "e.g. floci/floci:latest, floci/floci:x.y.z, floci/floci-az:x.y.z or floci/floci-gcp:x.y.z"
+      description: The Floci image tag in use (`floci/floci`, `floci/floci-az`, `floci/floci-gcp` or `floci/floci-oci`), if you overrode the default.
+      placeholder: "e.g. floci/floci:latest, floci/floci:x.y.z, floci/floci-az:x.y.z, floci/floci-gcp:x.y.z or floci/floci-oci:x.y.z"
 
   - type: input
     id: java-version
@@ -38,6 +38,7 @@ body:
         - testcontainers-floci
         - testcontainers-floci-az
         - testcontainers-floci-gcp
+        - testcontainers-floci-oci
         - testcontainers-floci-core
     validations:
       required: true
@@ -56,7 +57,7 @@ body:
       label: Steps to reproduce
       description: Minimal steps or a code snippet that reproduces the issue.
       placeholder: |
-        1. Create a FlociContainer / FlociAzContainer / FlociGcpContainer with ...
+        1. Create a FlociContainer / FlociAzContainer / FlociGcpContainer / FlociOciContainer with ...
         2. Call ...
         3. See error ...
     validations:
