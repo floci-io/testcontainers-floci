@@ -79,6 +79,7 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
     private final ServiceConfigRef<CloudRunConfig> cloudRunConfig = registerServiceConfig(CloudRunConfig.builder().build());
     private final ServiceConfigRef<CloudFunctionsConfig> cloudFunctionsConfig = registerServiceConfig(CloudFunctionsConfig.builder().build());
     private final ServiceConfigRef<MonitoringConfig> monitoringConfig = registerServiceConfig(MonitoringConfig.builder().build());
+    private final ServiceConfigRef<SchedulerConfig> schedulerConfig = registerServiceConfig(SchedulerConfig.builder().build());
     private final ServiceConfigRef<EventarcConfig> eventarcConfig = registerServiceConfig(EventarcConfig.builder().build());
     private final ServiceConfigRef<ServiceUsageConfig> serviceUsageConfig = registerServiceConfig(ServiceUsageConfig.builder().build());
     private final ServiceConfigRef<ResourceManagerConfig> resourceManagerConfig = registerServiceConfig(ResourceManagerConfig.builder().build());
@@ -630,6 +631,30 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
      */
     public FlociGcpContainer withMonitoringConfig(Consumer<MonitoringConfig.Builder> configurer) {
         return updateServiceConfig(monitoringConfig, configurer);
+    }
+
+    /**
+     * Returns the Cloud Scheduler configuration.
+     *
+     * @return the Cloud Scheduler configuration
+     */
+    public SchedulerConfig getSchedulerConfig() {
+        return schedulerConfig.get();
+    }
+
+    /**
+     * Configures Cloud Scheduler.
+     *
+     * <pre>{@code
+     * new FlociGcpContainer()
+     *     .withSchedulerConfig(c -> c.invocationEnabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link SchedulerConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociGcpContainer withSchedulerConfig(Consumer<SchedulerConfig.Builder> configurer) {
+        return updateServiceConfig(schedulerConfig, configurer);
     }
 
     /**
