@@ -151,6 +151,11 @@
             <artifactId>google-cloud-service-usage</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-bigquery</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

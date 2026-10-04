@@ -234,6 +234,14 @@ class FlociGcpContainerServicesConfigTest {
                 "FLOCI_GCP_SERVICES_FIREBASEAUTH_ENABLED", "false");
     }
 
+    @Test
+    void shouldWireBigQueryConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withBigQueryConfig(cfg -> cfg.mock(true)),
+                c -> c.getBigQueryConfig().isMock(), true,
+                "FLOCI_GCP_SERVICES_BIGQUERY_MOCK", "true");
+    }
+
     // --- Cross-cutting configs (config/) -----------------------------------------------------------
 
     @Test

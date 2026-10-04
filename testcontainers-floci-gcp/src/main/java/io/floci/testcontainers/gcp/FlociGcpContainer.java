@@ -85,6 +85,7 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
     private final ServiceConfigRef<ServiceUsageConfig> serviceUsageConfig = registerServiceConfig(ServiceUsageConfig.builder().build());
     private final ServiceConfigRef<ResourceManagerConfig> resourceManagerConfig = registerServiceConfig(ResourceManagerConfig.builder().build());
     private final ServiceConfigRef<FirebaseAuthConfig> firebaseAuthConfig = registerServiceConfig(FirebaseAuthConfig.builder().build());
+    private final ServiceConfigRef<BigQueryConfig> bigQueryConfig = registerServiceConfig(BigQueryConfig.builder().build());
 
     /**
      * Creates a new Floci GCP container with the default image ({@code floci/floci-gcp:latest}).
@@ -777,5 +778,31 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
      */
     public FlociGcpContainer withFirebaseAuthConfig(Consumer<FirebaseAuthConfig.Builder> configurer) {
         return updateServiceConfig(firebaseAuthConfig, configurer);
+    }
+
+    /**
+     * Returns the BigQuery configuration.
+     *
+     * @return the BigQuery configuration
+     */
+    public BigQueryConfig getBigQueryConfig() {
+        return bigQueryConfig.get();
+    }
+
+    /**
+     * Configures BigQuery, which runs queries in a sibling DuckDB container (floci-duck) and therefore requires the
+     * Docker socket unless mocked or connected to an already running floci-duck via
+     * {@link BigQueryConfig.Builder#duckUrl(String)}.
+     *
+     * <pre>{@code
+     * new FlociGcpContainer()
+     *     .withBigQueryConfig(c -> c.mock(true));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link BigQueryConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociGcpContainer withBigQueryConfig(Consumer<BigQueryConfig.Builder> configurer) {
+        return updateServiceConfig(bigQueryConfig, configurer);
     }
 }
