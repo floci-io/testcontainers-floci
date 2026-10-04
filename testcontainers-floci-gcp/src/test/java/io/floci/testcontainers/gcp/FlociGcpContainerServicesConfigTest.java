@@ -203,6 +203,14 @@ class FlociGcpContainerServicesConfigTest {
     }
 
     @Test
+    void shouldWireGkeConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withGkeConfig(cfg -> cfg.mock(true)),
+                c -> c.getGkeConfig().isMock(), true,
+                "FLOCI_GCP_SERVICES_GKE_MOCK", "true");
+    }
+
+    @Test
     void shouldWireServiceUsageConfigIntoContainer() {
         assertConfigWired(
                 c -> c.withServiceUsageConfig(cfg -> cfg.enabled(false)),
