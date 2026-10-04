@@ -52,6 +52,14 @@ class FlociOciContainerServicesConfigTest {
     // --- Cross-cutting configs (config/) ----------------------------------------------------------
 
     @Test
+    void shouldWireAuthConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withAuthConfig(cfg -> cfg.requireSignature(true)),
+                c -> c.getAuthConfig().isRequireSignature(), true,
+                "FLOCI_OCI_AUTH_REQUIRE_SIGNATURE", "true");
+    }
+
+    @Test
     void shouldWireTlsConfigIntoContainer() {
         assertConfigWired(
                 c -> c.withTlsConfig(cfg -> cfg.enabled(true)),
