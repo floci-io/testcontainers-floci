@@ -62,6 +62,7 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
     private TlsConfig tlsConfig = TlsConfig.builder().build();
 
     // Service configs
+    private final ServiceConfigRef<ComputeConfig> computeConfig = registerServiceConfig(ComputeConfig.builder().build());
     private final ServiceConfigRef<PubSubConfig> pubSubConfig = registerServiceConfig(PubSubConfig.builder().build());
     private final ServiceConfigRef<FirestoreConfig> firestoreConfig = registerServiceConfig(FirestoreConfig.builder().build());
     private final ServiceConfigRef<DatastoreConfig> datastoreConfig = registerServiceConfig(DatastoreConfig.builder().build());
@@ -212,6 +213,30 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
         this.tlsConfig = builder.build();
         tlsConfig.applyEnvVarsToContainer(this);
         return this;
+    }
+
+    /**
+     * Returns the Compute Engine configuration.
+     *
+     * @return the Compute Engine configuration
+     */
+    public ComputeConfig getComputeConfig() {
+        return computeConfig.get();
+    }
+
+    /**
+     * Configures Compute Engine.
+     *
+     * <pre>{@code
+     * new FlociGcpContainer()
+     *     .withComputeConfig(c -> c.regions(List.of("europe-west3")));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link ComputeConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociGcpContainer withComputeConfig(Consumer<ComputeConfig.Builder> configurer) {
+        return updateServiceConfig(computeConfig, configurer);
     }
 
     /**

@@ -68,6 +68,11 @@
 
         <dependency>
             <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-compute</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud</groupId>
             <artifactId>google-cloud-pubsub</artifactId>
             <scope>test</scope>
         </dependency>
