@@ -69,6 +69,7 @@ public class FlociOciContainer extends AbstractFlociContainer<FlociOciContainer>
     private final ServiceConfigRef<KmsConfig> kmsConfig = registerServiceConfig(KmsConfig.builder().build());
     private final ServiceConfigRef<VaultConfig> vaultConfig = registerServiceConfig(VaultConfig.builder().build());
     private final ServiceConfigRef<StreamingConfig> streamingConfig = registerServiceConfig(StreamingConfig.builder().build());
+    private final ServiceConfigRef<FunctionsConfig> functionsConfig = registerServiceConfig(FunctionsConfig.builder().build());
 
     /**
      * Creates a new Floci OCI container with the default image ({@code floci/floci-oci:latest}).
@@ -428,5 +429,30 @@ public class FlociOciContainer extends AbstractFlociContainer<FlociOciContainer>
      */
     public FlociOciContainer withStreamingConfig(Consumer<StreamingConfig.Builder> configurer) {
         return updateServiceConfig(streamingConfig, configurer);
+    }
+
+    /**
+     * Returns the OCI Functions configuration.
+     *
+     * @return the OCI Functions configuration
+     */
+    public FunctionsConfig getFunctionsConfig() {
+        return functionsConfig.get();
+    }
+
+    /**
+     * Configures OCI Functions, which runs invocations in a sibling Fn server container and therefore requires
+     * the Docker socket unless mocked.
+     *
+     * <pre>{@code
+     * new FlociOciContainer()
+     *     .withFunctionsConfig(c -> c.mock(true));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link FunctionsConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociOciContainer withFunctionsConfig(Consumer<FunctionsConfig.Builder> configurer) {
+        return updateServiceConfig(functionsConfig, configurer);
     }
 }

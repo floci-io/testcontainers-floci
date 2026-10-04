@@ -111,6 +111,11 @@
             <artifactId>oci-java-sdk-streaming</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.oracle.oci.sdk</groupId>
+            <artifactId>oci-java-sdk-functions</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

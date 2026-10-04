@@ -97,6 +97,14 @@ class FlociOciContainerServicesConfigTest {
                 "FLOCI_OCI_SERVICES_STREAMING_ENABLED", "false");
     }
 
+    @Test
+    void shouldWireFunctionsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withFunctionsConfig(cfg -> cfg.mock(true)),
+                c -> c.getFunctionsConfig().isMock(), true,
+                "FLOCI_OCI_SERVICES_FUNCTIONS_MOCK", "true");
+    }
+
     // --- Cross-cutting configs (config/) ----------------------------------------------------------
 
     @Test

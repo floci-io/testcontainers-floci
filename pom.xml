@@ -50,7 +50,7 @@
         <aws-sdk.version>2.55.11</aws-sdk.version>
         <azure-sdk.version>1.3.8</azure-sdk.version>
         <google-cloud-libraries-bom.version>26.87.0</google-cloud-libraries-bom.version>
-        <oci-sdk.version>3.97.1</oci-sdk.version>
+        <oci-sdk.version>3.92.1</oci-sdk.version>
         <junit.version>6.1.3</junit.version>
         <assertj.version>3.27.7</assertj.version>
         <slf4j.version>1.7.36</slf4j.version>
