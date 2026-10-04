@@ -67,6 +67,7 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
     private final ServiceConfigRef<PubSubConfig> pubSubConfig = registerServiceConfig(PubSubConfig.builder().build());
     private final ServiceConfigRef<FirestoreConfig> firestoreConfig = registerServiceConfig(FirestoreConfig.builder().build());
     private final ServiceConfigRef<DatastoreConfig> datastoreConfig = registerServiceConfig(DatastoreConfig.builder().build());
+    private final ServiceConfigRef<IamConfig> iamConfig = registerServiceConfig(IamConfig.builder().build());
     private final ServiceConfigRef<IamCredentialsConfig> iamCredentialsConfig = registerServiceConfig(IamCredentialsConfig.builder().build());
     private final ServiceConfigRef<StsConfig> stsConfig = registerServiceConfig(StsConfig.builder().build());
     private final ServiceConfigRef<SecretManagerConfig> secretManagerConfig = registerServiceConfig(SecretManagerConfig.builder().build());
@@ -334,6 +335,30 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
      */
     public FlociGcpContainer withDatastoreConfig(Consumer<DatastoreConfig.Builder> configurer) {
         return updateServiceConfig(datastoreConfig, configurer);
+    }
+
+    /**
+     * Returns the Identity and Access Management (IAM) configuration.
+     *
+     * @return the Identity and Access Management (IAM) configuration
+     */
+    public IamConfig getIamConfig() {
+        return iamConfig.get();
+    }
+
+    /**
+     * Configures Identity and Access Management (IAM).
+     *
+     * <pre>{@code
+     * new FlociGcpContainer()
+     *     .withIamConfig(c -> c.authorizationMode(IamConfig.AuthorizationMode.ENFORCE));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link IamConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociGcpContainer withIamConfig(Consumer<IamConfig.Builder> configurer) {
+        return updateServiceConfig(iamConfig, configurer);
     }
 
     /**

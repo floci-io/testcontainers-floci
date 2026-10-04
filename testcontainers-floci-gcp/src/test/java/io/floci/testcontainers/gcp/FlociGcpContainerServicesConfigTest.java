@@ -1,5 +1,6 @@
 package io.floci.testcontainers.gcp;
 
+import io.floci.testcontainers.gcp.config.services.IamConfig;
 import org.junit.jupiter.api.Test;
 
 import java.util.function.Consumer;
@@ -87,6 +88,14 @@ class FlociGcpContainerServicesConfigTest {
                 c -> c.withDatastoreConfig(cfg -> cfg.enabled(false)),
                 c -> c.getDatastoreConfig().isEnabled(), false,
                 "FLOCI_GCP_SERVICES_DATASTORE_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireIamConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withIamConfig(cfg -> cfg.authorizationMode(IamConfig.AuthorizationMode.ENFORCE)),
+                c -> c.getIamConfig().getAuthorizationMode(), IamConfig.AuthorizationMode.ENFORCE,
+                "FLOCI_GCP_SERVICES_IAM_AUTHORIZATION_MODE", "enforce");
     }
 
     @Test
