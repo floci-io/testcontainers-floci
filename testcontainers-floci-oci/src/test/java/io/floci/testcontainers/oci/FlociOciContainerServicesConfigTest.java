@@ -105,6 +105,14 @@ class FlociOciContainerServicesConfigTest {
                 "FLOCI_OCI_SERVICES_FUNCTIONS_MOCK", "true");
     }
 
+    @Test
+    void shouldWireOkeConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withOkeConfig(cfg -> cfg.mock(true)),
+                c -> c.getOkeConfig().isMock(), true,
+                "FLOCI_OCI_SERVICES_OKE_MOCK", "true");
+    }
+
     // --- Cross-cutting configs (config/) ----------------------------------------------------------
 
     @Test
