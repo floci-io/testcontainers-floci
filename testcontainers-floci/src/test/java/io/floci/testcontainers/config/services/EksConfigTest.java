@@ -24,6 +24,7 @@ class EksConfigTest {
         assertThat(config.isIamAuthWebhook()).isTrue();
         assertThat(config.isEcrRegistryMirror()).isTrue();
         assertThat(config.isDisableCni()).isFalse();
+        assertThat(config.isDefaultStorageClass()).isFalse();
         assertThat(config.getMaxMemoryMib()).isEqualTo(0);
         assertThat(config.getMaxVcpus()).isEqualTo(0);
         assertThat(config.getImageTemplate()).isEmpty();
@@ -48,6 +49,7 @@ class EksConfigTest {
                 .iamAuthWebhook(false)
                 .ecrRegistryMirror(false)
                 .disableCni(true)
+                .defaultStorageClass(true)
                 .maxMemoryMib(2048)
                 .maxVcpus(2)
                 .imageTemplate("custom-registry.internal/k3s:v%s")
@@ -70,6 +72,7 @@ class EksConfigTest {
         assertThat(config.isIamAuthWebhook()).isFalse();
         assertThat(config.isEcrRegistryMirror()).isFalse();
         assertThat(config.isDisableCni()).isTrue();
+        assertThat(config.isDefaultStorageClass()).isTrue();
         assertThat(config.getMaxMemoryMib()).isEqualTo(2048);
         assertThat(config.getMaxVcpus()).isEqualTo(2);
         assertThat(config.getImageTemplate()).contains("custom-registry.internal/k3s:v%s");
@@ -97,6 +100,7 @@ class EksConfigTest {
                 .containsEntry("FLOCI_SERVICES_EKS_IAM_AUTH_WEBHOOK", "true")
                 .containsEntry("FLOCI_SERVICES_EKS_ECR_REGISTRY_MIRROR", "true")
                 .containsEntry("FLOCI_SERVICES_EKS_DISABLE_CNI", "false")
+                .containsEntry("FLOCI_SERVICES_EKS_DEFAULT_STORAGE_CLASS", "false")
                 .doesNotContainKey("FLOCI_SERVICES_EKS_DOCKER_NETWORK")
                 .containsEntry("FLOCI_SERVICES_EKS_MAX_MEMORY_MIB", "0")
                 .containsEntry("FLOCI_SERVICES_EKS_MAX_VCPUS", "0")
@@ -123,6 +127,7 @@ class EksConfigTest {
                 .iamAuthWebhook(false)
                 .ecrRegistryMirror(false)
                 .disableCni(true)
+                .defaultStorageClass(true)
                 .maxMemoryMib(2048)
                 .maxVcpus(2)
                 .imageTemplate("custom-registry.internal/k3s:v%s")
@@ -147,6 +152,7 @@ class EksConfigTest {
                 .containsEntry("FLOCI_SERVICES_EKS_IAM_AUTH_WEBHOOK", "false")
                 .containsEntry("FLOCI_SERVICES_EKS_ECR_REGISTRY_MIRROR", "false")
                 .containsEntry("FLOCI_SERVICES_EKS_DISABLE_CNI", "true")
+                .containsEntry("FLOCI_SERVICES_EKS_DEFAULT_STORAGE_CLASS", "true")
                 .containsEntry("FLOCI_SERVICES_EKS_MAX_MEMORY_MIB", "2048")
                 .containsEntry("FLOCI_SERVICES_EKS_MAX_VCPUS", "2")
                 .containsEntry("FLOCI_SERVICES_EKS_IMAGE_TEMPLATE", "custom-registry.internal/k3s:v%s")
@@ -168,6 +174,7 @@ class EksConfigTest {
                 .doesNotContainKey("FLOCI_SERVICES_EKS_MOCK")
                 .doesNotContainKey("FLOCI_SERVICES_EKS_PROVIDER")
                 .doesNotContainKey("FLOCI_SERVICES_EKS_DISABLE_CNI")
+                .doesNotContainKey("FLOCI_SERVICES_EKS_DEFAULT_STORAGE_CLASS")
                 .doesNotContainKey("FLOCI_SERVICES_EKS_MAX_MEMORY_MIB")
                 .doesNotContainKey("FLOCI_SERVICES_EKS_MAX_VCPUS")
                 .doesNotContainKey("FLOCI_SERVICES_EKS_IMAGE_TEMPLATE")
@@ -203,6 +210,7 @@ class EksConfigTest {
                 .iamAuthWebhook(false)
                 .ecrRegistryMirror(false)
                 .disableCni(true)
+                .defaultStorageClass(true)
                 .maxMemoryMib(2048)
                 .maxVcpus(2)
                 .imageTemplate("custom-registry.internal/k3s:v%s")
@@ -225,6 +233,7 @@ class EksConfigTest {
         assertThat(copy.isIamAuthWebhook()).isFalse();
         assertThat(copy.isEcrRegistryMirror()).isFalse();
         assertThat(copy.isDisableCni()).isTrue();
+        assertThat(copy.isDefaultStorageClass()).isTrue();
         assertThat(copy.getMaxMemoryMib()).isEqualTo(2048);
         assertThat(copy.getMaxVcpus()).isEqualTo(2);
         assertThat(copy.getImageTemplate()).contains("custom-registry.internal/k3s:v%s");
