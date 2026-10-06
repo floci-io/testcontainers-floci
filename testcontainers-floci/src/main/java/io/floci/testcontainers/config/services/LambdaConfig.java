@@ -1,6 +1,8 @@
 package io.floci.testcontainers.config.services;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import org.testcontainers.containers.Container;
 
@@ -22,6 +24,8 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
     private static final boolean DEFAULT_EXPOSE_RUNTIME_PORTS = false;
     private static final int DEFAULT_MEMORY_MB = 128;
     private static final int DEFAULT_TIMEOUT_SECONDS = 3;
+    private static final boolean DEFAULT_DURABLE_SWEEP_ENABLED = true;
+    private static final long DEFAULT_DURABLE_SWEEP_INTERVAL_SECONDS = 1L;
     private static final int DEFAULT_RUNTIME_API_BASE_PORT = 12000;
     private static final int DEFAULT_RUNTIME_API_PORTS_COUNT = 10;
     private static final int DEFAULT_POLL_INTERVAL_MS = 1000;
@@ -39,6 +43,8 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
     private final boolean exposeRuntimePorts;
     private final int defaultMemoryMb;
     private final int defaultTimeoutSeconds;
+    private final boolean durableSweepEnabled;
+    private final long durableSweepIntervalSeconds;
     private final String dockerNetwork;
     private final int runtimeApiBasePort;
     private final int runtimeApiPortsCount;
@@ -50,6 +56,7 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
     private final String awsConfigPath;
     private final List<String> extraHosts;
     private final String ecrBaseUri;
+    private final Map<String, String> runtimeImages;
     private final String containerNamePrefix;
     private final Integer codeVolumePopulateConcurrency;
     private final int zipMaxEntries;
@@ -66,6 +73,8 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
         this.exposeRuntimePorts = builder.exposeRuntimePorts;
         this.defaultMemoryMb = builder.defaultMemoryMb;
         this.defaultTimeoutSeconds = builder.defaultTimeoutSeconds;
+        this.durableSweepEnabled = builder.durableSweepEnabled;
+        this.durableSweepIntervalSeconds = builder.durableSweepIntervalSeconds;
         this.dockerNetwork = builder.dockerNetwork;
         this.runtimeApiBasePort = builder.runtimeApiBasePort;
         this.runtimeApiPortsCount = builder.runtimeApiPortsCount;
@@ -77,6 +86,7 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
         this.awsConfigPath = builder.awsConfigPath;
         this.extraHosts = builder.extraHosts;
         this.ecrBaseUri = builder.ecrBaseUri;
+        this.runtimeImages = builder.runtimeImages;
         this.containerNamePrefix = builder.containerNamePrefix;
         this.codeVolumePopulateConcurrency = builder.codeVolumePopulateConcurrency;
         this.zipMaxEntries = builder.zipMaxEntries;
@@ -142,6 +152,29 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
      */
     public int getDefaultTimeoutSeconds() {
         return defaultTimeoutSeconds;
+    }
+
+    /**
+     * Returns whether the background sweep that fires durable execution timers runs.
+     *
+     * <p>These timers are waits, step retries, execution timeouts and retention expiry of durable
+     * functions. When off, timers are recorded but never fire.
+     *
+     * @return {@code true} if the durable execution timer sweep runs
+     */
+    public boolean isDurableSweepEnabled() {
+        return durableSweepEnabled;
+    }
+
+    /**
+     * Returns how often, in seconds, the durable execution timer sweep runs.
+     *
+     * <p>Durable waits are whole seconds, so the default of one second bounds their lateness.
+     *
+     * @return the durable sweep interval in seconds
+     */
+    public long getDurableSweepIntervalSeconds() {
+        return durableSweepIntervalSeconds;
     }
 
     /**
@@ -272,6 +305,19 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
     }
 
     /**
+     * Returns the full image references that override the default image of individual runtimes, keyed
+     * by Lambda runtime identifier (e.g. {@code python3.12}).
+     *
+     * <p>Runtimes without an entry keep the image derived from {@link #getEcrBaseUri()}. The overrides
+     * apply to zip-based functions only; image-package functions are unaffected.
+     *
+     * @return the per-runtime image overrides, empty if none are configured
+     */
+    public Map<String, String> getRuntimeImages() {
+        return runtimeImages;
+    }
+
+    /**
      * Base name prefix for the containers and code volumes Lambda spawns, replacing the
      * default {@code floci} (e.g. prefix {@code acme} names containers
      * {@code acme-<function>-<id>} and code volumes {@code acme-code-<function>-<hash>}).
@@ -391,6 +437,8 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
             container.withEnv("FLOCI_SERVICES_LAMBDA_EPHEMERAL", String.valueOf(ephemeral));
             container.withEnv("FLOCI_SERVICES_LAMBDA_DEFAULT_MEMORY_MB", String.valueOf(defaultMemoryMb));
             container.withEnv("FLOCI_SERVICES_LAMBDA_DEFAULT_TIMEOUT_SECONDS", String.valueOf(defaultTimeoutSeconds));
+            container.withEnv("FLOCI_SERVICES_LAMBDA_DURABLE_SWEEP_ENABLED", String.valueOf(durableSweepEnabled));
+            container.withEnv("FLOCI_SERVICES_LAMBDA_DURABLE_SWEEP_INTERVAL_SECONDS", String.valueOf(durableSweepIntervalSeconds));
             container.withEnv("FLOCI_SERVICES_LAMBDA_RUNTIME_API_BASE_PORT", String.valueOf(runtimeApiBasePort));
             container.withEnv("FLOCI_SERVICES_LAMBDA_RUNTIME_API_MAX_PORT", String.valueOf(getRuntimeApiMaxPort()));
             container.withEnv("FLOCI_SERVICES_LAMBDA_POLL_INTERVAL_MS", String.valueOf(pollIntervalMs));
@@ -398,6 +446,8 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
             container.withEnv("FLOCI_SERVICES_LAMBDA_REGION_CONCURRENCY_LIMIT", String.valueOf(regionConcurrencyLimit));
             container.withEnv("FLOCI_SERVICES_LAMBDA_UNRESERVED_CONCURRENCY_MIN", String.valueOf(unreservedConcurrencyMin));
             container.withEnv("FLOCI_SERVICES_LAMBDA_ECR_BASE_URI", ecrBaseUri);
+            runtimeImages.forEach((runtime, image) ->
+                    container.withEnv(runtimeImageEnvVar(runtime), image));
 
             container.withEnv("FLOCI_SERVICES_LAMBDA_HOT_RELOAD_ENABLED", String.valueOf(hotReload.enabled()));
             if (hotReload.allowedPaths().isPresent() && !hotReload.allowedPaths().get().isEmpty()) {
@@ -441,6 +491,16 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
 
             container.withEnv("FLOCI_SERVICES_LAMBDA_ACCEPT_EXTERNAL_LAYER_ARNS", String.valueOf(acceptExternalLayerArns));
         }
+    }
+
+    /**
+     * Returns the env var that sets the image of the given runtime. The runtime identifier is quoted with
+     * double underscores so that SmallRye binds the dotted map key ({@code python3.12} →
+     * {@code FLOCI_SERVICES_LAMBDA_RUNTIME_IMAGES__PYTHON3_12__}).
+     */
+    private static String runtimeImageEnvVar(String runtime) {
+        return "FLOCI_SERVICES_LAMBDA_RUNTIME_IMAGES__"
+                + runtime.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]", "_") + "__";
     }
 
     @Override
@@ -492,6 +552,8 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
         private boolean exposeRuntimePorts = DEFAULT_EXPOSE_RUNTIME_PORTS;
         private int defaultMemoryMb = DEFAULT_MEMORY_MB;
         private int defaultTimeoutSeconds = DEFAULT_TIMEOUT_SECONDS;
+        private boolean durableSweepEnabled = DEFAULT_DURABLE_SWEEP_ENABLED;
+        private long durableSweepIntervalSeconds = DEFAULT_DURABLE_SWEEP_INTERVAL_SECONDS;
         private String dockerNetwork;
         private int runtimeApiBasePort = DEFAULT_RUNTIME_API_BASE_PORT;
         private int runtimeApiPortsCount = DEFAULT_RUNTIME_API_PORTS_COUNT;
@@ -503,6 +565,7 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
         private String awsConfigPath;
         private List<String> extraHosts;
         private String ecrBaseUri = DEFAULT_ECR_BASE_URI;
+        private Map<String, String> runtimeImages = Map.of();
         private String containerNamePrefix;
         private Integer codeVolumePopulateConcurrency;
         private int zipMaxEntries = DEFAULT_ZIP_MAX_ENTRIES;
@@ -528,6 +591,8 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
             this.exposeRuntimePorts = instance.isExposeRuntimePorts();
             this.defaultMemoryMb = instance.getDefaultMemoryMb();
             this.defaultTimeoutSeconds = instance.getDefaultTimeoutSeconds();
+            this.durableSweepEnabled = instance.isDurableSweepEnabled();
+            this.durableSweepIntervalSeconds = instance.getDurableSweepIntervalSeconds();
             this.dockerNetwork = instance.getDockerNetwork();
             this.runtimeApiBasePort = instance.getRuntimeApiBasePort();
             this.runtimeApiPortsCount = instance.getRuntimeApiPortsCount();
@@ -539,6 +604,7 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
             this.awsConfigPath = instance.getAwsConfigPath();
             this.extraHosts = instance.getExtraHosts().orElse(null);
             this.ecrBaseUri = instance.getEcrBaseUri();
+            this.runtimeImages = instance.getRuntimeImages();
             this.containerNamePrefix = instance.getContainerNamePrefix().orElse(null);
             this.codeVolumePopulateConcurrency = instance.getCodeVolumePopulateConcurrency().orElse(null);
             this.zipMaxEntries = instance.getZipMaxEntries();
@@ -591,6 +657,33 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
          */
         public Builder defaultTimeoutSeconds(int defaultTimeoutSeconds) {
             this.defaultTimeoutSeconds = defaultTimeoutSeconds;
+            return this;
+        }
+
+        /**
+         * Sets whether the background sweep that fires durable execution timers runs.
+         *
+         * <p>These timers are waits, step retries, execution timeouts and retention expiry of durable
+         * functions. When off, timers are recorded but never fire.
+         *
+         * @param durableSweepEnabled {@code true} to run the durable execution timer sweep (default {@value DEFAULT_DURABLE_SWEEP_ENABLED})
+         * @return this builder
+         */
+        public Builder durableSweepEnabled(boolean durableSweepEnabled) {
+            this.durableSweepEnabled = durableSweepEnabled;
+            return this;
+        }
+
+        /**
+         * Sets how often, in seconds, the durable execution timer sweep runs.
+         *
+         * <p>Durable waits are whole seconds, so the default of one second bounds their lateness.
+         *
+         * @param durableSweepIntervalSeconds the durable sweep interval in seconds (default {@value DEFAULT_DURABLE_SWEEP_INTERVAL_SECONDS})
+         * @return this builder
+         */
+        public Builder durableSweepIntervalSeconds(long durableSweepIntervalSeconds) {
+            this.durableSweepIntervalSeconds = durableSweepIntervalSeconds;
             return this;
         }
 
@@ -731,6 +824,22 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
          */
         public Builder ecrBaseUri(String ecrBaseUri) {
             this.ecrBaseUri = ecrBaseUri;
+            return this;
+        }
+
+        /**
+         * Sets full image references that override the default image of individual runtimes, keyed by
+         * Lambda runtime identifier, e.g. {@code Map.of("python3.12",
+         * "public.ecr.aws/lambda/python:3.12@sha256:<digest>")} to pin a runtime to a digest.
+         *
+         * <p>Runtimes without an entry keep the image derived from the {@link #ecrBaseUri(String) ECR base
+         * URI}. The overrides apply to zip-based functions only; image-package functions are unaffected.
+         *
+         * @param runtimeImages the per-runtime image overrides, or {@code null} to clear them (default: none)
+         * @return this builder
+         */
+        public Builder runtimeImages(Map<String, String> runtimeImages) {
+            this.runtimeImages = runtimeImages == null ? Map.of() : Map.copyOf(runtimeImages);
             return this;
         }
 
