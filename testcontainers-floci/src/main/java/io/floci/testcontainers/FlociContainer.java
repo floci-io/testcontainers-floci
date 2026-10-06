@@ -1,6 +1,10 @@
 package io.floci.testcontainers;
 
+import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.command.InspectVolumeResponse;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Bind;
+import com.github.dockerjava.api.model.Container;
 import io.floci.testcontainers.config.*;
 import io.floci.testcontainers.config.services.*;
 import org.slf4j.Logger;
@@ -13,6 +17,8 @@ import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.builder.Transferable;
 import org.testcontainers.utility.DockerImageName;
+import org.testcontainers.utility.ResourceReaper;
+import org.testcontainers.utility.TestcontainersConfiguration;
 
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
@@ -21,11 +27,16 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Testcontainers module for <a href="https://github.com/floci-io/floci">Floci</a> — a
@@ -63,6 +74,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
 
     private static final String DOCKER_SOCKET_PATH = "/var/run/docker.sock";
     private static final int STOP_TIMEOUT_SECONDS = 30;
+    private static final String CHILD_RESOURCE_LABEL = "io.floci.testcontainers.instance";
+    private static final Pattern EXTRA_LABEL_ENV = Pattern.compile("FLOCI_DOCKER_EXTRA_LABELS_([0-9]+)__.*");
 
     private static final String DEFAULT_REGION = "us-east-1";
     private static final String DEFAULT_AVAILABILITY_ZONE = "us-east-1a";
@@ -72,6 +85,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
 
     private static final String AI_MOCK_CONFIG_FILE_PREFIX = "/tmp/floci-ai-mock-config-";
     private static final String AI_MOCK_CONFIG_FILE_SUFFIX = ".json";
+
+    private final Map<String, String> childResourceLabels = Map.of(CHILD_RESOURCE_LABEL, UUID.randomUUID().toString());
 
     // explicit override from withDockerSocket(), which takes full precedence of auto-detection mode
     private Boolean dockerSocketOverride;
@@ -314,6 +329,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     public FlociContainer(DockerImageName dockerImageName) {
         super(dockerImageName);
         dockerImageName.assertCompatibleWith(DEFAULT_IMAGE_NAME);
+        withCreateContainerCmdModifier(this::configureChildResourceCleanup);
 
         // Configure observability and healthcheck
         withLogLevel(Level.WARN);
@@ -354,12 +370,76 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         }
     }
 
+    private void configureChildResourceCleanup(CreateContainerCmd command) {
+        if (isReusable()) {
+            // Registering reusable children would reap them on JVM exit; unique labels would also prevent reuse.
+            return;
+        }
+
+        // Register before Floci can create children. The same instance label scopes explicit cleanup
+        // so stopping one Floci container leaves other instances in the same JVM alone.
+        ResourceReaper.instance().registerLabelsFilterForCleanup(childResourceLabels);
+
+        List<String> environment = new ArrayList<>(Arrays.asList(command.getEnv()));
+        int index = 0;
+        for (String entry : environment) {
+            Matcher matcher = EXTRA_LABEL_ENV.matcher(entry);
+            if (matcher.matches()) {
+                index = Math.max(index, Integer.parseInt(matcher.group(1)) + 1);
+            }
+        }
+        String prefix = "FLOCI_DOCKER_EXTRA_LABELS_" + index + "__";
+        environment.add(prefix + "KEY=" + CHILD_RESOURCE_LABEL);
+        environment.add(prefix + "VALUE=" + childResourceLabels.get(CHILD_RESOURCE_LABEL));
+        command.withEnv(environment);
+    }
+
+    private boolean isReusable() {
+        return isShouldBeReused() && TestcontainersConfiguration.getInstance().environmentSupportsReuse();
+    }
+
     @Override
     public void stop() {
+        // Testcontainers reuse requires callers to avoid stop/close; explicit stop still removes the emulator.
+        boolean cleanUpChildren = getContainerId() != null && !isReusable();
         preparePersistentStorageForCleanup();
         stopGracefully();
         super.stop();
-        deletePersistentStorage();
+        try {
+            if (cleanUpChildren) {
+                // Sweep after the emulator stops creating children, without waiting for Ryuk at JVM exit.
+                removeChildResources();
+            }
+        } finally {
+            deletePersistentStorage();
+        }
+    }
+
+    private void removeChildResources() {
+        for (Container container : dockerClient.listContainersCmd()
+                .withShowAll(true)
+                .withLabelFilter(childResourceLabels)
+                .exec()) {
+            try {
+                dockerClient.removeContainerCmd(container.getId()).withForce(true).withRemoveVolumes(true).exec();
+            } catch (NotFoundException ignored) {
+                // Floci's shutdown hooks or Ryuk may have already removed this container.
+            } catch (RuntimeException e) {
+                logger.warn("Failed to remove Floci child container {}", container.getId(), e);
+            }
+        }
+        // Docker's container removal only deletes anonymous volumes, so named volumes need a separate pass.
+        for (InspectVolumeResponse volume : dockerClient.listVolumesCmd()
+                .withFilter("label", List.of(CHILD_RESOURCE_LABEL + "=" + childResourceLabels.get(CHILD_RESOURCE_LABEL)))
+                .exec().getVolumes()) {
+            try {
+                dockerClient.removeVolumeCmd(volume.getName()).exec();
+            } catch (NotFoundException ignored) {
+                // Container removal or Ryuk may have already removed this volume.
+            } catch (RuntimeException e) {
+                logger.warn("Failed to remove Floci child volume {}", volume.getName(), e);
+            }
+        }
     }
 
     private void stopGracefully() {
