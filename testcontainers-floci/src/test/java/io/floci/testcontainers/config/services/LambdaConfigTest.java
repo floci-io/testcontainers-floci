@@ -17,6 +17,8 @@ class LambdaConfigTest {
         assertThat(config.isExposeRuntimePorts()).isFalse();
         assertThat(config.getDefaultMemoryMb()).isEqualTo(128);
         assertThat(config.getDefaultTimeoutSeconds()).isEqualTo(3);
+        assertThat(config.isDurableSweepEnabled()).isTrue();
+        assertThat(config.getDurableSweepIntervalSeconds()).isEqualTo(1L);
         assertThat(config.getDockerNetwork()).isNull();
         assertThat(config.getRuntimeApiBasePort()).isEqualTo(12000);
         assertThat(config.getRuntimeApiMaxPort()).isEqualTo(12009);
@@ -28,6 +30,7 @@ class LambdaConfigTest {
         assertThat(config.getAwsConfigPath()).isNull();
         assertThat(config.getExtraHosts()).isEmpty();
         assertThat(config.getEcrBaseUri()).isEqualTo("public.ecr.aws");
+        assertThat(config.getRuntimeImages()).isEmpty();
         assertThat(config.getContainerNamePrefix()).isEmpty();
         assertThat(config.getCodeVolumePopulateConcurrency()).isEmpty();
         assertThat(config.getZipMaxEntries()).isEqualTo(100000);
@@ -47,6 +50,8 @@ class LambdaConfigTest {
                 .exposeRuntimePorts(true)
                 .defaultMemoryMb(256)
                 .defaultTimeoutSeconds(10)
+                .durableSweepEnabled(false)
+                .durableSweepIntervalSeconds(5L)
                 .dockerNetwork("my-network")
                 .runtimeApiPortRange(9300, 50)
                 .pollIntervalMs(500)
@@ -56,6 +61,7 @@ class LambdaConfigTest {
                 .awsConfigPath("/home/user/.aws")
                 .extraHosts(java.util.List.of("host.docker.internal:host-gateway", "my-service:172.17.0.1"))
                 .ecrBaseUri("123456789012.dkr.ecr.us-east-1.amazonaws.com")
+                .runtimeImages(java.util.Map.of("python3.12", "registry.example/lambda-python:3.12", "provided.al2023", "registry.example/provided:al2023"))
                 .containerNamePrefix("acme")
                 .codeVolumePopulateConcurrency(4)
                 .zipMaxEntries(500)
@@ -71,6 +77,8 @@ class LambdaConfigTest {
         assertThat(config.isExposeRuntimePorts()).isTrue();
         assertThat(config.getDefaultMemoryMb()).isEqualTo(256);
         assertThat(config.getDefaultTimeoutSeconds()).isEqualTo(10);
+        assertThat(config.isDurableSweepEnabled()).isFalse();
+        assertThat(config.getDurableSweepIntervalSeconds()).isEqualTo(5L);
         assertThat(config.getDockerNetwork()).isEqualTo("my-network");
         assertThat(config.getRuntimeApiBasePort()).isEqualTo(9300);
         assertThat(config.getRuntimeApiMaxPort()).isEqualTo(9349);
@@ -84,6 +92,8 @@ class LambdaConfigTest {
         assertThat(config.getExtraHosts().get())
                 .containsExactly("host.docker.internal:host-gateway", "my-service:172.17.0.1");
         assertThat(config.getEcrBaseUri()).isEqualTo("123456789012.dkr.ecr.us-east-1.amazonaws.com");
+        assertThat(config.getRuntimeImages()).containsExactlyInAnyOrderEntriesOf(
+                java.util.Map.of("python3.12", "registry.example/lambda-python:3.12", "provided.al2023", "registry.example/provided:al2023"));
         assertThat(config.getContainerNamePrefix()).contains("acme");
         assertThat(config.getCodeVolumePopulateConcurrency()).contains(4);
         assertThat(config.getZipMaxEntries()).isEqualTo(500);
@@ -105,6 +115,8 @@ class LambdaConfigTest {
                 .containsEntry("FLOCI_SERVICES_LAMBDA_EPHEMERAL", "false")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_DEFAULT_MEMORY_MB", "128")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_DEFAULT_TIMEOUT_SECONDS", "3")
+                .containsEntry("FLOCI_SERVICES_LAMBDA_DURABLE_SWEEP_ENABLED", "true")
+                .containsEntry("FLOCI_SERVICES_LAMBDA_DURABLE_SWEEP_INTERVAL_SECONDS", "1")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_RUNTIME_API_BASE_PORT", "12000")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_RUNTIME_API_MAX_PORT", "12009")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_POLL_INTERVAL_MS", "1000")
@@ -112,6 +124,7 @@ class LambdaConfigTest {
                 .containsEntry("FLOCI_SERVICES_LAMBDA_REGION_CONCURRENCY_LIMIT", "1000")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_UNRESERVED_CONCURRENCY_MIN", "100")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_ECR_BASE_URI", "public.ecr.aws")
+                .doesNotContainKey("FLOCI_SERVICES_LAMBDA_RUNTIME_IMAGES__PYTHON3_12__")
                 .doesNotContainKey("FLOCI_SERVICES_LAMBDA_DOCKER_NETWORK")
                 .doesNotContainKey("FLOCI_SERVICES_LAMBDA_AWS_CONFIG_PATH")
                 .doesNotContainKey("FLOCI_SERVICES_LAMBDA_EXTRA_HOSTS")
@@ -134,6 +147,8 @@ class LambdaConfigTest {
                 .ephemeral(true)
                 .defaultMemoryMb(256)
                 .defaultTimeoutSeconds(30)
+                .durableSweepEnabled(false)
+                .durableSweepIntervalSeconds(5L)
                 .runtimeApiPortRange(9500, 50)
                 .pollIntervalMs(500)
                 .containerIdleTimeoutSeconds(600)
@@ -143,6 +158,7 @@ class LambdaConfigTest {
                 .awsConfigPath("/home/user/.aws")
                 .extraHosts(java.util.List.of("host.docker.internal:host-gateway", "my-service:172.17.0.1"))
                 .ecrBaseUri("123456789012.dkr.ecr.us-east-1.amazonaws.com")
+                .runtimeImages(java.util.Map.of("python3.12", "registry.example/lambda-python:3.12", "provided.al2023", "registry.example/provided:al2023"))
                 .containerNamePrefix("acme")
                 .codeVolumePopulateConcurrency(4)
                 .zipMaxEntries(500)
@@ -160,6 +176,8 @@ class LambdaConfigTest {
                 .containsEntry("FLOCI_SERVICES_LAMBDA_DEFAULT_MEMORY_MB", "256")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_EPHEMERAL", "true")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_DEFAULT_TIMEOUT_SECONDS", "30")
+                .containsEntry("FLOCI_SERVICES_LAMBDA_DURABLE_SWEEP_ENABLED", "false")
+                .containsEntry("FLOCI_SERVICES_LAMBDA_DURABLE_SWEEP_INTERVAL_SECONDS", "5")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_RUNTIME_API_BASE_PORT", "9500")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_RUNTIME_API_MAX_PORT", "9549")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_POLL_INTERVAL_MS", "500")
@@ -170,6 +188,8 @@ class LambdaConfigTest {
                 .containsEntry("FLOCI_SERVICES_LAMBDA_AWS_CONFIG_PATH", "/home/user/.aws")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_EXTRA_HOSTS", "host.docker.internal:host-gateway,my-service:172.17.0.1")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_ECR_BASE_URI", "123456789012.dkr.ecr.us-east-1.amazonaws.com")
+                .containsEntry("FLOCI_SERVICES_LAMBDA_RUNTIME_IMAGES__PYTHON3_12__", "registry.example/lambda-python:3.12")
+                .containsEntry("FLOCI_SERVICES_LAMBDA_RUNTIME_IMAGES__PROVIDED_AL2023__", "registry.example/provided:al2023")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_CONTAINER_NAME_PREFIX", "acme")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_CODE_VOLUME_POPULATE_CONCURRENCY", "4")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_ZIP_MAX_ENTRIES", "500")
@@ -188,6 +208,8 @@ class LambdaConfigTest {
 
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_SERVICES_LAMBDA_ENABLED", "false")
+                .doesNotContainKey("FLOCI_SERVICES_LAMBDA_DURABLE_SWEEP_ENABLED")
+                .doesNotContainKey("FLOCI_SERVICES_LAMBDA_DURABLE_SWEEP_INTERVAL_SECONDS")
                 .doesNotContainKey("FLOCI_SERVICES_LAMBDA_ZIP_MAX_ENTRIES")
                 .doesNotContainKey("FLOCI_SERVICES_LAMBDA_ASYNC_RETRY_DELAY_SECONDS")
                 .doesNotContainKey("FLOCI_SERVICES_LAMBDA_HONOUR_ARCHITECTURES")
@@ -353,6 +375,8 @@ class LambdaConfigTest {
                 .exposeRuntimePorts(true)
                 .defaultMemoryMb(256)
                 .defaultTimeoutSeconds(10)
+                .durableSweepEnabled(false)
+                .durableSweepIntervalSeconds(5L)
                 .dockerNetwork("test-network")
                 .runtimeApiPortRange(9300, 5)
                 .pollIntervalMs(500)
@@ -363,6 +387,7 @@ class LambdaConfigTest {
                 .awsConfigPath("/test/aws-config")
                 .extraHosts(java.util.List.of("host.docker.internal:host-gateway"))
                 .ecrBaseUri("123456789012.dkr.ecr.us-east-1.amazonaws.com")
+                .runtimeImages(java.util.Map.of("python3.12", "registry.example/lambda-python:3.12", "provided.al2023", "registry.example/provided:al2023"))
                 .containerNamePrefix("acme-prefix")
                 .codeVolumePopulateConcurrency(4)
                 .zipMaxEntries(500)
@@ -379,6 +404,8 @@ class LambdaConfigTest {
         assertThat(copy.isExposeRuntimePorts()).isTrue();
         assertThat(copy.getDefaultMemoryMb()).isEqualTo(256);
         assertThat(copy.getDefaultTimeoutSeconds()).isEqualTo(10);
+        assertThat(copy.isDurableSweepEnabled()).isFalse();
+        assertThat(copy.getDurableSweepIntervalSeconds()).isEqualTo(5L);
         assertThat(copy.getDockerNetwork()).isEqualTo("test-network");
         assertThat(copy.getRuntimeApiBasePort()).isEqualTo(9300);
         assertThat(copy.getRuntimeApiPortsCount()).isEqualTo(5);
@@ -391,6 +418,8 @@ class LambdaConfigTest {
         assertThat(copy.getExtraHosts()).isPresent();
         assertThat(copy.getExtraHosts().get()).containsExactly("host.docker.internal:host-gateway");
         assertThat(copy.getEcrBaseUri()).isEqualTo("123456789012.dkr.ecr.us-east-1.amazonaws.com");
+        assertThat(copy.getRuntimeImages()).containsExactlyInAnyOrderEntriesOf(
+                java.util.Map.of("python3.12", "registry.example/lambda-python:3.12", "provided.al2023", "registry.example/provided:al2023"));
         assertThat(copy.getContainerNamePrefix()).contains("acme-prefix");
         assertThat(copy.getCodeVolumePopulateConcurrency()).contains(4);
         assertThat(copy.getZipMaxEntries()).isEqualTo(500);
