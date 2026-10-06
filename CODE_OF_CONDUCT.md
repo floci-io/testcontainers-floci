@@ -2,9 +2,7 @@
 
 ## Our Pledge
 
-We as members, contributors, and maintainers pledge to make participation in Testcontainers Floci a harassment-free 
-experience for everyone, regardless of age, body size, disability, ethnicity, gender identity and expression, level 
-of experience, nationality, personal appearance, race, religion, or sexual identity and orientation.
+We as members, contributors, and maintainers pledge to make participation in Floci a harassment-free experience for everyone, regardless of age, body size, disability, ethnicity, gender identity and expression, level of experience, nationality, personal appearance, race, religion, or sexual identity and orientation.
 
 ## Our Standards
 
@@ -24,11 +22,9 @@ of experience, nationality, personal appearance, race, religion, or sexual ident
 
 ## Enforcement
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported by opening a GitHub issue or 
-contacting the maintainers directly. All complaints will be reviewed and investigated promptly and fairly.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported by opening a GitHub issue or contacting the maintainers directly. All complaints will be reviewed and investigated promptly and fairly.
 
-Maintainers have the right and responsibility to remove, edit, or reject comments, commits, code, issues, and other 
-contributions that are not aligned with this Code of Conduct.
+Maintainers have the right and responsibility to remove, edit, or reject comments, commits, code, issues, and other contributions that are not aligned with this Code of Conduct.
 
 ## Attribution
 

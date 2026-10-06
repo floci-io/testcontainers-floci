@@ -20,7 +20,7 @@ body:
     attributes:
       label: Floci Docker image
       description: The Floci image tag in use (`floci/floci` or `floci/floci-az`), if you overrode the default.
-      placeholder: "e.g. floci/floci:latest, floci/floci:1.5.15 or floci/floci-az:0.13.0"
+      placeholder: "e.g. floci/floci:latest, floci/floci:x.y.z or floci/floci-az:x.y.z"
 
   - type: input
     id: java-version
