@@ -20,6 +20,7 @@ class RedshiftConfigTest {
         assertThat(config.getProxyHandshakeTimeoutMillis()).isEqualTo(10000);
         assertThat(config.getProxyBackendConnectTimeoutMillis()).isEqualTo(5000);
         assertThat(config.getProxyMaxConnections()).isEqualTo(100);
+        assertThat(config.getSpectrumMaxRows()).isEqualTo(1000000L);
     }
 
     @Test
@@ -34,6 +35,7 @@ class RedshiftConfigTest {
                 .proxyHandshakeTimeoutMillis(2000)
                 .proxyBackendConnectTimeoutMillis(1000)
                 .proxyMaxConnections(20)
+                .spectrumMaxRows(500L)
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.getDefaultPort()).isEqualTo(5000);
@@ -44,6 +46,7 @@ class RedshiftConfigTest {
         assertThat(config.getProxyHandshakeTimeoutMillis()).isEqualTo(2000);
         assertThat(config.getProxyBackendConnectTimeoutMillis()).isEqualTo(1000);
         assertThat(config.getProxyMaxConnections()).isEqualTo(20);
+        assertThat(config.getSpectrumMaxRows()).isEqualTo(500L);
     }
 
     @Test
@@ -60,7 +63,8 @@ class RedshiftConfigTest {
                 .containsEntry("FLOCI_SERVICES_REDSHIFT_DEFAULT_CREDENTIAL_DURATION_SECONDS", "900")
                 .containsEntry("FLOCI_SERVICES_REDSHIFT_PROXY_HANDSHAKE_TIMEOUT_MILLIS", "10000")
                 .containsEntry("FLOCI_SERVICES_REDSHIFT_PROXY_BACKEND_CONNECT_TIMEOUT_MILLIS", "5000")
-                .containsEntry("FLOCI_SERVICES_REDSHIFT_PROXY_MAX_CONNECTIONS", "100");
+                .containsEntry("FLOCI_SERVICES_REDSHIFT_PROXY_MAX_CONNECTIONS", "100")
+                .containsEntry("FLOCI_SERVICES_REDSHIFT_SPECTRUM_MAX_ROWS", "1000000");
     }
 
     @Test
@@ -75,6 +79,7 @@ class RedshiftConfigTest {
                 .proxyHandshakeTimeoutMillis(2000)
                 .proxyBackendConnectTimeoutMillis(1000)
                 .proxyMaxConnections(20)
+                .spectrumMaxRows(500L)
                 .build()
                 .applyEnvVarsToContainer(container);
 
@@ -87,7 +92,8 @@ class RedshiftConfigTest {
                 .containsEntry("FLOCI_SERVICES_REDSHIFT_DEFAULT_CREDENTIAL_DURATION_SECONDS", "3600")
                 .containsEntry("FLOCI_SERVICES_REDSHIFT_PROXY_HANDSHAKE_TIMEOUT_MILLIS", "2000")
                 .containsEntry("FLOCI_SERVICES_REDSHIFT_PROXY_BACKEND_CONNECT_TIMEOUT_MILLIS", "1000")
-                .containsEntry("FLOCI_SERVICES_REDSHIFT_PROXY_MAX_CONNECTIONS", "20");
+                .containsEntry("FLOCI_SERVICES_REDSHIFT_PROXY_MAX_CONNECTIONS", "20")
+                .containsEntry("FLOCI_SERVICES_REDSHIFT_SPECTRUM_MAX_ROWS", "500");
     }
 
     @Test
@@ -103,7 +109,8 @@ class RedshiftConfigTest {
                 .doesNotContainKey("FLOCI_SERVICES_REDSHIFT_DEFAULT_CREDENTIAL_DURATION_SECONDS")
                 .doesNotContainKey("FLOCI_SERVICES_REDSHIFT_PROXY_HANDSHAKE_TIMEOUT_MILLIS")
                 .doesNotContainKey("FLOCI_SERVICES_REDSHIFT_PROXY_BACKEND_CONNECT_TIMEOUT_MILLIS")
-                .doesNotContainKey("FLOCI_SERVICES_REDSHIFT_PROXY_MAX_CONNECTIONS");
+                .doesNotContainKey("FLOCI_SERVICES_REDSHIFT_PROXY_MAX_CONNECTIONS")
+                .doesNotContainKey("FLOCI_SERVICES_REDSHIFT_SPECTRUM_MAX_ROWS");
     }
 
     @Test
@@ -118,6 +125,7 @@ class RedshiftConfigTest {
                 .proxyHandshakeTimeoutMillis(2000)
                 .proxyBackendConnectTimeoutMillis(1000)
                 .proxyMaxConnections(20)
+                .spectrumMaxRows(500L)
                 .build();
         RedshiftConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
@@ -129,6 +137,7 @@ class RedshiftConfigTest {
         assertThat(copy.getProxyHandshakeTimeoutMillis()).isEqualTo(2000);
         assertThat(copy.getProxyBackendConnectTimeoutMillis()).isEqualTo(1000);
         assertThat(copy.getProxyMaxConnections()).isEqualTo(20);
+        assertThat(copy.getSpectrumMaxRows()).isEqualTo(500L);
     }
 
     @Test

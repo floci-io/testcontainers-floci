@@ -26,6 +26,7 @@ public class RedshiftConfig extends AbstractServiceConfig<RedshiftConfig.Builder
     private static final int DEFAULT_PROXY_HANDSHAKE_TIMEOUT_MILLIS = 10000;
     private static final int DEFAULT_PROXY_BACKEND_CONNECT_TIMEOUT_MILLIS = 5000;
     private static final int DEFAULT_PROXY_MAX_CONNECTIONS = 100;
+    private static final long DEFAULT_SPECTRUM_MAX_ROWS = 1000000L;
 
     private final int defaultPort;
     private final String imageVersion;
@@ -35,6 +36,7 @@ public class RedshiftConfig extends AbstractServiceConfig<RedshiftConfig.Builder
     private final int proxyHandshakeTimeoutMillis;
     private final int proxyBackendConnectTimeoutMillis;
     private final int proxyMaxConnections;
+    private final long spectrumMaxRows;
 
     private RedshiftConfig(Builder builder) {
         super(builder.enabled);
@@ -46,6 +48,7 @@ public class RedshiftConfig extends AbstractServiceConfig<RedshiftConfig.Builder
         this.proxyHandshakeTimeoutMillis = builder.proxyHandshakeTimeoutMillis;
         this.proxyBackendConnectTimeoutMillis = builder.proxyBackendConnectTimeoutMillis;
         this.proxyMaxConnections = builder.proxyMaxConnections;
+        this.spectrumMaxRows = builder.spectrumMaxRows;
     }
 
     /**
@@ -145,6 +148,16 @@ public class RedshiftConfig extends AbstractServiceConfig<RedshiftConfig.Builder
         return proxyMaxConnections;
     }
 
+    /**
+     * Returns the maximum number of rows a Glue-backed Redshift Spectrum external table may load into the
+     * cluster's PostgreSQL; loading a larger table fails.
+     *
+     * @return the maximum number of rows a Glue-backed Redshift Spectrum external table may load
+     */
+    public long getSpectrumMaxRows() {
+        return spectrumMaxRows;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_REDSHIFT_ENABLED", String.valueOf(isEnabled()));
@@ -162,6 +175,7 @@ public class RedshiftConfig extends AbstractServiceConfig<RedshiftConfig.Builder
             container.withEnv("FLOCI_SERVICES_REDSHIFT_PROXY_HANDSHAKE_TIMEOUT_MILLIS", String.valueOf(proxyHandshakeTimeoutMillis));
             container.withEnv("FLOCI_SERVICES_REDSHIFT_PROXY_BACKEND_CONNECT_TIMEOUT_MILLIS", String.valueOf(proxyBackendConnectTimeoutMillis));
             container.withEnv("FLOCI_SERVICES_REDSHIFT_PROXY_MAX_CONNECTIONS", String.valueOf(proxyMaxConnections));
+            container.withEnv("FLOCI_SERVICES_REDSHIFT_SPECTRUM_MAX_ROWS", String.valueOf(spectrumMaxRows));
         }
     }
 
@@ -183,6 +197,7 @@ public class RedshiftConfig extends AbstractServiceConfig<RedshiftConfig.Builder
         private int proxyHandshakeTimeoutMillis = DEFAULT_PROXY_HANDSHAKE_TIMEOUT_MILLIS;
         private int proxyBackendConnectTimeoutMillis = DEFAULT_PROXY_BACKEND_CONNECT_TIMEOUT_MILLIS;
         private int proxyMaxConnections = DEFAULT_PROXY_MAX_CONNECTIONS;
+        private long spectrumMaxRows = DEFAULT_SPECTRUM_MAX_ROWS;
 
         private Builder() {
             // Allow instantiation only via RedshiftConfig.builder()
@@ -203,6 +218,7 @@ public class RedshiftConfig extends AbstractServiceConfig<RedshiftConfig.Builder
             this.proxyHandshakeTimeoutMillis = instance.getProxyHandshakeTimeoutMillis();
             this.proxyBackendConnectTimeoutMillis = instance.getProxyBackendConnectTimeoutMillis();
             this.proxyMaxConnections = instance.getProxyMaxConnections();
+            this.spectrumMaxRows = instance.getSpectrumMaxRows();
         }
 
         /**
@@ -295,6 +311,18 @@ public class RedshiftConfig extends AbstractServiceConfig<RedshiftConfig.Builder
          */
         public Builder proxyMaxConnections(int proxyMaxConnections) {
             this.proxyMaxConnections = proxyMaxConnections;
+            return this;
+        }
+
+        /**
+         * Sets the maximum number of rows a Glue-backed Redshift Spectrum external table may load into the
+         * cluster's PostgreSQL; loading a larger table fails.
+         *
+         * @param spectrumMaxRows the maximum number of rows a Glue-backed Redshift Spectrum external table may load (default {@value DEFAULT_SPECTRUM_MAX_ROWS})
+         * @return this builder
+         */
+        public Builder spectrumMaxRows(long spectrumMaxRows) {
+            this.spectrumMaxRows = spectrumMaxRows;
             return this;
         }
 
