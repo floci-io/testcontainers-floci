@@ -29,6 +29,7 @@ public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
     private static final boolean DEFAULT_IAM_AUTH_WEBHOOK = true;
     private static final boolean DEFAULT_ECR_REGISTRY_MIRROR = true;
     private static final boolean DEFAULT_DISABLE_CNI = false;
+    private static final boolean DEFAULT_DEFAULT_STORAGE_CLASS = false;
     private static final int DEFAULT_MAX_MEMORY_MIB = 0;
     private static final int DEFAULT_MAX_VCPUS = 0;
     private static final boolean DEFAULT_IMDS = false;
@@ -48,6 +49,7 @@ public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
     private final boolean iamAuthWebhook;
     private final boolean ecrRegistryMirror;
     private final boolean disableCni;
+    private final boolean defaultStorageClass;
     private final int maxMemoryMib;
     private final int maxVcpus;
     private final String imageTemplate;
@@ -70,6 +72,7 @@ public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
         this.iamAuthWebhook = builder.iamAuthWebhook;
         this.ecrRegistryMirror = builder.ecrRegistryMirror;
         this.disableCni = builder.disableCni;
+        this.defaultStorageClass = builder.defaultStorageClass;
         this.maxMemoryMib = builder.maxMemoryMib;
         this.maxVcpus = builder.maxVcpus;
         this.imageTemplate = builder.imageTemplate;
@@ -221,6 +224,21 @@ public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
     }
 
     /**
+     * Returns whether clusters keep k3s's bundled local-path provisioner and default StorageClass.
+     *
+     * <p>When {@code false} (the default), k3s starts with {@code --disable=local-storage}, so clusters
+     * match AWS EKS by starting with no default StorageClass and no host-path provisioner. When
+     * {@code true}, the bundled provisioner and default StorageClass are retained for local workloads that
+     * rely on automatic volume binding without installing a CSI driver. Like {@link #isDisableCni()}, this
+     * only takes effect at k3s startup.
+     *
+     * @return {@code true} if clusters keep k3s's bundled local-path provisioner and default StorageClass
+     */
+    public boolean isDefaultStorageClass() {
+        return defaultStorageClass;
+    }
+
+    /**
      * Returns the optional memory ceiling, in MiB, of the single k3s node container.
      *
      * <p>{@code 0} uses the limit of its instance type.
@@ -333,6 +351,7 @@ public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
             container.withEnv("FLOCI_SERVICES_EKS_IAM_AUTH_WEBHOOK", String.valueOf(iamAuthWebhook));
             container.withEnv("FLOCI_SERVICES_EKS_ECR_REGISTRY_MIRROR", String.valueOf(ecrRegistryMirror));
             container.withEnv("FLOCI_SERVICES_EKS_DISABLE_CNI", String.valueOf(disableCni));
+            container.withEnv("FLOCI_SERVICES_EKS_DEFAULT_STORAGE_CLASS", String.valueOf(defaultStorageClass));
 
             if (dockerNetwork != null) {
                 container.withEnv("FLOCI_SERVICES_EKS_DOCKER_NETWORK", dockerNetwork);
@@ -383,6 +402,7 @@ public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
         private boolean iamAuthWebhook = DEFAULT_IAM_AUTH_WEBHOOK;
         private boolean ecrRegistryMirror = DEFAULT_ECR_REGISTRY_MIRROR;
         private boolean disableCni = DEFAULT_DISABLE_CNI;
+        private boolean defaultStorageClass = DEFAULT_DEFAULT_STORAGE_CLASS;
         private int maxMemoryMib = DEFAULT_MAX_MEMORY_MIB;
         private int maxVcpus = DEFAULT_MAX_VCPUS;
         private String imageTemplate;
@@ -414,6 +434,7 @@ public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
             this.iamAuthWebhook = instance.isIamAuthWebhook();
             this.ecrRegistryMirror = instance.isEcrRegistryMirror();
             this.disableCni = instance.isDisableCni();
+            this.defaultStorageClass = instance.isDefaultStorageClass();
             this.maxMemoryMib = instance.getMaxMemoryMib();
             this.maxVcpus = instance.getMaxVcpus();
             this.imageTemplate = instance.getImageTemplate().orElse(null);
@@ -542,6 +563,23 @@ public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
          */
         public Builder disableCni(boolean disableCni) {
             this.disableCni = disableCni;
+            return this;
+        }
+
+        /**
+         * Controls whether clusters keep k3s's bundled local-path provisioner and default StorageClass.
+         *
+         * <p>When {@code false}, k3s starts with {@code --disable=local-storage}, so clusters match AWS EKS
+         * by starting with no default StorageClass and no host-path provisioner. Set to {@code true} for
+         * local workloads that rely on automatic volume binding without installing a CSI driver. Like
+         * {@link #disableCni(boolean)}, this only takes effect at k3s startup.
+         *
+         * @param defaultStorageClass {@code true} to keep k3s's local-path provisioner and default
+         *                            StorageClass (default {@value DEFAULT_DEFAULT_STORAGE_CLASS})
+         * @return this builder
+         */
+        public Builder defaultStorageClass(boolean defaultStorageClass) {
+            this.defaultStorageClass = defaultStorageClass;
             return this;
         }
 
