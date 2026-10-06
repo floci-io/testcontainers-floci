@@ -75,7 +75,6 @@ class EcrServiceTest extends AbstractServiceTest {
 
     @Test
     @Order(4)
-    @Disabled
     void shouldPushImage() throws Exception {
         DockerClient dockerClient = DockerClientFactory.instance().client();
 
@@ -107,7 +106,6 @@ class EcrServiceTest extends AbstractServiceTest {
 
     @Test
     @Order(6)
-    @Disabled
     void shouldPullImage() throws Exception {
         DockerClient dockerClient = DockerClientFactory.instance().client();
 
