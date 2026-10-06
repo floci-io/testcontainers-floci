@@ -65,7 +65,6 @@ class MskServiceTest extends AbstractServiceTest {
 
     @Test
     @Order(2)
-    @Disabled
     void shouldWaitForClusterActive() {
         await().atMost(Duration.ofSeconds(60))
                 .pollInterval(Duration.ofSeconds(2))
