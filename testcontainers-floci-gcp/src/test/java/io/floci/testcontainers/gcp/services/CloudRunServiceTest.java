@@ -57,6 +57,7 @@ class CloudRunServiceTest extends AbstractServiceTest {
      */
     private static String get(String host) throws Exception {
         try (Socket socket = new Socket(floci.getHost(), floci.getMappedPort(floci.getPort()))) {
+            socket.setSoTimeout(5000);
             OutputStream out = socket.getOutputStream();
             out.write(("GET / HTTP/1.1\r\nHost: " + host + "\r\nConnection: close\r\n\r\n")
                     .getBytes(StandardCharsets.US_ASCII));
