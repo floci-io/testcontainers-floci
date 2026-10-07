@@ -839,7 +839,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * new FlociContainer()
      *     .withDuckDbConfig(c -> c
      *         .url("http://duckdb:8080")
-     *         .defaultImage("floci/floci-duck:1.5.18"));
+     *         .defaultImage("floci/floci-duck:x.y.z"));
      * }</pre>
      *
      * @param configurer a consumer that receives a {@link DuckDbConfig.Builder} to modify

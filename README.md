@@ -1,43 +1,66 @@
-# Testcontainers Floci
+<p align="center">
+  <img src="https://raw.githubusercontent.com/floci-io/.github/main/floci.svg#gh-light-mode-only" alt="Floci" width="500" />
+  <img src="https://github.com/user-attachments/assets/edfff8b3-926c-471e-9549-77fb90a21b49#gh-dark-mode-only" alt="Floci" width="500" />
+</p>
 
-[![CI](https://github.com/floci-io/testcontainers-floci/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/floci-io/testcontainers-floci/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+<p align="center">
+  <strong>Any Cloud. Locally.</strong><br />
+  Light, fluffy, and always free: Testcontainers for Java<br />
+  No account. No auth token. No feature gates.
+</p>
 
-[Testcontainers](https://testcontainers.com/) modules for [Floci](https://github.com/floci-io/floci) — free, open-source local
-cloud emulators for AWS ([Floci](https://github.com/floci-io/floci)) and Azure ([Floci Azure](https://github.com/floci-io/floci-az)).
+<p align="center">
+  <a href="https://central.sonatype.com/artifact/io.floci/testcontainers-floci"><img src="https://img.shields.io/maven-central/v/io.floci/testcontainers-floci?label=maven%20central&color=blue" alt="Maven Central"></a>
+  <a href="https://github.com/floci-io/testcontainers-floci/actions/workflows/ci.yml"><img src="https://github.com/floci-io/testcontainers-floci/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-green" alt="License: MIT"></a>
+  <a href="https://github.com/floci-io/testcontainers-floci/stargazers"><img src="https://img.shields.io/github/stars/floci-io/testcontainers-floci?style=flat" alt="GitHub Stars"></a>
+</p>
 
-Floci provides a single Docker container that emulates many AWS services (like S3, SQS, DynamoDB, Lambda, and more) on
-a single endpoint, making it ideal for integration testing. See the [Floci documentation](https://floci.io/floci/services/) for the full list of supported services.
-
-## Modules
-
-| Module                                                                                                  | Description                                                |
-|-----------------------------------------------------------------------------------------------------------|-------------------------------------------------------------|
-| [`testcontainers-floci`](#module-testcontainers-floci)                                                    | Testcontainers module for starting a Floci (AWS) container  |
-| [`testcontainers-floci-az`](#module-testcontainers-floci-az)                                              | Testcontainers module for starting a Floci Azure container  |
-| `testcontainers-floci-core`                                                                               | Shared base classes of the modules above (not used directly) |
-| [`spring-boot-testcontainers-floci`](#module-spring-boot-testcontainers-floci-decommissioned) (decommissioned) | Superseded by Spring Cloud AWS's own testcontainers module |
-
-## Requirements
-
-- Java 17+
-- Docker
-
-## Version Compatibility
-
-| testcontainers-floci | Spring Boot integration                                     | Testcontainers | Release badges                                                                                                                                                                       |
-|-----------------------|-------------------------------------------------------------|----------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **2.x**               | via [`spring-cloud-aws-testcontainers`](#module-spring-boot-testcontainers-floci-decommissioned) (4.1.0+) | 2.x            | [![Maven Central](https://img.shields.io/maven-central/v/io.floci/testcontainers-floci)](https://central.sonatype.com/artifact/io.floci/testcontainers-floci)                        |
-| **1.x**               | `spring-boot-testcontainers-floci` (Spring Boot 3.5.x / Spring Cloud AWS 3.4.x) | 1.x            | [![Maven Central](https://img.shields.io/maven-central/v/io.floci/testcontainers-floci?filter=1.*)](https://img.shields.io/maven-central/v/io.floci/testcontainers-floci?filter=1.*) |
+<p align="center">
+  <a href="#quick-start">Quick Start</a> ·
+  <a href="#service-configuration">Configuration</a> ·
+  <a href="#the-floci-emulators">Emulators</a> ·
+  <a href="https://floci.io/floci/testcontainers/java/">Docs</a>
+</p>
 
 ---
 
-## Module: testcontainers-floci
+## What is this?
 
-The core module provides a `FlociContainer` class that starts and manages a Floci Docker container for use in 
-integration tests.
+[Testcontainers](https://testcontainers.com/) modules for [Floci](https://github.com/floci-io), the free, open-source
+local cloud emulators. Each module starts a Floci emulator container for your integration tests and gives you an
+endpoint and credentials to point the cloud SDK at, plus a typed, per-service configuration API over the emulator's
+environment variables. No cloud account, no auth token.
 
-### Installation
+| Module                                                                                                    | Description                                                  |
+|-----------------------------------------------------------------------------------------------------------|--------------------------------------------------------------|
+| [`testcontainers-floci`](#aws-testcontainers-floci)                                                       | Starts a Floci (AWS) container: `FlociContainer`             |
+| [`testcontainers-floci-az`](#azure-testcontainers-floci-az)                                               | Starts a Floci Azure container: `FlociAzContainer`           |
+| `testcontainers-floci-core`                                                                               | Shared base classes of the modules above (not used directly) |
+| [`spring-boot-testcontainers-floci`](#spring-boot-integration) (decommissioned)                           | Superseded by Spring Cloud AWS's own testcontainers module   |
+
+### The Floci emulators
+
+testcontainers-floci is the Java member of the [Floci](https://github.com/floci-io) Testcontainers family. Floci is
+named after [floccus](https://en.wikipedia.org/wiki/Cirrocumulus_floccus), the cloud formation that looks like popcorn.
+
+| Emulator                                         | Cloud | Port | Supported                                                   |
+|--------------------------------------------------|-------|:----:|:-----------------------------------------------------------:|
+| [floci](https://github.com/floci-io/floci)       | AWS   | 4566 | ✅ [`testcontainers-floci`](#aws-testcontainers-floci)       |
+| [floci-az](https://github.com/floci-io/floci-az) | Azure | 4577 | ✅ [`testcontainers-floci-az`](#azure-testcontainers-floci-az) |
+| [floci-gcp](https://github.com/floci-io/floci-gcp) | GCP | 4588 | Planned                                                     |
+| [floci-oci](https://github.com/floci-io/floci-oci) | OCI | 4599 | Planned                                                     |
+
+## Installation
+
+### Version compatibility
+
+| testcontainers-floci | Spring Boot integration                                     | Testcontainers | Release badges                                                                                                                                                                       |
+|-----------------------|-------------------------------------------------------------|----------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **2.x**               | via [`spring-cloud-aws-testcontainers`](#spring-boot-integration) (4.1.0+) | 2.x            | [![Maven Central](https://img.shields.io/maven-central/v/io.floci/testcontainers-floci)](https://central.sonatype.com/artifact/io.floci/testcontainers-floci)                        |
+| **1.x**               | `spring-boot-testcontainers-floci` (Spring Boot 3.5.x / Spring Cloud AWS 3.4.x) | 1.x            | [![Maven Central](https://img.shields.io/maven-central/v/io.floci/testcontainers-floci?filter=1.*)](https://img.shields.io/maven-central/v/io.floci/testcontainers-floci?filter=1.*) |
+
+### AWS: testcontainers-floci
 
 **Maven:**
 
@@ -62,9 +85,43 @@ testImplementation("io.floci:testcontainers-floci:${testcontainersFlociVersion}"
 testImplementation "io.floci:testcontainers-floci:${testcontainersFlociVersion}"
 ```
 
-### Usage
+### Azure: testcontainers-floci-az
 
-#### Java
+```xml
+<dependency>
+    <groupId>io.floci</groupId>
+    <artifactId>testcontainers-floci-az</artifactId>
+    <version>${testcontainers-floci.version}</version>
+    <scope>test</scope>
+</dependency>
+```
+
+### Spring Boot integration
+
+> **`spring-boot-testcontainers-floci` has been decommissioned on `main` and is no longer published for
+> `testcontainers-floci` 2.x.** The same `@ServiceConnection` integration between `FlociContainer` and Spring Cloud AWS
+> is now provided directly by the [Spring Cloud AWS](https://awspring.io/) project itself, via its own
+> `spring-cloud-aws-testcontainers` module, starting from **Spring Cloud AWS 4.1.0**. Depend on that module instead:
+>
+> ```xml
+> <dependency>
+>     <groupId>io.awspring.cloud</groupId>
+>     <artifactId>spring-cloud-aws-testcontainers</artifactId>
+>     <version>4.1.0</version>
+>     <scope>test</scope>
+> </dependency>
+> ```
+>
+> It is still used together with `testcontainers-floci` (for `FlociContainer` itself) — only the Spring Boot glue
+> code moves to Spring Cloud AWS. See the [Spring Cloud AWS documentation](https://docs.awspring.io/spring-cloud-aws/docs/current/reference/html/index.html)
+> for usage details.
+>
+> The `1.x` line (Spring Boot 3.x / Spring Cloud AWS 3.4.x) still ships `spring-boot-testcontainers-floci` on the
+> `releases/1.x` branch and is unaffected by this change.
+
+## Quick start
+
+### AWS (Java)
 
 ```java
 import io.floci.testcontainers.FlociContainer;
@@ -104,7 +161,7 @@ class S3IntegrationTest {
 }
 ```
 
-#### Kotlin
+### AWS (Kotlin)
 
 ```kotlin
 import io.floci.testcontainers.FlociContainer
@@ -148,7 +205,36 @@ class S3IntegrationTest {
 }
 ```
 
-### Configuration
+### Azure
+
+```java
+@Testcontainers
+class BlobStorageTest {
+
+    @Container
+    static FlociAzContainer floci = new FlociAzContainer();
+
+    @Test
+    void shouldUploadBlob() {
+        BlobServiceClient blobs = new BlobServiceClientBuilder()
+                .connectionString(floci.getStorageConnectionString())
+                .buildClient();
+
+        BlobClient blob = blobs.createBlobContainer("my-container").getBlobClient("hello.txt");
+        blob.upload(BinaryData.fromString("hello"));
+
+        assertThat(blob.downloadContent().toString()).isEqualTo("hello");
+    }
+}
+```
+
+Storage data planes live under account-prefixed paths of the default account `devstoreaccount1`
+(`getBlobEndpoint()`, `getQueueEndpoint()`, `getTableEndpoint()`); ARM management calls go to
+`getEndpoint() + "/subscriptions/" + getSubscriptionId() + ...`.
+
+## Service configuration
+
+### AWS
 
 | Method                                | Description                                                                                                    |
 |---------------------------------------|----------------------------------------------------------------------------------------------------------------|
@@ -174,7 +260,8 @@ class S3IntegrationTest {
 
 Each AWS service emulated by Floci can be individually configured via a `with*Config(...)` method on
 `FlociContainer`. Every service configuration supports at least an `enabled(boolean)` flag to enable or
-disable the service. Some services expose additional settings.
+disable the service. Some services expose additional settings. See the
+[Floci documentation](https://floci.io/floci/services/) for the full list of supported services.
 
 Example — disable a service and customize another:
 
@@ -203,7 +290,48 @@ FlociContainer floci = new FlociContainer().withDockerSocket(false);
 FlociContainer floci = new FlociContainer().withDockerSocket(true);
 ```
 
-### Container Properties
+### Azure
+
+| Method                      | Description                                                                                         |
+|-----------------------------|-----------------------------------------------------------------------------------------------------|
+| `FlociAzContainer()`        | Creates a container with the default image (`floci/floci-az:latest`)                                |
+| `FlociAzContainer(String)`  | Creates a container with a custom image tag                                                         |
+| `withLogLevel(Level)`       | Sets the Floci Azure log level (`TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`)                          |
+| `withDedicatedNetwork()`    | Creates a dedicated Docker network shared by Floci Azure and the containers it spawns               |
+| `withDockerSocket(boolean)` | Overrides whether the host Docker socket is mounted, bypassing auto-detection                       |
+| `withTlsConfig(...)`        | Configures TLS/HTTPS (self-signed by default; optionally provide cert/key paths)                    |
+| `withAuthConfig(...)`       | Configures authentication, e.g. keys of additional storage accounts used to validate SAS tokens     |
+| `with*Config(...)`          | Configures service-specific settings, e.g. `withServiceBusConfig(c -> c.mocked(false))`             |
+
+Docker-backed services (Functions, AKS, Container Registry, Redis, Event Hubs, Service Bus, SQL Database,
+PostgreSQL, MySQL, MariaDB, Cosmos DB API engines, Container Instances, Virtual Machines, Container Apps) mount the
+host Docker socket automatically while they are enabled and not `mocked`, exactly like the AWS module. Their sidecar
+containers publish their ports directly on the Docker host; the port ranges they use default to 10 ports each (e.g.
+`withAksConfig(c -> c.apiServerPortRange(6443, 10))`).
+
+#### HTTPS
+
+Several Azure SDKs (Key Vault, App Configuration, Communication Services, Cosmos DB) only talk HTTPS. Enable TLS and
+let the client trust the certificate Floci Azure serves; HTTP and HTTPS share the same port:
+
+```java
+FlociAzContainer floci = new FlociAzContainer().withTlsConfig(c -> c.enabled(true));
+floci.start();
+
+String certificatePem = floci.getTlsCertificate();      // add it to the trust store of your HTTP client
+SecretClient secrets = new SecretClientBuilder()
+        .vaultUrl(floci.getHttpsEndpoint() + "/devstoreaccount1-keyvault")
+        // ...
+        .buildClient();
+```
+
+> **Note:** Floci Azure generates some URLs (e.g. the polling URL of long-running Email operations) from its own base
+> URL `http://localhost:4577`, which does not match the randomly mapped host port of the container. Clients following
+> such URLs need to rewrite them to `getEndpoint()`/`getHttpsEndpoint()`.
+
+## Container options
+
+### AWS
 
 | Method                        | Description                                                       | Default          |
 |-------------------------------|-------------------------------------------------------------------|------------------|
@@ -225,94 +353,7 @@ FlociContainer floci = new FlociContainer().withDockerSocket(true);
 | `getNetworkConfig()`          | Current network configuration                                     | —                |
 | `get*Config()`                | Current configuration of a service                                | —                |
 
-
----
-
-## Module: testcontainers-floci-az
-
-The `testcontainers-floci-az` module provides a `FlociAzContainer` class that starts and manages a
-[Floci Azure](https://github.com/floci-io/floci-az) Docker container (`floci/floci-az`, port `4577`) for use in
-integration tests. It serves all emulated Azure services (Blob, Queue and Table Storage, Key Vault, Cosmos DB, Service
-Bus, Event Hubs, ARM-based services and more) on a single endpoint.
-
-### Installation
-
-```xml
-<dependency>
-    <groupId>io.floci</groupId>
-    <artifactId>testcontainers-floci-az</artifactId>
-    <version>${testcontainers-floci.version}</version>
-    <scope>test</scope>
-</dependency>
-```
-
-### Usage
-
-```java
-@Testcontainers
-class BlobStorageTest {
-
-    @Container
-    static FlociAzContainer floci = new FlociAzContainer();
-
-    @Test
-    void shouldUploadBlob() {
-        BlobServiceClient blobs = new BlobServiceClientBuilder()
-                .connectionString(floci.getStorageConnectionString())
-                .buildClient();
-
-        BlobClient blob = blobs.createBlobContainer("my-container").getBlobClient("hello.txt");
-        blob.upload(BinaryData.fromString("hello"));
-
-        assertThat(blob.downloadContent().toString()).isEqualTo("hello");
-    }
-}
-```
-
-Storage data planes live under account-prefixed paths of the default account `devstoreaccount1`
-(`getBlobEndpoint()`, `getQueueEndpoint()`, `getTableEndpoint()`); ARM management calls go to
-`getEndpoint() + "/subscriptions/" + getSubscriptionId() + ...`.
-
-#### HTTPS
-
-Several Azure SDKs (Key Vault, App Configuration, Communication Services, Cosmos DB) only talk HTTPS. Enable TLS and
-let the client trust the certificate Floci Azure serves; HTTP and HTTPS share the same port:
-
-```java
-FlociAzContainer floci = new FlociAzContainer().withTlsConfig(c -> c.enabled(true));
-floci.start();
-
-String certificatePem = floci.getTlsCertificate();      // add it to the trust store of your HTTP client
-SecretClient secrets = new SecretClientBuilder()
-        .vaultUrl(floci.getHttpsEndpoint() + "/devstoreaccount1-keyvault")
-        // ...
-        .buildClient();
-```
-
-### Configuration
-
-| Method                      | Description                                                                                         |
-|-----------------------------|-----------------------------------------------------------------------------------------------------|
-| `FlociAzContainer()`        | Creates a container with the default image (`floci/floci-az:latest`)                                |
-| `FlociAzContainer(String)`  | Creates a container with a custom image tag                                                         |
-| `withLogLevel(Level)`       | Sets the Floci Azure log level (`TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`)                          |
-| `withDedicatedNetwork()`    | Creates a dedicated Docker network shared by Floci Azure and the containers it spawns               |
-| `withDockerSocket(boolean)` | Overrides whether the host Docker socket is mounted, bypassing auto-detection                       |
-| `withTlsConfig(...)`        | Configures TLS/HTTPS (self-signed by default; optionally provide cert/key paths)                    |
-| `withAuthConfig(...)`       | Configures authentication, e.g. keys of additional storage accounts used to validate SAS tokens     |
-| `with*Config(...)`          | Configures service-specific settings, e.g. `withServiceBusConfig(c -> c.mocked(false))`             |
-
-Docker-backed services (Functions, AKS, Container Registry, Redis, Event Hubs, Service Bus, SQL Database,
-PostgreSQL, MySQL, MariaDB, Cosmos DB API engines, Container Instances, Virtual Machines, Container Apps) mount the
-host Docker socket automatically while they are enabled and not `mocked`, exactly like the AWS module. Their sidecar
-containers publish their ports directly on the Docker host; the port ranges they use default to 10 ports each (e.g.
-`withAksConfig(c -> c.apiServerPortRange(6443, 10))`).
-
-> **Note:** Floci Azure generates some URLs (e.g. the polling URL of long-running Email operations) from its own base
-> URL `http://localhost:4577`, which does not match the randomly mapped host port of the container. Clients following
-> such URLs need to rewrite them to `getEndpoint()`/`getHttpsEndpoint()`.
-
-### Container Properties
+### Azure
 
 | Method                        | Description                                                       | Default                                |
 |-------------------------------|-------------------------------------------------------------------|----------------------------------------|
@@ -330,38 +371,59 @@ containers publish their ports directly on the Docker host; the port ranges they
 | `getLogLevel()`               | Configured log level                                              | `WARN`                                 |
 | `get*Config()`                | Current configuration of a service or of TLS/auth                 | —                                      |
 
----
+## Docker image tags
 
-## Module: spring-boot-testcontainers-floci (decommissioned)
+By default each module runs the floating `latest` tag of its emulator image (`floci/floci:latest`,
+`floci/floci-az:latest`), so you always test against the current emulator. Pass an image name to the constructor to
+pin a release or follow `main`:
 
-> **This module has been decommissioned on `main` and is no longer published for `testcontainers-floci` 2.x.**
-> The same `@ServiceConnection` integration between `FlociContainer` and Spring Cloud AWS is now provided directly
-> by the [Spring Cloud AWS](https://awspring.io/) project itself, via its own `spring-cloud-aws-testcontainers`
-> module, starting from **Spring Cloud AWS 4.1.0**. Depend on that module instead:
->
-> ```xml
-> <dependency>
->     <groupId>io.awspring.cloud</groupId>
->     <artifactId>spring-cloud-aws-testcontainers</artifactId>
->     <version>4.1.0</version>
->     <scope>test</scope>
-> </dependency>
-> ```
->
-> It is still used together with `testcontainers-floci` (for `FlociContainer` itself) — only the Spring Boot glue
-> code moves to Spring Cloud AWS. See the [Spring Cloud AWS documentation](https://docs.awspring.io/spring-cloud-aws/docs/current/reference/html/index.html)
-> for usage details.
->
-> The `1.x` line (Spring Boot 3.x / Spring Cloud AWS 3.4.x) still ships `spring-boot-testcontainers-floci` on the
-> `releases/1.x` branch and is unaffected by this change.
+```java
+new FlociContainer("floci/floci:x.y.z");      // a specific release
+new FlociAzContainer("floci/floci-az:nightly"); // built from main every night
+```
 
----
+Every emulator publishes `latest`, `x.y.z` and `nightly` tags.
 
-## Contributing
+## Requirements
 
-Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for how to get started, how to run the tests, the
-branching model, and commit message conventions.
+- Java 17+
+- Docker
+
+## Building and testing
+
+```bash
+mvn -B verify                                              # all modules, unit and integration tests
+mvn -pl testcontainers-floci test -Dtest=IamConfigTest     # a single test class
+```
+
+There is no separate integration-test phase: `mvn verify` starts real Floci containers, so Docker must be running.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the project layout, the branching model, and how to add a service.
+
+## Other languages
+
+| Language | Repository |
+|---|---|
+| Java | **testcontainers-floci** (this repo) |
+| Node.js / TypeScript | [testcontainers-floci-node](https://github.com/floci-io/testcontainers-floci-node) |
+| Python | [testcontainers-floci-python](https://github.com/floci-io/testcontainers-floci-python) |
+| Go | [testcontainers-floci-go](https://github.com/floci-io/testcontainers-floci-go) |
+| .NET | [testcontainers-floci-dotnet](https://github.com/floci-io/testcontainers-floci-dotnet) |
+
+## Community
+
+- 💬 [Slack](https://join.slack.com/t/floci/shared_invite/zt-3tjn02s3q-A00kEjJ1cZxsg_imTfy6Cw): quick questions and community chat
+- 🗣️ [GitHub Discussions](https://github.com/orgs/floci-io/discussions): ideas, design tradeoffs, and proposals
+- [CONTRIBUTING.md](CONTRIBUTING.md) · [SECURITY.md](SECURITY.md) · [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) · [MAINTAINERS.md](MAINTAINERS.md)
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+MIT. See [LICENSE](LICENSE).
+
+---
+
+<div align="center">
+
+Floci™ is a trademark of Hector Ventura. Code is MIT-licensed; see
+[TRADEMARK.md](https://github.com/floci-io/.github/blob/main/TRADEMARK.md) for name and logo use.
+
+</div>

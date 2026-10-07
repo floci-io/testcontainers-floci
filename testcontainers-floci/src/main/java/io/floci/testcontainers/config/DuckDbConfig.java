@@ -9,7 +9,7 @@ import org.testcontainers.containers.Container;
  * <pre>{@code
  * DuckDbConfig config = DuckDbConfig.builder()
  *     .url("http://duckdb:8080")
- *     .defaultImage("floci/floci-duck:1.0")
+ *     .defaultImage("floci/floci-duck:x.y.z")
  *     .build();
  * }</pre>
  */
