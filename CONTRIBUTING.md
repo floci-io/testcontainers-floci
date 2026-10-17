@@ -34,8 +34,10 @@ Please read and follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 mvn verify
 ```
 
-This compiles all modules, runs unit tests, and runs integration tests against a real Floci container. Docker must be
-running for the integration tests to pass.
+This compiles all modules, runs the unit tests (`mvn test`, no Docker needed) and the integration tests against real
+Floci containers (Failsafe, Docker required). Every test that starts a container is tagged `@Tag("integration")` —
+inherited from `AbstractServiceTest` for the service tests — and uses the image pinned in `.github/docker-images.txt`
+via `TestImages`.
 
 ## Project Structure
 
@@ -61,7 +63,7 @@ testcontainers-floci-aws/         AWS module — FlociContainer (extends Abstrac
     io/floci/testcontainers/
       FlociContainerServicesConfigTest.java  Unit tests for service config wiring (no Docker)
       config/services/            Unit tests for individual config classes (no Docker)
-      services/                   Integration tests per AWS service (Docker required)
+      services/                   Integration tests per AWS service (tagged "integration", Docker required)
         AbstractServiceTest.java  Shared singleton FlociContainer used by all service tests
 testcontainers-floci-az/          Azure module — FlociAzContainer (extends AbstractFlociContainer)
   src/main/java/

@@ -1,5 +1,7 @@
 package io.floci.testcontainers.az;
 
+import io.floci.testcontainers.core.testing.TestImages;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import javax.net.ssl.SSLContext;
@@ -19,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FlociAzContainerTlsTest {
 
-    private static final String NIGHTLY_IMAGE = "floci/floci-az:nightly";
+    private static final String IMAGE = TestImages.pinnedImage(FlociAzContainer.DESCRIPTOR);
 
     @Test
     void shouldStoreTlsConfigOnContainer() {
@@ -40,8 +42,9 @@ class FlociAzContainerTlsTest {
     }
 
     @Test
+    @Tag("integration")
     void shouldServeHttpsWithTrustedCertificate() throws Exception {
-        try (FlociAzContainer container = new FlociAzContainer(NIGHTLY_IMAGE)
+        try (FlociAzContainer container = new FlociAzContainer(IMAGE)
                 .withTlsConfig(c -> c.enabled(true))) {
             container.start();
 
@@ -58,8 +61,9 @@ class FlociAzContainerTlsTest {
     }
 
     @Test
+    @Tag("integration")
     void shouldFailToFetchCertificateWhenTlsIsDisabled() {
-        try (FlociAzContainer container = new FlociAzContainer(NIGHTLY_IMAGE).disableAllServices()) {
+        try (FlociAzContainer container = new FlociAzContainer(IMAGE).disableAllServices()) {
             container.start();
 
             assertThatThrownBy(container::getTlsCertificate)

@@ -29,7 +29,7 @@ class OkeServiceTest extends AbstractServiceTest {
 
     @Test
     void shouldCreateMockedClusterWithKubeconfig() throws Exception {
-        try (FlociOciContainer mocked = new FlociOciContainer(NIGHTLY_IMAGE)
+        try (FlociOciContainer mocked = new FlociOciContainer(IMAGE)
                 .disableAllServices()
                 .withOkeConfig(c -> c.enabled(true).mock(true).kubeconfigAuth(OkeConfig.KubeconfigAuth.TOKEN));
              ContainerEngineClient oke = startAndCreateClient(mocked)) {
@@ -54,7 +54,7 @@ class OkeServiceTest extends AbstractServiceTest {
     void shouldRunClusterInK3sContainer() {
         // Floci OCI probes the k3s API server on its own network before the cluster becomes ACTIVE, which needs a
         // user-defined network
-        try (FlociOciContainer k3s = new FlociOciContainer(NIGHTLY_IMAGE)
+        try (FlociOciContainer k3s = new FlociOciContainer(IMAGE)
                 .withDedicatedNetwork()
                 .disableAllServices()
                 .withOkeConfig(c -> c.enabled(true).readyTimeoutSeconds(120));

@@ -12,7 +12,7 @@ class AcrServiceTest extends AbstractServiceTest {
     @Test
     void shouldCreateMockedRegistry() {
         // A non-mocked registry starts a registry:2 container; the mocked one has a cosmetic login server
-        try (FlociAzContainer mockedFloci = new FlociAzContainer(NIGHTLY_IMAGE)
+        try (FlociAzContainer mockedFloci = new FlociAzContainer(IMAGE)
                 .disableAllServices()
                 .withAcrConfig(c -> c.enabled(true).mocked(true))) {
             mockedFloci.start();

@@ -8,8 +8,10 @@ import com.azure.storage.blob.models.BlobStorageException;
 import com.azure.storage.blob.sas.BlobSasPermission;
 import com.azure.storage.blob.sas.BlobServiceSasSignatureValues;
 import com.azure.storage.common.StorageSharedKeyCredential;
+import io.floci.testcontainers.core.testing.TestImages;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.time.OffsetDateTime;
@@ -19,9 +21,10 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@Tag("integration")
 class FlociAzContainerAuthTest {
 
-    private static final String NIGHTLY_IMAGE = "floci/floci-az:nightly";
+    private static final String IMAGE = TestImages.pinnedImage(FlociAzContainer.DESCRIPTOR);
     private static final String ACCOUNT = "myaccount";
     private static final String ACCOUNT_KEY = Base64.getEncoder().encodeToString("my-account-key".getBytes());
     private static final String OTHER_KEY = Base64.getEncoder().encodeToString("some-other-key".getBytes());
@@ -31,7 +34,7 @@ class FlociAzContainerAuthTest {
 
     @BeforeAll
     static void startContainer() {
-        floci = new FlociAzContainer(NIGHTLY_IMAGE)
+        floci = new FlociAzContainer(IMAGE)
                 .withAuthConfig(c -> c.storageAccountKey(ACCOUNT, ACCOUNT_KEY));
         floci.start();
 

@@ -27,7 +27,7 @@ class CosmosServiceTest extends AbstractServiceTest {
 
     @Test
     void shouldStartEnabledEmbeddedApiEngine() {
-        try (FlociAzContainer engineFloci = new FlociAzContainer(NIGHTLY_IMAGE)
+        try (FlociAzContainer engineFloci = new FlociAzContainer(IMAGE)
                 .disableAllServices()
                 .withCosmosConfig(c -> c.enabled(true).table(api -> api.enabled(true)))) {
             engineFloci.start();

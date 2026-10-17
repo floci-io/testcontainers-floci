@@ -33,7 +33,7 @@ class ServiceUsageServiceTest extends AbstractServiceTest {
 
     @Test
     void shouldRejectDisabledServiceWhileEnforcementEnabled() throws Exception {
-        try (FlociGcpContainer enforcingFloci = new FlociGcpContainer(NIGHTLY_IMAGE)
+        try (FlociGcpContainer enforcingFloci = new FlociGcpContainer(IMAGE)
                 .disableAllServices()
                 .withServiceUsageConfig(c -> c.enabled(true).enforcementEnabled(true))
                 .withSecretManagerConfig(c -> c.enabled(true))) {

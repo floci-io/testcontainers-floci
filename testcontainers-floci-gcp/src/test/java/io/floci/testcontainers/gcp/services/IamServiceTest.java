@@ -26,7 +26,7 @@ class IamServiceTest extends AbstractServiceTest {
 
     @Test
     void shouldStartWithEnforcedAuthorization() {
-        try (FlociGcpContainer enforcingFloci = new FlociGcpContainer(NIGHTLY_IMAGE)
+        try (FlociGcpContainer enforcingFloci = new FlociGcpContainer(IMAGE)
                 .disableAllServices()
                 .withIamConfig(c -> c.enabled(true)
                         .authorizationMode(IamConfig.AuthorizationMode.ENFORCE)

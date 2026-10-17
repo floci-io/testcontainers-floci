@@ -10,6 +10,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.floci.testcontainers.az.FlociAzContainer;
+import io.floci.testcontainers.core.testing.TestImages;
+import org.junit.jupiter.api.Tag;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
@@ -33,11 +35,11 @@ import java.util.UUID;
  * Base class for Floci Azure service integration tests. Provides a shared {@link FlociAzContainer}
  * singleton (started once per JVM) with TLS enabled, since several Azure SDKs only talk HTTPS.
  */
+@Tag("integration")
 abstract class AbstractServiceTest {
 
-    // Integration tests run against the nightly build so newly added services are covered
-    // before they land in a versioned release.
-    protected static final String NIGHTLY_IMAGE = "floci/floci-az:nightly";
+    // The emulator image pinned in .github/docker-images.txt
+    protected static final String IMAGE = TestImages.pinnedImage(FlociAzContainer.DESCRIPTOR);
 
     private static final boolean DEBUG_LOGGING = false;
 
@@ -52,11 +54,11 @@ abstract class AbstractServiceTest {
 
     static {
         if (DEBUG_LOGGING) {
-            floci = new FlociAzContainer(NIGHTLY_IMAGE)
+            floci = new FlociAzContainer(IMAGE)
                     .withLogLevel(Level.DEBUG)
                     .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger("DOCKER")));
         } else {
-            floci = new FlociAzContainer(NIGHTLY_IMAGE)
+            floci = new FlociAzContainer(IMAGE)
                     .withLogLevel(Level.INFO);
         }
 

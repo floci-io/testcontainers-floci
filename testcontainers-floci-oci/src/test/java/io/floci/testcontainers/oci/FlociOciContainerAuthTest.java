@@ -2,8 +2,10 @@ package io.floci.testcontainers.oci;
 
 import com.oracle.bmc.http.signing.DefaultRequestSigner;
 import com.oracle.bmc.http.signing.RequestSigner;
+import io.floci.testcontainers.core.testing.TestImages;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
@@ -15,15 +17,16 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Tag("integration")
 class FlociOciContainerAuthTest {
 
-    private static final String NIGHTLY_IMAGE = "floci/floci-oci:nightly";
+    private static final String IMAGE = TestImages.pinnedImage(FlociOciContainer.DESCRIPTOR);
 
     private static FlociOciContainer floci;
 
     @BeforeAll
     static void startContainer() {
-        floci = new FlociOciContainer(NIGHTLY_IMAGE)
+        floci = new FlociOciContainer(IMAGE)
                 .withAuthConfig(c -> c.requireSignature(true));
         floci.start();
     }

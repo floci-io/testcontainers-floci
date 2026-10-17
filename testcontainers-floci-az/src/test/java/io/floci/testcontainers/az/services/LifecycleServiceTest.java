@@ -33,7 +33,7 @@ class LifecycleServiceTest extends AbstractServiceTest {
     @Test
     void shouldRemoveSiblingContainersAndVolumesOnStop() {
         String namespace;
-        try (FlociAzContainer container = new FlociAzContainer(NIGHTLY_IMAGE)
+        try (FlociAzContainer container = new FlociAzContainer(IMAGE)
                 .disableAllServices()
                 .withRedisConfig(c -> c.enabled(true).mocked(false))) {
             container.start();

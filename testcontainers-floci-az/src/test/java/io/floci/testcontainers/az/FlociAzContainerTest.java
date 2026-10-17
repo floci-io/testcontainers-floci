@@ -1,6 +1,8 @@
 package io.floci.testcontainers.az;
 
 import io.floci.testcontainers.core.config.services.AbstractServiceConfig;
+import io.floci.testcontainers.core.testing.TestImages;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 import org.testcontainers.utility.DockerImageName;
@@ -16,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FlociAzContainerTest {
 
-    private static final String NIGHTLY_IMAGE = "floci/floci-az:nightly";
+    private static final String IMAGE = TestImages.pinnedImage(FlociAzContainer.DESCRIPTOR);
 
     @Test
     void shouldCreateContainerWithDefaultImage() {
@@ -140,8 +142,9 @@ class FlociAzContainerTest {
     }
 
     @Test
+    @Tag("integration")
     void shouldStartContainerAndServeEndpoints() throws Exception {
-        try (FlociAzContainer container = new FlociAzContainer(NIGHTLY_IMAGE).withLogLevel(Level.DEBUG)) {
+        try (FlociAzContainer container = new FlociAzContainer(IMAGE).withLogLevel(Level.DEBUG)) {
             container.start();
 
             HttpResponse<String> response = HttpClient.newHttpClient().send(

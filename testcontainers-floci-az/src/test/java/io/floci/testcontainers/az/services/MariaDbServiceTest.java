@@ -12,7 +12,7 @@ class MariaDbServiceTest extends AbstractServiceTest {
     @Test
     void shouldCreateMockedServer() {
         // A non-mocked server starts a MariaDB container; the mocked one is ready without Docker
-        try (FlociAzContainer mockedFloci = new FlociAzContainer(NIGHTLY_IMAGE)
+        try (FlociAzContainer mockedFloci = new FlociAzContainer(IMAGE)
                 .disableAllServices()
                 .withMariaDbConfig(c -> c.enabled(true).mocked(true))) {
             mockedFloci.start();

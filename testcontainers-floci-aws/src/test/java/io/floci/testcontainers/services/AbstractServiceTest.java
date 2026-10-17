@@ -1,6 +1,8 @@
 package io.floci.testcontainers.services;
 
 import io.floci.testcontainers.FlociContainer;
+import io.floci.testcontainers.core.testing.TestImages;
+import org.junit.jupiter.api.Tag;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
@@ -16,13 +18,13 @@ import java.net.URI;
  * Base class for Floci service integration tests. Provides a shared {@link FlociContainer}
  * singleton (started once per JVM) and a convenience method to build pre-configured AWS SDK clients.
  */
+@Tag("integration")
 abstract class AbstractServiceTest {
 
     protected static final int LB_LISTENER_PORT = 8780;
 
-    // Integration tests run against the nightly build so newly added services are covered
-    // before they land in a versioned release.
-    private static final String NIGHTLY_IMAGE = "floci/floci:nightly";
+    // The emulator image pinned in .github/docker-images.txt
+    private static final String IMAGE = TestImages.pinnedImage(FlociContainer.DESCRIPTOR);
 
     private static final boolean DEBUG_LOGGING = false;
 
@@ -30,11 +32,11 @@ abstract class AbstractServiceTest {
 
     static {
         if (DEBUG_LOGGING) {
-            floci = new FlociContainer(NIGHTLY_IMAGE)
+            floci = new FlociContainer(IMAGE)
                     .withLogLevel(Level.DEBUG)
                     .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger("DOCKER")));
         } else {
-            floci = new FlociContainer(NIGHTLY_IMAGE)
+            floci = new FlociContainer(IMAGE)
                     .withLogLevel(Level.INFO);
         }
 

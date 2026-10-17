@@ -61,7 +61,7 @@ class LifecycleServiceTest extends AbstractServiceTest {
     void shouldRemoveSiblingContainersAndVolumesOnStop() {
         String namespace;
         // Floci OCI reaches the Fn server sibling container by its name, which needs a user-defined network
-        try (FlociOciContainer container = new FlociOciContainer(NIGHTLY_IMAGE)
+        try (FlociOciContainer container = new FlociOciContainer(IMAGE)
                 .withDedicatedNetwork()
                 .disableAllServices()
                 .withFunctionsConfig(c -> c.enabled(true))) {

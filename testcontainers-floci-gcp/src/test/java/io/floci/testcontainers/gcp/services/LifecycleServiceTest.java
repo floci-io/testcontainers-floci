@@ -32,7 +32,7 @@ class LifecycleServiceTest extends AbstractServiceTest {
     @Test
     void shouldRemoveSiblingContainersAndVolumesOnStop() {
         String namespace;
-        try (FlociGcpContainer container = new FlociGcpContainer(NIGHTLY_IMAGE)
+        try (FlociGcpContainer container = new FlociGcpContainer(IMAGE)
                 .disableAllServices()
                 .withCloudSqlConfig(c -> c.enabled(true))) {
             container.start();

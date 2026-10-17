@@ -2,6 +2,7 @@ package io.floci.testcontainers;
 
 import io.floci.testcontainers.config.services.AbstractServiceConfig;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.event.Level;
@@ -201,6 +202,7 @@ class FlociContainerTest {
     }
 
     @Test
+    @Tag("integration")
     void shouldWaitForStartScriptsToComplete() throws Exception {
         try (FlociContainer container = new FlociContainer().disableAllServices()) {
             container.withCopyToContainer(Transferable.of("""
@@ -218,6 +220,7 @@ class FlociContainerTest {
     }
 
     @Test
+    @Tag("integration")
     void shouldRunShutdownHooksWhenStopped(@TempDir Path temporaryDirectory) {
         Path shutdownMarker = temporaryDirectory.resolve("completed");
         try (FlociContainer container = new FlociContainer().disableAllServices()
@@ -235,6 +238,7 @@ class FlociContainerTest {
     }
 
     @Test
+    @Tag("integration")
     void shouldDeleteContainerOwnedPersistentStorage() throws Exception {
         try (FlociContainer container = new FlociContainer().disableAllServices()
                 .withStorageConfig(c -> c.randomHostPersistentPath())) {

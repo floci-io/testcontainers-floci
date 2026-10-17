@@ -52,7 +52,7 @@ class IdentityServiceTest extends AbstractServiceTest {
 
     @Test
     void shouldRejectUnknownCompartmentWithStrictCompartments() {
-        try (FlociOciContainer strict = new FlociOciContainer(NIGHTLY_IMAGE)
+        try (FlociOciContainer strict = new FlociOciContainer(IMAGE)
                 .disableAllServices()
                 .withIdentityConfig(c -> c.enabled(true).strictCompartments(true))
                 .withQueueConfig(c -> c.enabled(true))) {

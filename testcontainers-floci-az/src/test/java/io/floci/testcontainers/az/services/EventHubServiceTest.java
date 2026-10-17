@@ -17,7 +17,7 @@ class EventHubServiceTest extends AbstractServiceTest {
 
     @BeforeAll
     static void startContainer() {
-        eventHubFloci = new FlociAzContainer(NIGHTLY_IMAGE)
+        eventHubFloci = new FlociAzContainer(IMAGE)
                 .disableAllServices()
                 .withEventHubConfig(c -> c.enabled(true).mocked(true).amqpPort(15672));
         eventHubFloci.start();

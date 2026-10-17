@@ -15,7 +15,7 @@ class GkeServiceTest extends AbstractServiceTest {
     @Test
     void shouldCreateMockedCluster() throws Exception {
         // A non-mocked cluster starts a privileged k3s container; the mocked one is control plane only
-        try (FlociGcpContainer mockedFloci = new FlociGcpContainer(NIGHTLY_IMAGE)
+        try (FlociGcpContainer mockedFloci = new FlociGcpContainer(IMAGE)
                 .disableAllServices()
                 .withGkeConfig(c -> c.enabled(true).mock(true))) {
             mockedFloci.start();
