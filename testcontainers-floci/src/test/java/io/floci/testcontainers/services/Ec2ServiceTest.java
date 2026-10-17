@@ -4,9 +4,13 @@ import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.KeyPair;
 import com.jcraft.jsch.Session;
+import org.awaitility.core.ConditionTimeoutException;
 import org.junit.jupiter.api.*;
+import org.testcontainers.images.RemoteDockerImage;
+import org.testcontainers.utility.DockerImageName;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.ec2.Ec2Client;
+import software.amazon.awssdk.services.ec2.model.Instance;
 import software.amazon.awssdk.services.ec2.model.InstanceStateName;
 import software.amazon.awssdk.services.ec2.model.Vpc;
 
@@ -16,12 +20,17 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class Ec2ServiceTest extends AbstractServiceTest {
+
+    private static final String AMI_ID = "ami-alpine";
+    // The Docker image Floci's EC2 image catalog maps AMI_ID to
+    private static final String AMI_DOCKER_IMAGE = "public.ecr.aws/docker/library/alpine:latest";
 
     static Ec2Client ec2;
 
@@ -96,18 +105,33 @@ class Ec2ServiceTest extends AbstractServiceTest {
     void shouldStartInstance() throws Exception {
         assertThat(keyName).as("key pair must have been created by previous test").isNotBlank();
 
+        // Floci pulls the AMI's image as part of the launch and waits up to 5 minutes per pull attempt, so a
+        // single stalled pull on a CI runner kept the instance pending past the wait below. Testcontainers
+        // aborts and retries stalled pulls, so pull the image up front; Floci then finds it locally.
+        new RemoteDockerImage(DockerImageName.parse(AMI_DOCKER_IMAGE)).get();
+
         instanceId = ec2.runInstances(b -> b
-                        .imageId("ami-alpine")
+                        .imageId(AMI_ID)
                         .instanceType("t2.micro")
                         .minCount(1)
                         .maxCount(1)
                         .keyName(keyName))
                 .instances().get(0).instanceId();
 
-        await().atMost(Duration.ofMinutes(5))
-                .pollInterval(Duration.ofSeconds(2))
-                .until(() -> ec2.describeInstances(b -> b.instanceIds(instanceId))
-                        .reservations().get(0).instances().get(0).state().name() == InstanceStateName.RUNNING);
+        // A failed launch goes straight to terminated, so wait for the instance to leave pending only
+        Instance instance;
+        try {
+            instance = await().atMost(Duration.ofMinutes(2))
+                    .pollInterval(Duration.ofSeconds(1))
+                    .until(() -> describeInstance(instanceId), i -> i.state().name() != InstanceStateName.PENDING);
+        } catch (ConditionTimeoutException e) {
+            throw new AssertionError("EC2 instance " + instanceId + " is still pending. Floci EC2 log:\n"
+                    + flociEc2Log(instanceId), e);
+        }
+        assertThat(instance.state().name())
+                .as(() -> "state of EC2 instance " + instanceId + " (" + instance.stateReason()
+                        + "). Floci EC2 log:\n" + flociEc2Log(instanceId))
+                .isEqualTo(InstanceStateName.RUNNING);
     }
 
     @Test
@@ -151,6 +175,17 @@ class Ec2ServiceTest extends AbstractServiceTest {
                 .pollInterval(Duration.ofMillis(100))
                 .until(() -> ec2.describeInstances(b -> b.instanceIds(instanceId))
                         .reservations().get(0).instances().get(0).state().name() == InstanceStateName.TERMINATED);
+    }
+
+    private static Instance describeInstance(String id) {
+        return ec2.describeInstances(b -> b.instanceIds(id)).reservations().get(0).instances().get(0);
+    }
+
+    /** Floci's log lines about the given EC2 instance and image pulls, to explain a failed launch. */
+    private static String flociEc2Log(String id) {
+        return floci.getLogs().lines()
+                .filter(line -> line.contains(id) || line.contains(".ec2.") || line.contains("ImageCacheService"))
+                .collect(Collectors.joining("\n"));
     }
 
     private static String sshExec(Session session, String command)
