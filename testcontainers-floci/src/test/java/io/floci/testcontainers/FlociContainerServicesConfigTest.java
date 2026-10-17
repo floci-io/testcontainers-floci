@@ -134,7 +134,7 @@ class FlociContainerServicesConfigTest {
     void shouldWireCloudFrontConfigIntoContainer() {
         assertConfigWired(
                 c -> c.withCloudFrontConfig(cfg -> cfg.domainSuffix("example.cloudfront.net")),
-                c -> c.getCloudFrontConfig().getDomainSuffix(), "example.cloudfront.net",
+                c -> c.getCloudFrontConfig().getDomainSuffix(), Optional.of("example.cloudfront.net"),
                 "FLOCI_SERVICES_CLOUDFRONT_DOMAIN_SUFFIX", "example.cloudfront.net");
     }
 

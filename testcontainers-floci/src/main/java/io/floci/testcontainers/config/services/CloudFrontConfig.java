@@ -16,8 +16,6 @@ import org.testcontainers.containers.Container;
  */
 public class CloudFrontConfig extends AbstractServiceConfig<CloudFrontConfig.Builder> {
 
-    private static final String DEFAULT_DOMAIN_SUFFIX = "cloudfront.net";
-
     private final String domainSuffix;
     private final List<String> allowedPrivateOriginHosts;
 
@@ -48,13 +46,13 @@ public class CloudFrontConfig extends AbstractServiceConfig<CloudFrontConfig.Bui
     }
 
     /**
-     * Returns the domain suffix used for CloudFront distribution domain names. It is configurable
-     * because it differs by partition (Floci has no published source for the China CDN suffix).
+     * Returns the domain suffix used for CloudFront distribution domain names in every partition,
+     * or {@link Optional#empty()} if Floci derives the suffix from the request's partition.
      *
-     * @return the domain suffix (default {@value DEFAULT_DOMAIN_SUFFIX})
+     * @return the domain suffix, or {@link Optional#empty()} if not set
      */
-    public String getDomainSuffix() {
-        return domainSuffix;
+    public Optional<String> getDomainSuffix() {
+        return Optional.ofNullable(domainSuffix);
     }
 
     /**
@@ -74,7 +72,9 @@ public class CloudFrontConfig extends AbstractServiceConfig<CloudFrontConfig.Bui
         container.withEnv("FLOCI_SERVICES_CLOUDFRONT_ENABLED", String.valueOf(isEnabled()));
 
         if (isEnabled()) {
-            container.withEnv("FLOCI_SERVICES_CLOUDFRONT_DOMAIN_SUFFIX", domainSuffix);
+            if (domainSuffix != null) {
+                container.withEnv("FLOCI_SERVICES_CLOUDFRONT_DOMAIN_SUFFIX", domainSuffix);
+            }
 
             if (allowedPrivateOriginHosts != null && !allowedPrivateOriginHosts.isEmpty()) {
                 container.withEnv("FLOCI_SERVICES_CLOUDFRONT_ALLOWED_PRIVATE_ORIGIN_HOSTS",
@@ -88,7 +88,7 @@ public class CloudFrontConfig extends AbstractServiceConfig<CloudFrontConfig.Bui
      */
     public static class Builder extends AbstractServiceConfigBuilder<Builder, CloudFrontConfig> {
 
-        private String domainSuffix = DEFAULT_DOMAIN_SUFFIX;
+        private String domainSuffix;
         private List<String> allowedPrivateOriginHosts = null;
 
         private Builder() {
@@ -102,15 +102,16 @@ public class CloudFrontConfig extends AbstractServiceConfig<CloudFrontConfig.Bui
          */
         private Builder(CloudFrontConfig instance) {
             super(instance);
-            this.domainSuffix = instance.getDomainSuffix();
+            this.domainSuffix = instance.getDomainSuffix().orElse(null);
             this.allowedPrivateOriginHosts = instance.getAllowedPrivateOriginHosts().orElse(null);
         }
 
         /**
-         * Sets the domain suffix used for CloudFront distribution domain names. It is configurable
-         * because it differs by partition (Floci has no published source for the China CDN suffix).
+         * Sets the domain suffix used for CloudFront distribution domain names, in every partition.
+         * When unset, the suffix follows the request's partition (e.g. {@code cloudfront.net} in the
+         * {@code aws} partition).
          *
-         * @param domainSuffix the domain suffix (default {@value DEFAULT_DOMAIN_SUFFIX})
+         * @param domainSuffix the domain suffix, or {@code null} to derive it from the request's partition (default unset)
          * @return this builder
          */
         public Builder domainSuffix(String domainSuffix) {
