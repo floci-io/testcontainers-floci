@@ -49,8 +49,9 @@ public class ArmConfig extends AbstractServiceConfig<ArmConfig.Builder> {
     }
 
     /**
-     * Returns the subscription {@code GET /subscriptions} lists (and therefore the one
-     * {@code az login} selects). Other subscription ids are still accepted.
+     * Returns the subscription that always exists in Floci Azure's directory, listed first by
+     * {@code GET /subscriptions} (and therefore the one {@code az login} selects). By default, any
+     * other subscription id is registered on first use.
      *
      * @return the default subscription id
      */
@@ -89,8 +90,10 @@ public class ArmConfig extends AbstractServiceConfig<ArmConfig.Builder> {
         }
 
         /**
-         * Sets the subscription {@code GET /subscriptions} lists (and therefore the one
-         * {@code az login} selects). Other subscription ids are still accepted.
+         * Sets the subscription that always exists in Floci Azure's directory, listed first by
+         * {@code GET /subscriptions} (and therefore the one {@code az login} selects). By default, any
+         * other subscription id is registered on first use, so clients configured with their own
+         * subscription keep working.
          *
          * @param defaultSubscriptionId the default subscription id (default {@value DEFAULT_DEFAULT_SUBSCRIPTION_ID})
          * @return this builder
