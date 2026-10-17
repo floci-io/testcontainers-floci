@@ -1,10 +1,10 @@
 package io.floci.testcontainers.gcp;
 
 import io.floci.testcontainers.core.AbstractFlociContainer;
+import io.floci.testcontainers.core.CloudDescriptor;
 import io.floci.testcontainers.gcp.config.LocationsConfig;
 import io.floci.testcontainers.gcp.config.TlsConfig;
 import io.floci.testcontainers.gcp.config.services.*;
-import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
 
 import java.io.IOException;
@@ -13,7 +13,6 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.time.Duration;
 import java.util.function.Consumer;
 
 /**
@@ -52,10 +51,25 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
      */
     public static final int PORT = 4588;
 
-    private static final String LOG_LEVEL_ENV_VAR = "QUARKUS_LOG_CATEGORY__IO_FLOCI_GCP__LEVEL";
-    private static final String DOCKER_NETWORK_ENV_VAR = "FLOCI_GCP_SERVICES_DOCKER_NETWORK";
+    /**
+     * Description of the Floci GCP emulator. Every container starts with {@code FLOCI_GCP_TLS_HTTPS_PORT=0}, so no
+     * extra HTTPS listener is bound on 443.
+     */
+    public static final CloudDescriptor DESCRIPTOR = CloudDescriptor.builder()
+            .name("gcp")
+            .image(DEFAULT_IMAGE_NAME.getUnversionedPart())
+            .port(PORT)
+            .envPrefix("FLOCI_GCP_")
+            .healthPath("/_floci-gcp/health")
+            .resetPath("/_floci-gcp/state/reset")
+            .logLevelEnvVar("QUARKUS_LOG_CATEGORY__IO_FLOCI_GCP__LEVEL")
+            .networkEnvVar("FLOCI_GCP_SERVICES_DOCKER_NETWORK")
+            .resourceNamespaceEnvVar("FLOCI_GCP_DOCKER_RESOURCE_NAMESPACE")
+            .tlsHttpsPortEnvVar("FLOCI_GCP_TLS_HTTPS_PORT")
+            .defaultEnv("FLOCI_GCP_TLS_HTTPS_PORT", "0")
+            .build();
+
     private static final String PROJECT_ID_ENV_VAR = "FLOCI_GCP_DEFAULT_PROJECT_ID";
-    private static final String HEALTH_PATH = "/_floci-gcp/health";
     private static final String TLS_CERT_PATH = "/_floci-gcp/tls-cert";
 
     private static final String DEFAULT_PROJECT_ID = "floci-local";
@@ -111,12 +125,7 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
      * @param dockerImageName the Docker image name (must be compatible with {@code floci/floci-gcp})
      */
     public FlociGcpContainer(DockerImageName dockerImageName) {
-        super(dockerImageName, DEFAULT_IMAGE_NAME, PORT, LOG_LEVEL_ENV_VAR, DOCKER_NETWORK_ENV_VAR);
-
-        waitingFor(Wait.forHttp(HEALTH_PATH)
-                .forPort(PORT)
-                .forStatusCode(200)
-                .withStartupTimeout(Duration.ofSeconds(60)));
+        super(dockerImageName, DESCRIPTOR);
 
         applyAllConfigs();
     }

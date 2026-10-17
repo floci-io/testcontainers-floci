@@ -1,6 +1,9 @@
 package io.floci.testcontainers.core;
 
+import com.github.dockerjava.api.command.InspectVolumeResponse;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Bind;
+import com.github.dockerjava.api.model.Container;
 import io.floci.testcontainers.core.config.services.AbstractServiceConfig;
 import io.floci.testcontainers.core.config.services.AbstractServiceConfigBuilder;
 import org.slf4j.Logger;
@@ -9,10 +12,20 @@ import org.slf4j.event.Level;
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
+import org.testcontainers.utility.ResourceReaper;
+import org.testcontainers.utility.TestcontainersConfiguration;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -27,13 +40,16 @@ import java.util.function.Consumer;
  *     <li>{@link #disableAllServices()},</li>
  *     <li>mounting the host Docker socket only while an enabled service needs it, with an explicit
  *     {@link #withDockerSocket(boolean)} override,</li>
- *     <li>the log level, a dedicated Docker network and a graceful shutdown.</li>
+ *     <li>the log level, a dedicated Docker network and a graceful shutdown,</li>
+ *     <li>a resource namespace per start, which the emulator puts on every container and volume it creates
+ *     (label {@code floci_namespace}), so they are removed on {@link #stop()} and by Ryuk when the JVM dies,</li>
+ *     <li>waiting for the emulator's health endpoint and resetting its state via {@link #reset()}.</li>
  * </ul>
  *
- * <p>Subclasses pass their provider-specific settings (port, environment variable names) to the constructor,
- * register one {@link ServiceConfigRef} per service via {@link #registerServiceConfig(AbstractServiceConfig)}
- * (typically in field initializers), configure their wait strategy and finally call {@link #applyAllConfigs()}
- * at the end of their constructor.
+ * <p>Subclasses pass the {@link CloudDescriptor} of their emulator to the constructor, register one
+ * {@link ServiceConfigRef} per service via {@link #registerServiceConfig(AbstractServiceConfig)} (typically in field
+ * initializers), optionally replace the default wait strategy and finally call {@link #applyAllConfigs()} at the end
+ * of their constructor.
  *
  * @param <SELF> the concrete container type, used to support a fluent, self-typed API
  */
@@ -44,39 +60,41 @@ public abstract class AbstractFlociContainer<SELF extends AbstractFlociContainer
     private static final String DOCKER_SOCKET_PATH = "/var/run/docker.sock";
     private static final int STOP_TIMEOUT_SECONDS = 30;
     private static final Level DEFAULT_LOG_LEVEL = Level.WARN;
+    private static final Duration DEFAULT_STARTUP_TIMEOUT = Duration.ofSeconds(60);
+    private static final Duration RESET_TIMEOUT = Duration.ofSeconds(60);
+    private static final String NAMESPACE_LABEL = "floci_namespace";
+    private static final String NAMESPACE_PREFIX = "tc-";
 
-    private final int port;
-    private final String logLevelEnvVar;
-    private final String dockerNetworkEnvVar;
+    private final CloudDescriptor descriptor;
     private final List<ServiceConfigRef<?>> serviceConfigs = new ArrayList<>();
 
     // explicit override from withDockerSocket(), which takes full precedence over auto-detection
     private Boolean dockerSocketOverride;
 
+    // the namespace generated for the current start; a caller-set namespace is never replaced
+    private String generatedResourceNamespace;
+
     /**
-     * Creates a new Floci container.
+     * Creates a new Floci container. Applies the descriptor's {@linkplain CloudDescriptor#getDefaultEnv() default
+     * environment} first, sets the log level to {@link Level#WARN} and waits for HTTP {@code 200} on the
+     * descriptor's {@linkplain CloudDescriptor#getHealthPath() health path}.
      *
-     * @param dockerImageName       the Docker image to start
-     * @param compatibleImageName   the official image of the emulator, which {@code dockerImageName} must be
-     *                              compatible with
-     * @param port                  the port the emulator serves its API on
-     * @param logLevelEnvVar        the environment variable that sets the log level of the emulator's code
-     * @param dockerNetworkEnvVar   the environment variable that tells the emulator which Docker network to use
-     *                              for the containers it spawns
+     * @param dockerImageName the Docker image to start, which must be compatible with
+     *                        {@link CloudDescriptor#getImage()}
+     * @param descriptor      the description of the emulator
      */
-    protected AbstractFlociContainer(DockerImageName dockerImageName,
-                                     DockerImageName compatibleImageName,
-                                     int port,
-                                     String logLevelEnvVar,
-                                     String dockerNetworkEnvVar) {
+    protected AbstractFlociContainer(DockerImageName dockerImageName, CloudDescriptor descriptor) {
         super(dockerImageName);
-        dockerImageName.assertCompatibleWith(compatibleImageName);
+        dockerImageName.assertCompatibleWith(DockerImageName.parse(descriptor.getImage()));
 
-        this.port = port;
-        this.logLevelEnvVar = logLevelEnvVar;
-        this.dockerNetworkEnvVar = dockerNetworkEnvVar;
+        this.descriptor = descriptor;
 
+        descriptor.getDefaultEnv().forEach(this::withEnv);
         withLogLevel(DEFAULT_LOG_LEVEL);
+        waitingFor(Wait.forHttp(descriptor.getHealthPath())
+                .forPort(descriptor.getPort())
+                .forStatusCode(200)
+                .withStartupTimeout(DEFAULT_STARTUP_TIMEOUT));
     }
 
     /**
@@ -159,10 +177,112 @@ public abstract class AbstractFlociContainer<SELF extends AbstractFlociContainer
         }
     }
 
+    /**
+     * Prepares the resource namespace before the container is created: unless the caller set one or the container
+     * is reused, a new namespace is generated for every start and registered with Ryuk, so that the containers and
+     * volumes the emulator creates are removed even if the JVM dies.
+     */
+    @Override
+    protected void doStart() {
+        prepareResourceNamespace();
+        super.doStart();
+    }
+
+    private void prepareResourceNamespace() {
+        String envVar = descriptor.getResourceNamespaceEnvVar();
+        String current = getEnvMap().get(envVar);
+        boolean callerSet = current != null && !current.equals(generatedResourceNamespace);
+
+        if (isReusable()) {
+            // A generated namespace would change the container hash and prevent reuse; reused siblings must also
+            // survive the JVM, so nothing is registered with Ryuk.
+            if (!callerSet && current != null) {
+                getEnvMap().remove(envVar);
+            }
+            generatedResourceNamespace = null;
+            return;
+        }
+
+        if (!callerSet) {
+            generatedResourceNamespace = NAMESPACE_PREFIX + uniqueShortId();
+            withEnv(envVar, generatedResourceNamespace);
+        }
+        // Register before the emulator can create siblings
+        ResourceReaper.instance().registerLabelsFilterForCleanup(Map.of(NAMESPACE_LABEL, getResourceNamespace()));
+    }
+
+    /**
+     * Stops the emulator gracefully (so it can tear down what it created), removes the container and then every
+     * container and volume left behind with this container's {@code floci_namespace} label. Failures of the
+     * sibling cleanup are logged and never fail the stop. Reused containers keep their siblings.
+     */
     @Override
     public void stop() {
+        String namespace = getContainerId() != null && !isReusable() ? getResourceNamespace() : null;
+        beforeStop();
         stopGracefully();
         super.stop();
+        try {
+            if (namespace != null) {
+                removeSiblingResources(namespace);
+            }
+        } finally {
+            afterStop();
+        }
+    }
+
+    /**
+     * Hook for subclasses, called by {@link #stop()} while the emulator may still be running, before it is stopped.
+     * Does nothing by default.
+     */
+    protected void beforeStop() {
+    }
+
+    /**
+     * Hook for subclasses, called by {@link #stop()} after the container and its siblings have been removed, even
+     * if the removal failed. Does nothing by default.
+     */
+    protected void afterStop() {
+    }
+
+    private void removeSiblingResources(String namespace) {
+        try {
+            for (Container container : dockerClient.listContainersCmd()
+                    .withShowAll(true)
+                    .withLabelFilter(Map.of(NAMESPACE_LABEL, namespace))
+                    .exec()) {
+                try {
+                    dockerClient.removeContainerCmd(container.getId()).withForce(true).withRemoveVolumes(true).exec();
+                } catch (NotFoundException ignored) {
+                    // The emulator's shutdown or Ryuk may have already removed this container.
+                } catch (RuntimeException e) {
+                    logger.warn("Failed to remove Floci sibling container {}", container.getId(), e);
+                }
+            }
+            // Docker's container removal only deletes anonymous volumes, so named volumes need a separate pass.
+            for (InspectVolumeResponse volume : dockerClient.listVolumesCmd()
+                    .withFilter("label", List.of(NAMESPACE_LABEL + "=" + namespace))
+                    .exec().getVolumes()) {
+                try {
+                    dockerClient.removeVolumeCmd(volume.getName()).exec();
+                } catch (NotFoundException ignored) {
+                    // Container removal or Ryuk may have already removed this volume.
+                } catch (RuntimeException e) {
+                    logger.warn("Failed to remove Floci sibling volume {}", volume.getName(), e);
+                }
+            }
+        } catch (RuntimeException e) {
+            logger.warn("Failed to remove the containers and volumes of Floci namespace {}", namespace, e);
+        }
+    }
+
+    /**
+     * Returns whether this container is reused across test runs (reuse requested and enabled by the environment).
+     *
+     * @return {@code true} if the container is reused
+     */
+    protected boolean isReusable() {
+        return isShouldBeReused() && TestcontainersConfiguration.getInstance().environmentSupportsReuse();
     }
 
     private void stopGracefully() {
@@ -180,12 +300,21 @@ public abstract class AbstractFlociContainer<SELF extends AbstractFlociContainer
     }
 
     /**
+     * Returns the description of the emulator this container runs.
+     *
+     * @return the cloud descriptor
+     */
+    public CloudDescriptor getDescriptor() {
+        return descriptor;
+    }
+
+    /**
      * Returns the port the emulator serves its API on inside the container.
      *
      * @return the container port of the emulator
      */
     public int getPort() {
-        return port;
+        return descriptor.getPort();
     }
 
     /**
@@ -194,7 +323,56 @@ public abstract class AbstractFlociContainer<SELF extends AbstractFlociContainer
      * @return the endpoint URL
      */
     public String getEndpoint() {
-        return String.format("http://%s:%d", getHost(), getMappedPort(port));
+        return String.format("http://%s:%d", getHost(), getMappedPort(descriptor.getPort()));
+    }
+
+    /**
+     * Returns the namespace the emulator puts into the names and the {@code floci_namespace} label of every
+     * container and volume it creates.
+     *
+     * <p>Unless set explicitly via the descriptor's
+     * {@linkplain CloudDescriptor#getResourceNamespaceEnvVar() environment variable}, a new namespace
+     * ({@code tc-} plus 8 hex characters) is generated on every start, so this returns {@code null} before the first
+     * start. Reused containers get no generated namespace.
+     *
+     * @return the resource namespace, or {@code null} if none is set
+     */
+    public String getResourceNamespace() {
+        return getEnvMap().get(descriptor.getResourceNamespaceEnvVar());
+    }
+
+    /**
+     * Resets the state of the running emulator by sending {@code POST} to the descriptor's
+     * {@linkplain CloudDescriptor#getResetPath() reset path}: every resource created so far is removed.
+     *
+     * @throws IllegalStateException if the container is not running or the emulator does not answer with a
+     *                               {@code 2xx} status
+     */
+    public void reset() {
+        if (!isRunning()) {
+            throw new IllegalStateException("Cannot reset Floci: the container is not running");
+        }
+
+        // Plain HTTP keeps working on the emulator port while TLS is enabled, and needs no trusted certificate
+        URI uri = URI.create(String.format("http://%s:%d%s",
+                getHost(), getMappedPort(descriptor.getPort()), descriptor.getResetPath()));
+        HttpRequest request = HttpRequest.newBuilder(uri)
+                .POST(HttpRequest.BodyPublishers.noBody())
+                .timeout(RESET_TIMEOUT)
+                .build();
+        HttpResponse<String> response;
+        try {
+            response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to reset Floci via " + uri, e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted while resetting Floci via " + uri, e);
+        }
+        if (response.statusCode() / 100 != 2) {
+            throw new IllegalStateException("Failed to reset Floci via " + uri + " (HTTP " + response.statusCode()
+                    + "): " + response.body());
+        }
     }
 
     /**
@@ -204,7 +382,7 @@ public abstract class AbstractFlociContainer<SELF extends AbstractFlociContainer
      * @return this container instance
      */
     public SELF withLogLevel(Level logLevel) {
-        return withEnv(logLevelEnvVar, logLevel.toString());
+        return withEnv(descriptor.getLogLevelEnvVar(), logLevel.toString());
     }
 
     /**
@@ -213,7 +391,7 @@ public abstract class AbstractFlociContainer<SELF extends AbstractFlociContainer
      * @return the log level
      */
     public Level getLogLevel() {
-        String logLevelStr = getEnvMap().getOrDefault(logLevelEnvVar, DEFAULT_LOG_LEVEL.toString());
+        String logLevelStr = getEnvMap().getOrDefault(descriptor.getLogLevelEnvVar(), DEFAULT_LOG_LEVEL.toString());
         try {
             return Level.valueOf(logLevelStr);
         } catch (IllegalArgumentException e) {
@@ -234,7 +412,7 @@ public abstract class AbstractFlociContainer<SELF extends AbstractFlociContainer
                 .createNetworkCmdModifier(cmd -> cmd.withName(networkName))
                 .build();
         withNetwork(network);
-        return withEnv(dockerNetworkEnvVar, networkName);
+        return withEnv(descriptor.getNetworkEnvVar(), networkName);
     }
 
     /**
@@ -244,7 +422,7 @@ public abstract class AbstractFlociContainer<SELF extends AbstractFlociContainer
      * @return the name of the dedicated Docker network, or {@code null} if not configured
      */
     public String getDedicatedNetworkName() {
-        return getEnvMap().get(dockerNetworkEnvVar);
+        return getEnvMap().get(descriptor.getNetworkEnvVar());
     }
 
     /**
@@ -283,7 +461,7 @@ public abstract class AbstractFlociContainer<SELF extends AbstractFlociContainer
     }
 
     private void configureExposedPorts() {
-        withExposedPorts(port);
+        withExposedPorts(descriptor.getPort());
 
         serviceConfigs.forEach(ref -> ref.get().applyExposedPortsToContainer(this));
     }
