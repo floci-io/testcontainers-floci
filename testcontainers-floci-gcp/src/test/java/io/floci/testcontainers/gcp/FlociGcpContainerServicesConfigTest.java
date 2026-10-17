@@ -213,9 +213,9 @@ class FlociGcpContainerServicesConfigTest {
     @Test
     void shouldWireServiceUsageConfigIntoContainer() {
         assertConfigWired(
-                c -> c.withServiceUsageConfig(cfg -> cfg.enabled(false)),
-                c -> c.getServiceUsageConfig().isEnabled(), false,
-                "FLOCI_GCP_SERVICES_SERVICEUSAGE_ENABLED", "false");
+                c -> c.withServiceUsageConfig(cfg -> cfg.enforcementEnabled(true)),
+                c -> c.getServiceUsageConfig().isEnforcementEnabled(), true,
+                "FLOCI_GCP_SERVICES_SERVICEUSAGE_ENFORCEMENT_ENABLED", "true");
     }
 
     @Test
