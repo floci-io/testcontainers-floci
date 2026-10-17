@@ -90,6 +90,7 @@ public class FlociAzContainer extends AbstractFlociContainer<FlociAzContainer> {
     private final ServiceConfigRef<EventGridConfig> eventGridConfig = registerServiceConfig(EventGridConfig.builder().build());
     private final ServiceConfigRef<ManagedIdentityConfig> managedIdentityConfig = registerServiceConfig(ManagedIdentityConfig.builder().build());
     private final ServiceConfigRef<ContainerAppsConfig> containerAppsConfig = registerServiceConfig(ContainerAppsConfig.builder().build());
+    private final ServiceConfigRef<PolicyConfig> policyConfig = registerServiceConfig(PolicyConfig.builder().build());
     private final ServiceConfigRef<EmailConfig> emailConfig = registerServiceConfig(EmailConfig.builder().build());
 
     /**
@@ -971,6 +972,29 @@ public class FlociAzContainer extends AbstractFlociContainer<FlociAzContainer> {
      */
     public FlociAzContainer withContainerAppsConfig(Consumer<ContainerAppsConfig.Builder> configurer) {
         return updateServiceConfig(containerAppsConfig, configurer);
+    }
+    /**
+     * Returns the Azure Policy configuration.
+     *
+     * @return the Policy configuration
+     */
+    public PolicyConfig getPolicyConfig() {
+        return policyConfig.get();
+    }
+
+    /**
+     * Configures the Azure Policy control plane (definitions, set definitions, assignments and exemptions).
+     *
+     * <pre>{@code
+     * new FlociAzContainer()
+     *     .withPolicyConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link PolicyConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociAzContainer withPolicyConfig(Consumer<PolicyConfig.Builder> configurer) {
+        return updateServiceConfig(policyConfig, configurer);
     }
     /**
      * Returns the Azure Communication Services Email configuration.
