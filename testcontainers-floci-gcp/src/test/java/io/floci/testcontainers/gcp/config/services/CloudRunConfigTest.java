@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.GenericContainer;
 
 import java.time.Duration;
+import java.util.List;
 
 import static io.floci.testcontainers.core.testing.ContainerUtils.genericContainer;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -19,7 +20,8 @@ class CloudRunConfigTest {
                 .operationTimeout(Duration.ofSeconds(120))
                 .cleanupTimeout(Duration.ofMillis(1500))
                 .urlHostSuffix("run.example.com")
-                .maxWorkerInstances(3);
+                .maxWorkerInstances(3)
+                .securityOpts(List.of("seccomp=unconfined", "apparmor=unconfined"));
     }
 
     private static void assertCustomValues(CloudRunConfig config) {
@@ -31,6 +33,7 @@ class CloudRunConfigTest {
         assertThat(config.getCleanupTimeout()).isEqualTo(Duration.ofMillis(1500));
         assertThat(config.getUrlHostSuffix()).contains("run.example.com");
         assertThat(config.getMaxWorkerInstances()).isEqualTo(3);
+        assertThat(config.getSecurityOpts()).contains(List.of("seccomp=unconfined", "apparmor=unconfined"));
     }
 
     @Test
@@ -45,6 +48,7 @@ class CloudRunConfigTest {
         assertThat(config.getCleanupTimeout()).isEqualTo(Duration.ofSeconds(15));
         assertThat(config.getUrlHostSuffix()).isEmpty();
         assertThat(config.getMaxWorkerInstances()).isEqualTo(1);
+        assertThat(config.getSecurityOpts()).isEmpty();
     }
 
     @Test
@@ -68,7 +72,8 @@ class CloudRunConfigTest {
                 .containsEntry("FLOCI_GCP_SERVICES_CLOUDRUN_EXECUTION_OPERATION_TIMEOUT", "300s")
                 .containsEntry("FLOCI_GCP_SERVICES_CLOUDRUN_EXECUTION_CLEANUP_TIMEOUT", "15s")
                 .doesNotContainKey("FLOCI_GCP_SERVICES_CLOUDRUN_EXECUTION_URL_HOST_SUFFIX")
-                .containsEntry("FLOCI_GCP_SERVICES_CLOUDRUN_EXECUTION_MAX_WORKER_INSTANCES", "1");
+                .containsEntry("FLOCI_GCP_SERVICES_CLOUDRUN_EXECUTION_MAX_WORKER_INSTANCES", "1")
+                .doesNotContainKey("FLOCI_GCP_SERVICES_CLOUDRUN_EXECUTION_SECURITY_OPTS");
     }
 
     @Test
@@ -85,7 +90,8 @@ class CloudRunConfigTest {
                 .containsEntry("FLOCI_GCP_SERVICES_CLOUDRUN_EXECUTION_OPERATION_TIMEOUT", "120s")
                 .containsEntry("FLOCI_GCP_SERVICES_CLOUDRUN_EXECUTION_CLEANUP_TIMEOUT", "1500ms")
                 .containsEntry("FLOCI_GCP_SERVICES_CLOUDRUN_EXECUTION_URL_HOST_SUFFIX", "run.example.com")
-                .containsEntry("FLOCI_GCP_SERVICES_CLOUDRUN_EXECUTION_MAX_WORKER_INSTANCES", "3");
+                .containsEntry("FLOCI_GCP_SERVICES_CLOUDRUN_EXECUTION_MAX_WORKER_INSTANCES", "3")
+                .containsEntry("FLOCI_GCP_SERVICES_CLOUDRUN_EXECUTION_SECURITY_OPTS", "seccomp=unconfined,apparmor=unconfined");
     }
 
     @Test
@@ -102,7 +108,8 @@ class CloudRunConfigTest {
                 .doesNotContainKey("FLOCI_GCP_SERVICES_CLOUDRUN_EXECUTION_OPERATION_TIMEOUT")
                 .doesNotContainKey("FLOCI_GCP_SERVICES_CLOUDRUN_EXECUTION_CLEANUP_TIMEOUT")
                 .doesNotContainKey("FLOCI_GCP_SERVICES_CLOUDRUN_EXECUTION_URL_HOST_SUFFIX")
-                .doesNotContainKey("FLOCI_GCP_SERVICES_CLOUDRUN_EXECUTION_MAX_WORKER_INSTANCES");
+                .doesNotContainKey("FLOCI_GCP_SERVICES_CLOUDRUN_EXECUTION_MAX_WORKER_INSTANCES")
+                .doesNotContainKey("FLOCI_GCP_SERVICES_CLOUDRUN_EXECUTION_SECURITY_OPTS");
     }
 
     @Test

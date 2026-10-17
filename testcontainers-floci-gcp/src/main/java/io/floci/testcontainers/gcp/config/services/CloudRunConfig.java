@@ -5,6 +5,7 @@ import io.floci.testcontainers.core.config.services.AbstractServiceConfigBuilder
 import org.testcontainers.containers.Container;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -43,6 +44,7 @@ public class CloudRunConfig extends AbstractServiceConfig<CloudRunConfig.Builder
     private final Duration cleanupTimeout;
     private final String urlHostSuffix;
     private final int maxWorkerInstances;
+    private final List<String> securityOpts;
 
     private CloudRunConfig(Builder builder) {
         super(builder);
@@ -54,6 +56,7 @@ public class CloudRunConfig extends AbstractServiceConfig<CloudRunConfig.Builder
         this.cleanupTimeout = builder.cleanupTimeout;
         this.urlHostSuffix = builder.urlHostSuffix;
         this.maxWorkerInstances = builder.maxWorkerInstances;
+        this.securityOpts = builder.securityOpts == null ? null : List.copyOf(builder.securityOpts);
     }
 
     /**
@@ -151,6 +154,16 @@ public class CloudRunConfig extends AbstractServiceConfig<CloudRunConfig.Builder
         return maxWorkerInstances;
     }
 
+    /**
+     * Returns the Docker security options applied to every Cloud Run workload container (for example
+     * {@code seccomp=unconfined}), or empty if not set.
+     *
+     * @return the Docker security options, or empty
+     */
+    public Optional<List<String>> getSecurityOpts() {
+        return Optional.ofNullable(securityOpts);
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_GCP_SERVICES_CLOUDRUN_ENABLED", String.valueOf(isEnabled()));
@@ -168,6 +181,10 @@ public class CloudRunConfig extends AbstractServiceConfig<CloudRunConfig.Builder
             }
 
             container.withEnv("FLOCI_GCP_SERVICES_CLOUDRUN_EXECUTION_MAX_WORKER_INSTANCES", String.valueOf(maxWorkerInstances));
+
+            if (securityOpts != null) {
+                container.withEnv("FLOCI_GCP_SERVICES_CLOUDRUN_EXECUTION_SECURITY_OPTS", String.join(",", securityOpts));
+            }
         }
     }
 
@@ -198,6 +215,7 @@ public class CloudRunConfig extends AbstractServiceConfig<CloudRunConfig.Builder
         private Duration cleanupTimeout = DEFAULT_CLEANUP_TIMEOUT;
         private String urlHostSuffix;
         private int maxWorkerInstances = DEFAULT_MAX_WORKER_INSTANCES;
+        private List<String> securityOpts;
 
         private Builder() {
             // Allow instantiation only via CloudRunConfig.builder()
@@ -218,6 +236,7 @@ public class CloudRunConfig extends AbstractServiceConfig<CloudRunConfig.Builder
             this.cleanupTimeout = instance.cleanupTimeout;
             this.urlHostSuffix = instance.urlHostSuffix;
             this.maxWorkerInstances = instance.maxWorkerInstances;
+            this.securityOpts = instance.securityOpts;
         }
 
         /**
@@ -309,6 +328,20 @@ public class CloudRunConfig extends AbstractServiceConfig<CloudRunConfig.Builder
          */
         public Builder maxWorkerInstances(int maxWorkerInstances) {
             this.maxWorkerInstances = maxWorkerInstances;
+            return this;
+        }
+
+        /**
+         * Sets Docker security options applied to every Cloud Run workload container (not to other sidecars), for
+         * example {@code seccomp=unconfined} so workloads can create unprivileged user namespaces as on Cloud Run.
+         * Docker validates the options when a workload container is created; an invalid option fails that
+         * container. When unset, Docker's default seccomp profile stays in place.
+         *
+         * @param securityOpts the Docker security options, or {@code null} to unset (default unset)
+         * @return this builder
+         */
+        public Builder securityOpts(List<String> securityOpts) {
+            this.securityOpts = securityOpts;
             return this;
         }
 
