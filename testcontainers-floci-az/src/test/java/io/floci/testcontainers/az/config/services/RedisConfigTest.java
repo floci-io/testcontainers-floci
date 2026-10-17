@@ -18,6 +18,7 @@ class RedisConfigTest {
         assertThat(config.getPortsCount()).isEqualTo(10);
         assertThat(config.getMaxPort()).isEqualTo(6388);
         assertThat(config.getMaxMemory()).isEqualTo("256mb");
+        assertThat(config.isTlsEnabled()).isFalse();
     }
 
     @Test
@@ -28,6 +29,7 @@ class RedisConfigTest {
                 .defaultImage("redis:7-alpine")
                 .portRange(16379, 5)
                 .maxMemory("1gb")
+                .tlsEnabled(true)
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.isMocked()).isTrue();
@@ -36,6 +38,7 @@ class RedisConfigTest {
         assertThat(config.getPortsCount()).isEqualTo(5);
         assertThat(config.getMaxPort()).isEqualTo(16383);
         assertThat(config.getMaxMemory()).isEqualTo("1gb");
+        assertThat(config.isTlsEnabled()).isTrue();
     }
 
     @Test
@@ -49,7 +52,8 @@ class RedisConfigTest {
                 .containsEntry("FLOCI_AZ_SERVICES_REDIS_DEFAULT_IMAGE", "valkey/valkey:8-alpine")
                 .containsEntry("FLOCI_AZ_SERVICES_REDIS_BASE_PORT", "6379")
                 .containsEntry("FLOCI_AZ_SERVICES_REDIS_MAX_PORT", "6388")
-                .containsEntry("FLOCI_AZ_SERVICES_REDIS_MAX_MEMORY", "256mb");
+                .containsEntry("FLOCI_AZ_SERVICES_REDIS_MAX_MEMORY", "256mb")
+                .containsEntry("FLOCI_AZ_SERVICES_REDIS_TLS_ENABLED", "false");
     }
 
     @Test
@@ -60,6 +64,7 @@ class RedisConfigTest {
                 .defaultImage("redis:7-alpine")
                 .portRange(16379, 5)
                 .maxMemory("1gb")
+                .tlsEnabled(true)
                 .build()
                 .applyEnvVarsToContainer(container);
 
@@ -69,7 +74,8 @@ class RedisConfigTest {
                 .containsEntry("FLOCI_AZ_SERVICES_REDIS_DEFAULT_IMAGE", "redis:7-alpine")
                 .containsEntry("FLOCI_AZ_SERVICES_REDIS_BASE_PORT", "16379")
                 .containsEntry("FLOCI_AZ_SERVICES_REDIS_MAX_PORT", "16383")
-                .containsEntry("FLOCI_AZ_SERVICES_REDIS_MAX_MEMORY", "1gb");
+                .containsEntry("FLOCI_AZ_SERVICES_REDIS_MAX_MEMORY", "1gb")
+                .containsEntry("FLOCI_AZ_SERVICES_REDIS_TLS_ENABLED", "true");
     }
 
     @Test
@@ -83,7 +89,8 @@ class RedisConfigTest {
                 .doesNotContainKey("FLOCI_AZ_SERVICES_REDIS_DEFAULT_IMAGE")
                 .doesNotContainKey("FLOCI_AZ_SERVICES_REDIS_BASE_PORT")
                 .doesNotContainKey("FLOCI_AZ_SERVICES_REDIS_MAX_PORT")
-                .doesNotContainKey("FLOCI_AZ_SERVICES_REDIS_MAX_MEMORY");
+                .doesNotContainKey("FLOCI_AZ_SERVICES_REDIS_MAX_MEMORY")
+                .doesNotContainKey("FLOCI_AZ_SERVICES_REDIS_TLS_ENABLED");
     }
 
     @Test
@@ -94,6 +101,7 @@ class RedisConfigTest {
                 .defaultImage("redis:7-alpine")
                 .portRange(16379, 5)
                 .maxMemory("1gb")
+                .tlsEnabled(true)
                 .build();
         RedisConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
@@ -103,6 +111,7 @@ class RedisConfigTest {
         assertThat(copy.getPortsCount()).isEqualTo(5);
         assertThat(copy.getMaxPort()).isEqualTo(16383);
         assertThat(copy.getMaxMemory()).isEqualTo("1gb");
+        assertThat(copy.isTlsEnabled()).isTrue();
     }
 
     @Test
