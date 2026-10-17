@@ -12,7 +12,7 @@ class PostgresServiceTest extends AbstractServiceTest {
     @Test
     void shouldCreateMockedServer() {
         // A non-mocked server starts a PostgreSQL container; the mocked one is ready without Docker
-        try (FlociAzContainer mockedFloci = new FlociAzContainer(NIGHTLY_IMAGE)
+        try (FlociAzContainer mockedFloci = new FlociAzContainer(IMAGE)
                 .disableAllServices()
                 .withPostgresConfig(c -> c.enabled(true).mocked(true))) {
             mockedFloci.start();

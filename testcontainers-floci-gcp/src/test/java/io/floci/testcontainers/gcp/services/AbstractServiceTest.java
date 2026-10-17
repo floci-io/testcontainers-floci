@@ -4,8 +4,10 @@ import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider;
 import com.google.api.gax.rpc.TransportChannelProvider;
+import io.floci.testcontainers.core.testing.TestImages;
 import io.floci.testcontainers.gcp.FlociGcpContainer;
 import io.grpc.ManagedChannelBuilder;
+import org.junit.jupiter.api.Tag;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
@@ -21,11 +23,11 @@ import java.util.UUID;
  * Base class for Floci GCP service integration tests. Provides a shared {@link FlociGcpContainer}
  * singleton (started once per JVM).
  */
+@Tag("integration")
 abstract class AbstractServiceTest {
 
-    // Integration tests run against the nightly build so newly added services are covered
-    // before they land in a versioned release.
-    protected static final String NIGHTLY_IMAGE = "floci/floci-gcp:nightly";
+    // The emulator image pinned in .github/docker-images.txt
+    protected static final String IMAGE = TestImages.pinnedImage(FlociGcpContainer.DESCRIPTOR);
 
     private static final boolean DEBUG_LOGGING = false;
 
@@ -35,11 +37,11 @@ abstract class AbstractServiceTest {
 
     static {
         if (DEBUG_LOGGING) {
-            floci = new FlociGcpContainer(NIGHTLY_IMAGE)
+            floci = new FlociGcpContainer(IMAGE)
                     .withLogLevel(Level.DEBUG)
                     .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger("DOCKER")));
         } else {
-            floci = new FlociGcpContainer(NIGHTLY_IMAGE)
+            floci = new FlociGcpContainer(IMAGE)
                     .withLogLevel(Level.INFO);
         }
 

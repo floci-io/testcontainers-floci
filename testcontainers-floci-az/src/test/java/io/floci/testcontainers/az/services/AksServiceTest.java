@@ -12,7 +12,7 @@ class AksServiceTest extends AbstractServiceTest {
     @Test
     void shouldCreateMockedCluster() {
         // A non-mocked cluster starts a k3s container; the mocked one gets a synthetic kubeconfig
-        try (FlociAzContainer mockedFloci = new FlociAzContainer(NIGHTLY_IMAGE)
+        try (FlociAzContainer mockedFloci = new FlociAzContainer(IMAGE)
                 .disableAllServices()
                 .withAksConfig(c -> c.enabled(true).mocked(true))) {
             mockedFloci.start();

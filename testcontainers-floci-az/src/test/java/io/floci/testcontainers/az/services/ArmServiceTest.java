@@ -18,7 +18,7 @@ class ArmServiceTest extends AbstractServiceTest {
 
     @Test
     void shouldListConfiguredSubscription() {
-        try (FlociAzContainer armFloci = new FlociAzContainer(NIGHTLY_IMAGE)
+        try (FlociAzContainer armFloci = new FlociAzContainer(IMAGE)
                 .disableAllServices()
                 .withArmConfig(c -> c.enabled(true).defaultSubscriptionId("22222222-2222-2222-2222-222222222222"))) {
             armFloci.start();
@@ -35,7 +35,7 @@ class ArmServiceTest extends AbstractServiceTest {
     void shouldListConfiguredTenantsAndSubscriptions() {
         String tenantId = "11111111-0000-0000-0000-000000000000";
         String subscriptionId = "33333333-0000-0000-0000-000000000000";
-        try (FlociAzContainer armFloci = new FlociAzContainer(NIGHTLY_IMAGE)
+        try (FlociAzContainer armFloci = new FlociAzContainer(IMAGE)
                 .disableAllServices()
                 .withArmConfig(c -> c.enabled(true))
                 .withDirectoryConfig(c -> c
@@ -57,7 +57,7 @@ class ArmServiceTest extends AbstractServiceTest {
 
     @Test
     void shouldRefuseUnknownSubscriptionWithStrictParity() {
-        try (FlociAzContainer armFloci = new FlociAzContainer(NIGHTLY_IMAGE)
+        try (FlociAzContainer armFloci = new FlociAzContainer(IMAGE)
                 .disableAllServices()
                 .withArmConfig(c -> c.enabled(true))
                 .withParityConfig(c -> c.level(ParityConfig.Level.STRICT))) {
@@ -73,7 +73,7 @@ class ArmServiceTest extends AbstractServiceTest {
 
     @Test
     void shouldApplyParityOverrideOnTopOfLevel() {
-        try (FlociAzContainer armFloci = new FlociAzContainer(NIGHTLY_IMAGE)
+        try (FlociAzContainer armFloci = new FlociAzContainer(IMAGE)
                 .disableAllServices()
                 .withArmConfig(c -> c.enabled(true))
                 .withParityConfig(c -> c.resourceGroupSemantics(true))) {

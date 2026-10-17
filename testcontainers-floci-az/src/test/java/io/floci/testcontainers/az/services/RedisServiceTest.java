@@ -12,7 +12,7 @@ class RedisServiceTest extends AbstractServiceTest {
     @Test
     void shouldCreateMockedCache() {
         // A non-mocked cache starts a Valkey container; the mocked one reports hostName=localhost
-        try (FlociAzContainer mockedFloci = new FlociAzContainer(NIGHTLY_IMAGE)
+        try (FlociAzContainer mockedFloci = new FlociAzContainer(IMAGE)
                 .disableAllServices()
                 .withRedisConfig(c -> c.enabled(true).mocked(true))) {
             mockedFloci.start();

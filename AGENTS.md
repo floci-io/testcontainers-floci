@@ -36,13 +36,16 @@ Cloud AWS 4.1.0). See the README for the migration note.
 mvn verify
 ```
 
-Requires Docker running — `mvn test`/`mvn verify` run both plain unit tests (config classes, no Docker) and the
-Docker-backed `*ServiceTest` integration tests in the same surefire phase; there is no separate failsafe/`verify`-only
-split. Run a single test class or module with:
+`mvn test` runs the unit tests (Surefire) and needs no Docker. Every test that starts a container carries
+`@Tag("integration")` (once on each `AbstractServiceTest`, otherwise on the class or method) and runs in the
+`integration-test` phase (Failsafe), so `mvn verify` needs Docker. Integration tests use the emulator images pinned in
+`.github/docker-images.txt` (read by the core test-jar's `TestImages`; no other file names a pinned tag);
+`-Dfloci.test-image.tag=nightly` runs them against another tag. A new container-starting test outside the
+`services/` packages needs the tag too. Run a single test class with:
 
 ```
-mvn -pl testcontainers-floci-aws test -Dtest=IamConfigTest
-mvn -pl testcontainers-floci-aws test -Dtest=IamServiceTest
+mvn -pl testcontainers-floci-aws -am test -Dtest=IamConfigTest -Dsurefire.failIfNoSpecifiedTests=false
+mvn -pl testcontainers-floci-aws -am verify -Dit.test=IamServiceTest -Dtest=none -Dsurefire.failIfNoSpecifiedTests=false -Dfailsafe.failIfNoSpecifiedTests=false
 ```
 
 ## Architecture
@@ -71,7 +74,7 @@ entry point; everything else hangs off it:
 
 ## Testing
 
-- `services/*ServiceTest` (Docker required) all extend package-private `AbstractServiceTest`
+- `services/*ServiceTest` (Docker required, tagged `integration` through the base class) all extend package-private `AbstractServiceTest`
   (`testcontainers-floci-aws/src/test/java/io/floci/testcontainers/services/AbstractServiceTest.java`), which starts one
   `FlociContainer` singleton per JVM in a static initializer and exposes a `client(builder)` helper that wires
   endpoint/region/credentials onto an AWS SDK client builder.
@@ -146,8 +149,8 @@ Mirrors the AWS module, with these differences:
   Services that would otherwise start sidecars are tested against a dedicated `mocked` container.
 
 ```
-mvn -pl testcontainers-floci-core,testcontainers-floci-az test
-mvn -pl testcontainers-floci-az test -Dtest=BlobServiceTest
+mvn -pl testcontainers-floci-az -am verify
+mvn -pl testcontainers-floci-az -am verify -Dit.test=BlobServiceTest -Dtest=none -Dsurefire.failIfNoSpecifiedTests=false -Dfailsafe.failIfNoSpecifiedTests=false
 ```
 
 ## GCP module (`testcontainers-floci-gcp`)
@@ -171,8 +174,8 @@ list), with these differences:
   GKE (privileged k3s) is tested against a dedicated `mock` container.
 
 ```
-mvn -pl testcontainers-floci-core,testcontainers-floci-gcp test
-mvn -pl testcontainers-floci-gcp test -Dtest=PubSubServiceTest
+mvn -pl testcontainers-floci-gcp -am verify
+mvn -pl testcontainers-floci-gcp -am verify -Dit.test=PubSubServiceTest -Dtest=none -Dsurefire.failIfNoSpecifiedTests=false -Dfailsafe.failIfNoSpecifiedTests=false
 ```
 
 ## OCI module (`testcontainers-floci-oci`)
@@ -198,8 +201,8 @@ sidecars), with these differences:
   image built with a current Fn FDK (`src/test/resources/fn-hello`, skipped when it cannot be built).
 
 ```
-mvn -pl testcontainers-floci-core,testcontainers-floci-oci test
-mvn -pl testcontainers-floci-oci test -Dtest=ObjectStorageServiceTest
+mvn -pl testcontainers-floci-oci -am verify
+mvn -pl testcontainers-floci-oci -am verify -Dit.test=ObjectStorageServiceTest -Dtest=none -Dsurefire.failIfNoSpecifiedTests=false -Dfailsafe.failIfNoSpecifiedTests=false
 ```
 
 ## Keeping up to date with Floci (config migration process)
@@ -367,11 +370,12 @@ dependency in `testcontainers-floci-aws/pom.xml`, and a Docker-backed `services/
 `AbstractServiceTest`. If the nightly Floci image doesn't serve the service yet, keep the service test but mark it
 `@Disabled` with a reason (as done for Connect/CodeGuru Reviewer).
 
-**Verify** each service before committing (pull the image fresh first: `docker pull floci/floci:nightly`):
+**Verify** each service before committing. A migration runs ahead of the pinned images, so run the service tests
+against the nightly image (pull it fresh first: `docker pull floci/floci:nightly`):
 
 ```bash
-mvn -pl testcontainers-floci-aws test -Dtest='<Service>ConfigTest,FlociContainerServicesConfigTest,FlociContainerTest'
-mvn -pl testcontainers-floci-aws test -Dtest=<Service>ServiceTest     # new services / behaviour-relevant changes
+mvn -pl testcontainers-floci-aws -am test -Dtest='<Service>ConfigTest,FlociContainerServicesConfigTest,FlociContainerTest' -Dsurefire.failIfNoSpecifiedTests=false
+mvn -pl testcontainers-floci-aws -am verify -Dit.test=<Service>ServiceTest -Dfloci.test-image.tag=nightly -Dtest=none -Dsurefire.failIfNoSpecifiedTests=false -Dfailsafe.failIfNoSpecifiedTests=false   # new services / behaviour-relevant changes
 ```
 
 **Commit** each service separately, with only that service's files staged (`git add <paths>`, never `git add -A`),
@@ -397,7 +401,7 @@ grep -rn '@Disabled' testcontainers-floci-aws/src/test
 For each hit, remove the `@Disabled` annotation (and the then-unused import) and run just that class:
 
 ```bash
-mvn -pl testcontainers-floci-aws test -Dtest=<Service>ServiceTest
+mvn -pl testcontainers-floci-aws -am verify -Dit.test=<Service>ServiceTest -Dfloci.test-image.tag=nightly -Dtest=none -Dsurefire.failIfNoSpecifiedTests=false -Dfailsafe.failIfNoSpecifiedTests=false
 ```
 
 - **Passes out of the box** → keep the annotation removed.
@@ -482,7 +486,7 @@ The same process applies to `testcontainers-floci-az`, with these values:
 | The user's fork          | `cfranzen/floci-az` (to be created by the user), tag `migrated-to-testcontainers`         |
 | The file to diff         | `src/main/java/io/floci/az/config/EmulatorConfig.java` (`@ConfigMapping(prefix = "floci-az")`) |
 | Env-var prefix           | `FLOCI_AZ_…`, services `FLOCI_AZ_SERVICES_<ACCESSOR>_<PROPERTY>` (camelCase accessors are kebab-cased: `keyVault()` → `KEY_VAULT`) |
-| Image for service tests  | `floci/floci-az:nightly`                                                                  |
+| Image for service tests  | `floci/floci-az:nightly`, via `-Dfloci.test-image.tag=nightly` (CI uses the pinned tag) |
 
 Initial migration: `3d2d06c7508ce82362f42921c51b63f197b94089` (floci-az `main`, 2026-10-03). Classify the diff as for
 AWS: migrate `ServicesConfig`; `TlsConfig`, `AuthConfig`, `DirectoryConfig` (`cloud`, `tenants`, `subscriptions`) and
@@ -500,7 +504,7 @@ The same process applies to `testcontainers-floci-gcp`, with these values:
 | The user's fork          | `cfranzen/floci-gcp` (to be created by the user), tag `migrated-to-testcontainers`        |
 | The file to diff         | `src/main/java/io/floci/gcp/config/EmulatorConfig.java` (`@ConfigMapping(prefix = "floci-gcp")`) |
 | Env-var prefix           | `FLOCI_GCP_…`, services `FLOCI_GCP_SERVICES_<ACCESSOR>_<PROPERTY>` (accessors are single lower-case words: `secretmanager()` → `SECRETMANAGER`; digits are not separated: `postgres15Image()` → `POSTGRES15_IMAGE`) |
-| Image for service tests  | `floci/floci-gcp:nightly`                                                                 |
+| Image for service tests  | `floci/floci-gcp:nightly`, via `-Dfloci.test-image.tag=nightly` (CI uses the pinned tag) |
 
 Initial migration: `1bb0845c38b163ed28d58b5ff930f25cf90ab634` (floci-gcp `main`, 2026-10-04). Classify the diff as for
 AWS: migrate `ServicesConfig` (the shared `dockerNetwork()` is covered by `withDedicatedNetwork()`); `TlsConfig` and
@@ -518,7 +522,7 @@ The same process applies to `testcontainers-floci-oci`, with these values:
 | The user's fork          | `cfranzen/floci-oci` (to be created by the user), tag `migrated-to-testcontainers`          |
 | The file to diff         | `src/main/java/io/floci/oci/config/EmulatorConfig.java` (`@ConfigMapping(prefix = "floci-oci")`) |
 | Env-var prefix           | `FLOCI_OCI_…`, services `FLOCI_OCI_SERVICES_<ACCESSOR>_<PROPERTY>` (accessors are lowercase: `objectstorage()` → `OBJECTSTORAGE`) |
-| Image for service tests  | `floci/floci-oci:nightly`                                                                   |
+| Image for service tests  | `floci/floci-oci:nightly`, via `-Dfloci.test-image.tag=nightly` (CI uses the pinned tag) |
 
 Initial migration: `c0dea6f2d6a8256f39564d08cda40ea9d443ea27` (floci-oci `main`, 2026-10-02). Classify the diff as for
 Azure: migrate `ServicesConfig`; `TlsConfig` and `AuthConfig` are migrated cross-cutting classes and must be kept in

@@ -2,8 +2,10 @@ package io.floci.testcontainers.oci.services;
 
 import com.oracle.bmc.auth.SimpleAuthenticationDetailsProvider;
 import com.oracle.bmc.common.ClientBuilderBase;
+import io.floci.testcontainers.core.testing.TestImages;
 import io.floci.testcontainers.oci.FlociOciContainer;
 import io.floci.testcontainers.oci.TestAuthenticationProviders;
+import org.junit.jupiter.api.Tag;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
@@ -14,11 +16,11 @@ import org.testcontainers.containers.output.Slf4jLogConsumer;
  * endpoint and a signing authentication provider (which also supplies the region) onto an OCI SDK
  * client builder.
  */
+@Tag("integration")
 abstract class AbstractServiceTest {
 
-    // Integration tests run against the nightly build so newly added services are covered
-    // before they land in a versioned release.
-    protected static final String NIGHTLY_IMAGE = "floci/floci-oci:nightly";
+    // The emulator image pinned in .github/docker-images.txt
+    protected static final String IMAGE = TestImages.pinnedImage(FlociOciContainer.DESCRIPTOR);
 
     private static final boolean DEBUG_LOGGING = false;
 
@@ -28,11 +30,11 @@ abstract class AbstractServiceTest {
 
     static {
         if (DEBUG_LOGGING) {
-            floci = new FlociOciContainer(NIGHTLY_IMAGE)
+            floci = new FlociOciContainer(IMAGE)
                     .withLogLevel(Level.DEBUG)
                     .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger("DOCKER")));
         } else {
-            floci = new FlociOciContainer(NIGHTLY_IMAGE)
+            floci = new FlociOciContainer(IMAGE)
                     .withLogLevel(Level.INFO);
         }
 

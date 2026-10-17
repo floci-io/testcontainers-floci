@@ -43,7 +43,7 @@ class FunctionsServiceTest extends AbstractServiceTest {
 
     @Test
     void shouldInvokeMockedFunction() throws Exception {
-        try (FlociOciContainer mocked = new FlociOciContainer(NIGHTLY_IMAGE)
+        try (FlociOciContainer mocked = new FlociOciContainer(IMAGE)
                 .disableAllServices()
                 .withFunctionsConfig(c -> c.enabled(true).mock(true))) {
             mocked.start();
@@ -61,7 +61,7 @@ class FunctionsServiceTest extends AbstractServiceTest {
         String functionImage = buildFunctionImage();
 
         // Floci OCI reaches the Fn server sibling container by its name, which needs a user-defined network
-        try (FlociOciContainer fn = new FlociOciContainer(NIGHTLY_IMAGE)
+        try (FlociOciContainer fn = new FlociOciContainer(IMAGE)
                 .withDedicatedNetwork()
                 .disableAllServices()
                 .withFunctionsConfig(c -> c.enabled(true))) {

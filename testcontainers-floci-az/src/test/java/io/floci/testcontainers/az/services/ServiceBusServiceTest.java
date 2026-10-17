@@ -9,7 +9,7 @@ class ServiceBusServiceTest extends AbstractServiceTest {
 
     @Test
     void shouldApplyTopologyAtStartup() {
-        try (FlociAzContainer topologyFloci = new FlociAzContainer(NIGHTLY_IMAGE)
+        try (FlociAzContainer topologyFloci = new FlociAzContainer(IMAGE)
                 .disableAllServices()
                 .withServiceBusConfig(c -> c.enabled(true).topology("""
                         {"UserConfig": {"Namespaces": [{"Name": "default", "Queues": [{"Name": "orders"}], "Topics": []}]}}

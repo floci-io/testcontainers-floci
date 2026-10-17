@@ -4,6 +4,8 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.InspectVolumeResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Container;
+import io.floci.testcontainers.core.testing.TestImages;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.testcontainers.DockerClientFactory;
@@ -32,9 +34,10 @@ import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+@Tag("integration")
 class FlociContainerCleanupTest {
 
-    private static final String IMAGE = "floci/floci:2.1.0";
+    private static final String IMAGE = TestImages.pinnedImage(FlociContainer.DESCRIPTOR);
     private static final String TEST_LABEL = "com.example.cleanup-test";
 
     @Test

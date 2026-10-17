@@ -12,7 +12,7 @@ class MySqlServiceTest extends AbstractServiceTest {
     @Test
     void shouldCreateMockedServer() {
         // A non-mocked server starts a MySQL container; the mocked one is ready without Docker
-        try (FlociAzContainer mockedFloci = new FlociAzContainer(NIGHTLY_IMAGE)
+        try (FlociAzContainer mockedFloci = new FlociAzContainer(IMAGE)
                 .disableAllServices()
                 .withMySqlConfig(c -> c.enabled(true).mocked(true))) {
             mockedFloci.start();

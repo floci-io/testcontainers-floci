@@ -30,7 +30,7 @@ class FunctionsServiceTest extends AbstractServiceTest {
 
     @Test
     void shouldReturnStubInvocationResultWhenMocked() throws IOException {
-        try (FlociAzContainer mockedFloci = new FlociAzContainer(NIGHTLY_IMAGE)
+        try (FlociAzContainer mockedFloci = new FlociAzContainer(IMAGE)
                 .disableAllServices()
                 .withFunctionsConfig(c -> c.enabled(true).mocked(true))) {
             mockedFloci.start();

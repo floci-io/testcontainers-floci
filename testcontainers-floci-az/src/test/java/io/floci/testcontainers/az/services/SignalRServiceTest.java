@@ -23,7 +23,7 @@ class SignalRServiceTest extends AbstractServiceTest {
 
     @BeforeAll
     static void startContainer() {
-        signalRFloci = new FlociAzContainer(NIGHTLY_IMAGE)
+        signalRFloci = new FlociAzContainer(IMAGE)
                 .disableAllServices()
                 .withSignalRConfig(c -> c.enabled(true).accessKey(ACCESS_KEY));
         signalRFloci.start();

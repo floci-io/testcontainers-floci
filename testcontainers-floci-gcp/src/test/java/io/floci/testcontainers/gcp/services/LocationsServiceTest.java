@@ -30,7 +30,7 @@ class LocationsServiceTest extends AbstractServiceTest {
 
     @Test
     void shouldRejectUnknownLocationWhileStrict() throws Exception {
-        try (FlociGcpContainer strictFloci = new FlociGcpContainer(NIGHTLY_IMAGE)
+        try (FlociGcpContainer strictFloci = new FlociGcpContainer(IMAGE)
                 .disableAllServices()
                 .withKafkaConfig(c -> c.enabled(true).mock(true))
                 .withLocationsConfig(c -> c.strict(true))) {

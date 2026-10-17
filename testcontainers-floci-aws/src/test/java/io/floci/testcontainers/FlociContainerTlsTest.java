@@ -8,6 +8,7 @@ import org.apache.hc.client5.http.ssl.DefaultClientTlsStrategy;
 import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
 import org.apache.hc.client5.http.ssl.TrustAllStrategy;
 import org.apache.hc.core5.ssl.SSLContextBuilder;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import javax.net.ssl.SSLContext;
@@ -26,6 +27,7 @@ class FlociContainerTlsTest {
     }
 
     @Test
+    @Tag("integration")
     void shouldReachHealthCheckViaHttpsWhenTlsEnabled() throws Exception {
         SSLContext sslContext = SSLContextBuilder.create()
                 .loadTrustMaterial(TrustAllStrategy.INSTANCE)

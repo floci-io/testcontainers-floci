@@ -1,5 +1,7 @@
 package io.floci.testcontainers.oci;
 
+import io.floci.testcontainers.core.testing.TestImages;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import javax.net.ssl.SSLContext;
@@ -19,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FlociOciContainerTlsTest {
 
-    private static final String NIGHTLY_IMAGE = "floci/floci-oci:nightly";
+    private static final String IMAGE = TestImages.pinnedImage(FlociOciContainer.DESCRIPTOR);
 
     @Test
     void shouldStoreTlsConfigOnContainer() {
@@ -49,8 +51,9 @@ class FlociOciContainerTlsTest {
     }
 
     @Test
+    @Tag("integration")
     void shouldServeHttpsWithTrustedCertificate() throws Exception {
-        try (FlociOciContainer container = new FlociOciContainer(NIGHTLY_IMAGE)
+        try (FlociOciContainer container = new FlociOciContainer(IMAGE)
                 .withTlsConfig(c -> c.enabled(true))) {
             container.start();
 

@@ -20,7 +20,7 @@ class EntraServiceTest extends AbstractServiceTest {
 
     @BeforeAll
     static void startContainer() {
-        entraFloci = new FlociAzContainer(NIGHTLY_IMAGE)
+        entraFloci = new FlociAzContainer(IMAGE)
                 .disableAllServices()
                 .withEntraConfig(c -> c.enabled(true).defaultTenantId(TENANT_ID).tokenLifetimeSeconds(600));
         entraFloci.start();
@@ -54,7 +54,7 @@ class EntraServiceTest extends AbstractServiceTest {
 
     @Test
     void shouldRejectUnregisteredClientWhenValidatingClientCredentials() throws IOException {
-        try (FlociAzContainer validatingFloci = new FlociAzContainer(NIGHTLY_IMAGE)
+        try (FlociAzContainer validatingFloci = new FlociAzContainer(IMAGE)
                 .disableAllServices()
                 .withEntraConfig(c -> c.enabled(true).validateClientCredentials(true))) {
             validatingFloci.start();

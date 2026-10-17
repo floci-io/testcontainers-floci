@@ -18,7 +18,7 @@ class ManagedIdentityServiceTest extends AbstractServiceTest {
 
     @Test
     void shouldIssueImdsTokenForConfiguredSystemAssignedScope() throws Exception {
-        try (FlociAzContainer identityFloci = new FlociAzContainer(NIGHTLY_IMAGE)
+        try (FlociAzContainer identityFloci = new FlociAzContainer(IMAGE)
                 .disableAllServices()
                 .withArmConfig(c -> c.enabled(true))
                 .withEntraConfig(c -> c.enabled(true))
@@ -43,7 +43,7 @@ class ManagedIdentityServiceTest extends AbstractServiceTest {
 
     @Test
     void shouldIssueAppServiceTokenForConfiguredPathAndHeaderSecret() throws Exception {
-        try (FlociAzContainer identityFloci = new FlociAzContainer(NIGHTLY_IMAGE)
+        try (FlociAzContainer identityFloci = new FlociAzContainer(IMAGE)
                 .disableAllServices()
                 .withEntraConfig(c -> c.enabled(true))
                 .withManagedIdentityConfig(c -> c.enabled(true)

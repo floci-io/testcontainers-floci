@@ -654,11 +654,13 @@ Every emulator publishes `latest`, `x.y.z` and `nightly` tags.
 ## Building and testing
 
 ```bash
-mvn -B verify                                              # all modules, unit and integration tests
-mvn -pl testcontainers-floci-aws -am test -Dtest=IamConfigTest -Dsurefire.failIfNoSpecifiedTests=false  # a single test class
+mvn -B test                                    # unit tests of all modules, no Docker needed
+mvn -B verify                                  # plus the integration tests, which start real Floci containers
+mvn -B verify -pl testcontainers-floci-gcp -am # one cloud, as CI does
 ```
 
-There is no separate integration-test phase: `mvn verify` starts real Floci containers, so Docker must be running.
+Integration tests are tagged `integration` and run by Failsafe against the emulator images pinned in
+`.github/docker-images.txt`; add `-Dfloci.test-image.tag=nightly` to run them against another tag.
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the project layout, the branching model, and how to add a service.
 
 ## Other languages

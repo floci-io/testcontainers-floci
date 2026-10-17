@@ -1,6 +1,8 @@
 package io.floci.testcontainers.gcp;
 
 import io.floci.testcontainers.core.config.services.AbstractServiceConfig;
+import io.floci.testcontainers.core.testing.TestImages;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 import org.testcontainers.utility.DockerImageName;
@@ -16,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FlociGcpContainerTest {
 
-    private static final String NIGHTLY_IMAGE = "floci/floci-gcp:nightly";
+    private static final String IMAGE = TestImages.pinnedImage(FlociGcpContainer.DESCRIPTOR);
 
     @Test
     void shouldCreateContainerWithDefaultImage() {
@@ -112,8 +114,9 @@ class FlociGcpContainerTest {
     }
 
     @Test
+    @Tag("integration")
     void shouldStartContainerAndServeEndpoints() throws Exception {
-        try (FlociGcpContainer container = new FlociGcpContainer(NIGHTLY_IMAGE)
+        try (FlociGcpContainer container = new FlociGcpContainer(IMAGE)
                 .withLogLevel(Level.DEBUG)
                 .withProjectId("my-project")) {
             container.start();
