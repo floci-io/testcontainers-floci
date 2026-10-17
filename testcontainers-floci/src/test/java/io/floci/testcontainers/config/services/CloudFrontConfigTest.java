@@ -13,7 +13,7 @@ class CloudFrontConfigTest {
     void shouldApplyDefaultCloudFrontConfig() {
         CloudFrontConfig config = CloudFrontConfig.builder().build();
         assertThat(config.isEnabled()).isTrue();
-        assertThat(config.getDomainSuffix()).isEqualTo("cloudfront.net");
+        assertThat(config.getDomainSuffix()).isEmpty();
         assertThat(config.getAllowedPrivateOriginHosts()).isEmpty();
     }
 
@@ -25,7 +25,7 @@ class CloudFrontConfigTest {
                 .allowedPrivateOriginHosts(List.of("internal.example.com", "private.example.com"))
                 .build();
         assertThat(config.isEnabled()).isFalse();
-        assertThat(config.getDomainSuffix()).isEqualTo("example.com");
+        assertThat(config.getDomainSuffix()).contains("example.com");
         assertThat(config.getAllowedPrivateOriginHosts())
                 .contains(List.of("internal.example.com", "private.example.com"));
     }
@@ -37,7 +37,7 @@ class CloudFrontConfigTest {
 
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_SERVICES_CLOUDFRONT_ENABLED", "true")
-                .containsEntry("FLOCI_SERVICES_CLOUDFRONT_DOMAIN_SUFFIX", "cloudfront.net")
+                .doesNotContainKey("FLOCI_SERVICES_CLOUDFRONT_DOMAIN_SUFFIX")
                 .doesNotContainKey("FLOCI_SERVICES_CLOUDFRONT_ALLOWED_PRIVATE_ORIGIN_HOSTS");
     }
 
@@ -74,7 +74,10 @@ class CloudFrontConfigTest {
         GenericContainer<?> container = genericContainer();
         CloudFrontConfig.builder().enabled(false).build().applyEnvVarsToContainer(container);
 
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_CLOUDFRONT_ENABLED", "false");
+        assertThat(container.getEnvMap())
+                .containsEntry("FLOCI_SERVICES_CLOUDFRONT_ENABLED", "false")
+                .doesNotContainKey("FLOCI_SERVICES_CLOUDFRONT_DOMAIN_SUFFIX")
+                .doesNotContainKey("FLOCI_SERVICES_CLOUDFRONT_ALLOWED_PRIVATE_ORIGIN_HOSTS");
     }
 
     @Test
@@ -86,7 +89,7 @@ class CloudFrontConfigTest {
                 .build();
         CloudFrontConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
-        assertThat(copy.getDomainSuffix()).isEqualTo("example.com");
+        assertThat(copy.getDomainSuffix()).contains("example.com");
         assertThat(copy.getAllowedPrivateOriginHosts()).contains(List.of("internal.example.com"));
     }
 
