@@ -1,11 +1,14 @@
 package io.floci.testcontainers.services;
 
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.KeyPair;
 import com.jcraft.jsch.Session;
 import org.awaitility.core.ConditionTimeoutException;
 import org.junit.jupiter.api.*;
+import org.testcontainers.DockerClientFactory;
 import org.testcontainers.images.RemoteDockerImage;
 import org.testcontainers.utility.DockerImageName;
 import software.amazon.awssdk.core.SdkBytes;
@@ -30,7 +33,10 @@ class Ec2ServiceTest extends AbstractServiceTest {
 
     private static final String AMI_ID = "ami-alpine";
     // The Docker image Floci's EC2 image catalog maps AMI_ID to
-    private static final String AMI_DOCKER_IMAGE = "public.ecr.aws/docker/library/alpine:latest";
+    private static final DockerImageName AMI_DOCKER_IMAGE =
+            DockerImageName.parse("public.ecr.aws/docker/library/alpine:latest");
+    // The same Alpine image from Docker Hub, provided under the AMI_DOCKER_IMAGE name (see provideAmiImageLocally())
+    private static final DockerImageName DOCKER_HUB_GUEST_IMAGE = DockerImageName.parse("alpine:3.22");
 
     static Ec2Client ec2;
 
@@ -105,10 +111,7 @@ class Ec2ServiceTest extends AbstractServiceTest {
     void shouldStartInstance() throws Exception {
         assertThat(keyName).as("key pair must have been created by previous test").isNotBlank();
 
-        // Floci pulls the AMI's image as part of the launch and waits up to 5 minutes per pull attempt, so a
-        // single stalled pull on a CI runner kept the instance pending past the wait below. Testcontainers
-        // aborts and retries stalled pulls, so pull the image up front; Floci then finds it locally.
-        new RemoteDockerImage(DockerImageName.parse(AMI_DOCKER_IMAGE)).get();
+        provideAmiImageLocally();
 
         instanceId = ec2.runInstances(b -> b
                         .imageId(AMI_ID)
@@ -175,6 +178,27 @@ class Ec2ServiceTest extends AbstractServiceTest {
                 .pollInterval(Duration.ofMillis(100))
                 .until(() -> ec2.describeInstances(b -> b.instanceIds(instanceId))
                         .reservations().get(0).instances().get(0).state().name() == InstanceStateName.TERMINATED);
+    }
+
+    /**
+     * Makes sure the AMI's Docker image is present on the Docker host, so Floci starts the instance from it
+     * without pulling it.
+     *
+     * <p>On CI runners, pulls from public.ecr.aws regularly stall for minutes: first Floci's own pull during
+     * the launch kept the instance pending, then a pre-pull through Testcontainers did not finish within its
+     * 2 minutes of retries either, while Docker Hub images pull fine in the same runs. So unless the image
+     * is already present, pull the same Alpine image from Docker Hub and tag it with the name Floci's image
+     * catalog uses.
+     */
+    private static void provideAmiImageLocally() {
+        DockerClient docker = DockerClientFactory.instance().client();
+        try {
+            docker.inspectImageCmd(AMI_DOCKER_IMAGE.asCanonicalNameString()).exec();
+        } catch (NotFoundException e) {
+            String guestImage = new RemoteDockerImage(DOCKER_HUB_GUEST_IMAGE).get();
+            docker.tagImageCmd(guestImage, AMI_DOCKER_IMAGE.getUnversionedPart(), AMI_DOCKER_IMAGE.getVersionPart())
+                    .exec();
+        }
     }
 
     private static Instance describeInstance(String id) {
