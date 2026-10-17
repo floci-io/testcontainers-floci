@@ -37,7 +37,7 @@ environment variables. No cloud account, no auth token.
 | [`testcontainers-floci`](#aws-testcontainers-floci)                             | Testcontainers module for starting a Floci (AWS) container   |
 | [`testcontainers-floci-az`](#azure-testcontainers-floci-az)                     | Testcontainers module for starting a Floci Azure container   |
 | [`testcontainers-floci-gcp`](#gcp-testcontainers-floci-gcp)                     | Testcontainers module for starting a Floci GCP container     |
-| [`testcontainers-floci-oci`](#module-testcontainers-floci-oci)                  | Testcontainers module for starting a Floci OCI container     |
+| [`testcontainers-floci-oci`](#oci-testcontainers-floci-oci)                     | Testcontainers module for starting a Floci OCI container     |
 | `testcontainers-floci-core`                                                     | Shared base classes of the modules above (not used directly) |
 | [`spring-boot-testcontainers-floci`](#spring-boot-integration) (decommissioned) | Superseded by Spring Cloud AWS's own testcontainers module   |
 
@@ -575,21 +575,17 @@ without a structurally valid OCI signature with `401`; the signature is still ne
 
 ### OCI
 
-| Method                        | Description                                                       | Default                                |
-|-------------------------------|-------------------------------------------------------------------|----------------------------------------|
-| `getEndpoint()`               | HTTP endpoint URL (e.g. `http://localhost:32781`)                 | —                                      |
-| `getHttpsEndpoint()`          | HTTPS endpoint URL (requires TLS to be enabled)                   | —                                      |
-| `getTlsCertificate()`         | PEM certificate served for HTTPS (requires TLS to be enabled)     | —                                      |
-| `getAccountName()`            | Default storage account                                           | `devstoreaccount1`                     |
-| `getAccountKey()`             | Key of the default storage account                                | well-known development storage key     |
-| `getBlobEndpoint()`           | Blob Storage endpoint of the default account                      | —                                      |
-| `getQueueEndpoint()`          | Queue Storage endpoint of the default account                     | —                                      |
-| `getTableEndpoint()`          | Table Storage endpoint of the default account                     | —                                      |
-| `getStorageConnectionString()`| Connection string for Blob, Queue and Table Storage               | —                                      |
-| `getSubscriptionId()`         | Default subscription id (`withArmConfig(...)`)                    | `00000000-0000-0000-0000-000000000001` |
-| `getTenantId()`               | Default Microsoft Entra ID tenant id (`withEntraConfig(...)`)     | `00000000-0000-0000-0000-000000000002` |
-| `getLogLevel()`               | Configured log level                                              | `WARN`                                 |
-| `get*Config()`                | Current configuration of a service or of TLS/auth                 | —                                      |
+| Method                      | Description                                                                        | Default                                                                        |
+|-----------------------------|------------------------------------------------------------------------------------|--------------------------------------------------------------------------------|
+| `getEndpoint()`             | Endpoint URL (e.g. `http://localhost:32781`); `https://` while TLS is enabled      | —                                                                              |
+| `getTlsCertificate()`       | PEM certificate served for HTTPS, copied from the container (requires TLS enabled) | —                                                                              |
+| `getRegion()`               | Default region                                                                     | `us-ashburn-1`                                                                 |
+| `getRealm()`                | Realm used in minted OCIDs                                                         | `oc1`                                                                          |
+| `getTenancyId()`            | OCID of the tenancy used for unsigned requests                                     | `ocid1.tenancy.oc1..flocilocaltenancy0000000000000000000000000000000000000000` |
+| `getNamespace()`            | Object Storage namespace                                                           | `floci-local`                                                                  |
+| `getLogLevel()`             | Configured log level                                                               | `WARN`                                                                         |
+| `getDedicatedNetworkName()` | Name of the dedicated Docker network, or `null` if not configured                  | `null`                                                                         |
+| `get*Config()`              | Current configuration of a service or of TLS/auth                                  | —                                                                              |
 
 ## Docker image tags
 
