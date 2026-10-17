@@ -5,6 +5,7 @@ import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider;
 import com.google.api.gax.rpc.TransportChannelProvider;
 import io.floci.testcontainers.gcp.FlociGcpContainer;
+import io.grpc.ManagedChannelBuilder;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
@@ -26,7 +27,7 @@ abstract class AbstractServiceTest {
     // before they land in a versioned release.
     protected static final String NIGHTLY_IMAGE = "floci/floci-gcp:nightly";
 
-    private static final boolean DEBUG_LOGGING = true;
+    private static final boolean DEBUG_LOGGING = false;
 
     protected static final FlociGcpContainer floci;
 
@@ -62,7 +63,7 @@ abstract class AbstractServiceTest {
     protected static TransportChannelProvider grpcChannelProvider() {
         return InstantiatingGrpcChannelProvider.newBuilder()
                 .setEndpoint(floci.getEmulatorHost())
-                .setChannelConfigurator(builder -> builder.usePlaintext())
+                .setChannelConfigurator(ManagedChannelBuilder::usePlaintext)
                 .build();
     }
 
