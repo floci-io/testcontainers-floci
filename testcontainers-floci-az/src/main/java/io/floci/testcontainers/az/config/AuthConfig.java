@@ -13,7 +13,6 @@ import java.util.Map;
  * <p>Instances are created via {@link Builder}:
  * <pre>{@code
  * AuthConfig config = AuthConfig.builder()
- *     .mode("strict")
  *     .storageAccountKey("myaccount", "bXktYmFzZTY0LWtleQ==")
  *     .build();
  * }</pre>
@@ -50,8 +49,9 @@ public class AuthConfig {
     }
 
     /**
-     * Returns the authentication mode: {@code dev} accepts any credentials, {@code strict} validates
-     * HMAC-SHA256 signatures.
+     * Returns the authentication mode. Floci Azure reserves this setting but does not read it yet:
+     * every value, {@code strict} included, behaves like {@code dev}, i.e. any credentials are
+     * accepted and SharedKey signatures are not validated.
      *
      * @return the authentication mode
      */
@@ -105,10 +105,11 @@ public class AuthConfig {
         }
 
         /**
-         * Sets the authentication mode: {@code dev} accepts any credentials, {@code strict} validates
-         * HMAC-SHA256 signatures. Note that Floci Azure currently only declares this setting; shared-key
-         * signed SAS tokens are validated against {@link #storageAccountKey(String, String) the storage
-         * account keys} in either mode.
+         * Sets the authentication mode. Floci Azure reserves this setting but does not read it yet:
+         * every value, {@code strict} included, behaves like {@code dev}, i.e. any credentials are
+         * accepted and SharedKey signatures are not validated. Shared-key signed Blob service SAS
+         * tokens are validated against {@link #storageAccountKey(String, String) the storage account
+         * keys} independently of this setting.
          *
          * @param mode the authentication mode (default {@value DEFAULT_MODE})
          * @return this builder
