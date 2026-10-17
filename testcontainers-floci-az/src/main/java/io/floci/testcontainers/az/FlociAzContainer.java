@@ -1,6 +1,7 @@
 package io.floci.testcontainers.az;
 
 import io.floci.testcontainers.az.config.AuthConfig;
+import io.floci.testcontainers.az.config.DirectoryConfig;
 import io.floci.testcontainers.az.config.TlsConfig;
 import io.floci.testcontainers.az.config.services.*;
 import io.floci.testcontainers.core.AbstractFlociContainer;
@@ -60,6 +61,7 @@ public class FlociAzContainer extends AbstractFlociContainer<FlociAzContainer> {
 
     private TlsConfig tlsConfig = TlsConfig.builder().build();
     private AuthConfig authConfig = AuthConfig.builder().build();
+    private DirectoryConfig directoryConfig = DirectoryConfig.builder().build();
 
     // Service configs
     private final ServiceConfigRef<BlobConfig> blobConfig = registerServiceConfig(BlobConfig.builder().build());
@@ -129,6 +131,7 @@ public class FlociAzContainer extends AbstractFlociContainer<FlociAzContainer> {
     protected void applyGlobalEnvVars() {
         tlsConfig.applyEnvVarsToContainer(this);
         authConfig.applyEnvVarsToContainer(this);
+        directoryConfig.applyEnvVarsToContainer(this);
     }
 
     /**
@@ -246,6 +249,38 @@ public class FlociAzContainer extends AbstractFlociContainer<FlociAzContainer> {
         configurer.accept(builder);
         this.authConfig = builder.build();
         authConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Returns the tenant and subscription directory configuration.
+     *
+     * @return the directory configuration
+     */
+    public DirectoryConfig getDirectoryConfig() {
+        return directoryConfig;
+    }
+
+    /**
+     * Configures the tenant and subscription directory of the Floci Azure server, i.e. the default cloud
+     * and the tenants and subscriptions it holds besides the default ones:
+     *
+     * <pre>{@code
+     * new FlociAzContainer()
+     *     .withDirectoryConfig(c -> c
+     *         .tenant("11111111-0000-0000-0000-000000000000", t -> t.displayName("Contoso"))
+     *         .subscription("22222222-0000-0000-0000-000000000000",
+     *             s -> s.tenantId("11111111-0000-0000-0000-000000000000")));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link DirectoryConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociAzContainer withDirectoryConfig(Consumer<DirectoryConfig.Builder> configurer) {
+        DirectoryConfig.Builder builder = directoryConfig.toBuilder();
+        configurer.accept(builder);
+        this.directoryConfig = builder.build();
+        directoryConfig.applyEnvVarsToContainer(this);
         return this;
     }
 

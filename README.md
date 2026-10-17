@@ -399,6 +399,7 @@ FlociContainer floci = new FlociContainer().withDockerSocket(true);
 | `withDockerSocket(boolean)` | Overrides whether the host Docker socket is mounted, bypassing auto-detection                   |
 | `withTlsConfig(...)`        | Configures TLS/HTTPS (self-signed by default; optionally provide cert/key paths)                |
 | `withAuthConfig(...)`       | Configures authentication, e.g. keys of additional storage accounts used to validate SAS tokens |
+| `withDirectoryConfig(...)`  | Configures the default cloud and additional tenants/subscriptions of the ARM directory          |
 | `with*Config(...)`          | Configures service-specific settings, e.g. `withServiceBusConfig(c -> c.mocked(false))`         |
 
 Docker-backed services (Functions, AKS, Container Registry, Redis, Event Hubs, Service Bus, SQL Database,

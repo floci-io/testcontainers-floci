@@ -29,4 +29,28 @@ class ArmServiceTest extends AbstractServiceTest {
                     .isEqualTo("22222222-2222-2222-2222-222222222222");
         }
     }
+
+    @Test
+    void shouldListConfiguredTenantsAndSubscriptions() {
+        String tenantId = "11111111-0000-0000-0000-000000000000";
+        String subscriptionId = "33333333-0000-0000-0000-000000000000";
+        try (FlociAzContainer armFloci = new FlociAzContainer(NIGHTLY_IMAGE)
+                .disableAllServices()
+                .withArmConfig(c -> c.enabled(true))
+                .withDirectoryConfig(c -> c
+                        .tenant(tenantId, t -> t.displayName("Contoso").defaultDomain("contoso.example"))
+                        .subscription(subscriptionId, s -> s.tenantId(tenantId).displayName("contoso-dev")))) {
+            armFloci.start();
+
+            RestResponse tenants = rest(armFloci, "GET", "/tenants?api-version=2022-12-01", null);
+            RestResponse subscription = rest(armFloci, "GET", "/subscriptions/" + subscriptionId + "?api-version=2022-12-01", null);
+
+            assertThat(tenants.status()).as(tenants.toString()).isEqualTo(200);
+            assertThat(tenants.json().path("value").findValuesAsText("tenantId")).contains(tenantId);
+            assertThat(tenants.json().path("value").findValuesAsText("displayName")).contains("Contoso");
+            assertThat(subscription.status()).as(subscription.toString()).isEqualTo(200);
+            assertThat(subscription.json().path("displayName").asText()).isEqualTo("contoso-dev");
+            assertThat(subscription.json().path("tenantId").asText()).isEqualTo(tenantId);
+        }
+    }
 }
