@@ -39,6 +39,8 @@ abstract class AbstractServiceTest {
         }
 
         floci.withElbV2Config(c -> c.listenerPort(LB_LISTENER_PORT))
+                // advertise the MSK brokers' host listener on the Docker host, where the test JVM can reach it
+                .withMskConfig(c -> c.bootstrapHostname(floci.getHost()))
                 .start();
 
         // Floci speaks JSON 1.1 — disable CBOR which is used by some service clients (e.g. Kinesis SDK) as default

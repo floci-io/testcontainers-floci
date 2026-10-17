@@ -83,7 +83,6 @@ class MskServiceTest extends AbstractServiceTest {
 
     @Test
     @Order(3)
-    @Disabled
     void shouldCreateTopic() throws Exception {
         try (AdminClient admin = AdminClient.create(Map.of(
                 AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapBrokers))) {
@@ -98,7 +97,6 @@ class MskServiceTest extends AbstractServiceTest {
 
     @Test
     @Order(4)
-    @Disabled
     void shouldProduceAndConsumeMessage() throws Exception {
         String messageKey = "key-1";
         String messageValue = "Hello from Floci MSK!";
