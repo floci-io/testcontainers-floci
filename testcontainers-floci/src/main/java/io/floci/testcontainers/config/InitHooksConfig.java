@@ -8,6 +8,7 @@ import org.testcontainers.containers.Container;
  * <p>Instances are created via {@link Builder}:
  * <pre>{@code
  * InitHooksConfig config = InitHooksConfig.builder()
+ *     .dir("/opt/floci/init")
  *     .shellExecutable("/bin/bash")
  *     .timeoutSeconds(60)
  *     .build();
@@ -15,15 +16,18 @@ import org.testcontainers.containers.Container;
  */
 public class InitHooksConfig {
 
+    private static final String DEFAULT_DIR = "/etc/floci/init";
     private static final String DEFAULT_SHELL_EXECUTABLE = "/bin/sh";
     private static final long DEFAULT_SHUTDOWN_GRACE_PERIOD_SECONDS = 2;
     private static final long DEFAULT_TIMEOUT_SECONDS = 30;
 
+    private final String dir;
     private final String shellExecutable;
     private final long shutdownGracePeriodSeconds;
     private final long timeoutSeconds;
 
     private InitHooksConfig(Builder builder) {
+        this.dir = builder.dir;
         this.shellExecutable = builder.shellExecutable;
         this.shutdownGracePeriodSeconds = builder.shutdownGracePeriodSeconds;
         this.timeoutSeconds = builder.timeoutSeconds;
@@ -46,6 +50,16 @@ public class InitHooksConfig {
      */
     public Builder toBuilder() {
         return new Builder(this);
+    }
+
+    /**
+     * Returns the root directory of the Floci-native hook directories ({@code boot.d}, {@code start.d},
+     * {@code ready.d}, {@code stop.d}, {@code shutdown.d}) inside the container.
+     *
+     * @return the init hook root directory
+     */
+    public String getDir() {
+        return dir;
     }
 
     /**
@@ -82,6 +96,7 @@ public class InitHooksConfig {
      * @param container the container to configure
      */
     public void applyEnvVarsToContainer(Container<?> container) {
+        container.withEnv("FLOCI_INIT_HOOKS_DIR", dir);
         container.withEnv("FLOCI_INIT_HOOKS_SHELL_EXECUTABLE", shellExecutable);
         container.withEnv("FLOCI_INIT_HOOKS_SHUTDOWN_GRACE_PERIOD_SECONDS", String.valueOf(shutdownGracePeriodSeconds));
         container.withEnv("FLOCI_INIT_HOOKS_TIMEOUT_SECONDS", String.valueOf(timeoutSeconds));
@@ -92,6 +107,7 @@ public class InitHooksConfig {
      */
     public static class Builder {
 
+        private String dir = DEFAULT_DIR;
         private String shellExecutable = DEFAULT_SHELL_EXECUTABLE;
         private long shutdownGracePeriodSeconds = DEFAULT_SHUTDOWN_GRACE_PERIOD_SECONDS;
         private long timeoutSeconds = DEFAULT_TIMEOUT_SECONDS;
@@ -101,9 +117,24 @@ public class InitHooksConfig {
         }
 
         private Builder(InitHooksConfig instance) {
+            this.dir = instance.dir;
             this.shellExecutable = instance.shellExecutable;
             this.shutdownGracePeriodSeconds = instance.shutdownGracePeriodSeconds;
             this.timeoutSeconds = instance.timeoutSeconds;
+        }
+
+        /**
+         * Sets the root directory of the Floci-native hook directories ({@code boot.d}, {@code start.d},
+         * {@code ready.d}, {@code stop.d}, {@code shutdown.d}) inside the container. Hook scripts must
+         * be copied below this directory. The LocalStack-compatible tree under
+         * {@code /etc/localstack/init} is always read as well.
+         *
+         * @param dir the init hook root directory (default {@value DEFAULT_DIR})
+         * @return this builder
+         */
+        public Builder dir(String dir) {
+            this.dir = dir;
+            return this;
         }
 
         /**

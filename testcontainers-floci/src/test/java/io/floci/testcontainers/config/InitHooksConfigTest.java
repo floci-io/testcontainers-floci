@@ -11,6 +11,7 @@ class InitHooksConfigTest {
     @Test
     void shouldApplyDefaultInitHooksConfig() {
         InitHooksConfig config = InitHooksConfig.builder().build();
+        assertThat(config.getDir()).isEqualTo("/etc/floci/init");
         assertThat(config.getShellExecutable()).isEqualTo("/bin/sh");
         assertThat(config.getShutdownGracePeriodSeconds()).isEqualTo(2);
         assertThat(config.getTimeoutSeconds()).isEqualTo(30);
@@ -19,10 +20,12 @@ class InitHooksConfigTest {
     @Test
     void shouldApplyCustomInitHooksConfig() {
         InitHooksConfig config = InitHooksConfig.builder()
+                .dir("/opt/floci/init")
                 .shellExecutable("/bin/bash")
                 .shutdownGracePeriodSeconds(5)
                 .timeoutSeconds(60)
                 .build();
+        assertThat(config.getDir()).isEqualTo("/opt/floci/init");
         assertThat(config.getShellExecutable()).isEqualTo("/bin/bash");
         assertThat(config.getShutdownGracePeriodSeconds()).isEqualTo(5);
         assertThat(config.getTimeoutSeconds()).isEqualTo(60);
@@ -34,6 +37,7 @@ class InitHooksConfigTest {
         InitHooksConfig.builder().build().applyEnvVarsToContainer(container);
 
         assertThat(container.getEnvMap())
+                .containsEntry("FLOCI_INIT_HOOKS_DIR", "/etc/floci/init")
                 .containsEntry("FLOCI_INIT_HOOKS_SHELL_EXECUTABLE", "/bin/sh")
                 .containsEntry("FLOCI_INIT_HOOKS_SHUTDOWN_GRACE_PERIOD_SECONDS", "2")
                 .containsEntry("FLOCI_INIT_HOOKS_TIMEOUT_SECONDS", "30");
@@ -43,6 +47,7 @@ class InitHooksConfigTest {
     void shouldApplyCustomEnvVarsToContainer() {
         GenericContainer<?> container = genericContainer();
         InitHooksConfig.builder()
+                .dir("/opt/floci/init")
                 .shellExecutable("/bin/bash")
                 .shutdownGracePeriodSeconds(5)
                 .timeoutSeconds(60)
@@ -50,6 +55,7 @@ class InitHooksConfigTest {
                 .applyEnvVarsToContainer(container);
 
         assertThat(container.getEnvMap())
+                .containsEntry("FLOCI_INIT_HOOKS_DIR", "/opt/floci/init")
                 .containsEntry("FLOCI_INIT_HOOKS_SHELL_EXECUTABLE", "/bin/bash")
                 .containsEntry("FLOCI_INIT_HOOKS_SHUTDOWN_GRACE_PERIOD_SECONDS", "5")
                 .containsEntry("FLOCI_INIT_HOOKS_TIMEOUT_SECONDS", "60");
@@ -58,6 +64,7 @@ class InitHooksConfigTest {
     @Test
     void shouldPreserveValuesOnToBuilder() {
         InitHooksConfig config = InitHooksConfig.builder()
+                .dir("/opt/floci/init")
                 .shellExecutable("/bin/bash")
                 .shutdownGracePeriodSeconds(5)
                 .timeoutSeconds(60)
@@ -65,6 +72,7 @@ class InitHooksConfigTest {
 
         InitHooksConfig copy = config.toBuilder().build();
 
+        assertThat(copy.getDir()).isEqualTo("/opt/floci/init");
         assertThat(copy.getShellExecutable()).isEqualTo("/bin/bash");
         assertThat(copy.getShutdownGracePeriodSeconds()).isEqualTo(5);
         assertThat(copy.getTimeoutSeconds()).isEqualTo(60);
