@@ -90,7 +90,16 @@ abstract class AbstractServiceTest {
      * @param body        the request body, or {@code null} for none
      */
     protected static RestResponse rest(String method, String path, String contentType, String body) {
-        HttpRequest.Builder request = HttpRequest.newBuilder(URI.create(floci.getEndpoint() + path));
+        return rest(floci, method, path, contentType, body);
+    }
+
+    /**
+     * Same as {@link #rest(String, String, String, String)}, but against the given container instead of the shared
+     * one.
+     */
+    protected static RestResponse rest(FlociGcpContainer container, String method, String path, String contentType,
+                                       String body) {
+        HttpRequest.Builder request = HttpRequest.newBuilder(URI.create(container.getEndpoint() + path));
         if (body != null) {
             request.header("Content-Type", contentType)
                     .method(method, HttpRequest.BodyPublishers.ofString(body));

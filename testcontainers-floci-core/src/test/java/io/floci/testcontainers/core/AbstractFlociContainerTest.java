@@ -3,6 +3,7 @@ package io.floci.testcontainers.core;
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 import org.testcontainers.containers.TransferableCopyInspector;
+import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
 import org.testcontainers.utility.DockerImageName;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,6 +33,62 @@ class AbstractFlociContainerTest {
         try (TestFlociContainer container = new TestFlociContainer()) {
             assertThat(container.getPort()).isEqualTo(TestFlociContainer.PORT);
             assertThat(container.getExposedPorts()).contains(TestFlociContainer.PORT);
+        }
+    }
+
+    @Test
+    void shouldExposeDescriptor() {
+        try (TestFlociContainer container = new TestFlociContainer()) {
+            assertThat(container.getDescriptor()).isSameAs(TestFlociContainer.DESCRIPTOR);
+        }
+    }
+
+    @Test
+    void shouldApplyDefaultEnvOfDescriptor() {
+        try (TestFlociContainer container = new TestFlociContainer()) {
+            assertThat(container.getEnvMap()).containsEntry("FLOCI_TEST_TLS_HTTPS_PORT", "0");
+        }
+    }
+
+    @Test
+    void shouldLetCallerOverrideDefaultEnv() {
+        try (TestFlociContainer container = new TestFlociContainer()) {
+            container.withEnv("FLOCI_TEST_TLS_HTTPS_PORT", "8443");
+
+            assertThat(container.getEnvMap()).containsEntry("FLOCI_TEST_TLS_HTTPS_PORT", "8443");
+        }
+    }
+
+    @Test
+    void shouldWaitForHealthPath() {
+        try (TestFlociContainer container = new TestFlociContainer()) {
+            assertThat(container.waitStrategy()).isInstanceOf(HttpWaitStrategy.class);
+            assertThat(container.waitStrategy()).extracting("path").isEqualTo(TestFlociContainer.HEALTH_PATH);
+        }
+    }
+
+    @Test
+    void shouldHaveNoResourceNamespaceBeforeStart() {
+        try (TestFlociContainer container = new TestFlociContainer()) {
+            assertThat(container.getResourceNamespace()).isNull();
+        }
+    }
+
+    @Test
+    void shouldReturnCallerSetResourceNamespace() {
+        try (TestFlociContainer container = new TestFlociContainer()) {
+            container.withEnv(TestFlociContainer.RESOURCE_NAMESPACE_ENV_VAR, "my-namespace");
+
+            assertThat(container.getResourceNamespace()).isEqualTo("my-namespace");
+        }
+    }
+
+    @Test
+    void shouldRejectResetWhenNotRunning() {
+        try (TestFlociContainer container = new TestFlociContainer()) {
+            assertThatThrownBy(container::reset)
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("not running");
         }
     }
 

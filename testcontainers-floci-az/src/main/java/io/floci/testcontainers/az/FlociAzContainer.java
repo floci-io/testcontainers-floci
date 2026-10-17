@@ -6,7 +6,7 @@ import io.floci.testcontainers.az.config.ParityConfig;
 import io.floci.testcontainers.az.config.TlsConfig;
 import io.floci.testcontainers.az.config.services.*;
 import io.floci.testcontainers.core.AbstractFlociContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
+import io.floci.testcontainers.core.CloudDescriptor;
 import org.testcontainers.utility.DockerImageName;
 
 import java.io.IOException;
@@ -15,7 +15,6 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.time.Duration;
 import java.util.function.Consumer;
 
 /**
@@ -51,9 +50,27 @@ public class FlociAzContainer extends AbstractFlociContainer<FlociAzContainer> {
      */
     public static final int PORT = 4577;
 
-    private static final String LOG_LEVEL_ENV_VAR = "QUARKUS_LOG_CATEGORY__IO_FLOCI_AZ__LEVEL";
-    private static final String DOCKER_NETWORK_ENV_VAR = "FLOCI_AZ_SERVICES_DOCKER_NETWORK";
-    private static final String HEALTH_PATH = "/_floci/health";
+    /**
+     * Description of the Floci Azure emulator. Every container starts with
+     * {@code FLOCI_AZ_DOCKER_ENDPOINT_MODE=published}, so the host and port Floci Azure reports for its sidecars
+     * (databases, Redis, Event Hubs, …) are reachable from the test process, and with
+     * {@code FLOCI_AZ_TLS_HTTPS_PORT=0}, so no extra HTTPS listener is bound on 443.
+     */
+    public static final CloudDescriptor DESCRIPTOR = CloudDescriptor.builder()
+            .name("az")
+            .image(DEFAULT_IMAGE_NAME.getUnversionedPart())
+            .port(PORT)
+            .envPrefix("FLOCI_AZ_")
+            .healthPath("/_floci/health")
+            .resetPath("/_admin/reset")
+            .logLevelEnvVar("QUARKUS_LOG_CATEGORY__IO_FLOCI_AZ__LEVEL")
+            .networkEnvVar("FLOCI_AZ_SERVICES_DOCKER_NETWORK")
+            .resourceNamespaceEnvVar("FLOCI_AZ_DOCKER_RESOURCE_NAMESPACE")
+            .tlsHttpsPortEnvVar("FLOCI_AZ_TLS_HTTPS_PORT")
+            .defaultEnv("FLOCI_AZ_DOCKER_ENDPOINT_MODE", "published")
+            .defaultEnv("FLOCI_AZ_TLS_HTTPS_PORT", "0")
+            .build();
+
     private static final String TLS_CERT_PATH = "/_floci/tls-cert";
 
     private static final String DEFAULT_ACCOUNT_NAME = "devstoreaccount1";
@@ -119,12 +136,7 @@ public class FlociAzContainer extends AbstractFlociContainer<FlociAzContainer> {
      * @param dockerImageName the Docker image name (must be compatible with {@code floci/floci-az})
      */
     public FlociAzContainer(DockerImageName dockerImageName) {
-        super(dockerImageName, DEFAULT_IMAGE_NAME, PORT, LOG_LEVEL_ENV_VAR, DOCKER_NETWORK_ENV_VAR);
-
-        waitingFor(Wait.forHttp(HEALTH_PATH)
-                .forPort(PORT)
-                .forStatusCode(200)
-                .withStartupTimeout(Duration.ofSeconds(60)));
+        super(dockerImageName, DESCRIPTOR);
 
         applyAllConfigs();
     }

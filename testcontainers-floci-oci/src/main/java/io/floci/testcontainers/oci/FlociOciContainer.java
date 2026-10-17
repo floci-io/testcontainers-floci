@@ -1,6 +1,7 @@
 package io.floci.testcontainers.oci;
 
 import io.floci.testcontainers.core.AbstractFlociContainer;
+import io.floci.testcontainers.core.CloudDescriptor;
 import io.floci.testcontainers.oci.config.AuthConfig;
 import io.floci.testcontainers.oci.config.TlsConfig;
 import io.floci.testcontainers.oci.config.services.*;
@@ -45,8 +46,24 @@ public class FlociOciContainer extends AbstractFlociContainer<FlociOciContainer>
      */
     public static final int PORT = 4599;
 
-    private static final String LOG_LEVEL_ENV_VAR = "QUARKUS_LOG_CATEGORY__IO_FLOCI_OCI__LEVEL";
-    private static final String DOCKER_NETWORK_ENV_VAR = "FLOCI_OCI_SERVICES_DOCKER_NETWORK";
+    /**
+     * Description of the Floci OCI emulator. Every container starts with {@code FLOCI_OCI_TLS_HTTPS_PORT=0}, so no
+     * extra HTTPS listener is bound on 443.
+     */
+    public static final CloudDescriptor DESCRIPTOR = CloudDescriptor.builder()
+            .name("oci")
+            .image(DEFAULT_IMAGE_NAME.getUnversionedPart())
+            .port(PORT)
+            .envPrefix("FLOCI_OCI_")
+            .healthPath("/_floci-oci/health")
+            .resetPath("/_floci-oci/state/reset")
+            .logLevelEnvVar("QUARKUS_LOG_CATEGORY__IO_FLOCI_OCI__LEVEL")
+            .networkEnvVar("FLOCI_OCI_SERVICES_DOCKER_NETWORK")
+            .resourceNamespaceEnvVar("FLOCI_OCI_DOCKER_RESOURCE_NAMESPACE")
+            .tlsHttpsPortEnvVar("FLOCI_OCI_TLS_HTTPS_PORT")
+            .defaultEnv("FLOCI_OCI_TLS_HTTPS_PORT", "0")
+            .build();
+
     private static final String INIT_PATH = "/_floci-oci/init";
     private static final Pattern READY_PATTERN = Pattern.compile("\"ready\"\\s*:\\s*true");
     private static final String NOT_AUTHENTICATED_CODE = "\"NotAuthenticated\"";
@@ -98,8 +115,9 @@ public class FlociOciContainer extends AbstractFlociContainer<FlociOciContainer>
      * @param dockerImageName the Docker image name (must be compatible with {@code floci/floci-oci})
      */
     public FlociOciContainer(DockerImageName dockerImageName) {
-        super(dockerImageName, DEFAULT_IMAGE_NAME, PORT, LOG_LEVEL_ENV_VAR, DOCKER_NETWORK_ENV_VAR);
+        super(dockerImageName, DESCRIPTOR);
 
+        // In addition to the health check, wait for the startup hooks:
         // /_floci-oci/init reports "ready": true once all startup hooks have completed. While signatures are
         // required (AuthConfig#requireSignature), Floci OCI also rejects unsigned requests to its own
         // /_floci-oci endpoints with 401 NotAuthenticated, which is then the best readiness signal available.
