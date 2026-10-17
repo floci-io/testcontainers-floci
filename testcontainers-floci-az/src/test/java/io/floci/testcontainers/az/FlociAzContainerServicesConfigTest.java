@@ -276,6 +276,14 @@ class FlociAzContainerServicesConfigTest {
     }
 
     @Test
+    void shouldWireDirectoryConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withDirectoryConfig(cfg -> cfg.defaultCloud("AzureUSGovernment")),
+                c -> c.getDirectoryConfig().getDefaultCloud(), "AzureUSGovernment",
+                "FLOCI_AZ_CLOUD_DEFAULT", "AzureUSGovernment");
+    }
+
+    @Test
     void shouldWireTlsConfigIntoContainer() {
         assertConfigWired(
                 c -> c.withTlsConfig(cfg -> cfg.enabled(true)),
