@@ -15,7 +15,7 @@ import org.testcontainers.containers.Container;
  */
 public class FirehoseConfig extends AbstractServiceConfig<FirehoseConfig.Builder> {
 
-    private static final long DEFAULT_TICK_INTERVAL_SECONDS = 10;
+    private static final long DEFAULT_TICK_INTERVAL_SECONDS = 1;
     private static final int DEFAULT_FLUSH_RECORD_COUNT = 0;
     private static final String DEFAULT_STAGING_BUCKET = "floci-firehose-staging";
 
@@ -52,7 +52,8 @@ public class FirehoseConfig extends AbstractServiceConfig<FirehoseConfig.Builder
 
     /**
      * Returns how often, in seconds, the buffer flusher checks for streams whose buffering
-     * interval ({@code BufferingHints.IntervalInSeconds}) has elapsed.
+     * interval ({@code BufferingHints.IntervalInSeconds}) has elapsed. A buffer is delivered at most
+     * this long after its interval ends.
      *
      * @return the tick interval in seconds
      */
@@ -122,7 +123,8 @@ public class FirehoseConfig extends AbstractServiceConfig<FirehoseConfig.Builder
 
         /**
          * Sets how often, in seconds, the buffer flusher checks for streams whose buffering
-         * interval has elapsed.
+         * interval has elapsed. AWS delivers once the first buffer condition is met, so a buffer is
+         * delivered at most this long after its interval ends.
          *
          * @param tickIntervalSeconds the tick interval in seconds (default {@value DEFAULT_TICK_INTERVAL_SECONDS})
          * @return this builder
