@@ -32,13 +32,13 @@ local cloud emulators. Each module starts a Floci emulator container for your in
 endpoint and credentials to point the cloud SDK at, plus a typed, per-service configuration API over the emulator's
 environment variables. No cloud account, no auth token.
 
-| Module                                                                                                         | Description                                                  |
-|----------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------|
-| [`testcontainers-floci`](#aws-testcontainers-floci)                                                            | Testcontainers module for starting a Floci (AWS) container   |
-| [`testcontainers-floci-az`](#azure-testcontainers-floci-az)                                                    | Testcontainers module for starting a Floci Azure container   |
-| [`testcontainers-floci-gcp`](#gcp-testcontainers-floci-gcp)                                                    | Testcontainers module for starting a Floci GCP container     |
-| `testcontainers-floci-core`                                                                                    | Shared base classes of the modules above (not used directly) |
-| [`spring-boot-testcontainers-floci`](#module-spring-boot-testcontainers-floci-decommissioned) (decommissioned) | Superseded by Spring Cloud AWS's own testcontainers module   |
+| Module                                                                          | Description                                                  |
+|---------------------------------------------------------------------------------|--------------------------------------------------------------|
+| [`testcontainers-floci`](#aws-testcontainers-floci)                             | Testcontainers module for starting a Floci (AWS) container   |
+| [`testcontainers-floci-az`](#azure-testcontainers-floci-az)                     | Testcontainers module for starting a Floci Azure container   |
+| [`testcontainers-floci-gcp`](#gcp-testcontainers-floci-gcp)                     | Testcontainers module for starting a Floci GCP container     |
+| `testcontainers-floci-core`                                                     | Shared base classes of the modules above (not used directly) |
+| [`spring-boot-testcontainers-floci`](#spring-boot-integration) (decommissioned) | Superseded by Spring Cloud AWS's own testcontainers module   |
 
 ### The Floci emulators
 
@@ -56,10 +56,10 @@ named after [floccus](https://en.wikipedia.org/wiki/Cirrocumulus_floccus), the c
 
 ### Version compatibility
 
-| testcontainers-floci | Spring Boot integration                                                                                   | Testcontainers | Release badges                                                                                                                                                                       |
-|----------------------|-----------------------------------------------------------------------------------------------------------|----------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **2.x**              | via [`spring-cloud-aws-testcontainers`](#module-spring-boot-testcontainers-floci-decommissioned) (4.1.0+) | 2.x            | [![Maven Central](https://img.shields.io/maven-central/v/io.floci/testcontainers-floci)](https://central.sonatype.com/artifact/io.floci/testcontainers-floci)                        |
-| **1.x**              | `spring-boot-testcontainers-floci` (Spring Boot 3.5.x / Spring Cloud AWS 3.4.x)                           | 1.x            | [![Maven Central](https://img.shields.io/maven-central/v/io.floci/testcontainers-floci?filter=1.*)](https://img.shields.io/maven-central/v/io.floci/testcontainers-floci?filter=1.*) |
+| testcontainers-floci | Spring Boot integration                                                         | Testcontainers | Release badges                                                                                                                                                                       |
+|----------------------|---------------------------------------------------------------------------------|----------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **2.x**              | via [`spring-cloud-aws-testcontainers`](#spring-boot-integration) (4.1.0+)      | 2.x            | [![Maven Central](https://img.shields.io/maven-central/v/io.floci/testcontainers-floci)](https://central.sonatype.com/artifact/io.floci/testcontainers-floci)                        |
+| **1.x**              | `spring-boot-testcontainers-floci` (Spring Boot 3.5.x / Spring Cloud AWS 3.4.x) | 1.x            | [![Maven Central](https://img.shields.io/maven-central/v/io.floci/testcontainers-floci?filter=1.*)](https://img.shields.io/maven-central/v/io.floci/testcontainers-floci?filter=1.*) |
 
 ### AWS: testcontainers-floci
 
@@ -478,9 +478,9 @@ By default each module runs the floating `latest` tag of its emulator image (`fl
 pin a release or follow `main`:
 
 ```java
-new FlociContainer("floci/floci:x.y.z");      // a specific release
-new FlociAzContainer("floci/floci-az:nightly"); // built from main every night
-new FlociGcpContainer("floci/floci-gcp:latest"); // last release
+new FlociContainer("floci/floci:x.y.z");          // a specific release
+new FlociAzContainer("floci/floci-az:nightly");   // built from main every night
+new FlociGcpContainer("floci/floci-gcp:latest");  // last release
 ```
 
 Every emulator publishes `latest`, `x.y.z` and `nightly` tags.
