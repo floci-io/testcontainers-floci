@@ -1,6 +1,7 @@
 package io.floci.testcontainers.az.services;
 
 import io.floci.testcontainers.az.FlociAzContainer;
+import io.floci.testcontainers.az.config.ParityConfig;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -51,6 +52,44 @@ class ArmServiceTest extends AbstractServiceTest {
             assertThat(subscription.status()).as(subscription.toString()).isEqualTo(200);
             assertThat(subscription.json().path("displayName").asText()).isEqualTo("contoso-dev");
             assertThat(subscription.json().path("tenantId").asText()).isEqualTo(tenantId);
+        }
+    }
+
+    @Test
+    void shouldRefuseUnknownSubscriptionWithStrictParity() {
+        try (FlociAzContainer armFloci = new FlociAzContainer(NIGHTLY_IMAGE)
+                .disableAllServices()
+                .withArmConfig(c -> c.enabled(true))
+                .withParityConfig(c -> c.level(ParityConfig.Level.STRICT))) {
+            armFloci.start();
+
+            RestResponse response = rest(armFloci, "GET",
+                    "/subscriptions/55555555-0000-0000-0000-000000000000?api-version=2022-12-01", null);
+
+            assertThat(response.status()).as(response.toString()).isEqualTo(404);
+            assertThat(response.json().path("error").path("code").asText()).isEqualTo("SubscriptionNotFound");
+        }
+    }
+
+    @Test
+    void shouldApplyParityOverrideOnTopOfLevel() {
+        try (FlociAzContainer armFloci = new FlociAzContainer(NIGHTLY_IMAGE)
+                .disableAllServices()
+                .withArmConfig(c -> c.enabled(true))
+                .withParityConfig(c -> c.resourceGroupSemantics(true))) {
+            armFloci.start();
+            String resourceGroup = "/subscriptions/" + armFloci.getSubscriptionId() + "/resourceGroups/rg?api-version=2021-04-01";
+
+            RestResponse created = rest(armFloci, "PUT", resourceGroup, "{\"location\":\"eastus\"}");
+            RestResponse updated = rest(armFloci, "PUT", resourceGroup, "{\"location\":\"eastus\"}");
+            RestResponse unknown = rest(armFloci, "GET",
+                    "/subscriptions/55555555-0000-0000-0000-000000000000?api-version=2022-12-01", null);
+
+            // Azure's resource-group semantics answer a re-PUT with 200, while the compat level keeps
+            // registering unknown subscriptions on first use
+            assertThat(created.status()).as(created.toString()).isEqualTo(201);
+            assertThat(updated.status()).as(updated.toString()).isEqualTo(200);
+            assertThat(unknown.status()).as(unknown.toString()).isEqualTo(200);
         }
     }
 }

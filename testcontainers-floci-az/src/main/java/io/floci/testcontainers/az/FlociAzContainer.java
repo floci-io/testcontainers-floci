@@ -2,6 +2,7 @@ package io.floci.testcontainers.az;
 
 import io.floci.testcontainers.az.config.AuthConfig;
 import io.floci.testcontainers.az.config.DirectoryConfig;
+import io.floci.testcontainers.az.config.ParityConfig;
 import io.floci.testcontainers.az.config.TlsConfig;
 import io.floci.testcontainers.az.config.services.*;
 import io.floci.testcontainers.core.AbstractFlociContainer;
@@ -62,6 +63,7 @@ public class FlociAzContainer extends AbstractFlociContainer<FlociAzContainer> {
     private TlsConfig tlsConfig = TlsConfig.builder().build();
     private AuthConfig authConfig = AuthConfig.builder().build();
     private DirectoryConfig directoryConfig = DirectoryConfig.builder().build();
+    private ParityConfig parityConfig = ParityConfig.builder().build();
 
     // Service configs
     private final ServiceConfigRef<BlobConfig> blobConfig = registerServiceConfig(BlobConfig.builder().build());
@@ -132,6 +134,7 @@ public class FlociAzContainer extends AbstractFlociContainer<FlociAzContainer> {
         tlsConfig.applyEnvVarsToContainer(this);
         authConfig.applyEnvVarsToContainer(this);
         directoryConfig.applyEnvVarsToContainer(this);
+        parityConfig.applyEnvVarsToContainer(this);
     }
 
     /**
@@ -281,6 +284,35 @@ public class FlociAzContainer extends AbstractFlociContainer<FlociAzContainer> {
         configurer.accept(builder);
         this.directoryConfig = builder.build();
         directoryConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Returns the Azure parity configuration.
+     *
+     * @return the parity configuration
+     */
+    public ParityConfig getParityConfig() {
+        return parityConfig;
+    }
+
+    /**
+     * Configures how closely the Floci Azure server follows Azure where Azure differs from what Floci Azure
+     * has always answered, either as a whole level or per override:
+     *
+     * <pre>{@code
+     * new FlociAzContainer()
+     *     .withParityConfig(c -> c.level(ParityConfig.Level.AZURE).strictSubscriptions(true));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link ParityConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociAzContainer withParityConfig(Consumer<ParityConfig.Builder> configurer) {
+        ParityConfig.Builder builder = parityConfig.toBuilder();
+        configurer.accept(builder);
+        this.parityConfig = builder.build();
+        parityConfig.applyEnvVarsToContainer(this);
         return this;
     }
 
