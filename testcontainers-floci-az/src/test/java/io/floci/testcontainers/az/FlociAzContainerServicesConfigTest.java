@@ -251,6 +251,13 @@ class FlociAzContainerServicesConfigTest {
                 "FLOCI_AZ_SERVICES_CONTAINER_APPS_MOCKED", "false");
     }
     @Test
+    void shouldWirePolicyConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withPolicyConfig(cfg -> cfg.enabled(false)),
+                c -> c.getPolicyConfig().isEnabled(), false,
+                "FLOCI_AZ_SERVICES_POLICY_ENABLED", "false");
+    }
+    @Test
     void shouldWireEmailConfigIntoContainer() {
         assertConfigWired(
                 c -> c.withEmailConfig(cfg -> cfg.enabled(false)),
