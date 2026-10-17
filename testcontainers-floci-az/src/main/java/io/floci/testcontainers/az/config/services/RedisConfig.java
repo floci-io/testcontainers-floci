@@ -15,6 +15,7 @@ import org.testcontainers.containers.Container;
  *     .mocked(true)
  *     .defaultImage("redis:7-alpine")
  *     .portRange(16379, 5)
+ *     .tlsEnabled(true)
  *     .build();
  * }</pre>
  */
@@ -25,12 +26,14 @@ public class RedisConfig extends AbstractServiceConfig<RedisConfig.Builder> {
     private static final int DEFAULT_BASE_PORT = 6379;
     private static final int DEFAULT_PORTS_COUNT = 10;
     private static final String DEFAULT_MAX_MEMORY = "256mb";
+    private static final boolean DEFAULT_TLS_ENABLED = false;
 
     private final boolean mocked;
     private final String defaultImage;
     private final int basePort;
     private final int portsCount;
     private final String maxMemory;
+    private final boolean tlsEnabled;
 
     private RedisConfig(Builder builder) {
         super(builder);
@@ -39,6 +42,7 @@ public class RedisConfig extends AbstractServiceConfig<RedisConfig.Builder> {
         this.basePort = builder.basePort;
         this.portsCount = builder.portsCount;
         this.maxMemory = builder.maxMemory;
+        this.tlsEnabled = builder.tlsEnabled;
     }
 
     /**
@@ -116,6 +120,16 @@ public class RedisConfig extends AbstractServiceConfig<RedisConfig.Builder> {
         return maxMemory;
     }
 
+    /**
+     * Returns whether each cache also serves TLS on the container's port 6380, published on a second
+     * host port from the port range and reported as {@code sslPort}.
+     *
+     * @return {@code true} if TLS is enabled for the caches
+     */
+    public boolean isTlsEnabled() {
+        return tlsEnabled;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_AZ_SERVICES_REDIS_ENABLED", String.valueOf(isEnabled()));
@@ -126,6 +140,7 @@ public class RedisConfig extends AbstractServiceConfig<RedisConfig.Builder> {
             container.withEnv("FLOCI_AZ_SERVICES_REDIS_BASE_PORT", String.valueOf(basePort));
             container.withEnv("FLOCI_AZ_SERVICES_REDIS_MAX_PORT", String.valueOf(getMaxPort()));
             container.withEnv("FLOCI_AZ_SERVICES_REDIS_MAX_MEMORY", maxMemory);
+            container.withEnv("FLOCI_AZ_SERVICES_REDIS_TLS_ENABLED", String.valueOf(tlsEnabled));
         }
     }
 
@@ -144,6 +159,7 @@ public class RedisConfig extends AbstractServiceConfig<RedisConfig.Builder> {
         private int basePort = DEFAULT_BASE_PORT;
         private int portsCount = DEFAULT_PORTS_COUNT;
         private String maxMemory = DEFAULT_MAX_MEMORY;
+        private boolean tlsEnabled = DEFAULT_TLS_ENABLED;
 
         private Builder() {
             // Allow instantiation only via RedisConfig.builder()
@@ -161,6 +177,7 @@ public class RedisConfig extends AbstractServiceConfig<RedisConfig.Builder> {
             this.basePort = instance.basePort;
             this.portsCount = instance.portsCount;
             this.maxMemory = instance.maxMemory;
+            this.tlsEnabled = instance.tlsEnabled;
         }
 
         /**
@@ -208,6 +225,19 @@ public class RedisConfig extends AbstractServiceConfig<RedisConfig.Builder> {
          */
         public Builder maxMemory(String maxMemory) {
             this.maxMemory = maxMemory;
+            return this;
+        }
+
+        /**
+         * Sets whether each cache also serves TLS on the container's port 6380, published on a second
+         * host port from the port range and reported as {@code sslPort}. While enabled, every cache takes
+         * two host ports, so the port range fits only half as many caches.
+         *
+         * @param tlsEnabled {@code true} to enable TLS for the caches (default {@value DEFAULT_TLS_ENABLED})
+         * @return this builder
+         */
+        public Builder tlsEnabled(boolean tlsEnabled) {
+            this.tlsEnabled = tlsEnabled;
             return this;
         }
 
