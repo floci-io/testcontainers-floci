@@ -12,7 +12,7 @@ class FirehoseConfigTest {
     void shouldApplyDefaultFirehoseConfig() {
         FirehoseConfig config = FirehoseConfig.builder().build();
         assertThat(config.isEnabled()).isTrue();
-        assertThat(config.getTickIntervalSeconds()).isEqualTo(10);
+        assertThat(config.getTickIntervalSeconds()).isEqualTo(1);
         assertThat(config.getFlushRecordCount()).isEqualTo(0);
         assertThat(config.getStagingBucket()).isEqualTo("floci-firehose-staging");
     }
@@ -38,7 +38,7 @@ class FirehoseConfigTest {
 
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_SERVICES_FIREHOSE_ENABLED", "true")
-                .containsEntry("FLOCI_SERVICES_FIREHOSE_TICK_INTERVAL_SECONDS", "10")
+                .containsEntry("FLOCI_SERVICES_FIREHOSE_TICK_INTERVAL_SECONDS", "1")
                 .containsEntry("FLOCI_SERVICES_FIREHOSE_FLUSH_RECORD_COUNT", "0")
                 .containsEntry("FLOCI_SERVICES_FIREHOSE_STAGING_BUCKET", "floci-firehose-staging");
     }
