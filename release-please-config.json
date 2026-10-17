@@ -3,6 +3,7 @@
   "release-type": "maven",
   "changelog-path": "CHANGELOG.md",
   "include-component-in-tag": false,
+  "signoff": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
   "plugins": [
     {
       "type": "maven-workspace",
