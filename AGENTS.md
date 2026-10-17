@@ -183,7 +183,9 @@ sidecars), with these differences:
   also rejects unsigned requests to its own `/_floci-oci` endpoints, so a `401 NotAuthenticated` counts as ready.
 - `getEndpoint()` switches to `https://` while TLS is enabled; there is no cert endpoint, so `getTlsCertificate()`
   copies the certificate out of the container (`/app/data/tls/floci-selfsigned.crt`).
-- There is no OCI SDK in main scope. The shared `AbstractServiceTest` signs requests with a random RSA key
+- There is no OCI SDK in main scope. `getConfigProfile()` returns an `OciConfigProfile` (user, tenancy, fingerprint,
+  key file, region) signed with a throwaway RSA key generated once per container, which the SDK's
+  `ConfigFileAuthenticationDetailsProvider` loads via `writeConfigFile()`. The shared `AbstractServiceTest` signs requests with a random RSA key
   (`TestAuthenticationProviders`) and offers `client(<X>Client.builder())`. The endpoints Floci OCI returns (queue/stream
   `messagesEndpoint`, vault management/crypto endpoints, Functions invoke endpoint) are its base URL, so tests point
   all clients at `getEndpoint()`. The test OCI SDK is pinned to the version of Floci OCI's
