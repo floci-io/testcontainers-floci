@@ -2,6 +2,9 @@ version: 2
 updates:
   - package-ecosystem: maven
     directory: /
+    ignore:
+      # Pinned to the last JSON-protocol client, see testcontainers-floci/pom.xml
+      - dependency-name: "software.amazon.awssdk:translate"
     schedule:
       interval: daily
     open-pull-requests-limit: 10

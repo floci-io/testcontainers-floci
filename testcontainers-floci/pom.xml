@@ -574,6 +574,9 @@
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>translate</artifactId>
+            <!-- Pinned: from 2.55.16 the Translate client speaks Smithy RPC v2 CBOR, which Floci does not serve
+                 for Translate yet (404). Remove the pin (and the dependabot ignore) once Floci supports it. -->
+            <version>2.55.11</version>
             <scope>test</scope>
         </dependency>
         <dependency>
