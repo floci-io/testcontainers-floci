@@ -17,6 +17,7 @@ class CodeArtifactConfigTest {
         assertThat(config.getMavenImage()).isEqualTo("dzikoysk/reposilite:3.6.3");
         assertThat(config.getNpmImage()).isEqualTo("verdaccio/verdaccio:6.10.4");
         assertThat(config.getPypiImage()).isEqualTo("pypiserver/pypiserver:v2.4.2");
+        assertThat(config.getNugetImage()).isEqualTo("bagetter/bagetter:1.6.5");
     }
 
     @Test
@@ -28,6 +29,7 @@ class CodeArtifactConfigTest {
                 .mavenImage("dzikoysk/reposilite:3.7.0")
                 .npmImage("verdaccio/verdaccio:6.11.0")
                 .pypiImage("pypiserver/pypiserver:v2.5.0")
+                .nugetImage("bagetter/bagetter:1.7.0")
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.getMavenUrl()).contains("http://reposilite:8080");
@@ -35,6 +37,7 @@ class CodeArtifactConfigTest {
         assertThat(config.getMavenImage()).isEqualTo("dzikoysk/reposilite:3.7.0");
         assertThat(config.getNpmImage()).isEqualTo("verdaccio/verdaccio:6.11.0");
         assertThat(config.getPypiImage()).isEqualTo("pypiserver/pypiserver:v2.5.0");
+        assertThat(config.getNugetImage()).isEqualTo("bagetter/bagetter:1.7.0");
     }
 
     @Test
@@ -48,7 +51,8 @@ class CodeArtifactConfigTest {
                 .doesNotContainKey("FLOCI_SERVICES_CODEARTIFACT_MAVEN_TOKEN")
                 .containsEntry("FLOCI_SERVICES_CODEARTIFACT_MAVEN_IMAGE", "dzikoysk/reposilite:3.6.3")
                 .containsEntry("FLOCI_SERVICES_CODEARTIFACT_NPM_IMAGE", "verdaccio/verdaccio:6.10.4")
-                .containsEntry("FLOCI_SERVICES_CODEARTIFACT_PYPI_IMAGE", "pypiserver/pypiserver:v2.4.2");
+                .containsEntry("FLOCI_SERVICES_CODEARTIFACT_PYPI_IMAGE", "pypiserver/pypiserver:v2.4.2")
+                .containsEntry("FLOCI_SERVICES_CODEARTIFACT_NUGET_IMAGE", "bagetter/bagetter:1.6.5");
     }
 
     @Test
@@ -60,6 +64,7 @@ class CodeArtifactConfigTest {
                 .mavenImage("dzikoysk/reposilite:3.7.0")
                 .npmImage("verdaccio/verdaccio:6.11.0")
                 .pypiImage("pypiserver/pypiserver:v2.5.0")
+                .nugetImage("bagetter/bagetter:1.7.0")
                 .build()
                 .applyEnvVarsToContainer(container);
 
@@ -68,7 +73,8 @@ class CodeArtifactConfigTest {
                 .containsEntry("FLOCI_SERVICES_CODEARTIFACT_MAVEN_TOKEN", "admin:secret")
                 .containsEntry("FLOCI_SERVICES_CODEARTIFACT_MAVEN_IMAGE", "dzikoysk/reposilite:3.7.0")
                 .containsEntry("FLOCI_SERVICES_CODEARTIFACT_NPM_IMAGE", "verdaccio/verdaccio:6.11.0")
-                .containsEntry("FLOCI_SERVICES_CODEARTIFACT_PYPI_IMAGE", "pypiserver/pypiserver:v2.5.0");
+                .containsEntry("FLOCI_SERVICES_CODEARTIFACT_PYPI_IMAGE", "pypiserver/pypiserver:v2.5.0")
+                .containsEntry("FLOCI_SERVICES_CODEARTIFACT_NUGET_IMAGE", "bagetter/bagetter:1.7.0");
     }
 
     @Test
@@ -82,7 +88,8 @@ class CodeArtifactConfigTest {
                 .doesNotContainKey("FLOCI_SERVICES_CODEARTIFACT_MAVEN_TOKEN")
                 .doesNotContainKey("FLOCI_SERVICES_CODEARTIFACT_MAVEN_IMAGE")
                 .doesNotContainKey("FLOCI_SERVICES_CODEARTIFACT_NPM_IMAGE")
-                .doesNotContainKey("FLOCI_SERVICES_CODEARTIFACT_PYPI_IMAGE");
+                .doesNotContainKey("FLOCI_SERVICES_CODEARTIFACT_PYPI_IMAGE")
+                .doesNotContainKey("FLOCI_SERVICES_CODEARTIFACT_NUGET_IMAGE");
     }
 
     @Test
@@ -94,6 +101,7 @@ class CodeArtifactConfigTest {
                 .mavenImage("dzikoysk/reposilite:3.7.0")
                 .npmImage("verdaccio/verdaccio:6.11.0")
                 .pypiImage("pypiserver/pypiserver:v2.5.0")
+                .nugetImage("bagetter/bagetter:1.7.0")
                 .build();
         CodeArtifactConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
@@ -102,6 +110,7 @@ class CodeArtifactConfigTest {
         assertThat(copy.getMavenImage()).isEqualTo("dzikoysk/reposilite:3.7.0");
         assertThat(copy.getNpmImage()).isEqualTo("verdaccio/verdaccio:6.11.0");
         assertThat(copy.getPypiImage()).isEqualTo("pypiserver/pypiserver:v2.5.0");
+        assertThat(copy.getNugetImage()).isEqualTo("bagetter/bagetter:1.7.0");
     }
 
     @Test
