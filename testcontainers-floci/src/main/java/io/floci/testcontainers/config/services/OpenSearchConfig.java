@@ -2,6 +2,8 @@ package io.floci.testcontainers.config.services;
 
 import org.testcontainers.containers.Container;
 
+import java.util.Optional;
+
 /**
  * Configuration for OpenSearch-specific container settings.
  *
@@ -11,6 +13,7 @@ import org.testcontainers.containers.Container;
  *     .enabled(true)
  *     .mock(true)
  *     .proxyPortRange(9400, 100)
+ *     .dataVolume("opensearch-data")
  *     .build();
  * }</pre>
  */
@@ -24,6 +27,7 @@ public class OpenSearchConfig extends AbstractServiceConfig<OpenSearchConfig.Bui
     private final String defaultImage;
     private final int proxyBasePort;
     private final int proxyPortsCount;
+    private final String dataVolume;
     private final String dockerNetwork;
 
     private OpenSearchConfig(Builder builder) {
@@ -32,6 +36,7 @@ public class OpenSearchConfig extends AbstractServiceConfig<OpenSearchConfig.Bui
         this.defaultImage = builder.defaultImage;
         this.proxyBasePort = builder.proxyBasePort;
         this.proxyPortsCount = builder.proxyPortsCount;
+        this.dataVolume = builder.dataVolume;
         this.dockerNetwork = builder.dockerNetwork;
     }
 
@@ -101,6 +106,16 @@ public class OpenSearchConfig extends AbstractServiceConfig<OpenSearchConfig.Bui
     }
 
     /**
+     * Returns the data volume for the domain containers Floci spawns, replacing the per-domain
+     * volume Floci derives by default. Empty if Floci's default is used.
+     *
+     * @return the data volume (absolute host path or Docker volume name), if set
+     */
+    public Optional<String> getDataVolume() {
+        return Optional.ofNullable(dataVolume);
+    }
+
+    /**
      * Returns the Docker network used for OpenSearch containers, or {@code null} if not set.
      *
      * @return the Docker network name, or {@code null}
@@ -123,6 +138,10 @@ public class OpenSearchConfig extends AbstractServiceConfig<OpenSearchConfig.Bui
             container.withEnv("FLOCI_SERVICES_OPENSEARCH_PROXY_BASE_PORT", String.valueOf(proxyBasePort));
             container.withEnv("FLOCI_SERVICES_OPENSEARCH_PROXY_MAX_PORT", String.valueOf(getProxyMaxPort()));
 
+            if (dataVolume != null) {
+                container.withEnv("FLOCI_SERVICES_OPENSEARCH_DATA_VOLUME", dataVolume);
+            }
+
             if (dockerNetwork != null) {
                 container.withEnv("FLOCI_SERVICES_OPENSEARCH_DOCKER_NETWORK", dockerNetwork);
             }
@@ -143,6 +162,7 @@ public class OpenSearchConfig extends AbstractServiceConfig<OpenSearchConfig.Bui
         private String defaultImage = null;
         private int proxyBasePort = DEFAULT_PROXY_BASE_PORT;
         private int proxyPortsCount = DEFAULT_PROXY_PORTS_COUNT;
+        private String dataVolume;
         private String dockerNetwork;
 
         private Builder() {
@@ -160,6 +180,7 @@ public class OpenSearchConfig extends AbstractServiceConfig<OpenSearchConfig.Bui
             this.defaultImage = instance.getDefaultImage();
             this.proxyBasePort = instance.getProxyBasePort();
             this.proxyPortsCount = instance.getProxyPortsCount();
+            this.dataVolume = instance.getDataVolume().orElse(null);
             this.dockerNetwork = instance.getDockerNetwork();
         }
 
@@ -195,6 +216,22 @@ public class OpenSearchConfig extends AbstractServiceConfig<OpenSearchConfig.Bui
         public Builder proxyPortRange(int basePort, int amount) {
             this.proxyBasePort = basePort;
             this.proxyPortsCount = amount;
+            return this;
+        }
+
+        /**
+         * Sets the data volume for the domain containers Floci spawns, replacing the per-domain
+         * volume Floci derives by default. An absolute path is bind-mounted per domain as
+         * {@code <path>/<account-id>/<region>/<domain-name>}; since Floci runs in a container, the
+         * path is resolved on the Docker daemon's host. Any other value is a Docker volume name, and
+         * each domain gets its own {@code <name>-<account-id>-<region>-<domain-name>} volume. Storage
+         * named here is never removed when a domain is deleted.
+         *
+         * @param dataVolume an absolute host path or a Docker volume name, or {@code null} to use Floci's default (default unset)
+         * @return this builder
+         */
+        public Builder dataVolume(String dataVolume) {
+            this.dataVolume = dataVolume;
             return this;
         }
 
