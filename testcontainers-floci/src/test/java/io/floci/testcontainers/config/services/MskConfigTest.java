@@ -18,6 +18,7 @@ class MskConfigTest {
         assertThat(config.getKafkaHostPortBase()).isEqualTo(9300);
         assertThat(config.getKafkaHostPortMax()).isEqualTo(9309);
         assertThat(config.getKafkaHostPortsCount()).isEqualTo(10);
+        assertThat(config.getBootstrapHostname()).isEmpty();
     }
 
     @Test
@@ -27,6 +28,7 @@ class MskConfigTest {
                 .mock(true)
                 .defaultImage("redpandadata/redpanda:v24")
                 .kafkaHostPortRange(9500, 20)
+                .bootstrapHostname("kafka.example.com")
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.isMock()).isTrue();
@@ -34,6 +36,7 @@ class MskConfigTest {
         assertThat(config.getKafkaHostPortBase()).isEqualTo(9500);
         assertThat(config.getKafkaHostPortMax()).isEqualTo(9519);
         assertThat(config.getKafkaHostPortsCount()).isEqualTo(20);
+        assertThat(config.getBootstrapHostname()).contains("kafka.example.com");
     }
 
     @Test
@@ -46,7 +49,8 @@ class MskConfigTest {
                 .containsEntry("FLOCI_SERVICES_MSK_MOCK", "false")
                 .containsEntry("FLOCI_SERVICES_MSK_DEFAULT_IMAGE", "redpandadata/redpanda:latest")
                 .containsEntry("FLOCI_SERVICES_MSK_KAFKA_HOST_PORT_BASE", "9300")
-                .containsEntry("FLOCI_SERVICES_MSK_KAFKA_HOST_PORT_MAX", "9309");
+                .containsEntry("FLOCI_SERVICES_MSK_KAFKA_HOST_PORT_MAX", "9309")
+                .doesNotContainKey("FLOCI_SERVICES_MSK_BOOTSTRAP_HOSTNAME");
     }
 
     @Test
@@ -57,6 +61,7 @@ class MskConfigTest {
                 .mock(true)
                 .defaultImage("redpandadata/redpanda:v24")
                 .kafkaHostPortRange(9500, 20)
+                .bootstrapHostname("kafka.example.com")
                 .build()
                 .applyEnvVarsToContainer(container);
 
@@ -65,7 +70,8 @@ class MskConfigTest {
                 .containsEntry("FLOCI_SERVICES_MSK_MOCK", "true")
                 .containsEntry("FLOCI_SERVICES_MSK_DEFAULT_IMAGE", "redpandadata/redpanda:v24")
                 .containsEntry("FLOCI_SERVICES_MSK_KAFKA_HOST_PORT_BASE", "9500")
-                .containsEntry("FLOCI_SERVICES_MSK_KAFKA_HOST_PORT_MAX", "9519");
+                .containsEntry("FLOCI_SERVICES_MSK_KAFKA_HOST_PORT_MAX", "9519")
+                .containsEntry("FLOCI_SERVICES_MSK_BOOTSTRAP_HOSTNAME", "kafka.example.com");
     }
 
     @Test
@@ -78,7 +84,8 @@ class MskConfigTest {
                 .doesNotContainKey("FLOCI_SERVICES_MSK_MOCK")
                 .doesNotContainKey("FLOCI_SERVICES_MSK_DEFAULT_IMAGE")
                 .doesNotContainKey("FLOCI_SERVICES_MSK_KAFKA_HOST_PORT_BASE")
-                .doesNotContainKey("FLOCI_SERVICES_MSK_KAFKA_HOST_PORT_MAX");
+                .doesNotContainKey("FLOCI_SERVICES_MSK_KAFKA_HOST_PORT_MAX")
+                .doesNotContainKey("FLOCI_SERVICES_MSK_BOOTSTRAP_HOSTNAME");
     }
 
     @Test
@@ -99,6 +106,7 @@ class MskConfigTest {
                 .mock(true)
                 .defaultImage("test-image")
                 .kafkaHostPortRange(9400, 5)
+                .bootstrapHostname("test-bootstrap-host")
                 .build();
         MskConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
@@ -106,6 +114,7 @@ class MskConfigTest {
         assertThat(copy.getDefaultImage()).isEqualTo("test-image");
         assertThat(copy.getKafkaHostPortBase()).isEqualTo(9400);
         assertThat(copy.getKafkaHostPortsCount()).isEqualTo(5);
+        assertThat(copy.getBootstrapHostname()).contains("test-bootstrap-host");
     }
 
     @Test
