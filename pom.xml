@@ -33,11 +33,13 @@
     </scm>
 
     <modules>
+        <module>testcontainers-floci-bom</module>
         <module>testcontainers-floci-core</module>
-        <module>testcontainers-floci</module>
+        <module>testcontainers-floci-aws</module>
         <module>testcontainers-floci-az</module>
         <module>testcontainers-floci-oci</module>
         <module>testcontainers-floci-gcp</module>
+        <module>testcontainers-floci</module>
     </modules>
 
     <properties>
@@ -59,36 +61,20 @@
 
     <dependencyManagement>
         <dependencies>
+            <!-- The versions of this repository's modules come from the BOM consumers import as well -->
             <dependency>
                 <groupId>io.floci</groupId>
-                <artifactId>testcontainers-floci-core</artifactId>
+                <artifactId>testcontainers-floci-bom</artifactId>
                 <version>${project.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
+            <!-- Test helpers shared by the cloud modules; not part of the BOM -->
             <dependency>
                 <groupId>io.floci</groupId>
                 <artifactId>testcontainers-floci-core</artifactId>
                 <version>${project.version}</version>
                 <type>test-jar</type>
-            </dependency>
-            <dependency>
-                <groupId>io.floci</groupId>
-                <artifactId>testcontainers-floci</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.floci</groupId>
-                <artifactId>testcontainers-floci-az</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.floci</groupId>
-                <artifactId>testcontainers-floci-oci</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.floci</groupId>
-                <artifactId>testcontainers-floci-gcp</artifactId>
-                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.testcontainers</groupId>

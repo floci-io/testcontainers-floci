@@ -3,7 +3,7 @@ updates:
   - package-ecosystem: maven
     directory: /
     ignore:
-      # Pinned to the last JSON-protocol client, see testcontainers-floci/pom.xml
+      # Pinned to the last JSON-protocol client, see testcontainers-floci-aws/pom.xml
       - dependency-name: "software.amazon.awssdk:translate"
       # The test OCI SDK is pinned to the version of Floci OCI's compatibility-tests/sdk-test-java;
       # newer SDKs call API versions Floci OCI does not serve.

@@ -32,14 +32,16 @@ local cloud emulators. Each module starts a Floci emulator container for your in
 endpoint and credentials to point the cloud SDK at, plus a typed, per-service configuration API over the emulator's
 environment variables. No cloud account, no auth token.
 
-| Module                                                                          | Description                                                  |
-|---------------------------------------------------------------------------------|--------------------------------------------------------------|
-| [`testcontainers-floci`](#aws-testcontainers-floci)                             | Testcontainers module for starting a Floci (AWS) container   |
-| [`testcontainers-floci-az`](#azure-testcontainers-floci-az)                     | Testcontainers module for starting a Floci Azure container   |
-| [`testcontainers-floci-gcp`](#gcp-testcontainers-floci-gcp)                     | Testcontainers module for starting a Floci GCP container     |
-| [`testcontainers-floci-oci`](#oci-testcontainers-floci-oci)                     | Testcontainers module for starting a Floci OCI container     |
-| `testcontainers-floci-core`                                                     | Shared base classes of the modules above (not used directly) |
-| [`spring-boot-testcontainers-floci`](#spring-boot-integration) (decommissioned) | Superseded by Spring Cloud AWS's own testcontainers module   |
+| Module                                                                          | Description                                                          |
+|---------------------------------------------------------------------------------|----------------------------------------------------------------------|
+| [`testcontainers-floci-aws`](#aws-testcontainers-floci-aws)                     | Testcontainers module for starting a Floci (AWS) container           |
+| [`testcontainers-floci-az`](#azure-testcontainers-floci-az)                     | Testcontainers module for starting a Floci Azure container           |
+| [`testcontainers-floci-gcp`](#gcp-testcontainers-floci-gcp)                     | Testcontainers module for starting a Floci GCP container             |
+| [`testcontainers-floci-oci`](#oci-testcontainers-floci-oci)                     | Testcontainers module for starting a Floci OCI container             |
+| `testcontainers-floci-core`                                                     | Shared base classes of the modules above (not used directly)         |
+| [`testcontainers-floci-bom`](#bom)                                              | Bill of materials with the versions of all modules above             |
+| [`testcontainers-floci`](#aws-testcontainers-floci-aws) (relocated)             | Former name of `testcontainers-floci-aws`, relocated until 3.0.0     |
+| [`spring-boot-testcontainers-floci`](#spring-boot-integration) (decommissioned) | Superseded by Spring Cloud AWS's own testcontainers module           |
 
 ### The Floci emulators
 
@@ -48,7 +50,7 @@ named after [floccus](https://en.wikipedia.org/wiki/Cirrocumulus_floccus), the c
 
 | Emulator                                           | Cloud | Port |                           Supported                            |
 |----------------------------------------------------|-------|:----:|:--------------------------------------------------------------:|
-| [floci](https://github.com/floci-io/floci)         | AWS   | 4566 |     ✅ [`testcontainers-floci`](#aws-testcontainers-floci)     |
+| [floci](https://github.com/floci-io/floci)         | AWS   | 4566 | ✅ [`testcontainers-floci-aws`](#aws-testcontainers-floci-aws) |
 | [floci-az](https://github.com/floci-io/floci-az)   | Azure | 4577 | ✅ [`testcontainers-floci-az`](#azure-testcontainers-floci-az) |
 | [floci-gcp](https://github.com/floci-io/floci-gcp) | GCP   | 4588 | ✅ [`testcontainers-floci-gcp`](#gcp-testcontainers-floci-gcp) |
 | [floci-oci](https://github.com/floci-io/floci-oci) | OCI   | 4599 | ✅ [`testcontainers-floci-oci`](#oci-testcontainers-floci-oci) |
@@ -59,17 +61,40 @@ named after [floccus](https://en.wikipedia.org/wiki/Cirrocumulus_floccus), the c
 
 | testcontainers-floci | Spring Boot integration                                                         | Testcontainers | Release badges                                                                                                                                                                       |
 |----------------------|---------------------------------------------------------------------------------|----------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **2.x**              | via [`spring-cloud-aws-testcontainers`](#spring-boot-integration) (4.1.0+)      | 2.x            | [![Maven Central](https://img.shields.io/maven-central/v/io.floci/testcontainers-floci)](https://central.sonatype.com/artifact/io.floci/testcontainers-floci)                        |
+| **2.x**              | via [`spring-cloud-aws-testcontainers`](#spring-boot-integration) (4.1.0+)      | 2.x            | [![Maven Central](https://img.shields.io/maven-central/v/io.floci/testcontainers-floci-aws)](https://central.sonatype.com/artifact/io.floci/testcontainers-floci-aws)                |
 | **1.x**              | `spring-boot-testcontainers-floci` (Spring Boot 3.5.x / Spring Cloud AWS 3.4.x) | 1.x            | [![Maven Central](https://img.shields.io/maven-central/v/io.floci/testcontainers-floci?filter=1.*)](https://img.shields.io/maven-central/v/io.floci/testcontainers-floci?filter=1.*) |
 
-### AWS: testcontainers-floci
+### BOM
+
+`testcontainers-floci-bom` manages the versions of all modules, so several clouds stay on the same release:
+
+```xml
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>io.floci</groupId>
+            <artifactId>testcontainers-floci-bom</artifactId>
+            <version>${testcontainers-floci.version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+```
+
+```kotlin
+testImplementation(platform("io.floci:testcontainers-floci-bom:${testcontainersFlociVersion}"))
+testImplementation("io.floci:testcontainers-floci-aws")
+```
+
+### AWS: testcontainers-floci-aws
 
 **Maven:**
 
 ```xml
 <dependency>
     <groupId>io.floci</groupId>
-    <artifactId>testcontainers-floci</artifactId>
+    <artifactId>testcontainers-floci-aws</artifactId>
     <version>${testcontainers-floci.version}</version>
     <scope>test</scope>
 </dependency>
@@ -78,14 +103,18 @@ named after [floccus](https://en.wikipedia.org/wiki/Cirrocumulus_floccus), the c
 **Gradle (Kotlin DSL):**
 
 ```kotlin
-testImplementation("io.floci:testcontainers-floci:${testcontainersFlociVersion}")
+testImplementation("io.floci:testcontainers-floci-aws:${testcontainersFlociVersion}")
 ```
 
 **Gradle (Groovy DSL):**
 
 ```groovy
-testImplementation "io.floci:testcontainers-floci:${testcontainersFlociVersion}"
+testImplementation "io.floci:testcontainers-floci-aws:${testcontainersFlociVersion}"
 ```
+
+Up to 2.16.x this module was published as `io.floci:testcontainers-floci`. Those coordinates keep resolving to
+`testcontainers-floci-aws` of the same version through a Maven relocation for all 2.x releases (removed in 3.0.0);
+the Java package `io.floci.testcontainers` is unchanged.
 
 ### Azure: testcontainers-floci-az
 
@@ -626,7 +655,7 @@ Every emulator publishes `latest`, `x.y.z` and `nightly` tags.
 
 ```bash
 mvn -B verify                                              # all modules, unit and integration tests
-mvn -pl testcontainers-floci test -Dtest=IamConfigTest     # a single test class
+mvn -pl testcontainers-floci-aws -am test -Dtest=IamConfigTest -Dsurefire.failIfNoSpecifiedTests=false  # a single test class
 ```
 
 There is no separate integration-test phase: `mvn verify` starts real Floci containers, so Docker must be running.
