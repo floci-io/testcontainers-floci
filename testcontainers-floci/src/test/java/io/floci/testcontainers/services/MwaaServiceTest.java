@@ -2,6 +2,9 @@ package io.floci.testcontainers.services;
 
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.testcontainers.images.RemoteDockerImage;
+import org.testcontainers.utility.DockerImageName;
+import software.amazon.awssdk.http.apache5.Apache5HttpClient;
 import software.amazon.awssdk.services.mwaa.MwaaClient;
 import software.amazon.awssdk.services.mwaa.model.EnvironmentStatus;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -19,10 +22,21 @@ class MwaaServiceTest extends AbstractServiceTest {
 
     private static final String SOURCE_BUCKET = "mwaa-bucket";
     private static final String ENVIRONMENT_NAME = "test-environment-" + System.currentTimeMillis();
+    // Image Floci runs for the default Airflow version (apache/airflow:<version>-<pythonTag>)
+    private static final String AIRFLOW_IMAGE = "apache/airflow:2.10.5-python3.11";
 
     @BeforeAll
     static void setUp() {
-        mwaa = client(MwaaClient.builder());
+        // CreateEnvironment synchronously pulls the Postgres and Airflow (~2 GB) images and starts both
+        // containers. On a cold image cache that outlasts the SDK's default ~30s socket read timeout, and
+        // the SDK's retry of the still-running create collides with it on the container names, which
+        // leaves the environment CREATE_FAILED. Pull the images up front (Testcontainers aborts and
+        // retries stalled pulls) and extend the timeout so a slow create is never retried.
+        new RemoteDockerImage(DockerImageName.parse(floci.getMwaaConfig().getDefaultPostgresImage())).get();
+        new RemoteDockerImage(DockerImageName.parse(AIRFLOW_IMAGE)).get();
+
+        mwaa = client(MwaaClient.builder()
+                .httpClientBuilder(Apache5HttpClient.builder().socketTimeout(Duration.ofMinutes(5))));
 
         // Real (non-mock) mode doesn't validate the bucket up front, but it does poll
         // DagS3Path from it once the environment is up - create the bucket for realism.
