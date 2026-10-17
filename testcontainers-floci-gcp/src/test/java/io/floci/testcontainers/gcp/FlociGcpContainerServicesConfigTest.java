@@ -245,6 +245,14 @@ class FlociGcpContainerServicesConfigTest {
     // --- Cross-cutting configs (config/) -----------------------------------------------------------
 
     @Test
+    void shouldWireLocationsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withLocationsConfig(cfg -> cfg.strict(true)),
+                c -> c.getLocationsConfig().isStrict(), true,
+                "FLOCI_GCP_LOCATIONS_STRICT", "true");
+    }
+
+    @Test
     void shouldWireTlsConfigIntoContainer() {
         assertConfigWired(
                 c -> c.withTlsConfig(cfg -> cfg.enabled(true)),

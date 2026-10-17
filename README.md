@@ -440,6 +440,7 @@ SecretClient secrets = new SecretClientBuilder()
 | `withDedicatedNetwork()`    | Creates a dedicated Docker network shared by Floci GCP and the containers it spawns |
 | `withDockerSocket(boolean)` | Overrides whether the host Docker socket is mounted, bypassing auto-detection       |
 | `withTlsConfig(...)`        | Configures TLS/HTTPS (self-signed by default; optionally provide cert/key paths)    |
+| `withLocationsConfig(...)`  | Configures the location catalog, e.g. strict location validation (`c.strict(true)`) |
 | `with*Config(...)`          | Configures service-specific settings, e.g. `withCloudSqlConfig(c -> c.mock(true))`  |
 
 Docker-backed services (Managed Kafka, Cloud SQL, Cloud Run, GKE and the DuckDB query engine of BigQuery) mount the

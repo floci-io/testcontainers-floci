@@ -1,6 +1,7 @@
 package io.floci.testcontainers.gcp;
 
 import io.floci.testcontainers.core.AbstractFlociContainer;
+import io.floci.testcontainers.gcp.config.LocationsConfig;
 import io.floci.testcontainers.gcp.config.TlsConfig;
 import io.floci.testcontainers.gcp.config.services.*;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -59,6 +60,7 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
 
     private static final String DEFAULT_PROJECT_ID = "floci-local";
 
+    private LocationsConfig locationsConfig = LocationsConfig.builder().build();
     private TlsConfig tlsConfig = TlsConfig.builder().build();
 
     // Service configs
@@ -121,6 +123,7 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
 
     @Override
     protected void applyGlobalEnvVars() {
+        locationsConfig.applyEnvVarsToContainer(this);
         tlsConfig.applyEnvVarsToContainer(this);
     }
 
@@ -193,6 +196,34 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
             Thread.currentThread().interrupt();
             throw new IllegalStateException("Interrupted while fetching the TLS certificate of Floci GCP", e);
         }
+    }
+
+    /**
+     * Returns the configuration of the GCP location catalog.
+     *
+     * @return the locations configuration
+     */
+    public LocationsConfig getLocationsConfig() {
+        return locationsConfig;
+    }
+
+    /**
+     * Configures the GCP location catalog of Floci GCP, e.g. strict validation of the locations of regional calls.
+     *
+     * <pre>{@code
+     * new FlociGcpContainer()
+     *     .withLocationsConfig(c -> c.strict(true));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link LocationsConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociGcpContainer withLocationsConfig(Consumer<LocationsConfig.Builder> configurer) {
+        LocationsConfig.Builder builder = locationsConfig.toBuilder();
+        configurer.accept(builder);
+        this.locationsConfig = builder.build();
+        locationsConfig.applyEnvVarsToContainer(this);
+        return this;
     }
 
     /**
