@@ -22,7 +22,7 @@ public class SchedulerConfig extends AbstractServiceConfig<SchedulerConfig.Build
     private final long tickIntervalSeconds;
 
     private SchedulerConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.invocationEnabled = builder.invocationEnabled;
         this.tickIntervalSeconds = builder.tickIntervalSeconds;
     }

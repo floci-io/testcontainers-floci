@@ -15,7 +15,7 @@ public class AppConfigConfig extends AbstractServiceConfig<AppConfigConfig.Build
 
 
     private AppConfigConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

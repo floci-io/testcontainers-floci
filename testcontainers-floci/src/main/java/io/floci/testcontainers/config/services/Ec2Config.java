@@ -66,7 +66,7 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
     private final String vpcNetworksDriver;
 
     private Ec2Config(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.mock = builder.mock;
         this.imdsPort = builder.imdsPort;
         this.sshPortRangeStart = builder.sshPortRangeStart;

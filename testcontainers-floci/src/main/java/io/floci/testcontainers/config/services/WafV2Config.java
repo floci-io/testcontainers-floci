@@ -15,7 +15,7 @@ import org.testcontainers.containers.Container;
 public class WafV2Config extends AbstractServiceConfig<WafV2Config.Builder> {
 
     private WafV2Config(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

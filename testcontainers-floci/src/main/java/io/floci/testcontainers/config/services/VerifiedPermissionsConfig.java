@@ -21,7 +21,7 @@ public class VerifiedPermissionsConfig extends AbstractServiceConfig<VerifiedPer
     private final String cedarImage;
 
     private VerifiedPermissionsConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.cedarUrl = builder.cedarUrl;
         this.cedarImage = builder.cedarImage;
     }

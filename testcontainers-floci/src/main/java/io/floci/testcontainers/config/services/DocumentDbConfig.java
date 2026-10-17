@@ -25,7 +25,7 @@ public class DocumentDbConfig extends AbstractServiceConfig<DocumentDbConfig.Bui
     private final String dockerNetwork;
 
     private DocumentDbConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.mock = builder.mock;
         this.defaultImage = builder.defaultImage;
         this.dockerNetwork = builder.dockerNetwork;

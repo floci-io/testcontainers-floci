@@ -19,7 +19,7 @@ public class BcmDataExportsConfig extends AbstractServiceConfig<BcmDataExportsCo
     private final String emitMode;
 
     private BcmDataExportsConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.emitMode = builder.emitMode;
     }
 

@@ -28,7 +28,7 @@ public class CodeArtifactConfig extends AbstractServiceConfig<CodeArtifactConfig
     private final String nugetImage;
 
     private CodeArtifactConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.mavenUrl = builder.mavenUrl;
         this.mavenToken = builder.mavenToken;
         this.mavenImage = builder.mavenImage;

@@ -15,7 +15,7 @@ public class ApiGatewayV2Config extends AbstractServiceConfig<ApiGatewayV2Config
 
 
     private ApiGatewayV2Config(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

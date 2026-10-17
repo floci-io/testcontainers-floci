@@ -16,7 +16,7 @@ public class CodeBuildConfig extends AbstractServiceConfig<CodeBuildConfig.Build
     private final String dockerNetwork;
 
     private CodeBuildConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.dockerNetwork = builder.dockerNetwork;
     }
 

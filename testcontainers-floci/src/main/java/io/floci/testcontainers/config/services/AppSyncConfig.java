@@ -49,7 +49,7 @@ public class AppSyncConfig extends AbstractServiceConfig<AppSyncConfig.Builder> 
     private final String jsRuntimeDockerNetwork;
 
     private AppSyncConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.schemaWorkerThreads = builder.schemaWorkerThreads;
         this.schemaWorkerShutdownTimeoutSeconds = builder.schemaWorkerShutdownTimeoutSeconds;
         this.vtlMaxLoops = builder.vtlMaxLoops;

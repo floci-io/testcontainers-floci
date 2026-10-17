@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class DetectiveConfig extends AbstractServiceConfig<DetectiveConfig.Builder> {
 
     private DetectiveConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

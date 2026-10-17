@@ -15,7 +15,7 @@ public class AppConfigDataConfig extends AbstractServiceConfig<AppConfigDataConf
 
 
     private AppConfigDataConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

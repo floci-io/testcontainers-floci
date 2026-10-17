@@ -15,7 +15,7 @@ import org.testcontainers.containers.Container;
 public class ConfigServiceConfig extends AbstractServiceConfig<ConfigServiceConfig.Builder> {
 
     private ConfigServiceConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

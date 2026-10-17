@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class TransferFamilyConfig extends AbstractServiceConfig<TransferFamilyConfig.Builder> {
 
     private TransferFamilyConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

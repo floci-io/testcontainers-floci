@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class AccountConfig extends AbstractServiceConfig<AccountConfig.Builder> {
 
     private AccountConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

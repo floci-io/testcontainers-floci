@@ -33,7 +33,7 @@ public class AmazonMqConfig extends AbstractServiceConfig<AmazonMqConfig.Builder
     private final int consoleHostPortsCount;
 
     private AmazonMqConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.mock = builder.mock;
         this.defaultImage = builder.defaultImage;
         this.amqpHostPortBase = builder.amqpHostPortBase;

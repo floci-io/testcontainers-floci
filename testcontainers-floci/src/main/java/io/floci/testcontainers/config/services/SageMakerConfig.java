@@ -27,7 +27,7 @@ public class SageMakerConfig extends AbstractServiceConfig<SageMakerConfig.Build
     private final List<String> gpuDevices;
 
     private SageMakerConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.dockerNetwork = builder.dockerNetwork;
         this.gpuEnabled = builder.gpuEnabled;
         this.gpuMode = builder.gpuMode;

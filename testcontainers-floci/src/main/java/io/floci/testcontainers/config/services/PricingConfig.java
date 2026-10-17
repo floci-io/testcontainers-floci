@@ -18,7 +18,7 @@ public class PricingConfig extends AbstractServiceConfig<PricingConfig.Builder> 
     private final String snapshotPath;
 
     private PricingConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.snapshotPath = builder.snapshotPath;
     }
 

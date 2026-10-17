@@ -18,7 +18,7 @@ public class KinesisConfig extends AbstractServiceConfig<KinesisConfig.Builder> 
     private final long listShardsNextTokenTtlMillis;
 
     private KinesisConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.listShardsNextTokenTtlMillis = builder.listShardsNextTokenTtlMillis;
     }
 

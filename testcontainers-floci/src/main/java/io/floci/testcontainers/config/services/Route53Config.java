@@ -27,7 +27,7 @@ public class Route53Config extends AbstractServiceConfig<Route53Config.Builder> 
     private final long vpcAssociationControlPlaneDelayMs;
 
     private Route53Config(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.defaultNameserver1 = builder.defaultNameserver1;
         this.defaultNameserver2 = builder.defaultNameserver2;
         this.defaultNameserver3 = builder.defaultNameserver3;

@@ -29,7 +29,7 @@ public class DynamoDbConfig extends AbstractServiceConfig<DynamoDbConfig.Builder
     private final int localRequestTimeoutSeconds;
 
     private DynamoDbConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.vectorIndexAllocationSeconds = builder.vectorIndexAllocationSeconds;
         this.vectorIndexBackfillSeconds = builder.vectorIndexBackfillSeconds;
         this.backend = builder.backend;

@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class GuardDutyConfig extends AbstractServiceConfig<GuardDutyConfig.Builder> {
 
     private GuardDutyConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

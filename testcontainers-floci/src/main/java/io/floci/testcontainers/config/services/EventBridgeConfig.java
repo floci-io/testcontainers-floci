@@ -15,7 +15,7 @@ public class EventBridgeConfig extends AbstractServiceConfig<EventBridgeConfig.B
 
 
     private EventBridgeConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

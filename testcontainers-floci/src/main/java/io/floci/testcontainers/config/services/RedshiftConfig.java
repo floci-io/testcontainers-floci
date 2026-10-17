@@ -39,7 +39,7 @@ public class RedshiftConfig extends AbstractServiceConfig<RedshiftConfig.Builder
     private final long spectrumMaxRows;
 
     private RedshiftConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.defaultPort = builder.defaultPort;
         this.imageVersion = builder.imageVersion;
         this.dockerNetwork = builder.dockerNetwork;

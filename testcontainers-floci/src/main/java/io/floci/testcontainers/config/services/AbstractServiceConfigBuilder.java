@@ -3,19 +3,22 @@ package io.floci.testcontainers.config.services;
 /**
  * Base class for builders of {@link AbstractServiceConfig} subclasses.
  *
- * <p>Provides shared handling of the {@link AbstractServiceConfig#isEnabled() enabled} flag,
- * including pre-populating a new builder from the values of an existing configuration instance
- * (see {@link AbstractServiceConfig#toBuilder()}).
+ * <p>Kept for compatibility: every AWS service configuration builder still extends this class, but all behaviour
+ * lives in the provider-independent
+ * {@link io.floci.testcontainers.core.config.services.AbstractServiceConfigBuilder}. Custom builders should extend
+ * that class directly.
  *
  * @param <SELF> the concrete builder subtype, used to support a fluent, self-typed API in subclasses
  * @param <C>    the concrete {@link AbstractServiceConfig} subtype built by this builder, used as
  *               the return type of {@link #build()}
+ * @deprecated use {@link io.floci.testcontainers.core.config.services.AbstractServiceConfigBuilder}; this class will
+ * be removed in 3.0.0.
  */
+@Deprecated
 public abstract class AbstractServiceConfigBuilder<
         SELF extends AbstractServiceConfigBuilder<SELF, C>,
-        C extends AbstractServiceConfig<SELF>> {
-
-    protected boolean enabled = AbstractServiceConfig.DEFAULT_ENABLED;
+        C extends AbstractServiceConfig<SELF>>
+        extends io.floci.testcontainers.core.config.services.AbstractServiceConfigBuilder<SELF, C> {
 
     /**
      * Creates a new builder with default values.
@@ -29,7 +32,7 @@ public abstract class AbstractServiceConfigBuilder<
      * @param instance the configuration instance to copy values from
      */
     protected AbstractServiceConfigBuilder(C instance) {
-        this.enabled = instance.isEnabled();
+        super(instance);
     }
 
     /**
@@ -38,10 +41,9 @@ public abstract class AbstractServiceConfigBuilder<
      * @param enabled {@code true} to enable, {@code false} to disable (default {@value AbstractServiceConfig#DEFAULT_ENABLED})
      * @return this builder
      */
-    @SuppressWarnings("unchecked")
+    @Override
     public SELF enabled(boolean enabled) {
-        this.enabled = enabled;
-        return (SELF) this;
+        return super.enabled(enabled);
     }
 
     /**
@@ -50,5 +52,6 @@ public abstract class AbstractServiceConfigBuilder<
      *
      * @return the configuration built from this builder's values
      */
+    @Override
     public abstract C build();
 }

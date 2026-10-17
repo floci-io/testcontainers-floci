@@ -19,7 +19,7 @@ public class CostExplorerConfig extends AbstractServiceConfig<CostExplorerConfig
     private final double creditUsdMonthly;
 
     private CostExplorerConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.creditUsdMonthly = builder.creditUsdMonthly;
     }
 

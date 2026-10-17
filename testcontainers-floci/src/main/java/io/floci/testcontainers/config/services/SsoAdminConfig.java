@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class SsoAdminConfig extends AbstractServiceConfig<SsoAdminConfig.Builder> {
 
     private SsoAdminConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

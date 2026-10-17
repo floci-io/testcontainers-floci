@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class LakeFormationConfig extends AbstractServiceConfig<LakeFormationConfig.Builder> {
 
     private LakeFormationConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

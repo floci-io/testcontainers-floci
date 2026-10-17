@@ -20,7 +20,7 @@ public class GlueConfig extends AbstractServiceConfig<GlueConfig.Builder> {
     private final int crawlerRunDurationSeconds;
 
     private GlueConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.jobRunDurationSeconds = builder.jobRunDurationSeconds;
         this.crawlerRunDurationSeconds = builder.crawlerRunDurationSeconds;
     }

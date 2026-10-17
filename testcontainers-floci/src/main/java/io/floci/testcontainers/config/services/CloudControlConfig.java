@@ -22,7 +22,7 @@ public class CloudControlConfig extends AbstractServiceConfig<CloudControlConfig
     private final int createQueueCapacity;
 
     private CloudControlConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.createWorkerThreads = builder.createWorkerThreads;
         this.createQueueCapacity = builder.createQueueCapacity;
     }

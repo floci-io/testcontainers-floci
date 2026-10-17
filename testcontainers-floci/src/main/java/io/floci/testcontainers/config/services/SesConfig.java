@@ -28,7 +28,7 @@ public class SesConfig extends AbstractServiceConfig<SesConfig.Builder> {
     private final String smtpStarttls;
 
     private SesConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.smtpHost = builder.smtpHost;
         this.smtpPort = builder.smtpPort;
         this.smtpUser = builder.smtpUser;

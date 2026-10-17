@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class TextractConfig extends AbstractServiceConfig<TextractConfig.Builder> {
 
     private TextractConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

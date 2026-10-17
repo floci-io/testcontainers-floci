@@ -19,7 +19,7 @@ public class AthenaConfig extends AbstractServiceConfig<AthenaConfig.Builder> {
     private final boolean mock;
 
     private AthenaConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.mock = builder.mock;
     }
 

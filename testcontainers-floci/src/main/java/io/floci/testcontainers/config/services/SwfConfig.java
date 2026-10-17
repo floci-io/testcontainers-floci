@@ -22,7 +22,7 @@ public class SwfConfig extends AbstractServiceConfig<SwfConfig.Builder> {
     private final long timeoutSweepIntervalSeconds;
 
     private SwfConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.timeoutSweepEnabled = builder.timeoutSweepEnabled;
         this.timeoutSweepIntervalSeconds = builder.timeoutSweepIntervalSeconds;
     }

@@ -22,7 +22,7 @@ public class KinesisAnalyticsConfig extends AbstractServiceConfig<KinesisAnalyti
     private final String defaultImage;
 
     private KinesisAnalyticsConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.mock = builder.mock;
         this.defaultImage = builder.defaultImage;
     }

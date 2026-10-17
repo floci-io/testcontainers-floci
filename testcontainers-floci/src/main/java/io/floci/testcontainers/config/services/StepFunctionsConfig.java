@@ -30,7 +30,7 @@ public class StepFunctionsConfig extends AbstractServiceConfig<StepFunctionsConf
     private final int maxWaitSeconds;
 
     private StepFunctionsConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.allowPlaintextHttp = builder.allowPlaintextHttp;
         this.mockConfigFile = builder.mockConfigFile;
         this.mockConfig = builder.mockConfig;

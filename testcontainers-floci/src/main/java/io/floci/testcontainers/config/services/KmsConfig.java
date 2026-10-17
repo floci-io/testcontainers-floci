@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class KmsConfig extends AbstractServiceConfig<KmsConfig.Builder> {
 
     private KmsConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

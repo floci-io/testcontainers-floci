@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class GlobalAcceleratorConfig extends AbstractServiceConfig<GlobalAcceleratorConfig.Builder> {
 
     private GlobalAcceleratorConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

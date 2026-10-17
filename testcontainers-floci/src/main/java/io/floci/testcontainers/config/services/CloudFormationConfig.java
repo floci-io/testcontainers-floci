@@ -23,7 +23,7 @@ public class CloudFormationConfig extends AbstractServiceConfig<CloudFormationCo
     private final boolean allowStubUnsupportedResourceTypes;
 
     private CloudFormationConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.deletedStackRetentionSeconds = builder.deletedStackRetentionSeconds;
         this.allowStubLambdaCode = builder.allowStubLambdaCode;
         this.allowStubUnsupportedResourceTypes = builder.allowStubUnsupportedResourceTypes;

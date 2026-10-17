@@ -18,7 +18,7 @@ public class CodePipelineConfig extends AbstractServiceConfig<CodePipelineConfig
     private final long sourcePollIntervalMs;
 
     private CodePipelineConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.sourcePollIntervalMs = builder.sourcePollIntervalMs;
     }
 

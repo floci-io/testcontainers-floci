@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class S3TablesConfig extends AbstractServiceConfig<S3TablesConfig.Builder> {
 
     private S3TablesConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

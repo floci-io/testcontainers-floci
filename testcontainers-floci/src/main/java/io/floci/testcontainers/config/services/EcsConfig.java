@@ -46,7 +46,7 @@ public class EcsConfig extends AbstractServiceConfig<EcsConfig.Builder> {
     private final String taskRoleCredentialsProxyImage;
 
     private EcsConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.mock = builder.mock;
         this.dockerNetwork = builder.dockerNetwork;
         this.defaultMemoryMb = builder.defaultMemoryMb;

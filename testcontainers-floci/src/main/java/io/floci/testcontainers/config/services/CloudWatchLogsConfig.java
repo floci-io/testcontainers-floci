@@ -23,7 +23,7 @@ public class CloudWatchLogsConfig extends AbstractServiceConfig<CloudWatchLogsCo
     private final int maxStoredEvents;
 
     private CloudWatchLogsConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.maxEventsPerQuery = builder.maxEventsPerQuery;
         this.queryCompletionDelayMs = builder.queryCompletionDelayMs;
         this.maxStoredEvents = builder.maxStoredEvents;

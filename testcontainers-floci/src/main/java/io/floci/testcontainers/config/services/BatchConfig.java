@@ -22,7 +22,7 @@ public class BatchConfig extends AbstractServiceConfig<BatchConfig.Builder> {
     private final String dockerNetwork;
 
     private BatchConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.runnerMode = builder.runnerMode;
         this.dockerNetwork = builder.dockerNetwork;
     }

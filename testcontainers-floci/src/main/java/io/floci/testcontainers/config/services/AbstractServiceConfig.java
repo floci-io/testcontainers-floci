@@ -1,23 +1,24 @@
 package io.floci.testcontainers.config.services;
 
-import org.testcontainers.containers.Container;
-
 /**
  * Base class for Floci service configurations.
  *
- * <p>Every service configuration supports an {@link #isEnabled()} flag and can apply its
- * settings to a container via {@link #applyEnvVarsToContainer(Container)}.
+ * <p>Kept for compatibility: every AWS service configuration still extends this class, but all behaviour lives in
+ * the provider-independent {@link io.floci.testcontainers.core.config.services.AbstractServiceConfig}. Custom
+ * configurations should extend that class directly.
  *
  * @param <B> the concrete {@link AbstractServiceConfigBuilder} subtype used to build and rebuild
  *            this configuration, allowing {@link #toBuilder()} to be implemented in a type-safe
  *            way by subclasses
+ * @deprecated use {@link io.floci.testcontainers.core.config.services.AbstractServiceConfig}; this class will be
+ * removed in 3.0.0.
  */
-public abstract class AbstractServiceConfig<B extends AbstractServiceConfigBuilder<B, ?>> {
+@Deprecated
+public abstract class AbstractServiceConfig<B extends AbstractServiceConfigBuilder<B, ?>>
+        extends io.floci.testcontainers.core.config.services.AbstractServiceConfig<B> {
 
     /** Default value for the {@link #isEnabled()} flag. */
     protected static final boolean DEFAULT_ENABLED = true;
-
-    private final boolean enabled;
 
     /**
      * Creates a new service configuration with the given enabled flag.
@@ -25,16 +26,16 @@ public abstract class AbstractServiceConfig<B extends AbstractServiceConfigBuild
      * @param enabled {@code true} to enable the service
      */
     protected AbstractServiceConfig(boolean enabled) {
-        this.enabled = enabled;
+        super(enabled);
     }
 
     /**
-     * Returns whether this service is enabled.
+     * Creates a new service configuration with the enabled flag of the given builder.
      *
-     * @return {@code true} if this service is enabled
+     * @param builder the builder to take the enabled flag from
      */
-    public boolean isEnabled() {
-        return enabled;
+    protected AbstractServiceConfig(io.floci.testcontainers.core.config.services.AbstractServiceConfigBuilder<?, ?> builder) {
+        super(builder);
     }
 
     /**
@@ -44,54 +45,6 @@ public abstract class AbstractServiceConfig<B extends AbstractServiceConfigBuild
      *
      * @return a new builder pre-populated with this configuration's values
      */
+    @Override
     public abstract B toBuilder();
-
-    /**
-     * Applies this service configuration to the given container by setting
-     * the appropriate environment variables.
-     *
-     * @param container the container to configure
-     */
-    public void applyEnvVarsToContainer(Container<?> container) {
-    }
-
-    /**
-     * Applies this service configuration to the given container by exposing
-     * the appropriate ports.
-     *
-     * @param container the container to configure
-     */
-    public void applyExposedPortsToContainer(Container<?> container) {
-    }
-
-    /**
-     * Applies this service configuration to the given container by mounting the files it needs
-     * into the container (e.g. copying a generated configuration file to a path the Floci server
-     * reads).
-     *
-     * <p>Called from the same places as {@link #applyEnvVarsToContainer(Container)} — from the
-     * {@link io.floci.testcontainers.FlociContainer} constructor, after every
-     * {@code with<Service>Config(...)} call, and after {@code disableAllServices()} — so
-     * implementations must tolerate being invoked more than once for the same configuration
-     * (re-copying identical content to the same container path is harmless).
-     *
-     * @param container the container to configure
-     */
-    public void applyFileMountsToContainer(Container<?> container) {
-    }
-
-    /**
-     * Returns whether this service, as currently configured, needs access to the host Docker socket to
-     * create sibling containers (e.g. RDS spinning up a PostgreSQL container, Lambda invoking functions
-     * in child containers).
-     *
-     * <p>Defaults to {@code false}. Docker-backed services override this to return {@code true} while
-     * {@linkplain #isEnabled() enabled} (and, for services that support a docker-less {@code mock} mode,
-     * only while not running in that mode).
-     *
-     * @return {@code true} if this service requires the Docker socket to be mounted
-     */
-    public boolean requiresDockerSocket() {
-        return false;
-    }
 }

@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class BedrockAgentCoreControlConfig extends AbstractServiceConfig<BedrockAgentCoreControlConfig.Builder> {
 
     private BedrockAgentCoreControlConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class TranslateConfig extends AbstractServiceConfig<TranslateConfig.Builder> {
 
     private TranslateConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

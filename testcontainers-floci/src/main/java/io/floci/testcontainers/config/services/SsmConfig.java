@@ -19,7 +19,7 @@ public class SsmConfig extends AbstractServiceConfig<SsmConfig.Builder> {
     private final int maxParameterHistory;
 
     private SsmConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.maxParameterHistory = builder.maxParameterHistory;
     }
 

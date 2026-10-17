@@ -30,7 +30,7 @@ public class NeptuneConfig extends AbstractServiceConfig<NeptuneConfig.Builder> 
     private final String dockerNetwork;
 
     private NeptuneConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.proxyBasePort = builder.proxyBasePort;
         this.proxyPortsCount = builder.proxyPortsCount;
         this.dbType = builder.dbType;

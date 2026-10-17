@@ -32,7 +32,7 @@ public class TimestreamInfluxDbConfig extends AbstractServiceConfig<TimestreamIn
     private final String dockerNetwork;
 
     private TimestreamInfluxDbConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.mock = builder.mock;
         this.defaultImage = builder.defaultImage;
         this.hostPortBase = builder.hostPortBase;

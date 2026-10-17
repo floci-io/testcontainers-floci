@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class Route53ResolverConfig extends AbstractServiceConfig<Route53ResolverConfig.Builder> {
 
     private Route53ResolverConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

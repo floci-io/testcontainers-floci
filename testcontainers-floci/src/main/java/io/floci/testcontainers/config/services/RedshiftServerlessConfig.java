@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class RedshiftServerlessConfig extends AbstractServiceConfig<RedshiftServerlessConfig.Builder> {
 
     private RedshiftServerlessConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**
