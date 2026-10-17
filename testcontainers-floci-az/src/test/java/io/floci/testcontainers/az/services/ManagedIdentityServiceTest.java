@@ -40,4 +40,24 @@ class ManagedIdentityServiceTest extends AbstractServiceTest {
             assertThat(principalId).isEqualTo(identity.json().path("properties").path("principalId").asText());
         }
     }
+
+    @Test
+    void shouldIssueAppServiceTokenForConfiguredPathAndHeaderSecret() throws Exception {
+        try (FlociAzContainer identityFloci = new FlociAzContainer(NIGHTLY_IMAGE)
+                .disableAllServices()
+                .withEntraConfig(c -> c.enabled(true))
+                .withManagedIdentityConfig(c -> c.enabled(true)
+                        .appServicePath("identity/token")
+                        .appServiceHeaderSecret("my-identity-header"))) {
+            identityFloci.start();
+
+            HttpResponse<String> token = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(identityFloci.getEndpoint()
+                            + "/identity/token?api-version=2019-08-01&resource=https%3A%2F%2Fmanagement.azure.com%2F"))
+                    .header("X-IDENTITY-HEADER", "my-identity-header")
+                    .build(), HttpResponse.BodyHandlers.ofString());
+
+            assertThat(token.statusCode()).as(token.body()).isEqualTo(200);
+            assertThat(new ObjectMapper().readTree(token.body()).path("access_token").asText()).isNotEmpty();
+        }
+    }
 }
