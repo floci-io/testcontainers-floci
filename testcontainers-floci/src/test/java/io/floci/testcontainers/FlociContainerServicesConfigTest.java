@@ -585,9 +585,9 @@ class FlociContainerServicesConfigTest {
     @Test
     void shouldWireCloudControlConfigIntoContainer() {
         assertConfigWired(
-                c -> c.withCloudControlConfig(cfg -> cfg.enabled(false)),
-                c -> c.getCloudControlConfig().isEnabled(), false,
-                "FLOCI_SERVICES_CLOUDCONTROL_ENABLED", "false");
+                c -> c.withCloudControlConfig(cfg -> cfg.createWorkerThreads(8)),
+                c -> c.getCloudControlConfig().getCreateWorkerThreads(), 8,
+                "FLOCI_SERVICES_CLOUDCONTROL_CREATE_WORKER_THREADS", "8");
     }
 
     @Test
