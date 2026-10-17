@@ -25,7 +25,7 @@ public class TlsConfig {
 
     private static final boolean DEFAULT_ENABLED = false;
     private static final boolean DEFAULT_SELF_SIGNED = true;
-    private static final int DEFAULT_HTTPS_PORT = 443;
+    private static final int DEFAULT_HTTPS_PORT = 0;
 
     private final boolean enabled;
     private final String certPath;
@@ -106,7 +106,9 @@ public class TlsConfig {
      * used on the main port) lets clients that assume Azure lives on 443 reach Floci Azure. The port is
      * not exposed by this container; clients outside the container use the mapped main port.
      *
-     * <p>Default {@value DEFAULT_HTTPS_PORT}. {@code 0} disables the extra binding.
+     * <p>Default {@value DEFAULT_HTTPS_PORT}, which disables the extra binding: Floci Azure defaults to 443, but
+     * this module turns it off (via the container's default environment), since binding a privileged port
+     * inside the container is not needed for tests and the main port serves HTTPS as well.
      *
      * @return the additional HTTPS port
      */

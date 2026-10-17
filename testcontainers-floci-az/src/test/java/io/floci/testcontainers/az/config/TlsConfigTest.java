@@ -15,7 +15,7 @@ class TlsConfigTest {
         assertThat(config.getCertPath()).isEmpty();
         assertThat(config.getKeyPath()).isEmpty();
         assertThat(config.isSelfSigned()).isTrue();
-        assertThat(config.getHttpsPort()).isEqualTo(443);
+        assertThat(config.getHttpsPort()).isZero();
     }
 
     @Test
@@ -25,13 +25,13 @@ class TlsConfigTest {
                 .certPath("/certs/server.crt")
                 .keyPath("/certs/server.key")
                 .selfSigned(false)
-                .httpsPort(0)
+                .httpsPort(8443)
                 .build();
         assertThat(config.isEnabled()).isTrue();
         assertThat(config.getCertPath()).contains("/certs/server.crt");
         assertThat(config.getKeyPath()).contains("/certs/server.key");
         assertThat(config.isSelfSigned()).isFalse();
-        assertThat(config.getHttpsPort()).isZero();
+        assertThat(config.getHttpsPort()).isEqualTo(8443);
     }
 
     @Test
@@ -55,7 +55,7 @@ class TlsConfigTest {
                 .certPath("/certs/server.crt")
                 .keyPath("/certs/server.key")
                 .selfSigned(false)
-                .httpsPort(0)
+                .httpsPort(8443)
                 .build()
                 .applyEnvVarsToContainer(container);
 
@@ -64,7 +64,7 @@ class TlsConfigTest {
                 .containsEntry("FLOCI_AZ_TLS_CERT_PATH", "/certs/server.crt")
                 .containsEntry("FLOCI_AZ_TLS_KEY_PATH", "/certs/server.key")
                 .containsEntry("FLOCI_AZ_TLS_SELF_SIGNED", "false")
-                .containsEntry("FLOCI_AZ_TLS_HTTPS_PORT", "0");
+                .containsEntry("FLOCI_AZ_TLS_HTTPS_PORT", "8443");
     }
 
     @Test
