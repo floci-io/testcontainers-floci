@@ -34,7 +34,7 @@ public class IotConfig extends AbstractServiceConfig<IotConfig.Builder> {
     private final int mqttTlsPort;
 
     private IotConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.mqttEnabled = builder.mqttEnabled;
         this.mqttAutoStart = builder.mqttAutoStart;
         this.mqttHost = builder.mqttHost;

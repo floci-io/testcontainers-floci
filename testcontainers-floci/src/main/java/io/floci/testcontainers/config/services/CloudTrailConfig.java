@@ -20,7 +20,7 @@ public class CloudTrailConfig extends AbstractServiceConfig<CloudTrailConfig.Bui
     private final int flushIntervalSeconds;
 
     private CloudTrailConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.flushIntervalSeconds = builder.flushIntervalSeconds;
     }
 

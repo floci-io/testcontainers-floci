@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class CodeGuruReviewerConfig extends AbstractServiceConfig<CodeGuruReviewerConfig.Builder> {
 
     private CodeGuruReviewerConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

@@ -26,6 +26,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
@@ -75,7 +76,8 @@ class FlociContainerCleanupTest {
                 RuntimeException failure = new IllegalStateException("Docker resource listing failed");
                 container.failOperation(operation, failure);
 
-                assertThatThrownBy(container::stop).isSameAs(failure);
+                // Failures of the sibling cleanup are logged and never fail the stop
+                assertThatCode(container::stop).doesNotThrowAnyException();
                 assertThat(storage).doesNotExist();
             }
         }

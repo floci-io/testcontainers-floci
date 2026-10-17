@@ -61,7 +61,7 @@ public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
     private final boolean vpcRouteProgramming;
 
     private EksConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.mock = builder.mock;
         this.provider = builder.provider;
         this.defaultImage = builder.defaultImage;

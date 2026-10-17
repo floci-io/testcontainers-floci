@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class Macie2Config extends AbstractServiceConfig<Macie2Config.Builder> {
 
     private Macie2Config(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class LightsailConfig extends AbstractServiceConfig<LightsailConfig.Builder> {
 
     private LightsailConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

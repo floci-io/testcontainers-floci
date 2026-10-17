@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class ComprehendConfig extends AbstractServiceConfig<ComprehendConfig.Builder> {
 
     private ComprehendConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

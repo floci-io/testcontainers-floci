@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class NetworkFirewallConfig extends AbstractServiceConfig<NetworkFirewallConfig.Builder> {
 
     private NetworkFirewallConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

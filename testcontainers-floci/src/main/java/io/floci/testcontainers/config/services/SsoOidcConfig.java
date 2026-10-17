@@ -18,7 +18,7 @@ public class SsoOidcConfig extends AbstractServiceConfig<SsoOidcConfig.Builder> 
     private final String localPrincipalId;
 
     private SsoOidcConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.localPrincipalId = builder.localPrincipalId;
     }
 

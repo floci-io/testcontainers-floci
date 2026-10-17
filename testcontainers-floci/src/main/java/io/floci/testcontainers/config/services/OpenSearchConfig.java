@@ -31,7 +31,7 @@ public class OpenSearchConfig extends AbstractServiceConfig<OpenSearchConfig.Bui
     private final String dockerNetwork;
 
     private OpenSearchConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.mock = builder.mock;
         this.defaultImage = builder.defaultImage;
         this.proxyBasePort = builder.proxyBasePort;

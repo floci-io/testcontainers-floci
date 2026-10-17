@@ -15,7 +15,7 @@ public class ResourceGroupsTaggingConfig extends AbstractServiceConfig<ResourceG
 
 
     private ResourceGroupsTaggingConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

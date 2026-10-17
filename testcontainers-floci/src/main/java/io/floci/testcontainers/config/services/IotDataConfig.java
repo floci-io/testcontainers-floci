@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class IotDataConfig extends AbstractServiceConfig<IotDataConfig.Builder> {
 
     private IotDataConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

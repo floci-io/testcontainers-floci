@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class DmsConfig extends AbstractServiceConfig<DmsConfig.Builder> {
 
     private DmsConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

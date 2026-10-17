@@ -19,7 +19,7 @@ public class BackupConfig extends AbstractServiceConfig<BackupConfig.Builder> {
     private final int jobCompletionDelaySeconds;
 
     private BackupConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.jobCompletionDelaySeconds = builder.jobCompletionDelaySeconds;
     }
 

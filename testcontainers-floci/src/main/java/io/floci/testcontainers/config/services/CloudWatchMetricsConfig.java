@@ -15,7 +15,7 @@ public class CloudWatchMetricsConfig extends AbstractServiceConfig<CloudWatchMet
 
 
     private CloudWatchMetricsConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

@@ -12,6 +12,12 @@
     <name>Testcontainers Floci</name>
     <description>Testcontainers module for Floci — a free, open-source local AWS emulator</description>
 
+    <properties>
+        <!-- The release the public API is compared against (see japicmp-maven-plugin below) -->
+        <japicmp.baseline.version>2.16.1</japicmp.baseline.version>
+        <japicmp.baseline.directory>${project.build.directory}/japicmp-baseline</japicmp.baseline.directory>
+    </properties>
+
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -31,10 +37,20 @@
 
     <dependencies>
         <dependency>
+            <groupId>io.floci</groupId>
+            <artifactId>testcontainers-floci-core</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>io.floci</groupId>
+            <artifactId>testcontainers-floci-core</artifactId>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
@@ -744,6 +760,98 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <!--
+                    Fetches the released baseline of the API check below. Runs before anything is compiled, so the
+                    released jar comes from the repository even while the project version equals the baseline version
+                    (the reactor would otherwise resolve these coordinates to this module's own build output).
+                -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>fetch-api-baseline</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>io.floci</groupId>
+                                    <artifactId>testcontainers-floci</artifactId>
+                                    <version>${japicmp.baseline.version}</version>
+                                    <type>jar</type>
+                                </artifactItem>
+                            </artifactItems>
+                            <outputDirectory>${japicmp.baseline.directory}</outputDirectory>
+                            <overWriteReleases>true</overWriteReleases>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <!-- No public or protected member of the 2.x API may be removed or changed, source and binary -->
+                <groupId>com.github.siom79.japicmp</groupId>
+                <artifactId>japicmp-maven-plugin</artifactId>
+                <configuration>
+                    <oldVersions>
+                        <file implementation="japicmp.maven.ConfigurationFile">
+                            <path>${japicmp.baseline.directory}/testcontainers-floci-${japicmp.baseline.version}.jar</path>
+                        </file>
+                    </oldVersions>
+                    <newVersions>
+                        <file implementation="japicmp.maven.ConfigurationFile">
+                            <path>${project.build.directory}/${project.build.finalName}.jar</path>
+                        </file>
+                        <!-- members that moved into the core (e.g. of AbstractServiceConfig) are still part of the API -->
+                        <file implementation="japicmp.maven.ConfigurationFile">
+                            <path>${project.basedir}/../testcontainers-floci-core/target/testcontainers-floci-core-${project.version}.jar</path>
+                        </file>
+                    </newVersions>
+                    <parameter>
+                        <onlyModified>true</onlyModified>
+                        <includes>
+                            <include>io.floci.testcontainers.*</include>
+                        </includes>
+                        <excludes>
+                            <!-- Changed to Optional<String> after 2.16.1 (#9a28ace), before this check existed -->
+                            <exclude>io.floci.testcontainers.config.services.CloudFrontConfig#getDomainSuffix()</exclude>
+                        </excludes>
+                        <overrideCompatibilityChangeParameters>
+                            <!--
+                                Reported for FlociContainer since its superclass chain now runs through
+                                AbstractFlociContainer, although it still inherits every Testcontainers interface method
+                                implementation from GenericContainer. Methods added to this module's own interfaces are
+                                reported as METHOD_ADDED_TO_INTERFACE and still break the build.
+                            -->
+                            <overrideCompatibilityChangeParameter>
+                                <compatibilityChange>METHOD_ABSTRACT_ADDED_IN_IMPLEMENTED_INTERFACE</compatibilityChange>
+                                <binaryCompatible>true</binaryCompatible>
+                                <sourceCompatible>true</sourceCompatible>
+                                <semanticVersionLevel>MINOR</semanticVersionLevel>
+                            </overrideCompatibilityChangeParameter>
+                        </overrideCompatibilityChangeParameters>
+                        <breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
+                        <breakBuildOnSourceIncompatibleModifications>true</breakBuildOnSourceIncompatibleModifications>
+                        <skipHtmlReport>true</skipHtmlReport>
+                        <ignoreMissingClassesByRegularExpressions>
+                            <!-- optional dependencies of docker-java and Testcontainers, not on the compile classpath -->
+                            <ignoreMissingClassesByRegularExpression>com\.fasterxml\.jackson\..*</ignoreMissingClassesByRegularExpression>
+                            <ignoreMissingClassesByRegularExpression>com\.google\.cloud\.tools\.jib\..*</ignoreMissingClassesByRegularExpression>
+                        </ignoreMissingClassesByRegularExpressions>
+                    </parameter>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>api-compatibility</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>cmp</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

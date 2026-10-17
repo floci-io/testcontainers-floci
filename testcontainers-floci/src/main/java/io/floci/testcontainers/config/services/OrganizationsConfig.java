@@ -21,7 +21,7 @@ public class OrganizationsConfig extends AbstractServiceConfig<OrganizationsConf
     private final String managementAccountEmail;
 
     private OrganizationsConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.scpEnforcementEnabled = builder.scpEnforcementEnabled;
         this.managementAccountEmail = builder.managementAccountEmail;
     }

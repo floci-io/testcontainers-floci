@@ -32,7 +32,7 @@ public class MskConfig extends AbstractServiceConfig<MskConfig.Builder> {
     private final String bootstrapHostname;
 
     private MskConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.mock = builder.mock;
         this.defaultImage = builder.defaultImage;
         this.kafkaHostPortBase = builder.kafkaHostPortBase;

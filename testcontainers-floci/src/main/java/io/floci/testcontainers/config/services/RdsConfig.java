@@ -45,7 +45,7 @@ public class RdsConfig extends AbstractServiceConfig<RdsConfig.Builder> {
     private final int auroraResumeDelayMillis;
 
     private RdsConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.mock = builder.mock;
         this.proxyBasePort = builder.proxyBasePort;
         this.proxyPortsCount = builder.proxyPortsCount;

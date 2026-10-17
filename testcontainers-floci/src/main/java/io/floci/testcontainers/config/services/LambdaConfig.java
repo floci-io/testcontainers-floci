@@ -68,7 +68,7 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
     private final boolean acceptExternalLayerArns;
 
     private LambdaConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.ephemeral = builder.ephemeral;
         this.exposeRuntimePorts = builder.exposeRuntimePorts;
         this.defaultMemoryMb = builder.defaultMemoryMb;

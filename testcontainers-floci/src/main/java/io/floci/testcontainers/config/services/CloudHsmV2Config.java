@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class CloudHsmV2Config extends AbstractServiceConfig<CloudHsmV2Config.Builder> {
 
     private CloudHsmV2Config(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

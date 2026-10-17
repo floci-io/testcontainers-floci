@@ -36,7 +36,7 @@ public class EcrConfig extends AbstractServiceConfig<EcrConfig.Builder> {
     private final boolean preferLocalImages;
 
     private EcrConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.registryImage = builder.registryImage;
         this.registryContainerName = builder.registryContainerName;
         this.registryBasePort = builder.registryBasePort;

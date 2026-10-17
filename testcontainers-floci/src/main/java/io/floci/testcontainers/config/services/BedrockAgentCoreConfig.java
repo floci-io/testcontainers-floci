@@ -25,7 +25,7 @@ public class BedrockAgentCoreConfig extends AbstractServiceConfig<BedrockAgentCo
     private final String harnessEmptyReply;
 
     private BedrockAgentCoreConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.invokeResponse = builder.invokeResponse;
         this.validateRuntimeExists = builder.validateRuntimeExists;
         this.harnessEchoPrefix = builder.harnessEchoPrefix;

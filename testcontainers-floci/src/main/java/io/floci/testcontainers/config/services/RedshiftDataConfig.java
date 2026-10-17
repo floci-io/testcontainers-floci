@@ -26,7 +26,7 @@ public class RedshiftDataConfig extends AbstractServiceConfig<RedshiftDataConfig
     private final int shutdownTimeoutSeconds;
 
     private RedshiftDataConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.resultTtlHours = builder.resultTtlHours;
         this.maxConcurrentStatements = builder.maxConcurrentStatements;
         this.queueCapacity = builder.queueCapacity;

@@ -19,7 +19,7 @@ public class AcmConfig extends AbstractServiceConfig<AcmConfig.Builder> {
     private final int validationWaitSeconds;
 
     private AcmConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.validationWaitSeconds = builder.validationWaitSeconds;
     }
 

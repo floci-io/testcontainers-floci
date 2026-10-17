@@ -41,7 +41,7 @@ public class MwaaConfig extends AbstractServiceConfig<MwaaConfig.Builder> {
     private final boolean installRequirements;
 
     private MwaaConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.mock = builder.mock;
         this.defaultPostgresImage = builder.defaultPostgresImage;
         this.supportedVersions = builder.supportedVersions;

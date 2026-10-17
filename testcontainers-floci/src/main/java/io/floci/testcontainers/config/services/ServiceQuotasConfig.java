@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class ServiceQuotasConfig extends AbstractServiceConfig<ServiceQuotasConfig.Builder> {
 
     private ServiceQuotasConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

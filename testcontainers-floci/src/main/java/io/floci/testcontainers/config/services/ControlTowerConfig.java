@@ -20,7 +20,7 @@ public class ControlTowerConfig extends AbstractServiceConfig<ControlTowerConfig
     private final boolean seedLandingZone;
 
     private ControlTowerConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.seedLandingZone = builder.seedLandingZone;
     }
 

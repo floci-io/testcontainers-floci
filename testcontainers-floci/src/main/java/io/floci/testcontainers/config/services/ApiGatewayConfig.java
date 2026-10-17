@@ -22,7 +22,7 @@ public class ApiGatewayConfig extends AbstractServiceConfig<ApiGatewayConfig.Bui
     private final long vtlTimeoutMillis;
 
     private ApiGatewayConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.vtlMaxLoops = builder.vtlMaxLoops;
         this.vtlMaxOutputChars = builder.vtlMaxOutputChars;
         this.vtlTimeoutMillis = builder.vtlTimeoutMillis;

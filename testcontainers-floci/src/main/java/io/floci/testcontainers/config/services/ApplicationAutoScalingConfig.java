@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class ApplicationAutoScalingConfig extends AbstractServiceConfig<ApplicationAutoScalingConfig.Builder> {
 
     private ApplicationAutoScalingConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

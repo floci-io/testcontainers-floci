@@ -19,7 +19,7 @@ public class CloudMapConfig extends AbstractServiceConfig<CloudMapConfig.Builder
     private final int operationCompletionDelaySeconds;
 
     private CloudMapConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.operationCompletionDelaySeconds = builder.operationCompletionDelaySeconds;
     }
 

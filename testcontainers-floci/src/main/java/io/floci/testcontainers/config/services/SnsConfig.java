@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class SnsConfig extends AbstractServiceConfig<SnsConfig.Builder> {
 
     private SnsConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

@@ -22,7 +22,7 @@ public class ElbConfig extends AbstractServiceConfig<ElbConfig.Builder> {
     private final boolean mock;
 
     private ElbConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.mock = builder.mock;
     }
 

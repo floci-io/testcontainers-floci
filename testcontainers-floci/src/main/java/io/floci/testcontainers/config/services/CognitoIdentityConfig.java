@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class CognitoIdentityConfig extends AbstractServiceConfig<CognitoIdentityConfig.Builder> {
 
     private CognitoIdentityConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

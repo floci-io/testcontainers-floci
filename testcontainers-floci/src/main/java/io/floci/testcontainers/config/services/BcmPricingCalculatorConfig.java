@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class BcmPricingCalculatorConfig extends AbstractServiceConfig<BcmPricingCalculatorConfig.Builder> {
 
     private BcmPricingCalculatorConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

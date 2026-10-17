@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class FisConfig extends AbstractServiceConfig<FisConfig.Builder> {
 
     private FisConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

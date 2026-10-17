@@ -20,7 +20,7 @@ public class CloudFrontConfig extends AbstractServiceConfig<CloudFrontConfig.Bui
     private final List<String> allowedPrivateOriginHosts;
 
     private CloudFrontConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.domainSuffix = builder.domainSuffix;
         this.allowedPrivateOriginHosts = builder.allowedPrivateOriginHosts;
     }

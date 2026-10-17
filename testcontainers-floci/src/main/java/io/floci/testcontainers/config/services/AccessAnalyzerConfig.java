@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class AccessAnalyzerConfig extends AbstractServiceConfig<AccessAnalyzerConfig.Builder> {
 
     private AccessAnalyzerConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

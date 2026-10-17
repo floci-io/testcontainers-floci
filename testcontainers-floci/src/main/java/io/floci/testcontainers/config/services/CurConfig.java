@@ -22,7 +22,7 @@ public class CurConfig extends AbstractServiceConfig<CurConfig.Builder> {
     private final String stagingBucket;
 
     private CurConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.emitMode = builder.emitMode;
         this.stagingBucket = builder.stagingBucket;
     }

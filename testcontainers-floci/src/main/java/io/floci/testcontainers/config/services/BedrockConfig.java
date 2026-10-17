@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class BedrockConfig extends AbstractServiceConfig<BedrockConfig.Builder> {
 
     private BedrockConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

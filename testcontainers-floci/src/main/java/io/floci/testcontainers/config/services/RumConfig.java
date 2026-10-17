@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class RumConfig extends AbstractServiceConfig<RumConfig.Builder> {
 
     private RumConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

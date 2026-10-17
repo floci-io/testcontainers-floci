@@ -31,7 +31,7 @@ public class ElastiCacheConfig extends AbstractServiceConfig<ElastiCacheConfig.B
     private final String clusterAnnounceHostname;
 
     private ElastiCacheConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.proxyBasePort = builder.proxyBasePort;
         this.proxyPortsCount = builder.proxyPortsCount;
         this.defaultImage = builder.defaultImage;

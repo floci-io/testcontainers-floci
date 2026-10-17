@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class DataSyncConfig extends AbstractServiceConfig<DataSyncConfig.Builder> {
 
     private DataSyncConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

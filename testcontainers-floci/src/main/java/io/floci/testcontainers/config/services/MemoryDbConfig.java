@@ -31,7 +31,7 @@ public class MemoryDbConfig extends AbstractServiceConfig<MemoryDbConfig.Builder
     private final String dockerNetwork;
 
     private MemoryDbConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.mock = builder.mock;
         this.proxyBasePort = builder.proxyBasePort;
         this.proxyPortsCount = builder.proxyPortsCount;

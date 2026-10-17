@@ -24,7 +24,7 @@ public class FirehoseConfig extends AbstractServiceConfig<FirehoseConfig.Builder
     private final String stagingBucket;
 
     private FirehoseConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.tickIntervalSeconds = builder.tickIntervalSeconds;
         this.flushRecordCount = builder.flushRecordCount;
         this.stagingBucket = builder.stagingBucket;

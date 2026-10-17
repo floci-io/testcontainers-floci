@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class ResourceExplorer2Config extends AbstractServiceConfig<ResourceExplorer2Config.Builder> {
 
     private ResourceExplorer2Config(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

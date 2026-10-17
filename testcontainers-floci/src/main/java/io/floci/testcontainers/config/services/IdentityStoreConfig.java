@@ -18,7 +18,7 @@ public class IdentityStoreConfig extends AbstractServiceConfig<IdentityStoreConf
     private final String scimBearerToken;
 
     private IdentityStoreConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.scimBearerToken = builder.scimBearerToken;
     }
 

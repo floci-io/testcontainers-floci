@@ -29,7 +29,7 @@ public class BedrockRuntimeConfig extends AbstractServiceConfig<BedrockRuntimeCo
     private final int proxyRequestTimeoutSeconds;
 
     private BedrockRuntimeConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.backend = builder.backend;
         this.proxyUrl = builder.proxyUrl;
         this.proxyApiKey = builder.proxyApiKey;

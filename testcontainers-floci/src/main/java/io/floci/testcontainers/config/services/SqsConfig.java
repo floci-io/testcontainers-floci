@@ -27,7 +27,7 @@ public class SqsConfig extends AbstractServiceConfig<SqsConfig.Builder> {
     private final String receiptHandleSecret;
 
     private SqsConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.defaultVisibilityTimeout = builder.defaultVisibilityTimeout;
         this.maxMessageSize = builder.maxMessageSize;
         this.clearFifoDeduplicationCacheOnPurge = builder.clearFifoDeduplicationCacheOnPurge;

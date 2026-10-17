@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class SecurityHubConfig extends AbstractServiceConfig<SecurityHubConfig.Builder> {
 
     private SecurityHubConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class RekognitionConfig extends AbstractServiceConfig<RekognitionConfig.Builder> {
 
     private RekognitionConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

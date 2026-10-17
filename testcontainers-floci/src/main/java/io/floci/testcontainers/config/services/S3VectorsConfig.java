@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class S3VectorsConfig extends AbstractServiceConfig<S3VectorsConfig.Builder> {
 
     private S3VectorsConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

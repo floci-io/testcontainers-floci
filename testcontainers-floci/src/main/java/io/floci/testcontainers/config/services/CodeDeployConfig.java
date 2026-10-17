@@ -15,7 +15,7 @@ public class CodeDeployConfig extends AbstractServiceConfig<CodeDeployConfig.Bui
 
 
     private CodeDeployConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

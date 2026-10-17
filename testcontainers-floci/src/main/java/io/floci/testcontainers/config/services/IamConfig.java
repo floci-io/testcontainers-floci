@@ -24,7 +24,7 @@ public class IamConfig extends AbstractServiceConfig<IamConfig.Builder> {
     private final String accountAlias;
 
     private IamConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.enforcementEnabled = builder.enforcementEnabled;
         this.seedDeployerPrincipal = builder.seedDeployerPrincipal;
         this.accountAlias = builder.accountAlias;

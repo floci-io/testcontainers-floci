@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class EfsConfig extends AbstractServiceConfig<EfsConfig.Builder> {
 
     private EfsConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

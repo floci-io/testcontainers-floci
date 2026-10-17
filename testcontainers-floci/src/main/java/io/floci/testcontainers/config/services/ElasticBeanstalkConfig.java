@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class ElasticBeanstalkConfig extends AbstractServiceConfig<ElasticBeanstalkConfig.Builder> {
 
     private ElasticBeanstalkConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

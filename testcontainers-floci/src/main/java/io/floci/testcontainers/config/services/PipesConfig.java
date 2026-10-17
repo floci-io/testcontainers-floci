@@ -22,7 +22,7 @@ public class PipesConfig extends AbstractServiceConfig<PipesConfig.Builder> {
     private final int kafkaRestBridgeHostPortsCount;
 
     private PipesConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.kafkaRestBridgeDefaultImage = builder.kafkaRestBridgeDefaultImage;
         this.kafkaRestBridgeHostPortBase = builder.kafkaRestBridgeHostPortBase;
         this.kafkaRestBridgeHostPortsCount = builder.kafkaRestBridgeHostPortsCount;

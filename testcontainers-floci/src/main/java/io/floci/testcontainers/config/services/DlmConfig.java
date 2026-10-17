@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class DlmConfig extends AbstractServiceConfig<DlmConfig.Builder> {
 
     private DlmConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

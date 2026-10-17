@@ -28,7 +28,7 @@ public class S3Config extends AbstractServiceConfig<S3Config.Builder> {
     private final long lifecycleSweepIntervalSeconds;
 
     private S3Config(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.defaultPresignExpirySeconds = builder.defaultPresignExpirySeconds;
         this.enforceAuth = builder.enforceAuth;
         this.globalBucketNamespace = builder.globalBucketNamespace;

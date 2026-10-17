@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class Inspector2Config extends AbstractServiceConfig<Inspector2Config.Builder> {
 
     private Inspector2Config(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

@@ -130,9 +130,9 @@ When Floci adds a new service, the typical steps are:
    `FLOCI_SERVICES_<SERVICE>_<PROPERTY>`). If the service creates sibling Docker containers (like RDS or Lambda),
    override `requiresDockerSocket()` to return `true` while enabled (and, for services with a docker-less `mock`
    mode, only while not mocked) — this drives whether `FlociContainer` mounts the host Docker socket.
-2. Wire the config into `FlociContainer`: add a field, a `get<Service>Config()` getter, a `with<Service>Config(...)`
-   method, and register the field in the `serviceConfigAccessors` list (this drives `configureEnvVars()` /
-   `configureExposedPorts()` / `configureFileMounts()` / `disableAllServices()`).
+2. Wire the config into `FlociContainer`: add a `ServiceConfigRef` field via `registerServiceConfig(...)` (this
+   drives the env-var/port/file-mount wiring, `disableAllServices()` and the Docker socket decision), a
+   `get<Service>Config()` getter and a `with<Service>Config(...)` method that delegates to `updateServiceConfig(...)`.
 3. Add a config unit test in `testcontainers-floci/src/test/java/io/floci/testcontainers/config/services/`.
 4. Add a test method to `FlociContainerServicesConfigTest` for the container wiring, and add the new
    `container.get<Service>Config()` to the assertion list in `FlociContainerTest.shouldDisableAllServices()`

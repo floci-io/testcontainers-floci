@@ -23,7 +23,7 @@ public class ElbV2Config extends AbstractServiceConfig<ElbV2Config.Builder> {
     private final List<Integer> listenerPorts;
 
     private ElbV2Config(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.mock = builder.mock;
         this.listenerPorts = List.copyOf(builder.listenerPorts);
     }

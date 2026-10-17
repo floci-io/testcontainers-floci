@@ -1,24 +1,16 @@
 package io.floci.testcontainers;
 
-import com.github.dockerjava.api.command.CreateContainerCmd;
-import com.github.dockerjava.api.command.InspectVolumeResponse;
-import com.github.dockerjava.api.exception.NotFoundException;
-import com.github.dockerjava.api.model.Bind;
-import com.github.dockerjava.api.model.Container;
 import io.floci.testcontainers.config.*;
 import io.floci.testcontainers.config.services.*;
+import io.floci.testcontainers.core.AbstractFlociContainer;
+import io.floci.testcontainers.core.CloudDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
-import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.BindMode;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.builder.Transferable;
 import org.testcontainers.utility.DockerImageName;
-import org.testcontainers.utility.ResourceReaper;
-import org.testcontainers.utility.TestcontainersConfiguration;
 
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
@@ -27,16 +19,9 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Testcontainers module for <a href="https://github.com/floci-io/floci">Floci</a> — a
@@ -49,8 +34,9 @@ import java.util.regex.Pattern;
  * Docker daemon. This module automatically mounts the Docker socket only when at least one
  * currently enabled service actually needs it.
  * Sibling containers created by Floci (e.g. PostgreSQL for RDS) are accessible on the Docker
- * host via their mapped ports. Use {@link #withDockerSocket(boolean)} to override this
- * auto-detection, e.g. to opt out entirely regardless of which services are enabled.
+ * host via their mapped ports, and are removed together with their volumes when the container is stopped.
+ * Use {@link #withDockerSocket(boolean)} to override the Docker socket auto-detection, e.g. to opt out entirely
+ * regardless of which services are enabled.
  *
  * <pre>{@code
  * try (FlociContainer floci = new FlociContainer()) {
@@ -60,7 +46,7 @@ import java.util.regex.Pattern;
  * }
  * }</pre>
  */
-public class FlociContainer extends GenericContainer<FlociContainer> {
+public class FlociContainer extends AbstractFlociContainer<FlociContainer> {
 
     private static final Logger logger = LoggerFactory.getLogger(FlociContainer.class);
 
@@ -72,10 +58,23 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      */
     public static final int PORT = 4566;
 
-    private static final String DOCKER_SOCKET_PATH = "/var/run/docker.sock";
-    private static final int STOP_TIMEOUT_SECONDS = 30;
-    private static final String CHILD_RESOURCE_LABEL = "io.floci.testcontainers.instance";
-    private static final Pattern EXTRA_LABEL_ENV = Pattern.compile("FLOCI_DOCKER_EXTRA_LABELS_([0-9]+)__.*");
+    /**
+     * Description of the Floci AWS emulator.
+     */
+    public static final CloudDescriptor DESCRIPTOR = CloudDescriptor.builder()
+            .name("aws")
+            .image(DEFAULT_IMAGE_NAME.getUnversionedPart())
+            .port(PORT)
+            .envPrefix("FLOCI_")
+            .healthPath("/_floci/health")
+            .resetPath("/_floci/state/reset")
+            .logLevelEnvVar("QUARKUS_LOG_CATEGORY__IO_GITHUB_HECTORVENT__LEVEL")
+            .networkEnvVar("FLOCI_SERVICES_DOCKER_NETWORK")
+            .resourceNamespaceEnvVar("FLOCI_DOCKER_RESOURCE_NAMESPACE")
+            .tlsHttpsPortEnvVar("FLOCI_TLS_AWS_HTTPS_PORT")
+            .build();
+
+    private static final Duration STARTUP_TIMEOUT = Duration.ofSeconds(30);
 
     private static final String DEFAULT_REGION = "us-east-1";
     private static final String DEFAULT_AVAILABILITY_ZONE = "us-east-1a";
@@ -85,11 +84,6 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
 
     private static final String AI_MOCK_CONFIG_FILE_PREFIX = "/tmp/floci-ai-mock-config-";
     private static final String AI_MOCK_CONFIG_FILE_SUFFIX = ".json";
-
-    private final Map<String, String> childResourceLabels = Map.of(CHILD_RESOURCE_LABEL, UUID.randomUUID().toString());
-
-    // explicit override from withDockerSocket(), which takes full precedence of auto-detection mode
-    private Boolean dockerSocketOverride;
 
     // Shared AI mock-response configuration: either an explicit container path (withAiMockConfigFile)
     // or a generated path pointing at the content copied into the container (withAiMockConfig).
@@ -107,261 +101,132 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
     private NetworkConfig networkConfig = NetworkConfig.builder().build();
 
     // Services config
-    private AcmConfig acmConfig = AcmConfig.builder().build();
-    private ApiGatewayConfig apiGatewayConfig = ApiGatewayConfig.builder().build();
-    private ApiGatewayV2Config apiGatewayV2Config = ApiGatewayV2Config.builder().build();
-    private AppConfigConfig appConfigConfig = AppConfigConfig.builder().build();
-    private AppConfigDataConfig appConfigDataConfig = AppConfigDataConfig.builder().build();
-    private AppSyncConfig appSyncConfig = AppSyncConfig.builder().build();
-    private CloudFormationConfig cloudFormationConfig = CloudFormationConfig.builder().build();
-    private CloudFrontConfig cloudFrontConfig = CloudFrontConfig.builder().build();
-    private CloudMapConfig cloudMapConfig = CloudMapConfig.builder().build();
-    private CloudTrailConfig cloudTrailConfig = CloudTrailConfig.builder().build();
-    private CloudWatchLogsConfig cloudWatchLogsConfig = CloudWatchLogsConfig.builder().build();
-    private CloudWatchMetricsConfig cloudWatchMetricsConfig = CloudWatchMetricsConfig.builder().build();
-    private CognitoConfig cognitoConfig = CognitoConfig.builder().build();
-    private ConfigServiceConfig configServiceConfig = ConfigServiceConfig.builder().build();
-    private DynamoDbConfig dynamoDbConfig = DynamoDbConfig.builder().build();
-    private Ec2Config ec2Config = Ec2Config.builder().build();
-    private EcrConfig ecrConfig = EcrConfig.builder().build();
-    private EcsConfig ecsConfig = EcsConfig.builder().build();
-    private ElastiCacheConfig elastiCacheConfig = ElastiCacheConfig.builder().build();
-    private EventBridgeConfig eventBridgeConfig = EventBridgeConfig.builder().build();
-    private IamConfig iamConfig = IamConfig.builder().build();
-    private KinesisConfig kinesisConfig = KinesisConfig.builder().build();
-    private KmsConfig kmsConfig = KmsConfig.builder().build();
-    private LambdaConfig lambdaConfig = LambdaConfig.builder().build();
-    private OpenSearchConfig openSearchConfig = OpenSearchConfig.builder().build();
-    private RdsConfig rdsConfig = RdsConfig.builder().build();
-    private S3Config s3Config = S3Config.builder().build();
-    private SchedulerConfig schedulerConfig = SchedulerConfig.builder().build();
-    private SecretsManagerConfig secretsManagerConfig = SecretsManagerConfig.builder().build();
-    private SesConfig sesConfig = SesConfig.builder().build();
-    private SnsConfig snsConfig = SnsConfig.builder().build();
-    private SqsConfig sqsConfig = SqsConfig.builder().build();
-    private SsmConfig ssmConfig = SsmConfig.builder().build();
-    private StepFunctionsConfig stepFunctionsConfig = StepFunctionsConfig.builder().build();
-    private MskConfig mskConfig = MskConfig.builder().build();
-    private FirehoseConfig firehoseConfig = FirehoseConfig.builder().build();
-    private AthenaConfig athenaConfig = AthenaConfig.builder().build();
-    private GlueConfig glueConfig = GlueConfig.builder().build();
-    private ResourceGroupsTaggingConfig resourceGroupsTaggingConfig = ResourceGroupsTaggingConfig.builder().build();
-    private BedrockAgentCoreConfig bedrockAgentCoreConfig = BedrockAgentCoreConfig.builder().build();
-    private BedrockAgentCoreControlConfig bedrockAgentCoreControlConfig = BedrockAgentCoreControlConfig.builder().build();
-    private BedrockRuntimeConfig bedrockRuntimeConfig = BedrockRuntimeConfig.builder().build();
-    private PipesConfig pipesConfig = PipesConfig.builder().build();
-    private EksConfig eksConfig = EksConfig.builder().build();
-    private CodeBuildConfig codeBuildConfig = CodeBuildConfig.builder().build();
-    private CodeDeployConfig codeDeployConfig = CodeDeployConfig.builder().build();
-    private ElbV2Config elbV2Config = ElbV2Config.builder().build();
-    private BackupConfig backupConfig = BackupConfig.builder().build();
-    private TransferFamilyConfig transferFamilyConfig = TransferFamilyConfig.builder().build();
-    private Route53Config route53Config = Route53Config.builder().build();
-    private TextractConfig textractConfig = TextractConfig.builder().build();
-    private PricingConfig pricingConfig = PricingConfig.builder().build();
-    private NeptuneConfig neptuneConfig = NeptuneConfig.builder().build();
-    private CostExplorerConfig costExplorerConfig = CostExplorerConfig.builder().build();
-    private CurConfig curConfig = CurConfig.builder().build();
-    private BcmDataExportsConfig bcmDataExportsConfig = BcmDataExportsConfig.builder().build();
-    private BatchConfig batchConfig = BatchConfig.builder().build();
-    private RdsDataConfig rdsDataConfig = RdsDataConfig.builder().build();
-    private DocumentDbConfig documentDbConfig = DocumentDbConfig.builder().build();
-    private EmrConfig emrConfig = EmrConfig.builder().build();
-    private WafV2Config wafV2Config = WafV2Config.builder().build();
-    private IotConfig iotConfig = IotConfig.builder().build();
-    private IotDataConfig iotDataConfig = IotDataConfig.builder().build();
-    private LightsailConfig lightsailConfig = LightsailConfig.builder().build();
-    private CloudControlConfig cloudControlConfig = CloudControlConfig.builder().build();
-    private S3VectorsConfig s3VectorsConfig = S3VectorsConfig.builder().build();
-    private ElasticBeanstalkConfig elasticBeanstalkConfig = ElasticBeanstalkConfig.builder().build();
-    private CodePipelineConfig codePipelineConfig = CodePipelineConfig.builder().build();
-    private AmazonMqConfig amazonMqConfig = AmazonMqConfig.builder().build();
-    private MemoryDbConfig memoryDbConfig = MemoryDbConfig.builder().build();
-    private RumConfig rumConfig = RumConfig.builder().build();
-    private S3TablesConfig s3TablesConfig = S3TablesConfig.builder().build();
-    private ApplicationAutoScalingConfig applicationAutoScalingConfig = ApplicationAutoScalingConfig.builder().build();
-    private SwfConfig swfConfig = SwfConfig.builder().build();
-    private KinesisAnalyticsConfig kinesisAnalyticsConfig = KinesisAnalyticsConfig.builder().build();
-    private MwaaConfig mwaaConfig = MwaaConfig.builder().build();
-    private GuardDutyConfig guardDutyConfig = GuardDutyConfig.builder().build();
-    private CloudHsmV2Config cloudHsmV2Config = CloudHsmV2Config.builder().build();
-    private EmrServerlessConfig emrServerlessConfig = EmrServerlessConfig.builder().build();
-    private FisConfig fisConfig = FisConfig.builder().build();
-    private ConnectConfig connectConfig = ConnectConfig.builder().build();
-    private SsoAdminConfig ssoAdminConfig = SsoAdminConfig.builder().build();
-    private ApsConfig apsConfig = ApsConfig.builder().build();
-    private CodeGuruReviewerConfig codeGuruReviewerConfig = CodeGuruReviewerConfig.builder().build();
-    private ControlTowerConfig controlTowerConfig = ControlTowerConfig.builder().build();
-    private Route53ResolverConfig route53ResolverConfig = Route53ResolverConfig.builder().build();
-    private NetworkFirewallConfig networkFirewallConfig = NetworkFirewallConfig.builder().build();
-    private ServiceCatalogConfig serviceCatalogConfig = ServiceCatalogConfig.builder().build();
-    private ServiceQuotasConfig serviceQuotasConfig = ServiceQuotasConfig.builder().build();
-    private RamConfig ramConfig = RamConfig.builder().build();
-    private LakeFormationConfig lakeFormationConfig = LakeFormationConfig.builder().build();
-    private EfsConfig efsConfig = EfsConfig.builder().build();
-    private ResourceExplorer2Config resourceExplorer2Config = ResourceExplorer2Config.builder().build();
-    private RedshiftConfig redshiftConfig = RedshiftConfig.builder().build();
-    private OrganizationsConfig organizationsConfig = OrganizationsConfig.builder().build();
-    private ComprehendConfig comprehendConfig = ComprehendConfig.builder().build();
-    private RekognitionConfig rekognitionConfig = RekognitionConfig.builder().build();
-    private TranscribeConfig transcribeConfig = TranscribeConfig.builder().build();
-    private RedshiftDataConfig redshiftDataConfig = RedshiftDataConfig.builder().build();
-    private RedshiftServerlessConfig redshiftServerlessConfig = RedshiftServerlessConfig.builder().build();
-    private BedrockConfig bedrockConfig = BedrockConfig.builder().build();
-    private TranslateConfig translateConfig = TranslateConfig.builder().build();
-    private OamConfig oamConfig = OamConfig.builder().build();
-    private BcmPricingCalculatorConfig bcmPricingCalculatorConfig = BcmPricingCalculatorConfig.builder().build();
-    private TimestreamInfluxDbConfig timestreamInfluxDbConfig = TimestreamInfluxDbConfig.builder().build();
-    private SageMakerConfig sageMakerConfig = SageMakerConfig.builder().build();
-    private SsoOidcConfig ssoOidcConfig = SsoOidcConfig.builder().build();
-    private Macie2Config macie2Config = Macie2Config.builder().build();
-    private AccountConfig accountConfig = AccountConfig.builder().build();
-    private AccessAnalyzerConfig accessAnalyzerConfig = AccessAnalyzerConfig.builder().build();
-    private IdentityStoreConfig identityStoreConfig = IdentityStoreConfig.builder().build();
-    private BudgetsConfig budgetsConfig = BudgetsConfig.builder().build();
-    private Inspector2Config inspector2Config = Inspector2Config.builder().build();
-    private SecurityHubConfig securityHubConfig = SecurityHubConfig.builder().build();
-    private DetectiveConfig detectiveConfig = DetectiveConfig.builder().build();
-    private VerifiedPermissionsConfig verifiedPermissionsConfig = VerifiedPermissionsConfig.builder().build();
-    private ControlCatalogConfig controlCatalogConfig = ControlCatalogConfig.builder().build();
-    private AppIntegrationsConfig appIntegrationsConfig = AppIntegrationsConfig.builder().build();
-    private DlmConfig dlmConfig = DlmConfig.builder().build();
-    private CognitoIdentityConfig cognitoIdentityConfig = CognitoIdentityConfig.builder().build();
-    private GlobalAcceleratorConfig globalAcceleratorConfig = GlobalAcceleratorConfig.builder().build();
-    private DataSyncConfig dataSyncConfig = DataSyncConfig.builder().build();
-    private CodeArtifactConfig codeArtifactConfig = CodeArtifactConfig.builder().build();
-    private MarketplaceConfig marketplaceConfig = MarketplaceConfig.builder().build();
-    private DmsConfig dmsConfig = DmsConfig.builder().build();
-    private ElbConfig elbConfig = ElbConfig.builder().build();
-
-    private final List<ServiceConfigAccessor<?>> serviceConfigAccessors = List.<ServiceConfigAccessor<?>>of(
-            new ServiceConfigAccessor<>(() -> acmConfig, c -> acmConfig = c),
-            new ServiceConfigAccessor<>(() -> apiGatewayConfig, c -> apiGatewayConfig = c),
-            new ServiceConfigAccessor<>(() -> apiGatewayV2Config, c -> apiGatewayV2Config = c),
-            new ServiceConfigAccessor<>(() -> appConfigConfig, c -> appConfigConfig = c),
-            new ServiceConfigAccessor<>(() -> appConfigDataConfig, c -> appConfigDataConfig = c),
-            new ServiceConfigAccessor<>(() -> appSyncConfig, c -> appSyncConfig = c),
-            new ServiceConfigAccessor<>(() -> cloudFormationConfig, c -> cloudFormationConfig = c),
-            new ServiceConfigAccessor<>(() -> cloudFrontConfig, c -> cloudFrontConfig = c),
-            new ServiceConfigAccessor<>(() -> cloudMapConfig, c -> cloudMapConfig = c),
-            new ServiceConfigAccessor<>(() -> cloudWatchLogsConfig, c -> cloudWatchLogsConfig = c),
-            new ServiceConfigAccessor<>(() -> cloudWatchMetricsConfig, c -> cloudWatchMetricsConfig = c),
-            new ServiceConfigAccessor<>(() -> cognitoConfig, c -> cognitoConfig = c),
-            new ServiceConfigAccessor<>(() -> configServiceConfig, c -> configServiceConfig = c),
-            new ServiceConfigAccessor<>(() -> dynamoDbConfig, c -> dynamoDbConfig = c),
-            new ServiceConfigAccessor<>(() -> ec2Config, c -> ec2Config = c),
-            new ServiceConfigAccessor<>(() -> ecrConfig, c -> ecrConfig = c),
-            new ServiceConfigAccessor<>(() -> ecsConfig, c -> ecsConfig = c),
-            new ServiceConfigAccessor<>(() -> elastiCacheConfig, c -> elastiCacheConfig = c),
-            new ServiceConfigAccessor<>(() -> eventBridgeConfig, c -> eventBridgeConfig = c),
-            new ServiceConfigAccessor<>(() -> iamConfig, c -> iamConfig = c),
-            new ServiceConfigAccessor<>(() -> kinesisConfig, c -> kinesisConfig = c),
-            new ServiceConfigAccessor<>(() -> kmsConfig, c -> kmsConfig = c),
-            new ServiceConfigAccessor<>(() -> lambdaConfig, c -> lambdaConfig = c),
-            new ServiceConfigAccessor<>(() -> openSearchConfig, c -> openSearchConfig = c),
-            new ServiceConfigAccessor<>(() -> rdsConfig, c -> rdsConfig = c),
-            new ServiceConfigAccessor<>(() -> s3Config, c -> s3Config = c),
-            new ServiceConfigAccessor<>(() -> schedulerConfig, c -> schedulerConfig = c),
-            new ServiceConfigAccessor<>(() -> secretsManagerConfig, c -> secretsManagerConfig = c),
-            new ServiceConfigAccessor<>(() -> sesConfig, c -> sesConfig = c),
-            new ServiceConfigAccessor<>(() -> snsConfig, c -> snsConfig = c),
-            new ServiceConfigAccessor<>(() -> sqsConfig, c -> sqsConfig = c),
-            new ServiceConfigAccessor<>(() -> ssmConfig, c -> ssmConfig = c),
-            new ServiceConfigAccessor<>(() -> stepFunctionsConfig, c -> stepFunctionsConfig = c),
-            new ServiceConfigAccessor<>(() -> mskConfig, c -> mskConfig = c),
-            new ServiceConfigAccessor<>(() -> firehoseConfig, c -> firehoseConfig = c),
-            new ServiceConfigAccessor<>(() -> athenaConfig, c -> athenaConfig = c),
-            new ServiceConfigAccessor<>(() -> glueConfig, c -> glueConfig = c),
-            new ServiceConfigAccessor<>(() -> resourceGroupsTaggingConfig, c -> resourceGroupsTaggingConfig = c),
-            new ServiceConfigAccessor<>(() -> bedrockAgentCoreConfig, c -> bedrockAgentCoreConfig = c),
-            new ServiceConfigAccessor<>(() -> bedrockAgentCoreControlConfig, c -> bedrockAgentCoreControlConfig = c),
-            new ServiceConfigAccessor<>(() -> bedrockRuntimeConfig, c -> bedrockRuntimeConfig = c),
-            new ServiceConfigAccessor<>(() -> pipesConfig, c -> pipesConfig = c),
-            new ServiceConfigAccessor<>(() -> eksConfig, c -> eksConfig = c),
-            new ServiceConfigAccessor<>(() -> codeBuildConfig, c -> codeBuildConfig = c),
-            new ServiceConfigAccessor<>(() -> codeDeployConfig, c -> codeDeployConfig = c),
-            new ServiceConfigAccessor<>(() -> elbV2Config, c -> elbV2Config = c),
-            new ServiceConfigAccessor<>(() -> backupConfig, c -> backupConfig = c),
-            new ServiceConfigAccessor<>(() -> transferFamilyConfig, c -> transferFamilyConfig = c),
-            new ServiceConfigAccessor<>(() -> route53Config, c -> route53Config = c),
-            new ServiceConfigAccessor<>(() -> textractConfig, c -> textractConfig = c),
-            new ServiceConfigAccessor<>(() -> pricingConfig, c -> pricingConfig = c),
-            new ServiceConfigAccessor<>(() -> neptuneConfig, c -> neptuneConfig = c),
-            new ServiceConfigAccessor<>(() -> costExplorerConfig, c -> costExplorerConfig = c),
-            new ServiceConfigAccessor<>(() -> curConfig, c -> curConfig = c),
-            new ServiceConfigAccessor<>(() -> bcmDataExportsConfig, c -> bcmDataExportsConfig = c),
-            new ServiceConfigAccessor<>(() -> cloudTrailConfig, c -> cloudTrailConfig = c),
-            new ServiceConfigAccessor<>(() -> batchConfig, c -> batchConfig = c),
-            new ServiceConfigAccessor<>(() -> rdsDataConfig, c -> rdsDataConfig = c),
-            new ServiceConfigAccessor<>(() -> documentDbConfig, c -> documentDbConfig = c),
-            new ServiceConfigAccessor<>(() -> emrConfig, c -> emrConfig = c),
-            new ServiceConfigAccessor<>(() -> wafV2Config, c -> wafV2Config = c),
-            new ServiceConfigAccessor<>(() -> iotConfig, c -> iotConfig = c),
-            new ServiceConfigAccessor<>(() -> iotDataConfig, c -> iotDataConfig = c),
-            new ServiceConfigAccessor<>(() -> lightsailConfig, c -> lightsailConfig = c),
-            new ServiceConfigAccessor<>(() -> cloudControlConfig, c -> cloudControlConfig = c),
-            new ServiceConfigAccessor<>(() -> s3VectorsConfig, c -> s3VectorsConfig = c),
-            new ServiceConfigAccessor<>(() -> elasticBeanstalkConfig, c -> elasticBeanstalkConfig = c),
-            new ServiceConfigAccessor<>(() -> codePipelineConfig, c -> codePipelineConfig = c),
-            new ServiceConfigAccessor<>(() -> amazonMqConfig, c -> amazonMqConfig = c),
-            new ServiceConfigAccessor<>(() -> memoryDbConfig, c -> memoryDbConfig = c),
-            new ServiceConfigAccessor<>(() -> rumConfig, c -> rumConfig = c),
-            new ServiceConfigAccessor<>(() -> s3TablesConfig, c -> s3TablesConfig = c),
-            new ServiceConfigAccessor<>(() -> applicationAutoScalingConfig, c -> applicationAutoScalingConfig = c),
-            new ServiceConfigAccessor<>(() -> swfConfig, c -> swfConfig = c),
-            new ServiceConfigAccessor<>(() -> kinesisAnalyticsConfig, c -> kinesisAnalyticsConfig = c),
-            new ServiceConfigAccessor<>(() -> mwaaConfig, c -> mwaaConfig = c),
-            new ServiceConfigAccessor<>(() -> guardDutyConfig, c -> guardDutyConfig = c),
-            new ServiceConfigAccessor<>(() -> cloudHsmV2Config, c -> cloudHsmV2Config = c),
-            new ServiceConfigAccessor<>(() -> emrServerlessConfig, c -> emrServerlessConfig = c),
-            new ServiceConfigAccessor<>(() -> fisConfig, c -> fisConfig = c),
-            new ServiceConfigAccessor<>(() -> connectConfig, c -> connectConfig = c),
-            new ServiceConfigAccessor<>(() -> ssoAdminConfig, c -> ssoAdminConfig = c),
-            new ServiceConfigAccessor<>(() -> apsConfig, c -> apsConfig = c),
-            new ServiceConfigAccessor<>(() -> codeGuruReviewerConfig, c -> codeGuruReviewerConfig = c),
-            new ServiceConfigAccessor<>(() -> controlTowerConfig, c -> controlTowerConfig = c),
-            new ServiceConfigAccessor<>(() -> route53ResolverConfig, c -> route53ResolverConfig = c),
-            new ServiceConfigAccessor<>(() -> networkFirewallConfig, c -> networkFirewallConfig = c),
-            new ServiceConfigAccessor<>(() -> serviceCatalogConfig, c -> serviceCatalogConfig = c),
-            new ServiceConfigAccessor<>(() -> serviceQuotasConfig, c -> serviceQuotasConfig = c),
-            new ServiceConfigAccessor<>(() -> ramConfig, c -> ramConfig = c),
-            new ServiceConfigAccessor<>(() -> lakeFormationConfig, c -> lakeFormationConfig = c),
-            new ServiceConfigAccessor<>(() -> efsConfig, c -> efsConfig = c),
-            new ServiceConfigAccessor<>(() -> resourceExplorer2Config, c -> resourceExplorer2Config = c),
-            new ServiceConfigAccessor<>(() -> redshiftConfig, c -> redshiftConfig = c),
-            new ServiceConfigAccessor<>(() -> organizationsConfig, c -> organizationsConfig = c),
-            new ServiceConfigAccessor<>(() -> comprehendConfig, c -> comprehendConfig = c),
-            new ServiceConfigAccessor<>(() -> rekognitionConfig, c -> rekognitionConfig = c),
-            new ServiceConfigAccessor<>(() -> transcribeConfig, c -> transcribeConfig = c),
-            new ServiceConfigAccessor<>(() -> redshiftDataConfig, c -> redshiftDataConfig = c),
-            new ServiceConfigAccessor<>(() -> redshiftServerlessConfig, c -> redshiftServerlessConfig = c),
-            new ServiceConfigAccessor<>(() -> bedrockConfig, c -> bedrockConfig = c),
-            new ServiceConfigAccessor<>(() -> translateConfig, c -> translateConfig = c),
-            new ServiceConfigAccessor<>(() -> oamConfig, c -> oamConfig = c),
-            new ServiceConfigAccessor<>(() -> bcmPricingCalculatorConfig, c -> bcmPricingCalculatorConfig = c),
-            new ServiceConfigAccessor<>(() -> timestreamInfluxDbConfig, c -> timestreamInfluxDbConfig = c),
-            new ServiceConfigAccessor<>(() -> sageMakerConfig, c -> sageMakerConfig = c),
-            new ServiceConfigAccessor<>(() -> ssoOidcConfig, c -> ssoOidcConfig = c),
-            new ServiceConfigAccessor<>(() -> macie2Config, c -> macie2Config = c),
-            new ServiceConfigAccessor<>(() -> accountConfig, c -> accountConfig = c),
-            new ServiceConfigAccessor<>(() -> accessAnalyzerConfig, c -> accessAnalyzerConfig = c),
-            new ServiceConfigAccessor<>(() -> identityStoreConfig, c -> identityStoreConfig = c),
-            new ServiceConfigAccessor<>(() -> budgetsConfig, c -> budgetsConfig = c),
-            new ServiceConfigAccessor<>(() -> inspector2Config, c -> inspector2Config = c),
-            new ServiceConfigAccessor<>(() -> securityHubConfig, c -> securityHubConfig = c),
-            new ServiceConfigAccessor<>(() -> detectiveConfig, c -> detectiveConfig = c),
-            new ServiceConfigAccessor<>(() -> verifiedPermissionsConfig, c -> verifiedPermissionsConfig = c),
-            new ServiceConfigAccessor<>(() -> controlCatalogConfig, c -> controlCatalogConfig = c),
-            new ServiceConfigAccessor<>(() -> appIntegrationsConfig, c -> appIntegrationsConfig = c),
-            new ServiceConfigAccessor<>(() -> dlmConfig, c -> dlmConfig = c),
-            new ServiceConfigAccessor<>(() -> cognitoIdentityConfig, c -> cognitoIdentityConfig = c),
-            new ServiceConfigAccessor<>(() -> globalAcceleratorConfig, c -> globalAcceleratorConfig = c),
-            new ServiceConfigAccessor<>(() -> dataSyncConfig, c -> dataSyncConfig = c),
-            new ServiceConfigAccessor<>(() -> codeArtifactConfig, c -> codeArtifactConfig = c),
-            new ServiceConfigAccessor<>(() -> marketplaceConfig, c -> marketplaceConfig = c),
-            new ServiceConfigAccessor<>(() -> dmsConfig, c -> dmsConfig = c),
-            new ServiceConfigAccessor<>(() -> elbConfig, c -> elbConfig = c)
-    );
+    private final ServiceConfigRef<AcmConfig> acmConfig = registerServiceConfig(AcmConfig.builder().build());
+    private final ServiceConfigRef<ApiGatewayConfig> apiGatewayConfig = registerServiceConfig(ApiGatewayConfig.builder().build());
+    private final ServiceConfigRef<ApiGatewayV2Config> apiGatewayV2Config = registerServiceConfig(ApiGatewayV2Config.builder().build());
+    private final ServiceConfigRef<AppConfigConfig> appConfigConfig = registerServiceConfig(AppConfigConfig.builder().build());
+    private final ServiceConfigRef<AppConfigDataConfig> appConfigDataConfig = registerServiceConfig(AppConfigDataConfig.builder().build());
+    private final ServiceConfigRef<AppSyncConfig> appSyncConfig = registerServiceConfig(AppSyncConfig.builder().build());
+    private final ServiceConfigRef<CloudFormationConfig> cloudFormationConfig = registerServiceConfig(CloudFormationConfig.builder().build());
+    private final ServiceConfigRef<CloudFrontConfig> cloudFrontConfig = registerServiceConfig(CloudFrontConfig.builder().build());
+    private final ServiceConfigRef<CloudMapConfig> cloudMapConfig = registerServiceConfig(CloudMapConfig.builder().build());
+    private final ServiceConfigRef<CloudTrailConfig> cloudTrailConfig = registerServiceConfig(CloudTrailConfig.builder().build());
+    private final ServiceConfigRef<CloudWatchLogsConfig> cloudWatchLogsConfig = registerServiceConfig(CloudWatchLogsConfig.builder().build());
+    private final ServiceConfigRef<CloudWatchMetricsConfig> cloudWatchMetricsConfig = registerServiceConfig(CloudWatchMetricsConfig.builder().build());
+    private final ServiceConfigRef<CognitoConfig> cognitoConfig = registerServiceConfig(CognitoConfig.builder().build());
+    private final ServiceConfigRef<ConfigServiceConfig> configServiceConfig = registerServiceConfig(ConfigServiceConfig.builder().build());
+    private final ServiceConfigRef<DynamoDbConfig> dynamoDbConfig = registerServiceConfig(DynamoDbConfig.builder().build());
+    private final ServiceConfigRef<Ec2Config> ec2Config = registerServiceConfig(Ec2Config.builder().build());
+    private final ServiceConfigRef<EcrConfig> ecrConfig = registerServiceConfig(EcrConfig.builder().build());
+    private final ServiceConfigRef<EcsConfig> ecsConfig = registerServiceConfig(EcsConfig.builder().build());
+    private final ServiceConfigRef<ElastiCacheConfig> elastiCacheConfig = registerServiceConfig(ElastiCacheConfig.builder().build());
+    private final ServiceConfigRef<EventBridgeConfig> eventBridgeConfig = registerServiceConfig(EventBridgeConfig.builder().build());
+    private final ServiceConfigRef<IamConfig> iamConfig = registerServiceConfig(IamConfig.builder().build());
+    private final ServiceConfigRef<KinesisConfig> kinesisConfig = registerServiceConfig(KinesisConfig.builder().build());
+    private final ServiceConfigRef<KmsConfig> kmsConfig = registerServiceConfig(KmsConfig.builder().build());
+    private final ServiceConfigRef<LambdaConfig> lambdaConfig = registerServiceConfig(LambdaConfig.builder().build());
+    private final ServiceConfigRef<OpenSearchConfig> openSearchConfig = registerServiceConfig(OpenSearchConfig.builder().build());
+    private final ServiceConfigRef<RdsConfig> rdsConfig = registerServiceConfig(RdsConfig.builder().build());
+    private final ServiceConfigRef<S3Config> s3Config = registerServiceConfig(S3Config.builder().build());
+    private final ServiceConfigRef<SchedulerConfig> schedulerConfig = registerServiceConfig(SchedulerConfig.builder().build());
+    private final ServiceConfigRef<SecretsManagerConfig> secretsManagerConfig = registerServiceConfig(SecretsManagerConfig.builder().build());
+    private final ServiceConfigRef<SesConfig> sesConfig = registerServiceConfig(SesConfig.builder().build());
+    private final ServiceConfigRef<SnsConfig> snsConfig = registerServiceConfig(SnsConfig.builder().build());
+    private final ServiceConfigRef<SqsConfig> sqsConfig = registerServiceConfig(SqsConfig.builder().build());
+    private final ServiceConfigRef<SsmConfig> ssmConfig = registerServiceConfig(SsmConfig.builder().build());
+    private final ServiceConfigRef<StepFunctionsConfig> stepFunctionsConfig = registerServiceConfig(StepFunctionsConfig.builder().build());
+    private final ServiceConfigRef<MskConfig> mskConfig = registerServiceConfig(MskConfig.builder().build());
+    private final ServiceConfigRef<FirehoseConfig> firehoseConfig = registerServiceConfig(FirehoseConfig.builder().build());
+    private final ServiceConfigRef<AthenaConfig> athenaConfig = registerServiceConfig(AthenaConfig.builder().build());
+    private final ServiceConfigRef<GlueConfig> glueConfig = registerServiceConfig(GlueConfig.builder().build());
+    private final ServiceConfigRef<ResourceGroupsTaggingConfig> resourceGroupsTaggingConfig = registerServiceConfig(ResourceGroupsTaggingConfig.builder().build());
+    private final ServiceConfigRef<BedrockAgentCoreConfig> bedrockAgentCoreConfig = registerServiceConfig(BedrockAgentCoreConfig.builder().build());
+    private final ServiceConfigRef<BedrockAgentCoreControlConfig> bedrockAgentCoreControlConfig = registerServiceConfig(BedrockAgentCoreControlConfig.builder().build());
+    private final ServiceConfigRef<BedrockRuntimeConfig> bedrockRuntimeConfig = registerServiceConfig(BedrockRuntimeConfig.builder().build());
+    private final ServiceConfigRef<PipesConfig> pipesConfig = registerServiceConfig(PipesConfig.builder().build());
+    private final ServiceConfigRef<EksConfig> eksConfig = registerServiceConfig(EksConfig.builder().build());
+    private final ServiceConfigRef<CodeBuildConfig> codeBuildConfig = registerServiceConfig(CodeBuildConfig.builder().build());
+    private final ServiceConfigRef<CodeDeployConfig> codeDeployConfig = registerServiceConfig(CodeDeployConfig.builder().build());
+    private final ServiceConfigRef<ElbV2Config> elbV2Config = registerServiceConfig(ElbV2Config.builder().build());
+    private final ServiceConfigRef<BackupConfig> backupConfig = registerServiceConfig(BackupConfig.builder().build());
+    private final ServiceConfigRef<TransferFamilyConfig> transferFamilyConfig = registerServiceConfig(TransferFamilyConfig.builder().build());
+    private final ServiceConfigRef<Route53Config> route53Config = registerServiceConfig(Route53Config.builder().build());
+    private final ServiceConfigRef<TextractConfig> textractConfig = registerServiceConfig(TextractConfig.builder().build());
+    private final ServiceConfigRef<PricingConfig> pricingConfig = registerServiceConfig(PricingConfig.builder().build());
+    private final ServiceConfigRef<NeptuneConfig> neptuneConfig = registerServiceConfig(NeptuneConfig.builder().build());
+    private final ServiceConfigRef<CostExplorerConfig> costExplorerConfig = registerServiceConfig(CostExplorerConfig.builder().build());
+    private final ServiceConfigRef<CurConfig> curConfig = registerServiceConfig(CurConfig.builder().build());
+    private final ServiceConfigRef<BcmDataExportsConfig> bcmDataExportsConfig = registerServiceConfig(BcmDataExportsConfig.builder().build());
+    private final ServiceConfigRef<BatchConfig> batchConfig = registerServiceConfig(BatchConfig.builder().build());
+    private final ServiceConfigRef<RdsDataConfig> rdsDataConfig = registerServiceConfig(RdsDataConfig.builder().build());
+    private final ServiceConfigRef<DocumentDbConfig> documentDbConfig = registerServiceConfig(DocumentDbConfig.builder().build());
+    private final ServiceConfigRef<EmrConfig> emrConfig = registerServiceConfig(EmrConfig.builder().build());
+    private final ServiceConfigRef<WafV2Config> wafV2Config = registerServiceConfig(WafV2Config.builder().build());
+    private final ServiceConfigRef<IotConfig> iotConfig = registerServiceConfig(IotConfig.builder().build());
+    private final ServiceConfigRef<IotDataConfig> iotDataConfig = registerServiceConfig(IotDataConfig.builder().build());
+    private final ServiceConfigRef<LightsailConfig> lightsailConfig = registerServiceConfig(LightsailConfig.builder().build());
+    private final ServiceConfigRef<CloudControlConfig> cloudControlConfig = registerServiceConfig(CloudControlConfig.builder().build());
+    private final ServiceConfigRef<S3VectorsConfig> s3VectorsConfig = registerServiceConfig(S3VectorsConfig.builder().build());
+    private final ServiceConfigRef<ElasticBeanstalkConfig> elasticBeanstalkConfig = registerServiceConfig(ElasticBeanstalkConfig.builder().build());
+    private final ServiceConfigRef<CodePipelineConfig> codePipelineConfig = registerServiceConfig(CodePipelineConfig.builder().build());
+    private final ServiceConfigRef<AmazonMqConfig> amazonMqConfig = registerServiceConfig(AmazonMqConfig.builder().build());
+    private final ServiceConfigRef<MemoryDbConfig> memoryDbConfig = registerServiceConfig(MemoryDbConfig.builder().build());
+    private final ServiceConfigRef<RumConfig> rumConfig = registerServiceConfig(RumConfig.builder().build());
+    private final ServiceConfigRef<S3TablesConfig> s3TablesConfig = registerServiceConfig(S3TablesConfig.builder().build());
+    private final ServiceConfigRef<ApplicationAutoScalingConfig> applicationAutoScalingConfig = registerServiceConfig(ApplicationAutoScalingConfig.builder().build());
+    private final ServiceConfigRef<SwfConfig> swfConfig = registerServiceConfig(SwfConfig.builder().build());
+    private final ServiceConfigRef<KinesisAnalyticsConfig> kinesisAnalyticsConfig = registerServiceConfig(KinesisAnalyticsConfig.builder().build());
+    private final ServiceConfigRef<MwaaConfig> mwaaConfig = registerServiceConfig(MwaaConfig.builder().build());
+    private final ServiceConfigRef<GuardDutyConfig> guardDutyConfig = registerServiceConfig(GuardDutyConfig.builder().build());
+    private final ServiceConfigRef<CloudHsmV2Config> cloudHsmV2Config = registerServiceConfig(CloudHsmV2Config.builder().build());
+    private final ServiceConfigRef<EmrServerlessConfig> emrServerlessConfig = registerServiceConfig(EmrServerlessConfig.builder().build());
+    private final ServiceConfigRef<FisConfig> fisConfig = registerServiceConfig(FisConfig.builder().build());
+    private final ServiceConfigRef<ConnectConfig> connectConfig = registerServiceConfig(ConnectConfig.builder().build());
+    private final ServiceConfigRef<SsoAdminConfig> ssoAdminConfig = registerServiceConfig(SsoAdminConfig.builder().build());
+    private final ServiceConfigRef<ApsConfig> apsConfig = registerServiceConfig(ApsConfig.builder().build());
+    private final ServiceConfigRef<CodeGuruReviewerConfig> codeGuruReviewerConfig = registerServiceConfig(CodeGuruReviewerConfig.builder().build());
+    private final ServiceConfigRef<ControlTowerConfig> controlTowerConfig = registerServiceConfig(ControlTowerConfig.builder().build());
+    private final ServiceConfigRef<Route53ResolverConfig> route53ResolverConfig = registerServiceConfig(Route53ResolverConfig.builder().build());
+    private final ServiceConfigRef<NetworkFirewallConfig> networkFirewallConfig = registerServiceConfig(NetworkFirewallConfig.builder().build());
+    private final ServiceConfigRef<ServiceCatalogConfig> serviceCatalogConfig = registerServiceConfig(ServiceCatalogConfig.builder().build());
+    private final ServiceConfigRef<ServiceQuotasConfig> serviceQuotasConfig = registerServiceConfig(ServiceQuotasConfig.builder().build());
+    private final ServiceConfigRef<RamConfig> ramConfig = registerServiceConfig(RamConfig.builder().build());
+    private final ServiceConfigRef<LakeFormationConfig> lakeFormationConfig = registerServiceConfig(LakeFormationConfig.builder().build());
+    private final ServiceConfigRef<EfsConfig> efsConfig = registerServiceConfig(EfsConfig.builder().build());
+    private final ServiceConfigRef<ResourceExplorer2Config> resourceExplorer2Config = registerServiceConfig(ResourceExplorer2Config.builder().build());
+    private final ServiceConfigRef<RedshiftConfig> redshiftConfig = registerServiceConfig(RedshiftConfig.builder().build());
+    private final ServiceConfigRef<OrganizationsConfig> organizationsConfig = registerServiceConfig(OrganizationsConfig.builder().build());
+    private final ServiceConfigRef<ComprehendConfig> comprehendConfig = registerServiceConfig(ComprehendConfig.builder().build());
+    private final ServiceConfigRef<RekognitionConfig> rekognitionConfig = registerServiceConfig(RekognitionConfig.builder().build());
+    private final ServiceConfigRef<TranscribeConfig> transcribeConfig = registerServiceConfig(TranscribeConfig.builder().build());
+    private final ServiceConfigRef<RedshiftDataConfig> redshiftDataConfig = registerServiceConfig(RedshiftDataConfig.builder().build());
+    private final ServiceConfigRef<RedshiftServerlessConfig> redshiftServerlessConfig = registerServiceConfig(RedshiftServerlessConfig.builder().build());
+    private final ServiceConfigRef<BedrockConfig> bedrockConfig = registerServiceConfig(BedrockConfig.builder().build());
+    private final ServiceConfigRef<TranslateConfig> translateConfig = registerServiceConfig(TranslateConfig.builder().build());
+    private final ServiceConfigRef<OamConfig> oamConfig = registerServiceConfig(OamConfig.builder().build());
+    private final ServiceConfigRef<BcmPricingCalculatorConfig> bcmPricingCalculatorConfig = registerServiceConfig(BcmPricingCalculatorConfig.builder().build());
+    private final ServiceConfigRef<TimestreamInfluxDbConfig> timestreamInfluxDbConfig = registerServiceConfig(TimestreamInfluxDbConfig.builder().build());
+    private final ServiceConfigRef<SageMakerConfig> sageMakerConfig = registerServiceConfig(SageMakerConfig.builder().build());
+    private final ServiceConfigRef<SsoOidcConfig> ssoOidcConfig = registerServiceConfig(SsoOidcConfig.builder().build());
+    private final ServiceConfigRef<Macie2Config> macie2Config = registerServiceConfig(Macie2Config.builder().build());
+    private final ServiceConfigRef<AccountConfig> accountConfig = registerServiceConfig(AccountConfig.builder().build());
+    private final ServiceConfigRef<AccessAnalyzerConfig> accessAnalyzerConfig = registerServiceConfig(AccessAnalyzerConfig.builder().build());
+    private final ServiceConfigRef<IdentityStoreConfig> identityStoreConfig = registerServiceConfig(IdentityStoreConfig.builder().build());
+    private final ServiceConfigRef<BudgetsConfig> budgetsConfig = registerServiceConfig(BudgetsConfig.builder().build());
+    private final ServiceConfigRef<Inspector2Config> inspector2Config = registerServiceConfig(Inspector2Config.builder().build());
+    private final ServiceConfigRef<SecurityHubConfig> securityHubConfig = registerServiceConfig(SecurityHubConfig.builder().build());
+    private final ServiceConfigRef<DetectiveConfig> detectiveConfig = registerServiceConfig(DetectiveConfig.builder().build());
+    private final ServiceConfigRef<VerifiedPermissionsConfig> verifiedPermissionsConfig = registerServiceConfig(VerifiedPermissionsConfig.builder().build());
+    private final ServiceConfigRef<ControlCatalogConfig> controlCatalogConfig = registerServiceConfig(ControlCatalogConfig.builder().build());
+    private final ServiceConfigRef<AppIntegrationsConfig> appIntegrationsConfig = registerServiceConfig(AppIntegrationsConfig.builder().build());
+    private final ServiceConfigRef<DlmConfig> dlmConfig = registerServiceConfig(DlmConfig.builder().build());
+    private final ServiceConfigRef<CognitoIdentityConfig> cognitoIdentityConfig = registerServiceConfig(CognitoIdentityConfig.builder().build());
+    private final ServiceConfigRef<GlobalAcceleratorConfig> globalAcceleratorConfig = registerServiceConfig(GlobalAcceleratorConfig.builder().build());
+    private final ServiceConfigRef<DataSyncConfig> dataSyncConfig = registerServiceConfig(DataSyncConfig.builder().build());
+    private final ServiceConfigRef<CodeArtifactConfig> codeArtifactConfig = registerServiceConfig(CodeArtifactConfig.builder().build());
+    private final ServiceConfigRef<MarketplaceConfig> marketplaceConfig = registerServiceConfig(MarketplaceConfig.builder().build());
+    private final ServiceConfigRef<DmsConfig> dmsConfig = registerServiceConfig(DmsConfig.builder().build());
+    private final ServiceConfigRef<ElbConfig> elbConfig = registerServiceConfig(ElbConfig.builder().build());
 
     /**
      * Creates a new Floci container with the default image ({@code floci/floci:latest}).
@@ -385,142 +250,46 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @param dockerImageName the Docker image name
      */
     public FlociContainer(DockerImageName dockerImageName) {
-        super(dockerImageName);
-        dockerImageName.assertCompatibleWith(DEFAULT_IMAGE_NAME);
-        withCreateContainerCmdModifier(this::configureChildResourceCleanup);
+        super(dockerImageName, DESCRIPTOR);
 
-        // Configure observability and healthcheck
-        withLogLevel(Level.WARN);
+        // /_floci/health answers as soon as the HTTP server is up; /_floci/init reports "ready" only after the
+        // ready-stage init hooks have run, so a started container means the hooks are done.
         waitingFor(Wait.forHttp("/_floci/init")
                 .forPort(PORT)
                 .forStatusCode(200)
                 .forResponsePredicate(response -> response.matches("(?s).*\"ready\"\\s*:\\s*true.*"))
-                .withStartupTimeout(Duration.ofSeconds(30)));
+                .withStartupTimeout(STARTUP_TIMEOUT));
 
         // Configure ports, env vars and file mounts
-        configureExposedPorts();
-        configureEnvVars();
-        configureFileMounts();
+        applyAllConfigs();
     }
 
     /**
      * Finalizes container configuration right before creation, once every {@code with*Config(...)} call
-     * the caller is going to make has already happened. Used to conditionally mount the Docker socket
-     * (see {@link #shouldBindDockerSocket()}), since that decision depends on the final state of all
-     * service configurations rather than any single one of them.
+     * the caller is going to make has already happened. Used to conditionally mount the Docker socket,
+     * since that decision depends on the final state of all service configurations rather than any single
+     * one of them.
      */
     @Override
     protected void configure() {
         super.configure();
-
-        Optional<Bind> dockerSocketBinding = findDockerSocketBinding();
-        if (shouldBindDockerSocket()) {
-            if (dockerSocketBinding.isEmpty()) {
-                // Allow creation of child container instances (e.g. for ECS or RDS service)
-                withFileSystemBind(DockerClientFactory.instance().getRemoteDockerUnixSocketPath(), DOCKER_SOCKET_PATH);
-            }
-        } else {
-            dockerSocketBinding.ifPresent(bind -> getBinds().remove(bind));
-
-            if (isDockerSocketRequiredByServices()) {
-                logger().warn("There are services requiring a Docker socket, but the FlociContainer is configured to not mount it. This may cause failures in those services.");
-            }
-        }
-    }
-
-    private void configureChildResourceCleanup(CreateContainerCmd command) {
-        if (isReusable()) {
-            // Registering reusable children would reap them on JVM exit; unique labels would also prevent reuse.
-            return;
-        }
-
-        // Register before Floci can create children. The same instance label scopes explicit cleanup
-        // so stopping one Floci container leaves other instances in the same JVM alone.
-        ResourceReaper.instance().registerLabelsFilterForCleanup(childResourceLabels);
-
-        List<String> environment = new ArrayList<>(Arrays.asList(command.getEnv()));
-        int index = 0;
-        for (String entry : environment) {
-            Matcher matcher = EXTRA_LABEL_ENV.matcher(entry);
-            if (matcher.matches()) {
-                index = Math.max(index, Integer.parseInt(matcher.group(1)) + 1);
-            }
-        }
-        String prefix = "FLOCI_DOCKER_EXTRA_LABELS_" + index + "__";
-        environment.add(prefix + "KEY=" + CHILD_RESOURCE_LABEL);
-        environment.add(prefix + "VALUE=" + childResourceLabels.get(CHILD_RESOURCE_LABEL));
-        command.withEnv(environment);
-    }
-
-    private boolean isReusable() {
-        return isShouldBeReused() && TestcontainersConfiguration.getInstance().environmentSupportsReuse();
-    }
-
-    @Override
-    public void stop() {
-        // Testcontainers reuse requires callers to avoid stop/close; explicit stop still removes the emulator.
-        boolean cleanUpChildren = getContainerId() != null && !isReusable();
-        preparePersistentStorageForCleanup();
-        stopGracefully();
-        super.stop();
-        try {
-            if (cleanUpChildren) {
-                // Sweep after the emulator stops creating children, without waiting for Ryuk at JVM exit.
-                removeChildResources();
-            }
-        } finally {
-            deletePersistentStorage();
-        }
-    }
-
-    private void removeChildResources() {
-        for (Container container : dockerClient.listContainersCmd()
-                .withShowAll(true)
-                .withLabelFilter(childResourceLabels)
-                .exec()) {
-            try {
-                dockerClient.removeContainerCmd(container.getId()).withForce(true).withRemoveVolumes(true).exec();
-            } catch (NotFoundException ignored) {
-                // Floci's shutdown hooks or Ryuk may have already removed this container.
-            } catch (RuntimeException e) {
-                logger.warn("Failed to remove Floci child container {}", container.getId(), e);
-            }
-        }
-        // Docker's container removal only deletes anonymous volumes, so named volumes need a separate pass.
-        for (InspectVolumeResponse volume : dockerClient.listVolumesCmd()
-                .withFilter("label", List.of(CHILD_RESOURCE_LABEL + "=" + childResourceLabels.get(CHILD_RESOURCE_LABEL)))
-                .exec().getVolumes()) {
-            try {
-                dockerClient.removeVolumeCmd(volume.getName()).exec();
-            } catch (NotFoundException ignored) {
-                // Container removal or Ryuk may have already removed this volume.
-            } catch (RuntimeException e) {
-                logger.warn("Failed to remove Floci child volume {}", volume.getName(), e);
-            }
-        }
-    }
-
-    private void stopGracefully() {
-        if (!isRunning()) {
-            return;
-        }
-
-        try {
-            dockerClient.stopContainerCmd(getContainerId())
-                    .withTimeout(STOP_TIMEOUT_SECONDS)
-                    .exec();
-        } catch (RuntimeException e) {
-            logger.warn("Failed to stop Floci gracefully; forcing container removal", e);
-        }
     }
 
     /**
-     * Returns the endpoint URL for connecting to Floci (e.g. {@code http://localhost:32781}).
-     *
-     * @return the endpoint URL
+     * Makes the files child containers created in the persistent storage deletable before Floci is stopped.
      */
-    public String getEndpoint() {
-        return String.format("http://%s:%d", getHost(), getMappedPort(PORT));
+    @Override
+    protected void beforeStop() {
+        preparePersistentStorageForCleanup();
+    }
+
+    /**
+     * Deletes the persistent storage configured via {@link StorageConfig.Builder#randomHostPersistentPath()} once
+     * Floci and its sibling containers are gone.
+     */
+    @Override
+    protected void afterStop() {
+        deletePersistentStorage();
     }
 
     /**
@@ -604,23 +373,9 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @param logLevel the log level
      * @return this container instance
      */
+    @Override
     public FlociContainer withLogLevel(Level logLevel) {
-        return withEnv("QUARKUS_LOG_CATEGORY__IO_GITHUB_HECTORVENT__LEVEL", logLevel.toString());
-    }
-
-    /**
-     * Returns the log level configured for this Floci instance. Defaults to {@link Level#WARN}.
-     *
-     * @return the log level
-     */
-    public Level getLogLevel() {
-        String logLevelStr = getEnvMap().getOrDefault("QUARKUS_LOG_CATEGORY__IO_GITHUB_HECTORVENT__LEVEL", "WARN");
-        try {
-            return Level.valueOf(logLevelStr);
-        } catch (IllegalArgumentException e) {
-            logger.warn("Invalid log level '{}' in environment variable, defaulting to WARN", logLevelStr);
-            return Level.WARN;
-        }
+        return super.withLogLevel(logLevel);
     }
 
     /**
@@ -693,24 +448,10 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      *
      * @return this container instance
      */
+    @Override
     public FlociContainer withDedicatedNetwork() {
-        String networkName = "floci-network-" + uniqueShortId();
-        Network network = Network.builder()
-                .createNetworkCmdModifier(cmd -> cmd.withName(networkName))
-                .build();
-        withNetwork(network);
-        return withEnv("FLOCI_SERVICES_DOCKER_NETWORK", networkName);
+        return super.withDedicatedNetwork();
     }
-
-    /**
-     * Returns the name of the dedicated Docker network configured for this container, or {@code null} if no dedicated network is configured.
-     *
-     * @return the name of the dedicated Docker network, or {@code null} if not configured
-     */
-    public String getDedicatedNetworkName() {
-        return getEnvMap().get("FLOCI_SERVICES_DOCKER_NETWORK");
-    }
-
 
     /**
      * Disables all services in this Floci container. This is useful for testing scenarios where you want to start the
@@ -718,12 +459,9 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      *
      * @return this container instance
      */
+    @Override
     public FlociContainer disableAllServices() {
-        serviceConfigAccessors.forEach(ServiceConfigAccessor::disable);
-        configureExposedPorts();
-        configureEnvVars();
-        configureFileMounts();
-        return this;
+        return super.disableAllServices();
     }
 
     /**
@@ -747,9 +485,9 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @param enabled {@code true} to always mount the Docker socket, {@code false} to never mount it
      * @return this container instance
      */
+    @Override
     public FlociContainer withDockerSocket(boolean enabled) {
-        this.dockerSocketOverride = enabled;
-        return this;
+        return super.withDockerSocket(enabled);
     }
 
     /**
@@ -788,8 +526,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         configurer.accept(builder);
         this.tlsConfig = builder.build();
         // Some service ports and env vars (e.g. IoT's MQTT over TLS listener) only apply while TLS is enabled
-        configureExposedPorts();
-        configureEnvVars();
+        applyAllConfigs();
         return this;
     }
 
@@ -1033,7 +770,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the ACM configuration
      */
     public AcmConfig getAcmConfig() {
-        return acmConfig;
+        return acmConfig.get();
     }
 
     /**
@@ -1048,11 +785,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withAcmConfig(Consumer<AcmConfig.Builder> configurer) {
-        AcmConfig.Builder builder = acmConfig.toBuilder();
-        configurer.accept(builder);
-        this.acmConfig = builder.build();
-        acmConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(acmConfig, configurer);
     }
 
     /**
@@ -1061,7 +794,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the API Gateway configuration
      */
     public ApiGatewayConfig getApiGatewayConfig() {
-        return apiGatewayConfig;
+        return apiGatewayConfig.get();
     }
 
     /**
@@ -1076,11 +809,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withApiGatewayConfig(Consumer<ApiGatewayConfig.Builder> configurer) {
-        ApiGatewayConfig.Builder builder = apiGatewayConfig.toBuilder();
-        configurer.accept(builder);
-        this.apiGatewayConfig = builder.build();
-        apiGatewayConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(apiGatewayConfig, configurer);
     }
 
     /**
@@ -1089,7 +818,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the API Gateway V2 configuration
      */
     public ApiGatewayV2Config getApiGatewayV2Config() {
-        return apiGatewayV2Config;
+        return apiGatewayV2Config.get();
     }
 
     /**
@@ -1104,11 +833,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withApiGatewayV2Config(Consumer<ApiGatewayV2Config.Builder> configurer) {
-        ApiGatewayV2Config.Builder builder = apiGatewayV2Config.toBuilder();
-        configurer.accept(builder);
-        this.apiGatewayV2Config = builder.build();
-        apiGatewayV2Config.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(apiGatewayV2Config, configurer);
     }
 
     /**
@@ -1117,7 +842,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the AppConfig configuration
      */
     public AppConfigConfig getAppConfigConfig() {
-        return appConfigConfig;
+        return appConfigConfig.get();
     }
 
     /**
@@ -1132,11 +857,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withAppConfigConfig(Consumer<AppConfigConfig.Builder> configurer) {
-        AppConfigConfig.Builder builder = appConfigConfig.toBuilder();
-        configurer.accept(builder);
-        this.appConfigConfig = builder.build();
-        appConfigConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(appConfigConfig, configurer);
     }
 
     /**
@@ -1145,7 +866,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the AppConfig Data configuration
      */
     public AppConfigDataConfig getAppConfigDataConfig() {
-        return appConfigDataConfig;
+        return appConfigDataConfig.get();
     }
 
     /**
@@ -1160,11 +881,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withAppConfigDataConfig(Consumer<AppConfigDataConfig.Builder> configurer) {
-        AppConfigDataConfig.Builder builder = appConfigDataConfig.toBuilder();
-        configurer.accept(builder);
-        this.appConfigDataConfig = builder.build();
-        appConfigDataConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(appConfigDataConfig, configurer);
     }
 
     /**
@@ -1173,7 +890,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the AppSync configuration
      */
     public AppSyncConfig getAppSyncConfig() {
-        return appSyncConfig;
+        return appSyncConfig.get();
     }
 
     /**
@@ -1188,11 +905,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withAppSyncConfig(Consumer<AppSyncConfig.Builder> configurer) {
-        AppSyncConfig.Builder builder = appSyncConfig.toBuilder();
-        configurer.accept(builder);
-        this.appSyncConfig = builder.build();
-        appSyncConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(appSyncConfig, configurer);
     }
 
     /**
@@ -1201,7 +914,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the CloudFormation configuration
      */
     public CloudFormationConfig getCloudFormationConfig() {
-        return cloudFormationConfig;
+        return cloudFormationConfig.get();
     }
 
     /**
@@ -1216,11 +929,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withCloudFormationConfig(Consumer<CloudFormationConfig.Builder> configurer) {
-        CloudFormationConfig.Builder builder = cloudFormationConfig.toBuilder();
-        configurer.accept(builder);
-        this.cloudFormationConfig = builder.build();
-        cloudFormationConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(cloudFormationConfig, configurer);
     }
 
     /**
@@ -1229,7 +938,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the CloudFront configuration
      */
     public CloudFrontConfig getCloudFrontConfig() {
-        return cloudFrontConfig;
+        return cloudFrontConfig.get();
     }
 
     /**
@@ -1244,11 +953,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withCloudFrontConfig(Consumer<CloudFrontConfig.Builder> configurer) {
-        CloudFrontConfig.Builder builder = cloudFrontConfig.toBuilder();
-        configurer.accept(builder);
-        this.cloudFrontConfig = builder.build();
-        cloudFrontConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(cloudFrontConfig, configurer);
     }
 
     /**
@@ -1257,7 +962,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the CloudMap configuration
      */
     public CloudMapConfig getCloudMapConfig() {
-        return cloudMapConfig;
+        return cloudMapConfig.get();
     }
 
     /**
@@ -1272,11 +977,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withCloudMapConfig(Consumer<CloudMapConfig.Builder> configurer) {
-        CloudMapConfig.Builder builder = cloudMapConfig.toBuilder();
-        configurer.accept(builder);
-        this.cloudMapConfig = builder.build();
-        cloudMapConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(cloudMapConfig, configurer);
     }
 
     /**
@@ -1285,7 +986,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the CloudWatch Logs configuration
      */
     public CloudWatchLogsConfig getCloudWatchLogsConfig() {
-        return cloudWatchLogsConfig;
+        return cloudWatchLogsConfig.get();
     }
 
     /**
@@ -1300,11 +1001,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withCloudWatchLogsConfig(Consumer<CloudWatchLogsConfig.Builder> configurer) {
-        CloudWatchLogsConfig.Builder builder = cloudWatchLogsConfig.toBuilder();
-        configurer.accept(builder);
-        this.cloudWatchLogsConfig = builder.build();
-        cloudWatchLogsConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(cloudWatchLogsConfig, configurer);
     }
 
     /**
@@ -1313,7 +1010,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the CloudWatch Metrics configuration
      */
     public CloudWatchMetricsConfig getCloudWatchMetricsConfig() {
-        return cloudWatchMetricsConfig;
+        return cloudWatchMetricsConfig.get();
     }
 
     /**
@@ -1328,11 +1025,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withCloudWatchMetricsConfig(Consumer<CloudWatchMetricsConfig.Builder> configurer) {
-        CloudWatchMetricsConfig.Builder builder = cloudWatchMetricsConfig.toBuilder();
-        configurer.accept(builder);
-        this.cloudWatchMetricsConfig = builder.build();
-        cloudWatchMetricsConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(cloudWatchMetricsConfig, configurer);
     }
 
     /**
@@ -1341,7 +1034,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Cognito configuration
      */
     public CognitoConfig getCognitoConfig() {
-        return cognitoConfig;
+        return cognitoConfig.get();
     }
 
     /**
@@ -1356,11 +1049,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withCognitoConfig(Consumer<CognitoConfig.Builder> configurer) {
-        CognitoConfig.Builder builder = cognitoConfig.toBuilder();
-        configurer.accept(builder);
-        this.cognitoConfig = builder.build();
-        cognitoConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(cognitoConfig, configurer);
     }
 
     /**
@@ -1369,7 +1058,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the AWS Config configuration
      */
     public ConfigServiceConfig getConfigServiceConfig() {
-        return configServiceConfig;
+        return configServiceConfig.get();
     }
 
     /**
@@ -1384,11 +1073,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withConfigServiceConfig(Consumer<ConfigServiceConfig.Builder> configurer) {
-        ConfigServiceConfig.Builder builder = configServiceConfig.toBuilder();
-        configurer.accept(builder);
-        this.configServiceConfig = builder.build();
-        configServiceConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(configServiceConfig, configurer);
     }
 
     /**
@@ -1397,7 +1082,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the DynamoDB configuration
      */
     public DynamoDbConfig getDynamoDbConfig() {
-        return dynamoDbConfig;
+        return dynamoDbConfig.get();
     }
 
     /**
@@ -1412,11 +1097,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withDynamoDbConfig(Consumer<DynamoDbConfig.Builder> configurer) {
-        DynamoDbConfig.Builder builder = dynamoDbConfig.toBuilder();
-        configurer.accept(builder);
-        this.dynamoDbConfig = builder.build();
-        dynamoDbConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(dynamoDbConfig, configurer);
     }
 
     /**
@@ -1425,7 +1106,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the EC2 configuration
      */
     public Ec2Config getEc2Config() {
-        return ec2Config;
+        return ec2Config.get();
     }
 
     /**
@@ -1440,13 +1121,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withEc2Config(Consumer<Ec2Config.Builder> configurer) {
-        Ec2Config.Builder builder = ec2Config.toBuilder();
-        configurer.accept(builder);
-        this.ec2Config = builder.build();
-        configureExposedPorts();
-        ec2Config.applyEnvVarsToContainer(this);
-        ec2Config.applyFileMountsToContainer(this);
-        return this;
+        return updateServiceConfig(ec2Config, configurer);
     }
 
     /**
@@ -1455,7 +1130,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the ECR configuration
      */
     public EcrConfig getEcrConfig() {
-        return ecrConfig;
+        return ecrConfig.get();
     }
 
     /**
@@ -1472,12 +1147,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withEcrConfig(Consumer<EcrConfig.Builder> configurer) {
-        EcrConfig.Builder builder = ecrConfig.toBuilder();
-        configurer.accept(builder);
-        this.ecrConfig = builder.build();
-        configureExposedPorts();
-        ecrConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(ecrConfig, configurer);
     }
 
     /**
@@ -1486,7 +1156,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the ECS configuration
      */
     public EcsConfig getEcsConfig() {
-        return ecsConfig;
+        return ecsConfig.get();
     }
 
     /**
@@ -1503,11 +1173,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withEcsConfig(Consumer<EcsConfig.Builder> configurer) {
-        EcsConfig.Builder builder = ecsConfig.toBuilder();
-        configurer.accept(builder);
-        this.ecsConfig = builder.build();
-        ecsConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(ecsConfig, configurer);
     }
 
     /**
@@ -1516,7 +1182,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the ElastiCache configuration
      */
     public ElastiCacheConfig getElastiCacheConfig() {
-        return elastiCacheConfig;
+        return elastiCacheConfig.get();
     }
 
     /**
@@ -1533,12 +1199,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withElastiCacheConfig(Consumer<ElastiCacheConfig.Builder> configurer) {
-        ElastiCacheConfig.Builder builder = elastiCacheConfig.toBuilder();
-        configurer.accept(builder);
-        this.elastiCacheConfig = builder.build();
-        configureExposedPorts();
-        elastiCacheConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(elastiCacheConfig, configurer);
     }
 
     /**
@@ -1547,7 +1208,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the EventBridge configuration
      */
     public EventBridgeConfig getEventBridgeConfig() {
-        return eventBridgeConfig;
+        return eventBridgeConfig.get();
     }
 
     /**
@@ -1562,11 +1223,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withEventBridgeConfig(Consumer<EventBridgeConfig.Builder> configurer) {
-        EventBridgeConfig.Builder builder = eventBridgeConfig.toBuilder();
-        configurer.accept(builder);
-        this.eventBridgeConfig = builder.build();
-        eventBridgeConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(eventBridgeConfig, configurer);
     }
 
     /**
@@ -1575,7 +1232,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the IAM configuration
      */
     public IamConfig getIamConfig() {
-        return iamConfig;
+        return iamConfig.get();
     }
 
     /**
@@ -1590,11 +1247,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withIamConfig(Consumer<IamConfig.Builder> configurer) {
-        IamConfig.Builder builder = iamConfig.toBuilder();
-        configurer.accept(builder);
-        this.iamConfig = builder.build();
-        iamConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(iamConfig, configurer);
     }
 
     /**
@@ -1603,7 +1256,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Kinesis configuration
      */
     public KinesisConfig getKinesisConfig() {
-        return kinesisConfig;
+        return kinesisConfig.get();
     }
 
     /**
@@ -1618,11 +1271,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withKinesisConfig(Consumer<KinesisConfig.Builder> configurer) {
-        KinesisConfig.Builder builder = kinesisConfig.toBuilder();
-        configurer.accept(builder);
-        this.kinesisConfig = builder.build();
-        kinesisConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(kinesisConfig, configurer);
     }
 
     /**
@@ -1631,7 +1280,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the KMS configuration
      */
     public KmsConfig getKmsConfig() {
-        return kmsConfig;
+        return kmsConfig.get();
     }
 
     /**
@@ -1646,11 +1295,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withKmsConfig(Consumer<KmsConfig.Builder> configurer) {
-        KmsConfig.Builder builder = kmsConfig.toBuilder();
-        configurer.accept(builder);
-        this.kmsConfig = builder.build();
-        kmsConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(kmsConfig, configurer);
     }
 
     /**
@@ -1659,7 +1304,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Lambda configuration
      */
     public LambdaConfig getLambdaConfig() {
-        return lambdaConfig;
+        return lambdaConfig.get();
     }
 
     /**
@@ -1674,12 +1319,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withLambdaConfig(Consumer<LambdaConfig.Builder> configurer) {
-        LambdaConfig.Builder builder = lambdaConfig.toBuilder();
-        configurer.accept(builder);
-        this.lambdaConfig = builder.build();
-        configureExposedPorts();
-        lambdaConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(lambdaConfig, configurer);
     }
 
     /**
@@ -1688,7 +1328,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the OpenSearch configuration
      */
     public OpenSearchConfig getOpenSearchConfig() {
-        return openSearchConfig;
+        return openSearchConfig.get();
     }
 
     /**
@@ -1705,11 +1345,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withOpenSearchConfig(Consumer<OpenSearchConfig.Builder> configurer) {
-        OpenSearchConfig.Builder builder = openSearchConfig.toBuilder();
-        configurer.accept(builder);
-        this.openSearchConfig = builder.build();
-        openSearchConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(openSearchConfig, configurer);
     }
 
     /**
@@ -1718,7 +1354,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the RDS configuration
      */
     public RdsConfig getRdsConfig() {
-        return rdsConfig;
+        return rdsConfig.get();
     }
 
     /**
@@ -1735,12 +1371,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withRdsConfig(Consumer<RdsConfig.Builder> configurer) {
-        RdsConfig.Builder builder = rdsConfig.toBuilder();
-        configurer.accept(builder);
-        this.rdsConfig = builder.build();
-        configureExposedPorts();
-        rdsConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(rdsConfig, configurer);
     }
 
     /**
@@ -1749,7 +1380,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the S3 configuration
      */
     public S3Config getS3Config() {
-        return s3Config;
+        return s3Config.get();
     }
 
     /**
@@ -1764,11 +1395,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withS3Config(Consumer<S3Config.Builder> configurer) {
-        S3Config.Builder builder = s3Config.toBuilder();
-        configurer.accept(builder);
-        this.s3Config = builder.build();
-        s3Config.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(s3Config, configurer);
     }
 
     /**
@@ -1777,7 +1404,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Scheduler configuration
      */
     public SchedulerConfig getSchedulerConfig() {
-        return schedulerConfig;
+        return schedulerConfig.get();
     }
 
     /**
@@ -1792,11 +1419,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withSchedulerConfig(Consumer<SchedulerConfig.Builder> configurer) {
-        SchedulerConfig.Builder builder = schedulerConfig.toBuilder();
-        configurer.accept(builder);
-        this.schedulerConfig = builder.build();
-        schedulerConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(schedulerConfig, configurer);
     }
 
     /**
@@ -1805,7 +1428,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Secrets Manager configuration
      */
     public SecretsManagerConfig getSecretsManagerConfig() {
-        return secretsManagerConfig;
+        return secretsManagerConfig.get();
     }
 
     /**
@@ -1820,11 +1443,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withSecretsManagerConfig(Consumer<SecretsManagerConfig.Builder> configurer) {
-        SecretsManagerConfig.Builder builder = secretsManagerConfig.toBuilder();
-        configurer.accept(builder);
-        this.secretsManagerConfig = builder.build();
-        secretsManagerConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(secretsManagerConfig, configurer);
     }
 
     /**
@@ -1833,7 +1452,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the SES configuration
      */
     public SesConfig getSesConfig() {
-        return sesConfig;
+        return sesConfig.get();
     }
 
     /**
@@ -1848,11 +1467,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withSesConfig(Consumer<SesConfig.Builder> configurer) {
-        SesConfig.Builder builder = sesConfig.toBuilder();
-        configurer.accept(builder);
-        this.sesConfig = builder.build();
-        sesConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(sesConfig, configurer);
     }
 
     /**
@@ -1861,7 +1476,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the SNS configuration
      */
     public SnsConfig getSnsConfig() {
-        return snsConfig;
+        return snsConfig.get();
     }
 
     /**
@@ -1876,11 +1491,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withSnsConfig(Consumer<SnsConfig.Builder> configurer) {
-        SnsConfig.Builder builder = snsConfig.toBuilder();
-        configurer.accept(builder);
-        this.snsConfig = builder.build();
-        snsConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(snsConfig, configurer);
     }
 
     /**
@@ -1889,7 +1500,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the SQS configuration
      */
     public SqsConfig getSqsConfig() {
-        return sqsConfig;
+        return sqsConfig.get();
     }
 
     /**
@@ -1904,11 +1515,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withSqsConfig(Consumer<SqsConfig.Builder> configurer) {
-        SqsConfig.Builder builder = sqsConfig.toBuilder();
-        configurer.accept(builder);
-        this.sqsConfig = builder.build();
-        sqsConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(sqsConfig, configurer);
     }
 
     /**
@@ -1917,7 +1524,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the SSM configuration
      */
     public SsmConfig getSsmConfig() {
-        return ssmConfig;
+        return ssmConfig.get();
     }
 
     /**
@@ -1932,11 +1539,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withSsmConfig(Consumer<SsmConfig.Builder> configurer) {
-        SsmConfig.Builder builder = ssmConfig.toBuilder();
-        configurer.accept(builder);
-        this.ssmConfig = builder.build();
-        ssmConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(ssmConfig, configurer);
     }
 
     /**
@@ -1945,7 +1548,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Step Functions configuration
      */
     public StepFunctionsConfig getStepFunctionsConfig() {
-        return stepFunctionsConfig;
+        return stepFunctionsConfig.get();
     }
 
     /**
@@ -1960,12 +1563,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withStepFunctionsConfig(Consumer<StepFunctionsConfig.Builder> configurer) {
-        StepFunctionsConfig.Builder builder = stepFunctionsConfig.toBuilder();
-        configurer.accept(builder);
-        this.stepFunctionsConfig = builder.build();
-        stepFunctionsConfig.applyEnvVarsToContainer(this);
-        stepFunctionsConfig.applyFileMountsToContainer(this);
-        return this;
+        return updateServiceConfig(stepFunctionsConfig, configurer);
     }
 
     /**
@@ -1974,7 +1572,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the MSK configuration
      */
     public MskConfig getMskConfig() {
-        return mskConfig;
+        return mskConfig.get();
     }
 
     /**
@@ -1992,12 +1590,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withMskConfig(Consumer<MskConfig.Builder> configurer) {
-        MskConfig.Builder builder = mskConfig.toBuilder();
-        configurer.accept(builder);
-        this.mskConfig = builder.build();
-        configureExposedPorts();
-        mskConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(mskConfig, configurer);
     }
 
     /**
@@ -2006,7 +1599,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Firehose configuration
      */
     public FirehoseConfig getFirehoseConfig() {
-        return firehoseConfig;
+        return firehoseConfig.get();
     }
 
     /**
@@ -2021,11 +1614,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withFirehoseConfig(Consumer<FirehoseConfig.Builder> configurer) {
-        FirehoseConfig.Builder builder = firehoseConfig.toBuilder();
-        configurer.accept(builder);
-        this.firehoseConfig = builder.build();
-        firehoseConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(firehoseConfig, configurer);
     }
 
     /**
@@ -2034,7 +1623,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Athena configuration
      */
     public AthenaConfig getAthenaConfig() {
-        return athenaConfig;
+        return athenaConfig.get();
     }
 
     /**
@@ -2049,11 +1638,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withAthenaConfig(Consumer<AthenaConfig.Builder> configurer) {
-        AthenaConfig.Builder builder = athenaConfig.toBuilder();
-        configurer.accept(builder);
-        this.athenaConfig = builder.build();
-        athenaConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(athenaConfig, configurer);
     }
 
     /**
@@ -2062,7 +1647,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Glue configuration
      */
     public GlueConfig getGlueConfig() {
-        return glueConfig;
+        return glueConfig.get();
     }
 
     /**
@@ -2077,11 +1662,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withGlueConfig(Consumer<GlueConfig.Builder> configurer) {
-        GlueConfig.Builder builder = glueConfig.toBuilder();
-        configurer.accept(builder);
-        this.glueConfig = builder.build();
-        glueConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(glueConfig, configurer);
     }
 
     /**
@@ -2090,7 +1671,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Resource Groups Tagging configuration
      */
     public ResourceGroupsTaggingConfig getResourceGroupsTaggingConfig() {
-        return resourceGroupsTaggingConfig;
+        return resourceGroupsTaggingConfig.get();
     }
 
     /**
@@ -2105,11 +1686,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withResourceGroupsTaggingConfig(Consumer<ResourceGroupsTaggingConfig.Builder> configurer) {
-        ResourceGroupsTaggingConfig.Builder builder = resourceGroupsTaggingConfig.toBuilder();
-        configurer.accept(builder);
-        this.resourceGroupsTaggingConfig = builder.build();
-        resourceGroupsTaggingConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(resourceGroupsTaggingConfig, configurer);
     }
 
     /**
@@ -2118,7 +1695,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Bedrock AgentCore configuration
      */
     public BedrockAgentCoreConfig getBedrockAgentCoreConfig() {
-        return bedrockAgentCoreConfig;
+        return bedrockAgentCoreConfig.get();
     }
 
     /**
@@ -2133,11 +1710,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withBedrockAgentCoreConfig(Consumer<BedrockAgentCoreConfig.Builder> configurer) {
-        BedrockAgentCoreConfig.Builder builder = bedrockAgentCoreConfig.toBuilder();
-        configurer.accept(builder);
-        this.bedrockAgentCoreConfig = builder.build();
-        bedrockAgentCoreConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(bedrockAgentCoreConfig, configurer);
     }
 
     /**
@@ -2146,7 +1719,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Bedrock AgentCore Control configuration
      */
     public BedrockAgentCoreControlConfig getBedrockAgentCoreControlConfig() {
-        return bedrockAgentCoreControlConfig;
+        return bedrockAgentCoreControlConfig.get();
     }
 
     /**
@@ -2161,11 +1734,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withBedrockAgentCoreControlConfig(Consumer<BedrockAgentCoreControlConfig.Builder> configurer) {
-        BedrockAgentCoreControlConfig.Builder builder = bedrockAgentCoreControlConfig.toBuilder();
-        configurer.accept(builder);
-        this.bedrockAgentCoreControlConfig = builder.build();
-        bedrockAgentCoreControlConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(bedrockAgentCoreControlConfig, configurer);
     }
 
     /**
@@ -2174,7 +1743,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Bedrock Runtime configuration
      */
     public BedrockRuntimeConfig getBedrockRuntimeConfig() {
-        return bedrockRuntimeConfig;
+        return bedrockRuntimeConfig.get();
     }
 
     /**
@@ -2189,11 +1758,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withBedrockRuntimeConfig(Consumer<BedrockRuntimeConfig.Builder> configurer) {
-        BedrockRuntimeConfig.Builder builder = bedrockRuntimeConfig.toBuilder();
-        configurer.accept(builder);
-        this.bedrockRuntimeConfig = builder.build();
-        bedrockRuntimeConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(bedrockRuntimeConfig, configurer);
     }
 
     /**
@@ -2202,7 +1767,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Pipes configuration
      */
     public PipesConfig getPipesConfig() {
-        return pipesConfig;
+        return pipesConfig.get();
     }
 
     /**
@@ -2217,11 +1782,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withPipesConfig(Consumer<PipesConfig.Builder> configurer) {
-        PipesConfig.Builder builder = pipesConfig.toBuilder();
-        configurer.accept(builder);
-        this.pipesConfig = builder.build();
-        pipesConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(pipesConfig, configurer);
     }
 
     /**
@@ -2230,7 +1791,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the EKS configuration
      */
     public EksConfig getEksConfig() {
-        return eksConfig;
+        return eksConfig.get();
     }
 
     /**
@@ -2247,12 +1808,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withEksConfig(Consumer<EksConfig.Builder> configurer) {
-        EksConfig.Builder builder = eksConfig.toBuilder();
-        configurer.accept(builder);
-        this.eksConfig = builder.build();
-        configureExposedPorts();
-        eksConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(eksConfig, configurer);
     }
 
     /**
@@ -2261,7 +1817,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the CodeBuild configuration
      */
     public CodeBuildConfig getCodeBuildConfig() {
-        return codeBuildConfig;
+        return codeBuildConfig.get();
     }
 
     /**
@@ -2276,11 +1832,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withCodeBuildConfig(Consumer<CodeBuildConfig.Builder> configurer) {
-        CodeBuildConfig.Builder builder = codeBuildConfig.toBuilder();
-        configurer.accept(builder);
-        this.codeBuildConfig = builder.build();
-        codeBuildConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(codeBuildConfig, configurer);
     }
 
     /**
@@ -2289,7 +1841,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the CodeDeploy configuration
      */
     public CodeDeployConfig getCodeDeployConfig() {
-        return codeDeployConfig;
+        return codeDeployConfig.get();
     }
 
     /**
@@ -2304,11 +1856,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withCodeDeployConfig(Consumer<CodeDeployConfig.Builder> configurer) {
-        CodeDeployConfig.Builder builder = codeDeployConfig.toBuilder();
-        configurer.accept(builder);
-        this.codeDeployConfig = builder.build();
-        codeDeployConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(codeDeployConfig, configurer);
     }
 
     /**
@@ -2317,7 +1865,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the ELBv2 configuration
      */
     public ElbV2Config getElbV2Config() {
-        return elbV2Config;
+        return elbV2Config.get();
     }
 
     /**
@@ -2332,12 +1880,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withElbV2Config(Consumer<ElbV2Config.Builder> configurer) {
-        ElbV2Config.Builder builder = elbV2Config.toBuilder();
-        configurer.accept(builder);
-        this.elbV2Config = builder.build();
-        configureExposedPorts();
-        elbV2Config.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(elbV2Config, configurer);
     }
 
     /**
@@ -2346,7 +1889,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Backup configuration
      */
     public BackupConfig getBackupConfig() {
-        return backupConfig;
+        return backupConfig.get();
     }
 
     /**
@@ -2361,11 +1904,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withBackupConfig(Consumer<BackupConfig.Builder> configurer) {
-        BackupConfig.Builder builder = backupConfig.toBuilder();
-        configurer.accept(builder);
-        this.backupConfig = builder.build();
-        backupConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(backupConfig, configurer);
     }
 
     /**
@@ -2374,7 +1913,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Transfer Family configuration
      */
     public TransferFamilyConfig getTransferFamilyConfig() {
-        return transferFamilyConfig;
+        return transferFamilyConfig.get();
     }
 
     /**
@@ -2389,11 +1928,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withTransferFamilyConfig(Consumer<TransferFamilyConfig.Builder> configurer) {
-        TransferFamilyConfig.Builder builder = transferFamilyConfig.toBuilder();
-        configurer.accept(builder);
-        this.transferFamilyConfig = builder.build();
-        transferFamilyConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(transferFamilyConfig, configurer);
     }
 
     /**
@@ -2402,7 +1937,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Route 53 configuration
      */
     public Route53Config getRoute53Config() {
-        return route53Config;
+        return route53Config.get();
     }
 
     /**
@@ -2417,11 +1952,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withRoute53Config(Consumer<Route53Config.Builder> configurer) {
-        Route53Config.Builder builder = route53Config.toBuilder();
-        configurer.accept(builder);
-        this.route53Config = builder.build();
-        route53Config.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(route53Config, configurer);
     }
 
     /**
@@ -2430,7 +1961,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Textract configuration
      */
     public TextractConfig getTextractConfig() {
-        return textractConfig;
+        return textractConfig.get();
     }
 
     /**
@@ -2445,11 +1976,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withTextractConfig(Consumer<TextractConfig.Builder> configurer) {
-        TextractConfig.Builder builder = textractConfig.toBuilder();
-        configurer.accept(builder);
-        this.textractConfig = builder.build();
-        textractConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(textractConfig, configurer);
     }
 
     /**
@@ -2458,7 +1985,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Pricing configuration
      */
     public PricingConfig getPricingConfig() {
-        return pricingConfig;
+        return pricingConfig.get();
     }
 
     /**
@@ -2473,11 +2000,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withPricingConfig(Consumer<PricingConfig.Builder> configurer) {
-        PricingConfig.Builder builder = pricingConfig.toBuilder();
-        configurer.accept(builder);
-        this.pricingConfig = builder.build();
-        pricingConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(pricingConfig, configurer);
     }
 
     /**
@@ -2486,7 +2009,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Neptune configuration
      */
     public NeptuneConfig getNeptuneConfig() {
-        return neptuneConfig;
+        return neptuneConfig.get();
     }
 
     /**
@@ -2503,12 +2026,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withNeptuneConfig(Consumer<NeptuneConfig.Builder> configurer) {
-        NeptuneConfig.Builder builder = neptuneConfig.toBuilder();
-        configurer.accept(builder);
-        this.neptuneConfig = builder.build();
-        configureExposedPorts();
-        neptuneConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(neptuneConfig, configurer);
     }
 
     /**
@@ -2517,7 +2035,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Cost Explorer configuration
      */
     public CostExplorerConfig getCostExplorerConfig() {
-        return costExplorerConfig;
+        return costExplorerConfig.get();
     }
 
     /**
@@ -2532,11 +2050,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withCostExplorerConfig(Consumer<CostExplorerConfig.Builder> configurer) {
-        CostExplorerConfig.Builder builder = costExplorerConfig.toBuilder();
-        configurer.accept(builder);
-        this.costExplorerConfig = builder.build();
-        costExplorerConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(costExplorerConfig, configurer);
     }
 
     /**
@@ -2545,7 +2059,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the CUR configuration
      */
     public CurConfig getCurConfig() {
-        return curConfig;
+        return curConfig.get();
     }
 
     /**
@@ -2560,11 +2074,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withCurConfig(Consumer<CurConfig.Builder> configurer) {
-        CurConfig.Builder builder = curConfig.toBuilder();
-        configurer.accept(builder);
-        this.curConfig = builder.build();
-        curConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(curConfig, configurer);
     }
 
     /**
@@ -2573,7 +2083,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the BCM Data Exports configuration
      */
     public BcmDataExportsConfig getBcmDataExportsConfig() {
-        return bcmDataExportsConfig;
+        return bcmDataExportsConfig.get();
     }
 
     /**
@@ -2588,11 +2098,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withBcmDataExportsConfig(Consumer<BcmDataExportsConfig.Builder> configurer) {
-        BcmDataExportsConfig.Builder builder = bcmDataExportsConfig.toBuilder();
-        configurer.accept(builder);
-        this.bcmDataExportsConfig = builder.build();
-        bcmDataExportsConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(bcmDataExportsConfig, configurer);
     }
 
     /**
@@ -2601,7 +2107,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the CloudTrail configuration
      */
     public CloudTrailConfig getCloudTrailConfig() {
-        return cloudTrailConfig;
+        return cloudTrailConfig.get();
     }
 
     /**
@@ -2616,11 +2122,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withCloudTrailConfig(Consumer<CloudTrailConfig.Builder> configurer) {
-        CloudTrailConfig.Builder builder = cloudTrailConfig.toBuilder();
-        configurer.accept(builder);
-        this.cloudTrailConfig = builder.build();
-        cloudTrailConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(cloudTrailConfig, configurer);
     }
 
     /**
@@ -2629,7 +2131,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Batch configuration
      */
     public BatchConfig getBatchConfig() {
-        return batchConfig;
+        return batchConfig.get();
     }
 
     /**
@@ -2644,11 +2146,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withBatchConfig(Consumer<BatchConfig.Builder> configurer) {
-        BatchConfig.Builder builder = batchConfig.toBuilder();
-        configurer.accept(builder);
-        this.batchConfig = builder.build();
-        batchConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(batchConfig, configurer);
     }
 
     /**
@@ -2657,7 +2155,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the RDS Data configuration
      */
     public RdsDataConfig getRdsDataConfig() {
-        return rdsDataConfig;
+        return rdsDataConfig.get();
     }
 
     /**
@@ -2672,11 +2170,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withRdsDataConfig(Consumer<RdsDataConfig.Builder> configurer) {
-        RdsDataConfig.Builder builder = rdsDataConfig.toBuilder();
-        configurer.accept(builder);
-        this.rdsDataConfig = builder.build();
-        rdsDataConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(rdsDataConfig, configurer);
     }
 
     /**
@@ -2685,7 +2179,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the DocumentDB configuration
      */
     public DocumentDbConfig getDocumentDbConfig() {
-        return documentDbConfig;
+        return documentDbConfig.get();
     }
 
     /**
@@ -2702,11 +2196,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withDocumentDbConfig(Consumer<DocumentDbConfig.Builder> configurer) {
-        DocumentDbConfig.Builder builder = documentDbConfig.toBuilder();
-        configurer.accept(builder);
-        this.documentDbConfig = builder.build();
-        documentDbConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(documentDbConfig, configurer);
     }
 
     /**
@@ -2715,7 +2205,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the EMR configuration
      */
     public EmrConfig getEmrConfig() {
-        return emrConfig;
+        return emrConfig.get();
     }
 
     /**
@@ -2730,11 +2220,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withEmrConfig(Consumer<EmrConfig.Builder> configurer) {
-        EmrConfig.Builder builder = emrConfig.toBuilder();
-        configurer.accept(builder);
-        this.emrConfig = builder.build();
-        emrConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(emrConfig, configurer);
     }
 
     /**
@@ -2743,7 +2229,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the WAF V2 configuration
      */
     public WafV2Config getWafV2Config() {
-        return wafV2Config;
+        return wafV2Config.get();
     }
 
     /**
@@ -2758,11 +2244,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withWafV2Config(Consumer<WafV2Config.Builder> configurer) {
-        WafV2Config.Builder builder = wafV2Config.toBuilder();
-        configurer.accept(builder);
-        this.wafV2Config = builder.build();
-        wafV2Config.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(wafV2Config, configurer);
     }
 
     /**
@@ -2771,7 +2253,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the IoT Core configuration
      */
     public IotConfig getIotConfig() {
-        return iotConfig;
+        return iotConfig.get();
     }
 
     /**
@@ -2788,12 +2270,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withIotConfig(Consumer<IotConfig.Builder> configurer) {
-        IotConfig.Builder builder = iotConfig.toBuilder();
-        configurer.accept(builder);
-        this.iotConfig = builder.build();
-        configureExposedPorts();
-        iotConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(iotConfig, configurer);
     }
 
     /**
@@ -2802,7 +2279,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the IoT Data Plane configuration
      */
     public IotDataConfig getIotDataConfig() {
-        return iotDataConfig;
+        return iotDataConfig.get();
     }
 
     /**
@@ -2817,11 +2294,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withIotDataConfig(Consumer<IotDataConfig.Builder> configurer) {
-        IotDataConfig.Builder builder = iotDataConfig.toBuilder();
-        configurer.accept(builder);
-        this.iotDataConfig = builder.build();
-        iotDataConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(iotDataConfig, configurer);
     }
 
     /**
@@ -2830,7 +2303,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Lightsail configuration
      */
     public LightsailConfig getLightsailConfig() {
-        return lightsailConfig;
+        return lightsailConfig.get();
     }
 
     /**
@@ -2845,11 +2318,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withLightsailConfig(Consumer<LightsailConfig.Builder> configurer) {
-        LightsailConfig.Builder builder = lightsailConfig.toBuilder();
-        configurer.accept(builder);
-        this.lightsailConfig = builder.build();
-        lightsailConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(lightsailConfig, configurer);
     }
 
     /**
@@ -2858,7 +2327,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Cloud Control API configuration
      */
     public CloudControlConfig getCloudControlConfig() {
-        return cloudControlConfig;
+        return cloudControlConfig.get();
     }
 
     /**
@@ -2873,11 +2342,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withCloudControlConfig(Consumer<CloudControlConfig.Builder> configurer) {
-        CloudControlConfig.Builder builder = cloudControlConfig.toBuilder();
-        configurer.accept(builder);
-        this.cloudControlConfig = builder.build();
-        cloudControlConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(cloudControlConfig, configurer);
     }
 
     /**
@@ -2886,7 +2351,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the S3 Vectors configuration
      */
     public S3VectorsConfig getS3VectorsConfig() {
-        return s3VectorsConfig;
+        return s3VectorsConfig.get();
     }
 
     /**
@@ -2901,11 +2366,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withS3VectorsConfig(Consumer<S3VectorsConfig.Builder> configurer) {
-        S3VectorsConfig.Builder builder = s3VectorsConfig.toBuilder();
-        configurer.accept(builder);
-        this.s3VectorsConfig = builder.build();
-        s3VectorsConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(s3VectorsConfig, configurer);
     }
 
     /**
@@ -2914,7 +2375,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Elastic Beanstalk configuration
      */
     public ElasticBeanstalkConfig getElasticBeanstalkConfig() {
-        return elasticBeanstalkConfig;
+        return elasticBeanstalkConfig.get();
     }
 
     /**
@@ -2929,11 +2390,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withElasticBeanstalkConfig(Consumer<ElasticBeanstalkConfig.Builder> configurer) {
-        ElasticBeanstalkConfig.Builder builder = elasticBeanstalkConfig.toBuilder();
-        configurer.accept(builder);
-        this.elasticBeanstalkConfig = builder.build();
-        elasticBeanstalkConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(elasticBeanstalkConfig, configurer);
     }
 
     /**
@@ -2942,7 +2399,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the CodePipeline configuration
      */
     public CodePipelineConfig getCodePipelineConfig() {
-        return codePipelineConfig;
+        return codePipelineConfig.get();
     }
 
     /**
@@ -2957,11 +2414,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withCodePipelineConfig(Consumer<CodePipelineConfig.Builder> configurer) {
-        CodePipelineConfig.Builder builder = codePipelineConfig.toBuilder();
-        configurer.accept(builder);
-        this.codePipelineConfig = builder.build();
-        codePipelineConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(codePipelineConfig, configurer);
     }
 
     /**
@@ -2970,7 +2423,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Amazon MQ configuration
      */
     public AmazonMqConfig getAmazonMqConfig() {
-        return amazonMqConfig;
+        return amazonMqConfig.get();
     }
 
     /**
@@ -2987,11 +2440,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withAmazonMqConfig(Consumer<AmazonMqConfig.Builder> configurer) {
-        AmazonMqConfig.Builder builder = amazonMqConfig.toBuilder();
-        configurer.accept(builder);
-        this.amazonMqConfig = builder.build();
-        amazonMqConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(amazonMqConfig, configurer);
     }
 
     /**
@@ -3000,7 +2449,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the MemoryDB configuration
      */
     public MemoryDbConfig getMemoryDbConfig() {
-        return memoryDbConfig;
+        return memoryDbConfig.get();
     }
 
     /**
@@ -3018,12 +2467,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withMemoryDbConfig(Consumer<MemoryDbConfig.Builder> configurer) {
-        MemoryDbConfig.Builder builder = memoryDbConfig.toBuilder();
-        configurer.accept(builder);
-        this.memoryDbConfig = builder.build();
-        configureExposedPorts();
-        memoryDbConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(memoryDbConfig, configurer);
     }
 
     /**
@@ -3032,7 +2476,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the RUM configuration
      */
     public RumConfig getRumConfig() {
-        return rumConfig;
+        return rumConfig.get();
     }
 
     /**
@@ -3047,11 +2491,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withRumConfig(Consumer<RumConfig.Builder> configurer) {
-        RumConfig.Builder builder = rumConfig.toBuilder();
-        configurer.accept(builder);
-        this.rumConfig = builder.build();
-        rumConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(rumConfig, configurer);
     }
 
     /**
@@ -3060,7 +2500,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the S3 Tables configuration
      */
     public S3TablesConfig getS3TablesConfig() {
-        return s3TablesConfig;
+        return s3TablesConfig.get();
     }
 
     /**
@@ -3075,11 +2515,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withS3TablesConfig(Consumer<S3TablesConfig.Builder> configurer) {
-        S3TablesConfig.Builder builder = s3TablesConfig.toBuilder();
-        configurer.accept(builder);
-        this.s3TablesConfig = builder.build();
-        s3TablesConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(s3TablesConfig, configurer);
     }
 
     /**
@@ -3088,7 +2524,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Application Auto Scaling configuration
      */
     public ApplicationAutoScalingConfig getApplicationAutoScalingConfig() {
-        return applicationAutoScalingConfig;
+        return applicationAutoScalingConfig.get();
     }
 
     /**
@@ -3103,11 +2539,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withApplicationAutoScalingConfig(Consumer<ApplicationAutoScalingConfig.Builder> configurer) {
-        ApplicationAutoScalingConfig.Builder builder = applicationAutoScalingConfig.toBuilder();
-        configurer.accept(builder);
-        this.applicationAutoScalingConfig = builder.build();
-        applicationAutoScalingConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(applicationAutoScalingConfig, configurer);
     }
 
     /**
@@ -3116,7 +2548,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the SWF configuration
      */
     public SwfConfig getSwfConfig() {
-        return swfConfig;
+        return swfConfig.get();
     }
 
     /**
@@ -3132,11 +2564,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withSwfConfig(Consumer<SwfConfig.Builder> configurer) {
-        SwfConfig.Builder builder = swfConfig.toBuilder();
-        configurer.accept(builder);
-        this.swfConfig = builder.build();
-        swfConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(swfConfig, configurer);
     }
 
     /**
@@ -3146,7 +2574,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Kinesis Analytics configuration
      */
     public KinesisAnalyticsConfig getKinesisAnalyticsConfig() {
-        return kinesisAnalyticsConfig;
+        return kinesisAnalyticsConfig.get();
     }
 
     /**
@@ -3163,11 +2591,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withKinesisAnalyticsConfig(Consumer<KinesisAnalyticsConfig.Builder> configurer) {
-        KinesisAnalyticsConfig.Builder builder = kinesisAnalyticsConfig.toBuilder();
-        configurer.accept(builder);
-        this.kinesisAnalyticsConfig = builder.build();
-        kinesisAnalyticsConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(kinesisAnalyticsConfig, configurer);
     }
 
     /**
@@ -3177,7 +2601,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the MWAA configuration
      */
     public MwaaConfig getMwaaConfig() {
-        return mwaaConfig;
+        return mwaaConfig.get();
     }
 
     /**
@@ -3196,12 +2620,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withMwaaConfig(Consumer<MwaaConfig.Builder> configurer) {
-        MwaaConfig.Builder builder = mwaaConfig.toBuilder();
-        configurer.accept(builder);
-        this.mwaaConfig = builder.build();
-        configureExposedPorts();
-        mwaaConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(mwaaConfig, configurer);
     }
 
     /**
@@ -3210,7 +2629,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the GuardDuty configuration
      */
     public GuardDutyConfig getGuardDutyConfig() {
-        return guardDutyConfig;
+        return guardDutyConfig.get();
     }
 
     /**
@@ -3225,11 +2644,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withGuardDutyConfig(Consumer<GuardDutyConfig.Builder> configurer) {
-        GuardDutyConfig.Builder builder = guardDutyConfig.toBuilder();
-        configurer.accept(builder);
-        this.guardDutyConfig = builder.build();
-        guardDutyConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(guardDutyConfig, configurer);
     }
 
     /**
@@ -3238,7 +2653,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the CloudHSM v2 configuration
      */
     public CloudHsmV2Config getCloudHsmV2Config() {
-        return cloudHsmV2Config;
+        return cloudHsmV2Config.get();
     }
 
     /**
@@ -3253,11 +2668,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withCloudHsmV2Config(Consumer<CloudHsmV2Config.Builder> configurer) {
-        CloudHsmV2Config.Builder builder = cloudHsmV2Config.toBuilder();
-        configurer.accept(builder);
-        this.cloudHsmV2Config = builder.build();
-        cloudHsmV2Config.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(cloudHsmV2Config, configurer);
     }
 
     /**
@@ -3266,7 +2677,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the EMR Serverless configuration
      */
     public EmrServerlessConfig getEmrServerlessConfig() {
-        return emrServerlessConfig;
+        return emrServerlessConfig.get();
     }
 
     /**
@@ -3281,11 +2692,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withEmrServerlessConfig(Consumer<EmrServerlessConfig.Builder> configurer) {
-        EmrServerlessConfig.Builder builder = emrServerlessConfig.toBuilder();
-        configurer.accept(builder);
-        this.emrServerlessConfig = builder.build();
-        emrServerlessConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(emrServerlessConfig, configurer);
     }
 
     /**
@@ -3294,7 +2701,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the FIS configuration
      */
     public FisConfig getFisConfig() {
-        return fisConfig;
+        return fisConfig.get();
     }
 
     /**
@@ -3309,11 +2716,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withFisConfig(Consumer<FisConfig.Builder> configurer) {
-        FisConfig.Builder builder = fisConfig.toBuilder();
-        configurer.accept(builder);
-        this.fisConfig = builder.build();
-        fisConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(fisConfig, configurer);
     }
 
 
@@ -3323,7 +2726,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Connect configuration
      */
     public ConnectConfig getConnectConfig() {
-        return connectConfig;
+        return connectConfig.get();
     }
 
     /**
@@ -3338,11 +2741,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withConnectConfig(Consumer<ConnectConfig.Builder> configurer) {
-        ConnectConfig.Builder builder = connectConfig.toBuilder();
-        configurer.accept(builder);
-        this.connectConfig = builder.build();
-        connectConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(connectConfig, configurer);
     }
 
 
@@ -3352,7 +2751,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the SSO Admin configuration
      */
     public SsoAdminConfig getSsoAdminConfig() {
-        return ssoAdminConfig;
+        return ssoAdminConfig.get();
     }
 
     /**
@@ -3367,11 +2766,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withSsoAdminConfig(Consumer<SsoAdminConfig.Builder> configurer) {
-        SsoAdminConfig.Builder builder = ssoAdminConfig.toBuilder();
-        configurer.accept(builder);
-        this.ssoAdminConfig = builder.build();
-        ssoAdminConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(ssoAdminConfig, configurer);
     }
 
 
@@ -3381,7 +2776,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the APS (Prometheus) configuration
      */
     public ApsConfig getApsConfig() {
-        return apsConfig;
+        return apsConfig.get();
     }
 
     /**
@@ -3396,11 +2791,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withApsConfig(Consumer<ApsConfig.Builder> configurer) {
-        ApsConfig.Builder builder = apsConfig.toBuilder();
-        configurer.accept(builder);
-        this.apsConfig = builder.build();
-        apsConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(apsConfig, configurer);
     }
 
 
@@ -3410,7 +2801,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the CodeGuru Reviewer configuration
      */
     public CodeGuruReviewerConfig getCodeGuruReviewerConfig() {
-        return codeGuruReviewerConfig;
+        return codeGuruReviewerConfig.get();
     }
 
     /**
@@ -3425,11 +2816,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withCodeGuruReviewerConfig(Consumer<CodeGuruReviewerConfig.Builder> configurer) {
-        CodeGuruReviewerConfig.Builder builder = codeGuruReviewerConfig.toBuilder();
-        configurer.accept(builder);
-        this.codeGuruReviewerConfig = builder.build();
-        codeGuruReviewerConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(codeGuruReviewerConfig, configurer);
     }
 
 
@@ -3439,7 +2826,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Control Tower configuration
      */
     public ControlTowerConfig getControlTowerConfig() {
-        return controlTowerConfig;
+        return controlTowerConfig.get();
     }
 
     /**
@@ -3454,11 +2841,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withControlTowerConfig(Consumer<ControlTowerConfig.Builder> configurer) {
-        ControlTowerConfig.Builder builder = controlTowerConfig.toBuilder();
-        configurer.accept(builder);
-        this.controlTowerConfig = builder.build();
-        controlTowerConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(controlTowerConfig, configurer);
     }
 
 
@@ -3468,7 +2851,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Route 53 Resolver configuration
      */
     public Route53ResolverConfig getRoute53ResolverConfig() {
-        return route53ResolverConfig;
+        return route53ResolverConfig.get();
     }
 
     /**
@@ -3483,11 +2866,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withRoute53ResolverConfig(Consumer<Route53ResolverConfig.Builder> configurer) {
-        Route53ResolverConfig.Builder builder = route53ResolverConfig.toBuilder();
-        configurer.accept(builder);
-        this.route53ResolverConfig = builder.build();
-        route53ResolverConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(route53ResolverConfig, configurer);
     }
 
 
@@ -3497,7 +2876,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Network Firewall configuration
      */
     public NetworkFirewallConfig getNetworkFirewallConfig() {
-        return networkFirewallConfig;
+        return networkFirewallConfig.get();
     }
 
     /**
@@ -3512,11 +2891,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withNetworkFirewallConfig(Consumer<NetworkFirewallConfig.Builder> configurer) {
-        NetworkFirewallConfig.Builder builder = networkFirewallConfig.toBuilder();
-        configurer.accept(builder);
-        this.networkFirewallConfig = builder.build();
-        networkFirewallConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(networkFirewallConfig, configurer);
     }
 
 
@@ -3526,7 +2901,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Service Catalog configuration
      */
     public ServiceCatalogConfig getServiceCatalogConfig() {
-        return serviceCatalogConfig;
+        return serviceCatalogConfig.get();
     }
 
     /**
@@ -3541,11 +2916,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withServiceCatalogConfig(Consumer<ServiceCatalogConfig.Builder> configurer) {
-        ServiceCatalogConfig.Builder builder = serviceCatalogConfig.toBuilder();
-        configurer.accept(builder);
-        this.serviceCatalogConfig = builder.build();
-        serviceCatalogConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(serviceCatalogConfig, configurer);
     }
 
 
@@ -3555,7 +2926,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Service Quotas configuration
      */
     public ServiceQuotasConfig getServiceQuotasConfig() {
-        return serviceQuotasConfig;
+        return serviceQuotasConfig.get();
     }
 
     /**
@@ -3570,11 +2941,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withServiceQuotasConfig(Consumer<ServiceQuotasConfig.Builder> configurer) {
-        ServiceQuotasConfig.Builder builder = serviceQuotasConfig.toBuilder();
-        configurer.accept(builder);
-        this.serviceQuotasConfig = builder.build();
-        serviceQuotasConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(serviceQuotasConfig, configurer);
     }
 
 
@@ -3584,7 +2951,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the RAM configuration
      */
     public RamConfig getRamConfig() {
-        return ramConfig;
+        return ramConfig.get();
     }
 
     /**
@@ -3599,11 +2966,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withRamConfig(Consumer<RamConfig.Builder> configurer) {
-        RamConfig.Builder builder = ramConfig.toBuilder();
-        configurer.accept(builder);
-        this.ramConfig = builder.build();
-        ramConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(ramConfig, configurer);
     }
 
 
@@ -3613,7 +2976,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Lake Formation configuration
      */
     public LakeFormationConfig getLakeFormationConfig() {
-        return lakeFormationConfig;
+        return lakeFormationConfig.get();
     }
 
     /**
@@ -3628,11 +2991,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withLakeFormationConfig(Consumer<LakeFormationConfig.Builder> configurer) {
-        LakeFormationConfig.Builder builder = lakeFormationConfig.toBuilder();
-        configurer.accept(builder);
-        this.lakeFormationConfig = builder.build();
-        lakeFormationConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(lakeFormationConfig, configurer);
     }
 
 
@@ -3642,7 +3001,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the EFS configuration
      */
     public EfsConfig getEfsConfig() {
-        return efsConfig;
+        return efsConfig.get();
     }
 
     /**
@@ -3657,11 +3016,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withEfsConfig(Consumer<EfsConfig.Builder> configurer) {
-        EfsConfig.Builder builder = efsConfig.toBuilder();
-        configurer.accept(builder);
-        this.efsConfig = builder.build();
-        efsConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(efsConfig, configurer);
     }
 
 
@@ -3671,7 +3026,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Resource Explorer v2 configuration
      */
     public ResourceExplorer2Config getResourceExplorer2Config() {
-        return resourceExplorer2Config;
+        return resourceExplorer2Config.get();
     }
 
     /**
@@ -3686,11 +3041,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withResourceExplorer2Config(Consumer<ResourceExplorer2Config.Builder> configurer) {
-        ResourceExplorer2Config.Builder builder = resourceExplorer2Config.toBuilder();
-        configurer.accept(builder);
-        this.resourceExplorer2Config = builder.build();
-        resourceExplorer2Config.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(resourceExplorer2Config, configurer);
     }
 
 
@@ -3700,7 +3051,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Redshift configuration
      */
     public RedshiftConfig getRedshiftConfig() {
-        return redshiftConfig;
+        return redshiftConfig.get();
     }
 
     /**
@@ -3715,11 +3066,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withRedshiftConfig(Consumer<RedshiftConfig.Builder> configurer) {
-        RedshiftConfig.Builder builder = redshiftConfig.toBuilder();
-        configurer.accept(builder);
-        this.redshiftConfig = builder.build();
-        redshiftConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(redshiftConfig, configurer);
     }
 
 
@@ -3729,7 +3076,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Organizations configuration
      */
     public OrganizationsConfig getOrganizationsConfig() {
-        return organizationsConfig;
+        return organizationsConfig.get();
     }
 
     /**
@@ -3744,11 +3091,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withOrganizationsConfig(Consumer<OrganizationsConfig.Builder> configurer) {
-        OrganizationsConfig.Builder builder = organizationsConfig.toBuilder();
-        configurer.accept(builder);
-        this.organizationsConfig = builder.build();
-        organizationsConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(organizationsConfig, configurer);
     }
 
 
@@ -3758,7 +3101,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Comprehend configuration
      */
     public ComprehendConfig getComprehendConfig() {
-        return comprehendConfig;
+        return comprehendConfig.get();
     }
 
     /**
@@ -3773,11 +3116,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withComprehendConfig(Consumer<ComprehendConfig.Builder> configurer) {
-        ComprehendConfig.Builder builder = comprehendConfig.toBuilder();
-        configurer.accept(builder);
-        this.comprehendConfig = builder.build();
-        comprehendConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(comprehendConfig, configurer);
     }
 
 
@@ -3787,7 +3126,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Rekognition configuration
      */
     public RekognitionConfig getRekognitionConfig() {
-        return rekognitionConfig;
+        return rekognitionConfig.get();
     }
 
     /**
@@ -3802,11 +3141,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withRekognitionConfig(Consumer<RekognitionConfig.Builder> configurer) {
-        RekognitionConfig.Builder builder = rekognitionConfig.toBuilder();
-        configurer.accept(builder);
-        this.rekognitionConfig = builder.build();
-        rekognitionConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(rekognitionConfig, configurer);
     }
 
 
@@ -3816,7 +3151,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Transcribe configuration
      */
     public TranscribeConfig getTranscribeConfig() {
-        return transcribeConfig;
+        return transcribeConfig.get();
     }
 
     /**
@@ -3831,11 +3166,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withTranscribeConfig(Consumer<TranscribeConfig.Builder> configurer) {
-        TranscribeConfig.Builder builder = transcribeConfig.toBuilder();
-        configurer.accept(builder);
-        this.transcribeConfig = builder.build();
-        transcribeConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(transcribeConfig, configurer);
     }
 
     /**
@@ -3844,7 +3175,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Redshift Data API configuration
      */
     public RedshiftDataConfig getRedshiftDataConfig() {
-        return redshiftDataConfig;
+        return redshiftDataConfig.get();
     }
 
     /**
@@ -3859,11 +3190,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withRedshiftDataConfig(Consumer<RedshiftDataConfig.Builder> configurer) {
-        RedshiftDataConfig.Builder builder = redshiftDataConfig.toBuilder();
-        configurer.accept(builder);
-        this.redshiftDataConfig = builder.build();
-        redshiftDataConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(redshiftDataConfig, configurer);
     }
 
     /**
@@ -3872,7 +3199,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Redshift Serverless configuration
      */
     public RedshiftServerlessConfig getRedshiftServerlessConfig() {
-        return redshiftServerlessConfig;
+        return redshiftServerlessConfig.get();
     }
 
     /**
@@ -3887,11 +3214,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withRedshiftServerlessConfig(Consumer<RedshiftServerlessConfig.Builder> configurer) {
-        RedshiftServerlessConfig.Builder builder = redshiftServerlessConfig.toBuilder();
-        configurer.accept(builder);
-        this.redshiftServerlessConfig = builder.build();
-        redshiftServerlessConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(redshiftServerlessConfig, configurer);
     }
 
     /**
@@ -3900,7 +3223,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Bedrock configuration
      */
     public BedrockConfig getBedrockConfig() {
-        return bedrockConfig;
+        return bedrockConfig.get();
     }
 
     /**
@@ -3915,11 +3238,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withBedrockConfig(Consumer<BedrockConfig.Builder> configurer) {
-        BedrockConfig.Builder builder = bedrockConfig.toBuilder();
-        configurer.accept(builder);
-        this.bedrockConfig = builder.build();
-        bedrockConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(bedrockConfig, configurer);
     }
 
     /**
@@ -3928,7 +3247,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Translate configuration
      */
     public TranslateConfig getTranslateConfig() {
-        return translateConfig;
+        return translateConfig.get();
     }
 
     /**
@@ -3943,11 +3262,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withTranslateConfig(Consumer<TranslateConfig.Builder> configurer) {
-        TranslateConfig.Builder builder = translateConfig.toBuilder();
-        configurer.accept(builder);
-        this.translateConfig = builder.build();
-        translateConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(translateConfig, configurer);
     }
 
     /**
@@ -3956,7 +3271,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the OAM (CloudWatch Observability Access Manager) configuration
      */
     public OamConfig getOamConfig() {
-        return oamConfig;
+        return oamConfig.get();
     }
 
     /**
@@ -3971,11 +3286,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withOamConfig(Consumer<OamConfig.Builder> configurer) {
-        OamConfig.Builder builder = oamConfig.toBuilder();
-        configurer.accept(builder);
-        this.oamConfig = builder.build();
-        oamConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(oamConfig, configurer);
     }
 
     /**
@@ -3984,7 +3295,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the BCM Pricing Calculator configuration
      */
     public BcmPricingCalculatorConfig getBcmPricingCalculatorConfig() {
-        return bcmPricingCalculatorConfig;
+        return bcmPricingCalculatorConfig.get();
     }
 
     /**
@@ -3999,11 +3310,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withBcmPricingCalculatorConfig(Consumer<BcmPricingCalculatorConfig.Builder> configurer) {
-        BcmPricingCalculatorConfig.Builder builder = bcmPricingCalculatorConfig.toBuilder();
-        configurer.accept(builder);
-        this.bcmPricingCalculatorConfig = builder.build();
-        bcmPricingCalculatorConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(bcmPricingCalculatorConfig, configurer);
     }
 
     /**
@@ -4012,7 +3319,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Timestream for InfluxDB configuration
      */
     public TimestreamInfluxDbConfig getTimestreamInfluxDbConfig() {
-        return timestreamInfluxDbConfig;
+        return timestreamInfluxDbConfig.get();
     }
 
     /**
@@ -4027,11 +3334,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withTimestreamInfluxDbConfig(Consumer<TimestreamInfluxDbConfig.Builder> configurer) {
-        TimestreamInfluxDbConfig.Builder builder = timestreamInfluxDbConfig.toBuilder();
-        configurer.accept(builder);
-        this.timestreamInfluxDbConfig = builder.build();
-        timestreamInfluxDbConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(timestreamInfluxDbConfig, configurer);
     }
 
     /**
@@ -4040,7 +3343,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the SageMaker configuration
      */
     public SageMakerConfig getSageMakerConfig() {
-        return sageMakerConfig;
+        return sageMakerConfig.get();
     }
 
     /**
@@ -4055,11 +3358,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withSageMakerConfig(Consumer<SageMakerConfig.Builder> configurer) {
-        SageMakerConfig.Builder builder = sageMakerConfig.toBuilder();
-        configurer.accept(builder);
-        this.sageMakerConfig = builder.build();
-        sageMakerConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(sageMakerConfig, configurer);
     }
 
     /**
@@ -4068,7 +3367,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the SSO OIDC (IAM Identity Center OIDC) configuration
      */
     public SsoOidcConfig getSsoOidcConfig() {
-        return ssoOidcConfig;
+        return ssoOidcConfig.get();
     }
 
     /**
@@ -4083,11 +3382,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withSsoOidcConfig(Consumer<SsoOidcConfig.Builder> configurer) {
-        SsoOidcConfig.Builder builder = ssoOidcConfig.toBuilder();
-        configurer.accept(builder);
-        this.ssoOidcConfig = builder.build();
-        ssoOidcConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(ssoOidcConfig, configurer);
     }
 
     /**
@@ -4096,7 +3391,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Macie configuration
      */
     public Macie2Config getMacie2Config() {
-        return macie2Config;
+        return macie2Config.get();
     }
 
     /**
@@ -4111,11 +3406,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withMacie2Config(Consumer<Macie2Config.Builder> configurer) {
-        Macie2Config.Builder builder = macie2Config.toBuilder();
-        configurer.accept(builder);
-        this.macie2Config = builder.build();
-        macie2Config.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(macie2Config, configurer);
     }
 
     /**
@@ -4124,7 +3415,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Account Management configuration
      */
     public AccountConfig getAccountConfig() {
-        return accountConfig;
+        return accountConfig.get();
     }
 
     /**
@@ -4139,11 +3430,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withAccountConfig(Consumer<AccountConfig.Builder> configurer) {
-        AccountConfig.Builder builder = accountConfig.toBuilder();
-        configurer.accept(builder);
-        this.accountConfig = builder.build();
-        accountConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(accountConfig, configurer);
     }
 
     /**
@@ -4152,7 +3439,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the IAM Access Analyzer configuration
      */
     public AccessAnalyzerConfig getAccessAnalyzerConfig() {
-        return accessAnalyzerConfig;
+        return accessAnalyzerConfig.get();
     }
 
     /**
@@ -4167,11 +3454,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withAccessAnalyzerConfig(Consumer<AccessAnalyzerConfig.Builder> configurer) {
-        AccessAnalyzerConfig.Builder builder = accessAnalyzerConfig.toBuilder();
-        configurer.accept(builder);
-        this.accessAnalyzerConfig = builder.build();
-        accessAnalyzerConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(accessAnalyzerConfig, configurer);
     }
 
     /**
@@ -4180,7 +3463,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Identity Store configuration
      */
     public IdentityStoreConfig getIdentityStoreConfig() {
-        return identityStoreConfig;
+        return identityStoreConfig.get();
     }
 
     /**
@@ -4195,11 +3478,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withIdentityStoreConfig(Consumer<IdentityStoreConfig.Builder> configurer) {
-        IdentityStoreConfig.Builder builder = identityStoreConfig.toBuilder();
-        configurer.accept(builder);
-        this.identityStoreConfig = builder.build();
-        identityStoreConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(identityStoreConfig, configurer);
     }
 
     /**
@@ -4208,7 +3487,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Budgets configuration
      */
     public BudgetsConfig getBudgetsConfig() {
-        return budgetsConfig;
+        return budgetsConfig.get();
     }
 
     /**
@@ -4223,11 +3502,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withBudgetsConfig(Consumer<BudgetsConfig.Builder> configurer) {
-        BudgetsConfig.Builder builder = budgetsConfig.toBuilder();
-        configurer.accept(builder);
-        this.budgetsConfig = builder.build();
-        budgetsConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(budgetsConfig, configurer);
     }
 
     /**
@@ -4236,7 +3511,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Inspector configuration
      */
     public Inspector2Config getInspector2Config() {
-        return inspector2Config;
+        return inspector2Config.get();
     }
 
     /**
@@ -4251,11 +3526,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withInspector2Config(Consumer<Inspector2Config.Builder> configurer) {
-        Inspector2Config.Builder builder = inspector2Config.toBuilder();
-        configurer.accept(builder);
-        this.inspector2Config = builder.build();
-        inspector2Config.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(inspector2Config, configurer);
     }
 
     /**
@@ -4264,7 +3535,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Security Hub configuration
      */
     public SecurityHubConfig getSecurityHubConfig() {
-        return securityHubConfig;
+        return securityHubConfig.get();
     }
 
     /**
@@ -4279,11 +3550,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withSecurityHubConfig(Consumer<SecurityHubConfig.Builder> configurer) {
-        SecurityHubConfig.Builder builder = securityHubConfig.toBuilder();
-        configurer.accept(builder);
-        this.securityHubConfig = builder.build();
-        securityHubConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(securityHubConfig, configurer);
     }
 
     /**
@@ -4292,7 +3559,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Detective configuration
      */
     public DetectiveConfig getDetectiveConfig() {
-        return detectiveConfig;
+        return detectiveConfig.get();
     }
 
     /**
@@ -4307,11 +3574,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withDetectiveConfig(Consumer<DetectiveConfig.Builder> configurer) {
-        DetectiveConfig.Builder builder = detectiveConfig.toBuilder();
-        configurer.accept(builder);
-        this.detectiveConfig = builder.build();
-        detectiveConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(detectiveConfig, configurer);
     }
 
     /**
@@ -4320,7 +3583,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Verified Permissions configuration
      */
     public VerifiedPermissionsConfig getVerifiedPermissionsConfig() {
-        return verifiedPermissionsConfig;
+        return verifiedPermissionsConfig.get();
     }
 
     /**
@@ -4335,11 +3598,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withVerifiedPermissionsConfig(Consumer<VerifiedPermissionsConfig.Builder> configurer) {
-        VerifiedPermissionsConfig.Builder builder = verifiedPermissionsConfig.toBuilder();
-        configurer.accept(builder);
-        this.verifiedPermissionsConfig = builder.build();
-        verifiedPermissionsConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(verifiedPermissionsConfig, configurer);
     }
 
     /**
@@ -4348,7 +3607,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Control Catalog configuration
      */
     public ControlCatalogConfig getControlCatalogConfig() {
-        return controlCatalogConfig;
+        return controlCatalogConfig.get();
     }
 
     /**
@@ -4363,11 +3622,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withControlCatalogConfig(Consumer<ControlCatalogConfig.Builder> configurer) {
-        ControlCatalogConfig.Builder builder = controlCatalogConfig.toBuilder();
-        configurer.accept(builder);
-        this.controlCatalogConfig = builder.build();
-        controlCatalogConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(controlCatalogConfig, configurer);
     }
 
     /**
@@ -4376,7 +3631,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the AppIntegrations configuration
      */
     public AppIntegrationsConfig getAppIntegrationsConfig() {
-        return appIntegrationsConfig;
+        return appIntegrationsConfig.get();
     }
 
     /**
@@ -4391,11 +3646,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withAppIntegrationsConfig(Consumer<AppIntegrationsConfig.Builder> configurer) {
-        AppIntegrationsConfig.Builder builder = appIntegrationsConfig.toBuilder();
-        configurer.accept(builder);
-        this.appIntegrationsConfig = builder.build();
-        appIntegrationsConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(appIntegrationsConfig, configurer);
     }
 
     /**
@@ -4404,7 +3655,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the DLM (Data Lifecycle Manager) configuration
      */
     public DlmConfig getDlmConfig() {
-        return dlmConfig;
+        return dlmConfig.get();
     }
 
     /**
@@ -4419,11 +3670,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withDlmConfig(Consumer<DlmConfig.Builder> configurer) {
-        DlmConfig.Builder builder = dlmConfig.toBuilder();
-        configurer.accept(builder);
-        this.dlmConfig = builder.build();
-        dlmConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(dlmConfig, configurer);
     }
 
     /**
@@ -4432,7 +3679,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Cognito Identity configuration
      */
     public CognitoIdentityConfig getCognitoIdentityConfig() {
-        return cognitoIdentityConfig;
+        return cognitoIdentityConfig.get();
     }
 
     /**
@@ -4447,11 +3694,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withCognitoIdentityConfig(Consumer<CognitoIdentityConfig.Builder> configurer) {
-        CognitoIdentityConfig.Builder builder = cognitoIdentityConfig.toBuilder();
-        configurer.accept(builder);
-        this.cognitoIdentityConfig = builder.build();
-        cognitoIdentityConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(cognitoIdentityConfig, configurer);
     }
 
     /**
@@ -4460,7 +3703,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Global Accelerator configuration
      */
     public GlobalAcceleratorConfig getGlobalAcceleratorConfig() {
-        return globalAcceleratorConfig;
+        return globalAcceleratorConfig.get();
     }
 
     /**
@@ -4475,11 +3718,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withGlobalAcceleratorConfig(Consumer<GlobalAcceleratorConfig.Builder> configurer) {
-        GlobalAcceleratorConfig.Builder builder = globalAcceleratorConfig.toBuilder();
-        configurer.accept(builder);
-        this.globalAcceleratorConfig = builder.build();
-        globalAcceleratorConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(globalAcceleratorConfig, configurer);
     }
 
     /**
@@ -4488,7 +3727,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the DataSync configuration
      */
     public DataSyncConfig getDataSyncConfig() {
-        return dataSyncConfig;
+        return dataSyncConfig.get();
     }
 
     /**
@@ -4503,11 +3742,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withDataSyncConfig(Consumer<DataSyncConfig.Builder> configurer) {
-        DataSyncConfig.Builder builder = dataSyncConfig.toBuilder();
-        configurer.accept(builder);
-        this.dataSyncConfig = builder.build();
-        dataSyncConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(dataSyncConfig, configurer);
     }
 
     /**
@@ -4516,7 +3751,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the CodeArtifact configuration
      */
     public CodeArtifactConfig getCodeArtifactConfig() {
-        return codeArtifactConfig;
+        return codeArtifactConfig.get();
     }
 
     /**
@@ -4531,11 +3766,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withCodeArtifactConfig(Consumer<CodeArtifactConfig.Builder> configurer) {
-        CodeArtifactConfig.Builder builder = codeArtifactConfig.toBuilder();
-        configurer.accept(builder);
-        this.codeArtifactConfig = builder.build();
-        codeArtifactConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(codeArtifactConfig, configurer);
     }
 
     /**
@@ -4544,7 +3775,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the AWS Marketplace configuration
      */
     public MarketplaceConfig getMarketplaceConfig() {
-        return marketplaceConfig;
+        return marketplaceConfig.get();
     }
 
     /**
@@ -4559,11 +3790,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withMarketplaceConfig(Consumer<MarketplaceConfig.Builder> configurer) {
-        MarketplaceConfig.Builder builder = marketplaceConfig.toBuilder();
-        configurer.accept(builder);
-        this.marketplaceConfig = builder.build();
-        marketplaceConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(marketplaceConfig, configurer);
     }
 
     /**
@@ -4572,7 +3799,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the DMS (Database Migration Service) configuration
      */
     public DmsConfig getDmsConfig() {
-        return dmsConfig;
+        return dmsConfig.get();
     }
 
     /**
@@ -4587,11 +3814,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withDmsConfig(Consumer<DmsConfig.Builder> configurer) {
-        DmsConfig.Builder builder = dmsConfig.toBuilder();
-        configurer.accept(builder);
-        this.dmsConfig = builder.build();
-        dmsConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(dmsConfig, configurer);
     }
 
     /**
@@ -4600,7 +3823,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return the Classic ELB configuration
      */
     public ElbConfig getElbConfig() {
-        return elbConfig;
+        return elbConfig.get();
     }
 
     /**
@@ -4615,11 +3838,7 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
      * @return this container instance
      */
     public FlociContainer withElbConfig(Consumer<ElbConfig.Builder> configurer) {
-        ElbConfig.Builder builder = elbConfig.toBuilder();
-        configurer.accept(builder);
-        this.elbConfig = builder.build();
-        elbConfig.applyEnvVarsToContainer(this);
-        return this;
+        return updateServiceConfig(elbConfig, configurer);
     }
 
     private void preparePersistentStorageForCleanup() {
@@ -4680,29 +3899,8 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         }
     }
 
-    /**
-     * Configures all exposed ports of the Floci container
-     */
-    private void configureExposedPorts() {
-        withExposedPorts(PORT);
-
-        serviceConfigAccessors.forEach(accessor -> accessor.get().applyExposedPortsToContainer(this));
-    }
-
-    /**
-     * Mounts into the container any files the service configurations need (e.g. a generated
-     * Step Functions mock configuration file). Called from the same places as
-     * {@link #configureEnvVars()}; service configs tolerate being invoked more than once, so
-     * repeated invocations are harmless.
-     */
-    private void configureFileMounts() {
-        serviceConfigAccessors.forEach(accessor -> accessor.get().applyFileMountsToContainer(this));
-    }
-
-    /**
-     * Configures environment variables of the Floci container
-     */
-    private void configureEnvVars() {
+    @Override
+    protected void applyGlobalEnvVars() {
         tlsConfig.applyEnvVarsToContainer(this);
         storageConfig.applyEnvVarsToContainer(this);
         duckDbConfig.applyEnvVarsToContainer(this);
@@ -4712,61 +3910,5 @@ public class FlociContainer extends GenericContainer<FlociContainer> {
         initHooksConfig.applyEnvVarsToContainer(this);
         partitionsConfig.applyEnvVarsToContainer(this);
         networkConfig.applyEnvVarsToContainer(this);
-
-        // Services config
-        serviceConfigAccessors.forEach(accessor -> accessor.get().applyEnvVarsToContainer(this));
-    }
-
-    /**
-     * Determines whether the Docker socket should be mounted: an explicit {@link #withDockerSocket(boolean)}
-     * override always wins; otherwise falls back to {@link #isDockerSocketRequiredByServices()}.
-     *
-     * @return {@code true} if the Docker socket should be mounted
-     */
-    private boolean shouldBindDockerSocket() {
-        return dockerSocketOverride != null ? dockerSocketOverride : isDockerSocketRequiredByServices();
-    }
-
-    /**
-     * Returns whether any currently enabled service configuration needs access to the Docker socket
-     * (see {@link io.floci.testcontainers.config.services.AbstractServiceConfig#requiresDockerSocket()}).
-     *
-     * @return {@code true} if at least one enabled service requires the Docker socket
-     */
-    private boolean isDockerSocketRequiredByServices() {
-        return serviceConfigAccessors.stream().anyMatch(accessor -> accessor.get().requiresDockerSocket());
-    }
-
-    /**
-     * Returns the binding configuration for the Docker socket, if it is mounted into the container.
-     *
-     * @return an {@link Optional} containing the binding configuration, or {@link Optional#empty()} if not mounted
-     */
-    private Optional<Bind> findDockerSocketBinding() {
-        return getBinds().stream().filter(b -> DOCKER_SOCKET_PATH.equals(b.getVolume().getPath())).findFirst();
-    }
-
-    private static String uniqueShortId() {
-        return UUID.randomUUID().toString().replace("-", "").substring(0, 8);
-    }
-
-    /**
-     * A getter/setter pair for one of the AWS service configuration fields, allowing the
-     * immutable configuration instance held by that field to be read and replaced generically
-     * (e.g. to disable every service via {@link #disableAllServices()}).
-     *
-     * @param getter reads the current configuration value of the field
-     * @param setter replaces the field with a new configuration value
-     */
-    private record ServiceConfigAccessor<T extends AbstractServiceConfig<?>>(Supplier<T> getter, Consumer<T> setter) {
-
-        @SuppressWarnings("unchecked")
-        void disable() {
-            setter.accept((T) get().toBuilder().enabled(false).build());
-        }
-
-        public T get() {
-            return getter.get();
-        }
     }
 }

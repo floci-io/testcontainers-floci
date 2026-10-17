@@ -23,7 +23,7 @@ public class RdsDataConfig extends AbstractServiceConfig<RdsDataConfig.Builder> 
     private final boolean databaseResumingExceptionEnabled;
 
     private RdsDataConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.transactionTtlSeconds = builder.transactionTtlSeconds;
         this.databaseResumingExceptionEnabled = builder.databaseResumingExceptionEnabled;
     }

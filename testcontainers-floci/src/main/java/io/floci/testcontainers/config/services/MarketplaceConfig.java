@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class MarketplaceConfig extends AbstractServiceConfig<MarketplaceConfig.Builder> {
 
     private MarketplaceConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

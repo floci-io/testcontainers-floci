@@ -19,7 +19,7 @@ public class CognitoConfig extends AbstractServiceConfig<CognitoConfig.Builder> 
     private final boolean enforceTokenValidityLimits;
 
     private CognitoConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.enforceTokenValidityLimits = builder.enforceTokenValidityLimits;
     }
 

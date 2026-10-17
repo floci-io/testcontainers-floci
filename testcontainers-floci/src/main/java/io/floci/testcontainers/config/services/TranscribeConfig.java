@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class TranscribeConfig extends AbstractServiceConfig<TranscribeConfig.Builder> {
 
     private TranscribeConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

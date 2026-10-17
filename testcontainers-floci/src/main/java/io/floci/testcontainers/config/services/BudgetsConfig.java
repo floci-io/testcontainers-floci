@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class BudgetsConfig extends AbstractServiceConfig<BudgetsConfig.Builder> {
 
     private BudgetsConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

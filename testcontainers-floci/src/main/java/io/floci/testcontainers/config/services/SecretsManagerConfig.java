@@ -23,7 +23,7 @@ public class SecretsManagerConfig extends AbstractServiceConfig<SecretsManagerCo
     private final long rotationTickSeconds;
 
     private SecretsManagerConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.defaultRecoveryWindowDays = builder.defaultRecoveryWindowDays;
         this.scheduledRotationEnabled = builder.scheduledRotationEnabled;
         this.rotationTickSeconds = builder.rotationTickSeconds;

@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class ConnectConfig extends AbstractServiceConfig<ConnectConfig.Builder> {
 
     private ConnectConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

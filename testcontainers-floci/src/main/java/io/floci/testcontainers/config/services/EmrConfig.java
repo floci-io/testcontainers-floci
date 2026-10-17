@@ -23,7 +23,7 @@ public class EmrConfig extends AbstractServiceConfig<EmrConfig.Builder> {
     private final int clusterStartupDelaySeconds;
 
     private EmrConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
         this.defaultReleaseLabel = builder.defaultReleaseLabel;
         this.clusterStartupDelaySeconds = builder.clusterStartupDelaySeconds;
     }

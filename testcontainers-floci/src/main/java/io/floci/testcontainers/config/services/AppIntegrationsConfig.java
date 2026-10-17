@@ -14,7 +14,7 @@ import org.testcontainers.containers.Container;
 public class AppIntegrationsConfig extends AbstractServiceConfig<AppIntegrationsConfig.Builder> {
 
     private AppIntegrationsConfig(Builder builder) {
-        super(builder.enabled);
+        super(builder);
     }
 
     /**

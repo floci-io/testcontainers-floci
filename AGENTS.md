@@ -6,11 +6,15 @@ Testcontainers module for [Floci](https://github.com/floci-io/floci) — a local
 
 ## Structure
 
-- `testcontainers-floci-core/` — Shared, provider-independent base: `AbstractFlociContainer` (service config
-  registry, env-var/port/file-mount wiring, Docker socket auto-detection, log level, dedicated network, graceful stop)
-  and `AbstractServiceConfig`/`AbstractServiceConfigBuilder`. Publishes its test helpers (`ContainerUtils`,
-  `TransferableCopyInspector`) as test-jar. Not used by the AWS module (yet).
-- `testcontainers-floci/` — AWS module: `FlociContainer` extending `GenericContainer`
+- `testcontainers-floci-core/` — Shared, provider-independent base: `AbstractFlociContainer` (constructed from a
+  `CloudDescriptor` — image, port, health/reset paths and env-var names of one emulator; service config registry,
+  env-var/port/file-mount wiring, Docker socket auto-detection, log level, dedicated network, per-start resource
+  namespace with sibling cleanup on stop, `reset()`, graceful stop) and `AbstractServiceConfig`/
+  `AbstractServiceConfigBuilder`. Publishes its test helpers (`ContainerUtils`, `TransferableCopyInspector`,
+  `DockerSocketInspector`) as test-jar.
+- `testcontainers-floci/` — AWS module: `FlociContainer` extending `AbstractFlociContainer`. Its public API must stay
+  compatible with 2.16.1 (`japicmp` in the module's `verify` phase); `config.services.AbstractServiceConfig`/
+  `AbstractServiceConfigBuilder` remain as deprecated subclasses of the core types that every AWS config extends.
 - `testcontainers-floci-az/` — Azure module: `FlociAzContainer` extending `AbstractFlociContainer`, for
   [Floci Azure](https://github.com/floci-io/floci-az) (`floci/floci-az`, port 4577)
 - `testcontainers-floci-gcp/` — GCP module: `FlociGcpContainer` extending `AbstractFlociContainer`, for
@@ -52,12 +56,14 @@ entry point; everything else hangs off it:
   copied into the container (currently only `StepFunctionsConfig`, for a generated mock config file). All three
   `apply*ToContainer(...)` hooks must tolerate repeated invocation — they run once per `with<Service>Config(...)`
   call plus once from the constructor and from `disableAllServices()`.
-- `FlociContainer` holds one field + a `with<Service>Config(Consumer<Builder>)`/`get<Service>Config()` pair per
-  service, and registers every service field in `serviceConfigAccessors` (a `List<ServiceConfigAccessor<?>>`, a
-  generic getter/setter pair) so operations like `disableAllServices()` and the env-var/port/file-mount wiring
-  (`configureEnvVars()`/`configureExposedPorts()`/`configureFileMounts()`, called from the constructor and after
-  every `with*Config` call) can iterate all services generically without a big switch. Adding a new service means touching all of these — see
-  "Adding support for a new Floci service" in CONTRIBUTING.md for the exact steps and file locations.
+- `FlociContainer` holds one `ServiceConfigRef` field per service, registered via the core's
+  `registerServiceConfig(...)`, plus a `with<Service>Config(Consumer<Builder>)`/`get<Service>Config()` pair whose
+  `with…` method delegates to `updateServiceConfig(...)`. The core iterates the registered configs for
+  `disableAllServices()`, the env-var/port/file-mount wiring (`applyAllConfigs()`, called from the constructor) and
+  the Docker socket decision; cross-cutting configs are applied in `applyGlobalEnvVars()`. Methods inherited from the
+  core that return the container (`withLogLevel`, `withDedicatedNetwork`, `disableAllServices`, `withDockerSocket`)
+  are overridden to keep returning `FlociContainer` in the bytecode. Adding a new service means touching all of
+  these — see "Adding support for a new Floci service" in CONTRIBUTING.md for the exact steps and file locations.
 
 ## Testing
 
@@ -106,7 +112,7 @@ entry point; everything else hangs off it:
   for Lambda). Pick a property that maps to a `FLOCI_*` env var; fall back to `enabled(false)` for services whose
   only setting is the enabled flag. Find the exact env-var name in the config class's `applyEnvVarsToContainer(...)`.
 - `FlociContainerTest.shouldDisableAllServices()` asserts `disableAllServices()` disables every service, but it
-  enumerates each `container.get<Service>Config()` **explicitly** (not via `serviceConfigAccessors`). Whenever you
+  enumerates each `container.get<Service>Config()` **explicitly** (not via the registered configs). Whenever you
   add a new service config, add its getter to that assertion list too — otherwise the new service is silently
   unchecked. When adding a service, verify this test lists all config classes under `config/services/` and fill in
   any gaps.
@@ -348,7 +354,7 @@ order of fields/getters/builder methods/env vars aligned with each other and wit
   disabled, `toBuilder()`) as described under "Testing" — **never** as a new per-property test method.
 
 **For a new service** follow "Adding support for a new Floci service" in CONTRIBUTING.md in full: the config class,
-`FlociContainer` field/getter/`with…Config`/`serviceConfigAccessors` entry, `<Service>ConfigTest`, a
+`FlociContainer` `ServiceConfigRef` field/getter/`with…Config`, `<Service>ConfigTest`, a
 `shouldWire<Service>ConfigIntoContainer()` test in `FlociContainerServicesConfigTest`, the getter added to
 `FlociContainerTest.shouldDisableAllServices()`, the README service list if it enumerates services, the AWS SDK test
 dependency in `testcontainers-floci/pom.xml`, and a Docker-backed `services/<Service>ServiceTest` extending
