@@ -9,7 +9,7 @@ import org.testcontainers.containers.Container;
  * <pre>{@code
  * BatchConfig config = BatchConfig.builder()
  *     .enabled(true)
- *     .runnerMode("deferred")
+ *     .runnerMode("docker")
  *     .dockerNetwork("my-batch-network")
  *     .build();
  * }</pre>
@@ -17,6 +17,7 @@ import org.testcontainers.containers.Container;
 public class BatchConfig extends AbstractServiceConfig<BatchConfig.Builder> {
 
     private static final String DEFAULT_RUNNER_MODE = "immediate";
+    private static final String DOCKER_RUNNER_MODE = "docker";
 
     private final String runnerMode;
     private final String dockerNetwork;
@@ -48,7 +49,8 @@ public class BatchConfig extends AbstractServiceConfig<BatchConfig.Builder> {
     }
 
     /**
-     * Returns the runner mode used for Batch jobs.
+     * Returns the runner mode used for Batch jobs: {@code docker} runs each job in a container, any other mode
+     * (such as the default {@value DEFAULT_RUNNER_MODE}) completes jobs immediately without one.
      *
      * @return the runner mode
      */
@@ -78,9 +80,13 @@ public class BatchConfig extends AbstractServiceConfig<BatchConfig.Builder> {
         }
     }
 
+    /**
+     * Returns {@code true} while enabled with the {@code docker} runner mode, the only mode that runs jobs in
+     * containers.
+     */
     @Override
     public boolean requiresDockerSocket() {
-        return isEnabled();
+        return isEnabled() && DOCKER_RUNNER_MODE.equalsIgnoreCase(runnerMode);
     }
 
     /**
@@ -107,7 +113,8 @@ public class BatchConfig extends AbstractServiceConfig<BatchConfig.Builder> {
         }
 
         /**
-         * Sets the runner mode used for Batch jobs.
+         * Sets the runner mode used for Batch jobs: {@code docker} runs each job in a container (which needs the
+         * Docker socket), any other mode completes jobs immediately without one.
          *
          * @param runnerMode the runner mode (default {@value DEFAULT_RUNNER_MODE})
          * @return this builder
