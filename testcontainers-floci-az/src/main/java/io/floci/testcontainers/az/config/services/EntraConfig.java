@@ -18,6 +18,7 @@ import java.util.Optional;
  *     .defaultTenantId("11111111-1111-1111-1111-111111111111")
  *     .issuer("https://login.example.com/tenant/v2.0")
  *     .tokenLifetimeSeconds(600L)
+ *     .validateClientCredentials(true)
  *     .build();
  * }</pre>
  */
@@ -26,11 +27,13 @@ public class EntraConfig extends AbstractServiceConfig<EntraConfig.Builder> {
     private static final String DEFAULT_DEFAULT_TENANT_ID = "00000000-0000-0000-0000-000000000002";
     private static final long DEFAULT_TOKEN_LIFETIME_SECONDS = 3599L;
     private static final boolean DEFAULT_VALIDATE_TOKENS = false;
+    private static final boolean DEFAULT_VALIDATE_CLIENT_CREDENTIALS = false;
 
     private final String defaultTenantId;
     private final String issuer;
     private final long tokenLifetimeSeconds;
     private final boolean validateTokens;
+    private final boolean validateClientCredentials;
     private final String signingKeyPath;
 
     private EntraConfig(Builder builder) {
@@ -39,6 +42,7 @@ public class EntraConfig extends AbstractServiceConfig<EntraConfig.Builder> {
         this.issuer = builder.issuer;
         this.tokenLifetimeSeconds = builder.tokenLifetimeSeconds;
         this.validateTokens = builder.validateTokens;
+        this.validateClientCredentials = builder.validateClientCredentials;
         this.signingKeyPath = builder.signingKeyPath;
     }
 
@@ -101,6 +105,17 @@ public class EntraConfig extends AbstractServiceConfig<EntraConfig.Builder> {
     }
 
     /**
+     * Returns whether the token endpoint checks the client against the directory: an unregistered
+     * {@code client_id} gets {@code 400 unauthorized_client} ({@code AADSTS700016}) and a wrong
+     * secret {@code 401 invalid_client} ({@code AADSTS7000215}).
+     *
+     * @return {@code true} if client credentials are validated
+     */
+    public boolean isValidateClientCredentials() {
+        return validateClientCredentials;
+    }
+
+    /**
      * Returns the directory inside the container holding the persisted RSA signing key. When
      * empty, floci-az uses {@code {storage.persistent-path}/entra}.
      *
@@ -118,6 +133,7 @@ public class EntraConfig extends AbstractServiceConfig<EntraConfig.Builder> {
             container.withEnv("FLOCI_AZ_SERVICES_ENTRA_DEFAULT_TENANT_ID", defaultTenantId);
             container.withEnv("FLOCI_AZ_SERVICES_ENTRA_TOKEN_LIFETIME_SECONDS", String.valueOf(tokenLifetimeSeconds));
             container.withEnv("FLOCI_AZ_SERVICES_ENTRA_VALIDATE_TOKENS", String.valueOf(validateTokens));
+            container.withEnv("FLOCI_AZ_SERVICES_ENTRA_VALIDATE_CLIENT_CREDENTIALS", String.valueOf(validateClientCredentials));
 
             if (issuer != null) {
                 container.withEnv("FLOCI_AZ_SERVICES_ENTRA_ISSUER", issuer);
@@ -138,6 +154,7 @@ public class EntraConfig extends AbstractServiceConfig<EntraConfig.Builder> {
         private String issuer;
         private long tokenLifetimeSeconds = DEFAULT_TOKEN_LIFETIME_SECONDS;
         private boolean validateTokens = DEFAULT_VALIDATE_TOKENS;
+        private boolean validateClientCredentials = DEFAULT_VALIDATE_CLIENT_CREDENTIALS;
         private String signingKeyPath;
 
         private Builder() {
@@ -155,6 +172,7 @@ public class EntraConfig extends AbstractServiceConfig<EntraConfig.Builder> {
             this.issuer = instance.issuer;
             this.tokenLifetimeSeconds = instance.tokenLifetimeSeconds;
             this.validateTokens = instance.validateTokens;
+            this.validateClientCredentials = instance.validateClientCredentials;
             this.signingKeyPath = instance.signingKeyPath;
         }
 
@@ -201,6 +219,20 @@ public class EntraConfig extends AbstractServiceConfig<EntraConfig.Builder> {
          */
         public Builder validateTokens(boolean validateTokens) {
             this.validateTokens = validateTokens;
+            return this;
+        }
+
+        /**
+         * Sets whether the token endpoint checks the client against the directory: an unregistered
+         * {@code client_id} gets {@code 400 unauthorized_client} ({@code AADSTS700016}) and a wrong
+         * secret {@code 401 invalid_client} ({@code AADSTS7000215}). By default any client id and secret are accepted.
+         *
+         * @param validateClientCredentials {@code true} to validate client credentials
+         *                                  (default {@value DEFAULT_VALIDATE_CLIENT_CREDENTIALS})
+         * @return this builder
+         */
+        public Builder validateClientCredentials(boolean validateClientCredentials) {
+            this.validateClientCredentials = validateClientCredentials;
             return this;
         }
 
