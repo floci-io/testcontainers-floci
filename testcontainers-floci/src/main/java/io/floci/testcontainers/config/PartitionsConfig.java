@@ -65,7 +65,7 @@ public class PartitionsConfig {
 
     /**
      * Returns whether requests signed for a service AWS does not publish in the request's partition
-     * (e.g. CloudFront in GovCloud) are refused.
+     * (e.g. CloudFront in GovCloud, Lightsail in China) are refused.
      *
      * @return {@code true} if such requests are refused
      */
@@ -132,7 +132,7 @@ public class PartitionsConfig {
 
         /**
          * Sets whether requests signed for a service AWS does not publish in the request's partition
-         * (CloudFront in GovCloud, IAM in {@code aws-eusc}) are refused. On AWS such a request never
+         * (CloudFront in GovCloud, Lightsail in China) are refused. On AWS such a request never
          * reaches an API because its endpoint does not resolve; by default Floci serves every enabled
          * service in every partition.
          *
