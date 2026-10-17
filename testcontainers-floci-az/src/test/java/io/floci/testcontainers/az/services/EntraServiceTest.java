@@ -52,6 +52,23 @@ class EntraServiceTest extends AbstractServiceTest {
         assertThat(response.json().path("token_endpoint").asText()).endsWith("/" + TENANT_ID + "/oauth2/v2.0/token");
     }
 
+    @Test
+    void shouldRejectUnregisteredClientWhenValidatingClientCredentials() throws IOException {
+        try (FlociAzContainer validatingFloci = new FlociAzContainer(NIGHTLY_IMAGE)
+                .disableAllServices()
+                .withEntraConfig(c -> c.enabled(true).validateClientCredentials(true))) {
+            validatingFloci.start();
+
+            RestResponse response = restForm(validatingFloci, "/organizations/oauth2/v2.0/token",
+                    "grant_type=client_credentials&client_id=unregistered-app&client_secret=secret"
+                            + "&scope=https%3A%2F%2Fmanagement.azure.com%2F.default");
+
+            assertThat(response.status()).as(response.toString()).isEqualTo(400);
+            assertThat(response.json().path("error").asText()).isEqualTo("unauthorized_client");
+            assertThat(response.json().path("error_description").asText()).contains("AADSTS700016");
+        }
+    }
+
     private static JsonNode claims(String jwt) throws IOException {
         return new ObjectMapper().readTree(Base64.getUrlDecoder().decode(jwt.split("\\.")[1]));
     }
