@@ -117,8 +117,11 @@ Mirrors the AWS module, with these differences:
 
 - `FlociAzContainer` registers each service via `registerServiceConfig(...)` (a `ServiceConfigRef` field per service,
   in Floci's `ServicesConfig` order) and its `with<Service>Config(...)` delegates to `updateServiceConfig(...)`;
-  there is no hand-written accessor list. Cross-cutting configs (`config/TlsConfig`, `config/AuthConfig`) are applied in
-  `applyGlobalEnvVars()`.
+  there is no hand-written accessor list. Cross-cutting configs (`config/TlsConfig`, `config/AuthConfig`,
+  `config/DirectoryConfig`, `config/ParityConfig`) are applied in `applyGlobalEnvVars()`. `DirectoryConfig` covers the
+  root `cloud.default`, `tenants[]` and `subscriptions[]` (list entries are the `TenantConfig`/`SubscriptionConfig` value
+  types, emitted as indexed env vars `FLOCI_AZ_TENANTS_<n>__ID` etc.); `ParityConfig` covers `parity` and
+  `parity-overrides.*`.
 - Configs extend the core `AbstractServiceConfig` from another package, so they call `super(builder)` instead of
   reading `builder.enabled`.
 - Naming follows Floci Azure (`mocked`, not `mock`). Deprecated Floci properties (e.g. `sql.mocked`) are not exposed.
@@ -419,9 +422,10 @@ The same process applies to `testcontainers-floci-az`, with these values:
 | Image for service tests  | `floci/floci-az:nightly`                                                                  |
 
 Initial migration: `3d2d06c7508ce82362f42921c51b63f197b94089` (floci-az `main`, 2026-10-03). Classify the diff as for
-AWS: migrate `ServicesConfig`; `TlsConfig` and `AuthConfig` are migrated cross-cutting classes and must be kept in sync
-too; ignore `StorageConfig.services` (per-service storage overrides); only summarize everything else (`dns`, `storage`,
-`docker`, root properties). Commit scope is `az` (e.g. `feat(az): add <property> config property`).
+AWS: migrate `ServicesConfig`; `TlsConfig`, `AuthConfig`, `DirectoryConfig` (`cloud`, `tenants`, `subscriptions`) and
+`ParityConfig` (`parity`, `parity-overrides`) are migrated cross-cutting classes and must be kept in sync too; ignore
+`StorageConfig.services` (per-service storage overrides); only summarize everything else (`dns`, `storage`, `docker`,
+other root properties). Commit scope is `az` (e.g. `feat(az): add <property> config property`).
 
 ### Floci GCP
 
