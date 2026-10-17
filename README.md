@@ -120,6 +120,19 @@ testImplementation "io.floci:testcontainers-floci:${testcontainersFlociVersion}"
 </dependency>
 ```
 
+Floci OCI never verifies request signatures, so `getConfigProfile()` hands out an OCI configuration profile signed with
+a throwaway key generated per container, ready for the SDK's file-based authentication:
+
+```java
+try (FlociOciContainer floci = new FlociOciContainer()) {
+    floci.start();
+    OciConfigProfile profile = floci.getConfigProfile();
+    ObjectStorageClient client = ObjectStorageClient.builder()
+            .endpoint(floci.getEndpoint())
+            .build(new ConfigFileAuthenticationDetailsProvider(profile.writeConfigFile().toString(), profile.getName()));
+}
+```
+
 ### Spring Boot integration
 
 > **`spring-boot-testcontainers-floci` has been decommissioned on `main` and is no longer published for

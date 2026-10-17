@@ -8,8 +8,18 @@ import io.floci.testcontainers.oci.config.services.*;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.GeneralSecurityException;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.MessageDigest;
 import java.time.Duration;
+import java.util.Base64;
+import java.util.StringJoiner;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
@@ -29,10 +39,10 @@ import java.util.regex.Pattern;
  * <pre>{@code
  * try (FlociOciContainer floci = new FlociOciContainer()) {
  *     floci.start();
+ *     OciConfigProfile profile = floci.getConfigProfile();
  *     ObjectStorageClient client = ObjectStorageClient.builder()
- *         .region(floci.getRegion())
- *         .build(authProvider);
- *     client.setEndpoint(floci.getEndpoint());
+ *         .endpoint(floci.getEndpoint())
+ *         .build(new ConfigFileAuthenticationDetailsProvider(profile.writeConfigFile().toString(), profile.getName()));
  * }
  * }</pre>
  */
@@ -80,8 +90,15 @@ public class FlociOciContainer extends AbstractFlociContainer<FlociOciContainer>
             "ocid1.tenancy.oc1..flocilocaltenancy0000000000000000000000000000000000000000";
     private static final String DEFAULT_NAMESPACE = "floci-local";
 
+    private static final String CONFIG_PROFILE_USER_ID = "ocid1.user.oc1..testcontainersfloci";
+    private static final int SIGNING_KEY_SIZE = 2048;
+
     private TlsConfig tlsConfig = TlsConfig.builder().build();
     private AuthConfig authConfig = AuthConfig.builder().build();
+
+    // throwaway signing key of getConfigProfile(), generated on first use
+    private Path signingKeyFile;
+    private String signingKeyFingerprint;
 
     // Service configs
     private final ServiceConfigRef<IdentityConfig> identityConfig = registerServiceConfig(IdentityConfig.builder().build());
@@ -280,6 +297,69 @@ public class FlociOciContainer extends AbstractFlociContainer<FlociOciContainer>
      */
     public FlociOciContainer withNamespace(String namespace) {
         return withEnv(NAMESPACE_ENV_VAR, namespace);
+    }
+
+    /**
+     * Returns an OCI configuration file profile (user, tenancy, fingerprint, key file, region) for signing requests
+     * to this container, which the OCI SDKs' file-based authentication can load (see {@link OciConfigProfile}).
+     *
+     * <p>Floci OCI parses, but never verifies, request signatures, so the profile signs with a throwaway RSA key that
+     * is generated once per container and stored in a temporary PEM file deleted when the JVM exits. The tenancy and
+     * region are the container's current {@link #getTenancyId()} and {@link #getRegion()}. The container does not
+     * have to be running.
+     *
+     * @return the configuration profile
+     * @throws UncheckedIOException  if the key file cannot be written
+     * @throws IllegalStateException if no RSA key can be generated
+     */
+    public synchronized OciConfigProfile getConfigProfile() {
+        if (signingKeyFile == null) {
+            KeyPair keyPair = generateSigningKey();
+            signingKeyFingerprint = fingerprint(keyPair);
+            signingKeyFile = writePrivateKey(keyPair);
+        }
+        return new OciConfigProfile(OciConfigProfile.DEFAULT_PROFILE_NAME, CONFIG_PROFILE_USER_ID,
+                signingKeyFingerprint, getTenancyId(), getRegion(), signingKeyFile);
+    }
+
+    private static KeyPair generateSigningKey() {
+        try {
+            KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
+            generator.initialize(SIGNING_KEY_SIZE);
+            return generator.generateKeyPair();
+        } catch (GeneralSecurityException e) {
+            throw new IllegalStateException("Failed to generate an RSA key for signing OCI requests", e);
+        }
+    }
+
+    /**
+     * Returns the OCI API key fingerprint: the MD5 digest of the DER-encoded public key as colon-separated hex.
+     */
+    private static String fingerprint(KeyPair keyPair) {
+        try {
+            byte[] digest = MessageDigest.getInstance("MD5").digest(keyPair.getPublic().getEncoded());
+            StringJoiner fingerprint = new StringJoiner(":");
+            for (byte b : digest) {
+                fingerprint.add(String.format("%02x", b));
+            }
+            return fingerprint.toString();
+        } catch (GeneralSecurityException e) {
+            throw new IllegalStateException("Failed to compute the fingerprint of the OCI signing key", e);
+        }
+    }
+
+    private static Path writePrivateKey(KeyPair keyPair) {
+        String pem = "-----BEGIN PRIVATE KEY-----\n"
+                + Base64.getMimeEncoder(64, "\n".getBytes(StandardCharsets.US_ASCII))
+                .encodeToString(keyPair.getPrivate().getEncoded())
+                + "\n-----END PRIVATE KEY-----\n";
+        try {
+            Path file = Files.createTempFile("floci-oci-key-", ".pem");
+            file.toFile().deleteOnExit();
+            return Files.writeString(file, pem, StandardCharsets.US_ASCII);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to write the OCI signing key", e);
+        }
     }
 
     /**
