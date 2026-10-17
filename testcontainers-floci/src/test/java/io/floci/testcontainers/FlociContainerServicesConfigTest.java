@@ -157,9 +157,9 @@ class FlociContainerServicesConfigTest {
     @Test
     void shouldWireCognitoConfigIntoContainer() {
         assertConfigWired(
-                c -> c.withCognitoConfig(cfg -> cfg.enabled(false)),
-                c -> c.getCognitoConfig().isEnabled(), false,
-                "FLOCI_SERVICES_COGNITO_ENABLED", "false");
+                c -> c.withCognitoConfig(cfg -> cfg.enforceTokenValidityLimits(false)),
+                c -> c.getCognitoConfig().isEnforceTokenValidityLimits(), false,
+                "FLOCI_SERVICES_COGNITO_ENFORCE_TOKEN_VALIDITY_LIMITS", "false");
     }
 
     @Test

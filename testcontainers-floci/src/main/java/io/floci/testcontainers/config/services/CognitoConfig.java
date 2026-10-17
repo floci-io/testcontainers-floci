@@ -8,14 +8,19 @@ import org.testcontainers.containers.Container;
  * <p>Instances are created via {@link Builder}:
  * <pre>{@code
  * CognitoConfig config = CognitoConfig.builder()
+ *     .enforceTokenValidityLimits(false)
  *     .build();
  * }</pre>
  */
 public class CognitoConfig extends AbstractServiceConfig<CognitoConfig.Builder> {
 
+    private static final boolean DEFAULT_ENFORCE_TOKEN_VALIDITY_LIMITS = true;
+
+    private final boolean enforceTokenValidityLimits;
 
     private CognitoConfig(Builder builder) {
         super(builder.enabled);
+        this.enforceTokenValidityLimits = builder.enforceTokenValidityLimits;
     }
 
     /**
@@ -38,9 +43,22 @@ public class CognitoConfig extends AbstractServiceConfig<CognitoConfig.Builder> 
         return new Builder(this);
     }
 
+    /**
+     * Returns whether app clients whose token validity is outside AWS's limits are rejected.
+     *
+     * @return {@code true} if the token validity limits are enforced
+     */
+    public boolean isEnforceTokenValidityLimits() {
+        return enforceTokenValidityLimits;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_COGNITO_ENABLED", String.valueOf(isEnabled()));
+
+        if (isEnabled()) {
+            container.withEnv("FLOCI_SERVICES_COGNITO_ENFORCE_TOKEN_VALIDITY_LIMITS", String.valueOf(enforceTokenValidityLimits));
+        }
     }
 
     /**
@@ -48,6 +66,7 @@ public class CognitoConfig extends AbstractServiceConfig<CognitoConfig.Builder> 
      */
     public static class Builder extends AbstractServiceConfigBuilder<Builder, CognitoConfig> {
 
+        private boolean enforceTokenValidityLimits = DEFAULT_ENFORCE_TOKEN_VALIDITY_LIMITS;
 
         private Builder() {
             // Allow instantiation only via CognitoConfig.builder()
@@ -60,6 +79,22 @@ public class CognitoConfig extends AbstractServiceConfig<CognitoConfig.Builder> 
          */
         private Builder(CognitoConfig instance) {
             super(instance);
+            this.enforceTokenValidityLimits = instance.isEnforceTokenValidityLimits();
+        }
+
+        /**
+         * Sets whether app clients whose token validity is outside AWS's limits are rejected: access
+         * and ID tokens between 5 minutes and 1 day, refresh tokens between 60 minutes and 3,650 days.
+         * On by default, because a client that Floci accepts and AWS refuses only fails when it is
+         * deployed. Turn it off to use tokens shorter than AWS allows, e.g. a one-minute access token
+         * to test what happens when it expires.
+         *
+         * @param enforceTokenValidityLimits {@code true} to enforce the token validity limits (default {@value DEFAULT_ENFORCE_TOKEN_VALIDITY_LIMITS})
+         * @return this builder
+         */
+        public Builder enforceTokenValidityLimits(boolean enforceTokenValidityLimits) {
+            this.enforceTokenValidityLimits = enforceTokenValidityLimits;
+            return this;
         }
 
         /**

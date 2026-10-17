@@ -12,14 +12,17 @@ class CognitoConfigTest {
     void shouldApplyDefaultCognitoConfig() {
         CognitoConfig config = CognitoConfig.builder().build();
         assertThat(config.isEnabled()).isTrue();
+        assertThat(config.isEnforceTokenValidityLimits()).isTrue();
     }
 
     @Test
     void shouldApplyCustomCognitoConfig() {
         CognitoConfig config = CognitoConfig.builder()
                 .enabled(false)
+                .enforceTokenValidityLimits(false)
                 .build();
         assertThat(config.isEnabled()).isFalse();
+        assertThat(config.isEnforceTokenValidityLimits()).isFalse();
     }
 
     @Test
@@ -27,7 +30,21 @@ class CognitoConfigTest {
         GenericContainer<?> container = genericContainer();
         CognitoConfig.builder().build().applyEnvVarsToContainer(container);
 
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_COGNITO_ENABLED", "true");
+        assertThat(container.getEnvMap())
+                .containsEntry("FLOCI_SERVICES_COGNITO_ENABLED", "true")
+                .containsEntry("FLOCI_SERVICES_COGNITO_ENFORCE_TOKEN_VALIDITY_LIMITS", "true");
+    }
+
+    @Test
+    void shouldApplyCustomEnvVarsToContainer() {
+        GenericContainer<?> container = genericContainer();
+        CognitoConfig.builder()
+                .enforceTokenValidityLimits(false)
+                .build()
+                .applyEnvVarsToContainer(container);
+
+        assertThat(container.getEnvMap())
+                .containsEntry("FLOCI_SERVICES_COGNITO_ENFORCE_TOKEN_VALIDITY_LIMITS", "false");
     }
 
     @Test
@@ -35,16 +52,20 @@ class CognitoConfigTest {
         GenericContainer<?> container = genericContainer();
         CognitoConfig.builder().enabled(false).build().applyEnvVarsToContainer(container);
 
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_COGNITO_ENABLED", "false");
+        assertThat(container.getEnvMap())
+                .containsEntry("FLOCI_SERVICES_COGNITO_ENABLED", "false")
+                .doesNotContainKey("FLOCI_SERVICES_COGNITO_ENFORCE_TOKEN_VALIDITY_LIMITS");
     }
 
     @Test
     void shouldPreserveValuesOnToBuilder() {
         CognitoConfig config = CognitoConfig.builder()
                 .enabled(false)
+                .enforceTokenValidityLimits(false)
                 .build();
         CognitoConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
+        assertThat(copy.isEnforceTokenValidityLimits()).isFalse();
     }
 
 }
