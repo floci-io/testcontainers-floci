@@ -2,6 +2,8 @@ package io.floci.testcontainers.config.services;
 
 import org.testcontainers.containers.Container;
 
+import java.util.Optional;
+
 /**
  * Configuration for MSK (Managed Streaming for Apache Kafka)-specific container settings.
  *
@@ -12,6 +14,7 @@ import org.testcontainers.containers.Container;
  *     .mock(false)
  *     .defaultImage("redpandadata/redpanda:latest")
  *     .kafkaHostPortRange(9300, 10)
+ *     .bootstrapHostname("localhost")
  *     .build();
  * }</pre>
  */
@@ -26,6 +29,7 @@ public class MskConfig extends AbstractServiceConfig<MskConfig.Builder> {
     private final String defaultImage;
     private final int kafkaHostPortBase;
     private final int kafkaHostPortsCount;
+    private final String bootstrapHostname;
 
     private MskConfig(Builder builder) {
         super(builder.enabled);
@@ -33,6 +37,7 @@ public class MskConfig extends AbstractServiceConfig<MskConfig.Builder> {
         this.defaultImage = builder.defaultImage;
         this.kafkaHostPortBase = builder.kafkaHostPortBase;
         this.kafkaHostPortsCount = builder.kafkaHostPortsCount;
+        this.bootstrapHostname = builder.bootstrapHostname;
     }
 
     /**
@@ -100,6 +105,16 @@ public class MskConfig extends AbstractServiceConfig<MskConfig.Builder> {
         return kafkaHostPortBase + kafkaHostPortsCount - 1;
     }
 
+    /**
+     * Returns the hostname the brokers' host listener advertises when Floci runs in a container.
+     * Empty if Floci's default ({@code localhost}, Docker-network address in GetBootstrapBrokers) is used.
+     *
+     * @return the bootstrap hostname, if set
+     */
+    public Optional<String> getBootstrapHostname() {
+        return Optional.ofNullable(bootstrapHostname);
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_MSK_ENABLED", String.valueOf(isEnabled()));
@@ -109,6 +124,10 @@ public class MskConfig extends AbstractServiceConfig<MskConfig.Builder> {
             container.withEnv("FLOCI_SERVICES_MSK_DEFAULT_IMAGE", defaultImage);
             container.withEnv("FLOCI_SERVICES_MSK_KAFKA_HOST_PORT_BASE", String.valueOf(kafkaHostPortBase));
             container.withEnv("FLOCI_SERVICES_MSK_KAFKA_HOST_PORT_MAX", String.valueOf(getKafkaHostPortMax()));
+
+            if (bootstrapHostname != null) {
+                container.withEnv("FLOCI_SERVICES_MSK_BOOTSTRAP_HOSTNAME", bootstrapHostname);
+            }
         }
     }
 
@@ -136,6 +155,7 @@ public class MskConfig extends AbstractServiceConfig<MskConfig.Builder> {
         private String defaultImage = DEFAULT_IMAGE;
         private int kafkaHostPortBase = DEFAULT_KAFKA_HOST_PORT_BASE;
         private int kafkaHostPortsCount = DEFAULT_KAFKA_HOST_PORTS_COUNT;
+        private String bootstrapHostname;
 
         private Builder() {
             // Allow instantiation only via MskConfig.builder()
@@ -152,6 +172,7 @@ public class MskConfig extends AbstractServiceConfig<MskConfig.Builder> {
             this.defaultImage = instance.getDefaultImage();
             this.kafkaHostPortBase = instance.getKafkaHostPortBase();
             this.kafkaHostPortsCount = instance.getKafkaHostPortsCount();
+            this.bootstrapHostname = instance.getBootstrapHostname().orElse(null);
         }
 
         /**
@@ -186,6 +207,23 @@ public class MskConfig extends AbstractServiceConfig<MskConfig.Builder> {
         public Builder kafkaHostPortRange(int basePort, int amount) {
             this.kafkaHostPortBase = basePort;
             this.kafkaHostPortsCount = amount;
+            return this;
+        }
+
+        /**
+         * Sets the hostname the brokers' host listener advertises. Only applies when Floci runs in a
+         * container (always the case here): each broker then has a second Kafka listener, published on
+         * the Docker host on a port from the Kafka host port range and advertised as
+         * {@code <bootstrapHostname>:<port>} ({@code localhost} when unset). When set,
+         * GetBootstrapBrokers returns both listeners, {@code <container-name>:9092,<bootstrapHostname>:<port>},
+         * so clients on the Docker host and in sibling containers can each discover the broker; when
+         * unset, it returns only the broker's Docker-network address.
+         *
+         * @param bootstrapHostname the hostname to advertise, or {@code null} to use Floci's default (default unset)
+         * @return this builder
+         */
+        public Builder bootstrapHostname(String bootstrapHostname) {
+            this.bootstrapHostname = bootstrapHostname;
             return this;
         }
 
