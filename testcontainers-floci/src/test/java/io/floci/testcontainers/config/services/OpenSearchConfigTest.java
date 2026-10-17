@@ -17,6 +17,7 @@ class OpenSearchConfigTest {
         assertThat(config.getProxyBasePort()).isEqualTo(9400);
         assertThat(config.getProxyMaxPort()).isEqualTo(9409);
         assertThat(config.getProxyPortsCount()).isEqualTo(10);
+        assertThat(config.getDataVolume()).isEmpty();
         assertThat(config.getDockerNetwork()).isNull();
     }
 
@@ -27,6 +28,7 @@ class OpenSearchConfigTest {
                 .mock(true)
                 .defaultImage("opensearchproject/opensearch:3")
                 .proxyPortRange(9500, 50)
+                .dataVolume("my-os-data")
                 .dockerNetwork("my-os-network")
                 .build();
         assertThat(config.isEnabled()).isFalse();
@@ -35,6 +37,7 @@ class OpenSearchConfigTest {
         assertThat(config.getProxyBasePort()).isEqualTo(9500);
         assertThat(config.getProxyMaxPort()).isEqualTo(9549);
         assertThat(config.getProxyPortsCount()).isEqualTo(50);
+        assertThat(config.getDataVolume()).contains("my-os-data");
         assertThat(config.getDockerNetwork()).isEqualTo("my-os-network");
     }
 
@@ -49,6 +52,7 @@ class OpenSearchConfigTest {
                 .doesNotContainKey("FLOCI_SERVICES_OPENSEARCH_DEFAULT_IMAGE")
                 .containsEntry("FLOCI_SERVICES_OPENSEARCH_PROXY_BASE_PORT", "9400")
                 .containsEntry("FLOCI_SERVICES_OPENSEARCH_PROXY_MAX_PORT", "9409")
+                .doesNotContainKey("FLOCI_SERVICES_OPENSEARCH_DATA_VOLUME")
                 .doesNotContainKey("FLOCI_SERVICES_OPENSEARCH_DOCKER_NETWORK");
     }
 
@@ -60,6 +64,7 @@ class OpenSearchConfigTest {
                 .mock(true)
                 .defaultImage("opensearchproject/opensearch:3")
                 .proxyPortRange(9500, 50)
+                .dataVolume("my-os-data")
                 .dockerNetwork("my-os-network")
                 .build()
                 .applyEnvVarsToContainer(container);
@@ -70,6 +75,7 @@ class OpenSearchConfigTest {
                 .containsEntry("FLOCI_SERVICES_OPENSEARCH_DEFAULT_IMAGE", "opensearchproject/opensearch:3")
                 .containsEntry("FLOCI_SERVICES_OPENSEARCH_PROXY_BASE_PORT", "9500")
                 .containsEntry("FLOCI_SERVICES_OPENSEARCH_PROXY_MAX_PORT", "9549")
+                .containsEntry("FLOCI_SERVICES_OPENSEARCH_DATA_VOLUME", "my-os-data")
                 .containsEntry("FLOCI_SERVICES_OPENSEARCH_DOCKER_NETWORK", "my-os-network");
     }
 
@@ -78,7 +84,14 @@ class OpenSearchConfigTest {
         GenericContainer<?> container = genericContainer();
         OpenSearchConfig.builder().enabled(false).build().applyEnvVarsToContainer(container);
 
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_OPENSEARCH_ENABLED", "false");
+        assertThat(container.getEnvMap())
+                .containsEntry("FLOCI_SERVICES_OPENSEARCH_ENABLED", "false")
+                .doesNotContainKey("FLOCI_SERVICES_OPENSEARCH_MOCK")
+                .doesNotContainKey("FLOCI_SERVICES_OPENSEARCH_DEFAULT_IMAGE")
+                .doesNotContainKey("FLOCI_SERVICES_OPENSEARCH_PROXY_BASE_PORT")
+                .doesNotContainKey("FLOCI_SERVICES_OPENSEARCH_PROXY_MAX_PORT")
+                .doesNotContainKey("FLOCI_SERVICES_OPENSEARCH_DATA_VOLUME")
+                .doesNotContainKey("FLOCI_SERVICES_OPENSEARCH_DOCKER_NETWORK");
     }
 
     @Test
@@ -88,6 +101,7 @@ class OpenSearchConfigTest {
                 .mock(true)
                 .defaultImage("test-image")
                 .proxyPortRange(9500, 5)
+                .dataVolume("test-data")
                 .dockerNetwork("test-network")
                 .build();
         OpenSearchConfig copy = config.toBuilder().build();
@@ -96,6 +110,7 @@ class OpenSearchConfigTest {
         assertThat(copy.getDefaultImage()).isEqualTo("test-image");
         assertThat(copy.getProxyBasePort()).isEqualTo(9500);
         assertThat(copy.getProxyPortsCount()).isEqualTo(5);
+        assertThat(copy.getDataVolume()).contains("test-data");
         assertThat(copy.getDockerNetwork()).isEqualTo("test-network");
     }
 
