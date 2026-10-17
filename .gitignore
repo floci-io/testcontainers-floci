@@ -17,3 +17,6 @@ target/
 
 # Local scratch: backlog, plans, notes (never committed)
 /local/
+
+# Git worktrees of parallel Floci migration runs (see AGENTS.md)
+/.worktrees/
