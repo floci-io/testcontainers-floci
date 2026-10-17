@@ -47,7 +47,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <testcontainers.version>2.0.5</testcontainers.version>
-        <aws-sdk.version>2.55.11</aws-sdk.version>
+        <aws-sdk.version>2.55.16</aws-sdk.version>
         <azure-sdk.version>1.3.8</azure-sdk.version>
         <google-cloud-libraries-bom.version>26.87.0</google-cloud-libraries-bom.version>
         <oci-sdk.version>3.97.2</oci-sdk.version>
