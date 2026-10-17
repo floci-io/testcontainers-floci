@@ -210,6 +210,32 @@ the Floci config changes" / similar.
 The tag is maintained **manually by the user**. Never create, move, or push it yourself — at the end, report the
 commit you diffed against so the user can move the tag.
 
+### Step 0 — Create a dedicated worktree for the run
+
+Every migration run works in its **own git worktree**, never in the main checkout. This lets several agents run in
+parallel (typically one per provider: AWS, Azure, GCP, OCI) without touching each other's files, branches, or the
+user's working copy. Create the worktree from an up-to-date `origin/main` with a **detached HEAD** — the feature branch
+is only created once the run is complete (step 8):
+
+```bash
+git fetch origin
+RUN=floci-aws-$(date +%Y%m%d-%H%M%S)              # <provider>-<timestamp>, unique per run (aws|az|gcp|oci)
+git worktree add --detach .worktrees/$RUN origin/main
+cd .worktrees/$RUN
+```
+
+- Run **every** later command (git, mvn, file edits) inside this worktree. Never switch the branch of, commit in, or
+  modify the main checkout — its uncommitted changes are none of the run's business.
+- Keep run-specific scratch data (the Floci clone from step 2, temp files) under `<scratchpad>/$RUN/`, not in a path
+  another run could use too.
+- Parallel runs for **different** providers are fine. Never start two runs for the **same** provider at once — they
+  would migrate the same Floci range and produce conflicting commits and branch names.
+- Parallel runs share the Docker daemon and `~/.m2`. Only use `mvn test`/`mvn verify` (as below), never `mvn install`,
+  so runs don't overwrite each other's artifacts in the local Maven repository.
+- If the agent harness has its own worktree tool (e.g. Claude Code's `EnterWorktree`, which creates the worktree under
+  `.claude/worktrees/` on a temporary branch), that may be used instead. Step 8 then also deletes the temporary branch
+  after the worktree is removed.
+
 ### Step 1 — Make sure the fork is synced with upstream
 
 The user normally syncs the fork before starting. Verify it rather than assume it:
@@ -228,8 +254,8 @@ API for the file diff: its file list is truncated at 300 files, and the fork is 
 ahead, so `EmulatorConfig.java` is often missing from the response.
 
 ```bash
-git clone --filter=blob:none https://github.com/cfranzen/floci.git <scratchpad>/floci
-cd <scratchpad>/floci
+git clone --filter=blob:none https://github.com/cfranzen/floci.git <scratchpad>/$RUN/floci
+cd <scratchpad>/$RUN/floci
 git rev-parse migrated-to-testcontainers^{commit}   # base (the tag is annotated → dereference it)
 git rev-parse main                                  # head — note this SHA, it's what the user will move the tag to
 git diff migrated-to-testcontainers main -- src/main/java/io/github/hectorvent/floci/config/EmulatorConfig.java
@@ -241,21 +267,15 @@ individual Floci commits that touched the file; their messages/PRs are useful co
 property behaves. When the diff is ambiguous, read the full file at `<head>` (and the code that consumes the property)
 rather than guessing.
 
-### Step 3 — Determine the target version and create the feature branch
+### Step 3 — Determine the target version
 
 ```bash
 gh api repos/floci-io/floci/releases/latest --jq .tag_name
 ```
 
 Assume the next Floci release bumps the **minor** version and resets the patch: latest `2.1.0` → target `2.2.0`;
-latest `2.1.3` → target `2.2.0`. Create the branch from an up-to-date `main` of this repo:
-
-```bash
-git fetch origin && git checkout -b feat/support-floci-2.2.0 origin/main
-```
-
-(If the working tree has unrelated uncommitted changes, stop and ask the user how to handle them instead of carrying
-them onto the new branch.)
+latest `2.1.3` → target `2.2.0`. The target version names the feature branch, but do **not** create the branch yet:
+all commits are made on the worktree's detached HEAD, and the branch is created from it in step 8.
 
 ### Step 4 — Classify the diff
 
@@ -271,7 +291,7 @@ them onto the new branch.)
 3. **Everything else** — root properties (`port`, `baseUrl`, `defaultRegion`, …), and global sections such as `dns()`,
    `network()`, `auth()`, `security()`, `storage()` (except the overrides above), `tls()`, `protocols()`,
    `duckdb()`, `initHooks()`, `partitions()`, and `default` helper methods — **do not migrate**. Only summarize them
-   for the user (step 8). This applies even when a matching cross-cutting class already exists under `config/`
+   for the user (step 9). This applies even when a matching cross-cutting class already exists under `config/`
    (`TlsConfig`, `StorageConfig`, `DuckDbConfig`, `SecurityConfig`, `ProtocolsConfig`, `AuthConfig`,
    `InitHooksConfig`, `PartitionsConfig`, `NetworkConfig`) — the user decides about those manually.
 
@@ -391,12 +411,43 @@ After all services are migrated run the full build once (`mvn verify`, Docker re
 honestly, distinguishing failures caused by the migration from pre-existing/flaky ones. Do not push or open a PR unless
 the user asks.
 
-### Step 8 — Report to the user
+### Step 8 — Create the feature branch and remove the worktree
+
+Once the run is complete, turn the worktree's commits into a feature branch, then delete the worktree:
+
+```bash
+git status --porcelain                              # must be empty: every change committed or deliberately discarded
+git log --oneline origin/main..HEAD                 # the run's commits
+git branch --no-track feat/support-floci-2.2.0 HEAD # create the branch without checking it out
+cd ../..                                            # back to the main checkout's root
+git worktree remove .worktrees/$RUN
+git log --oneline -1 feat/support-floci-2.2.0       # verify: the run's last commit
+```
+
+- Branch name: `feat/support-floci-<target>` for AWS, and `feat/support-floci-az-<target>`,
+  `feat/support-floci-gcp-<target>`, `feat/support-floci-oci-<target>` for the other providers (target version from
+  step 3, based on that provider's upstream releases). If the branch already exists (e.g. from an earlier, unmerged
+  run), never reset or overwrite it — append `-2`, `-3`, … and mention it in the report.
+- **Create the branch before removing the worktree.** Commits on a detached HEAD are only reachable through the
+  worktree's reflog, which is deleted together with the worktree.
+- Use `git branch`, not `git checkout -b`: the branch is not checked out anywhere, so the worktree can be removed and
+  the user can check the branch out wherever they like. `--no-track` keeps it from tracking `origin/main`.
+- If `git worktree remove` refuses because of modified or untracked files, look at them first: commit what belongs to
+  the migration, delete leftovers, and only use `--force` once you're sure nothing is lost. Ignored build output
+  (`target/`) does not block the removal.
+- With a harness-created worktree (step 0), leave it through the harness (e.g. `ExitWorktree` with `remove`) and then
+  delete its temporary branch with `git branch -D <temp-branch>` — after checking that the feature branch points at
+  the same commit.
+- A run without any commits (nothing to migrate) creates no branch; just remove the worktree.
+- A run that stops to wait for a user decision (e.g. a removed property, step 5) is not complete: keep the worktree
+  until the decision is made and the run is finished, and tell the user where it is.
+
+### Step 9 — Report to the user
 
 Finish with a report containing:
 
-1. **Floci range migrated**: base SHA (tag), head SHA, target version, branch name — and a reminder that the user can
-   now move `migrated-to-testcontainers` to the head SHA.
+1. **Floci range migrated**: base SHA (tag), head SHA, target version, branch name (and that the worktree was
+   removed) — and a reminder that the user can now move `migrated-to-testcontainers` to the head SHA.
 2. **Services migrated**: one line per commit (service, properties added/changed, commit SHA).
 3. **Skipped / needs a decision**: removed or renamed properties, anything that couldn't be mapped cleanly, disabled
    service tests, untouched Floci services that still have no config class here.
