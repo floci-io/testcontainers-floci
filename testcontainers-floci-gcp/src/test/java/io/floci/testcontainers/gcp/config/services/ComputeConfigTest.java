@@ -15,7 +15,7 @@ class ComputeConfigTest {
         ComputeConfig config = ComputeConfig.builder().build();
         assertThat(config.isEnabled()).isTrue();
         assertThat(config.getOperationDelayMs()).isEqualTo(50);
-        assertThat(config.getRegions()).containsExactly("us-central1", "europe-west1");
+        assertThat(config.getRegions()).isEmpty();
     }
 
     @Test
@@ -27,7 +27,7 @@ class ComputeConfigTest {
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.getOperationDelayMs()).isZero();
-        assertThat(config.getRegions()).containsExactly("europe-west3");
+        assertThat(config.getRegions()).contains(List.of("europe-west3"));
     }
 
     @Test
@@ -38,7 +38,7 @@ class ComputeConfigTest {
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_GCP_SERVICES_COMPUTE_ENABLED", "true")
                 .containsEntry("FLOCI_GCP_SERVICES_COMPUTE_OPERATION_DELAY_MS", "50")
-                .containsEntry("FLOCI_GCP_SERVICES_COMPUTE_REGIONS", "us-central1,europe-west1");
+                .doesNotContainKey("FLOCI_GCP_SERVICES_COMPUTE_REGIONS");
     }
 
     @Test
@@ -77,6 +77,6 @@ class ComputeConfigTest {
         ComputeConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
         assertThat(copy.getOperationDelayMs()).isZero();
-        assertThat(copy.getRegions()).containsExactly("europe-west3");
+        assertThat(copy.getRegions()).contains(List.of("europe-west3"));
     }
 }

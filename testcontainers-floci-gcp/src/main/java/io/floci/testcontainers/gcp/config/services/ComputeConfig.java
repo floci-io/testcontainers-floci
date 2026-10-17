@@ -5,6 +5,7 @@ import io.floci.testcontainers.core.config.services.AbstractServiceConfigBuilder
 import org.testcontainers.containers.Container;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Configuration for Compute Engine of Floci GCP.
@@ -23,7 +24,6 @@ import java.util.List;
 public class ComputeConfig extends AbstractServiceConfig<ComputeConfig.Builder> {
 
     private static final long DEFAULT_OPERATION_DELAY_MS = 50;
-    private static final List<String> DEFAULT_REGIONS = List.of("us-central1", "europe-west1");
 
     private final long operationDelayMs;
     private final List<String> regions;
@@ -31,7 +31,7 @@ public class ComputeConfig extends AbstractServiceConfig<ComputeConfig.Builder> 
     private ComputeConfig(Builder builder) {
         super(builder);
         this.operationDelayMs = builder.operationDelayMs;
-        this.regions = List.copyOf(builder.regions);
+        this.regions = builder.regions == null ? null : List.copyOf(builder.regions);
     }
 
     /**
@@ -65,13 +65,14 @@ public class ComputeConfig extends AbstractServiceConfig<ComputeConfig.Builder> 
     }
 
     /**
-     * Returns the regions Floci GCP offers for Compute Engine. Each region has the zones {@code <region>-a},
-     * {@code -b} and {@code -c}; requests for other regions or zones are rejected as not found.
+     * Returns the allow-list of regions Floci GCP offers for Compute Engine. Each listed region keeps its real
+     * zones from Floci GCP's bundled location catalog; requests for other regions or zones are rejected as not
+     * found. When empty, Floci GCP serves all regions of its location catalog.
      *
-     * @return the regions
+     * @return the regions, or empty if not set
      */
-    public List<String> getRegions() {
-        return regions;
+    public Optional<List<String>> getRegions() {
+        return Optional.ofNullable(regions);
     }
 
     @Override
@@ -80,7 +81,9 @@ public class ComputeConfig extends AbstractServiceConfig<ComputeConfig.Builder> 
 
         if (isEnabled()) {
             container.withEnv("FLOCI_GCP_SERVICES_COMPUTE_OPERATION_DELAY_MS", String.valueOf(operationDelayMs));
-            container.withEnv("FLOCI_GCP_SERVICES_COMPUTE_REGIONS", String.join(",", regions));
+            if (regions != null) {
+                container.withEnv("FLOCI_GCP_SERVICES_COMPUTE_REGIONS", String.join(",", regions));
+            }
         }
     }
 
@@ -90,7 +93,7 @@ public class ComputeConfig extends AbstractServiceConfig<ComputeConfig.Builder> 
     public static class Builder extends AbstractServiceConfigBuilder<Builder, ComputeConfig> {
 
         private long operationDelayMs = DEFAULT_OPERATION_DELAY_MS;
-        private List<String> regions = DEFAULT_REGIONS;
+        private List<String> regions;
 
         private Builder() {
             // Allow instantiation only via ComputeConfig.builder()
@@ -120,10 +123,12 @@ public class ComputeConfig extends AbstractServiceConfig<ComputeConfig.Builder> 
         }
 
         /**
-         * Sets the regions Floci GCP offers for Compute Engine. Each region has the zones {@code <region>-a},
-         * {@code -b} and {@code -c}; requests for other regions or zones are rejected as not found.
+         * Sets an allow-list of regions Floci GCP offers for Compute Engine. Each listed region keeps its real
+         * zones from Floci GCP's bundled location catalog; requests for other regions or zones are rejected as
+         * not found. Regions unknown to the catalog are ignored by Floci GCP. When not set (or empty), Floci GCP
+         * serves all regions of its location catalog.
          *
-         * @param regions the regions (default {@code us-central1, europe-west1})
+         * @param regions the regions, or {@code null} to serve the whole location catalog (default)
          * @return this builder
          */
         public Builder regions(List<String> regions) {
