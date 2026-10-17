@@ -79,9 +79,11 @@ class BatchConfigTest {
     }
 
     @Test
-    void shouldRequireDockerSocketWhenEnabled() {
-        assertThat(BatchConfig.builder().build().requiresDockerSocket()).isTrue();
-        assertThat(BatchConfig.builder().enabled(false).build().requiresDockerSocket()).isFalse();
+    void shouldRequireDockerSocketOnlyInDockerRunnerMode() {
+        assertThat(BatchConfig.builder().build().requiresDockerSocket()).isFalse();
+        assertThat(BatchConfig.builder().runnerMode("deferred").build().requiresDockerSocket()).isFalse();
+        assertThat(BatchConfig.builder().runnerMode("docker").build().requiresDockerSocket()).isTrue();
+        assertThat(BatchConfig.builder().runnerMode("docker").enabled(false).build().requiresDockerSocket()).isFalse();
     }
 
 }

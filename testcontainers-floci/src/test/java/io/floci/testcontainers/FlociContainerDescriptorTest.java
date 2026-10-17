@@ -31,11 +31,18 @@ class FlociContainerDescriptorTest {
     void shouldRequireDockerSocketForReferenceServicesByDefault() {
         try (FlociContainer container = new FlociContainer()) {
             assertThat(configsRequiringDockerSocket(container)).containsExactlyInAnyOrder(
-                    "AmazonMqConfig", "AppSyncConfig", "AthenaConfig", "BatchConfig", "CodeArtifactConfig",
+                    "AmazonMqConfig", "AppSyncConfig", "AthenaConfig", "CodeArtifactConfig",
                     "CodeBuildConfig", "DocumentDbConfig", "Ec2Config", "EcrConfig", "EcsConfig", "EksConfig",
                     "ElastiCacheConfig", "KinesisAnalyticsConfig", "LambdaConfig", "MemoryDbConfig", "MskConfig",
                     "MwaaConfig", "NeptuneConfig", "OpenSearchConfig", "PipesConfig", "RdsConfig", "RedshiftConfig",
                     "SageMakerConfig", "TimestreamInfluxDbConfig", "VerifiedPermissionsConfig");
+        }
+    }
+
+    @Test
+    void shouldRequireDockerSocketForBatchOnlyInDockerRunnerMode() {
+        try (FlociContainer container = new FlociContainer().withBatchConfig(c -> c.runnerMode("docker"))) {
+            assertThat(configsRequiringDockerSocket(container)).contains("BatchConfig");
         }
     }
 
