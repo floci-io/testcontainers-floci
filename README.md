@@ -400,6 +400,7 @@ FlociContainer floci = new FlociContainer().withDockerSocket(true);
 | `withTlsConfig(...)`        | Configures TLS/HTTPS (self-signed by default; optionally provide cert/key paths)                |
 | `withAuthConfig(...)`       | Configures authentication, e.g. keys of additional storage accounts used to validate SAS tokens |
 | `withDirectoryConfig(...)`  | Configures the default cloud and additional tenants/subscriptions of the ARM directory          |
+| `withParityConfig(...)`     | Configures how closely Floci Azure follows Azure (`compat`/`azure`/`strict` level and overrides) |
 | `with*Config(...)`          | Configures service-specific settings, e.g. `withServiceBusConfig(c -> c.mocked(false))`         |
 
 Docker-backed services (Functions, AKS, Container Registry, Redis, Event Hubs, Service Bus, SQL Database,

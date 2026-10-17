@@ -1,5 +1,6 @@
 package io.floci.testcontainers.az;
 
+import io.floci.testcontainers.az.config.ParityConfig;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -281,6 +282,14 @@ class FlociAzContainerServicesConfigTest {
                 c -> c.withDirectoryConfig(cfg -> cfg.defaultCloud("AzureUSGovernment")),
                 c -> c.getDirectoryConfig().getDefaultCloud(), "AzureUSGovernment",
                 "FLOCI_AZ_CLOUD_DEFAULT", "AzureUSGovernment");
+    }
+
+    @Test
+    void shouldWireParityConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withParityConfig(cfg -> cfg.level(ParityConfig.Level.STRICT)),
+                c -> c.getParityConfig().getLevel(), ParityConfig.Level.STRICT,
+                "FLOCI_AZ_PARITY", "strict");
     }
 
     @Test
