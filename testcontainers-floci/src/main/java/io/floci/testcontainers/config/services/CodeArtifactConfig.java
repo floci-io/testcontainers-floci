@@ -18,12 +18,14 @@ public class CodeArtifactConfig extends AbstractServiceConfig<CodeArtifactConfig
     private static final String DEFAULT_MAVEN_IMAGE = "dzikoysk/reposilite:3.6.3";
     private static final String DEFAULT_NPM_IMAGE = "verdaccio/verdaccio:6.10.4";
     private static final String DEFAULT_PYPI_IMAGE = "pypiserver/pypiserver:v2.4.2";
+    private static final String DEFAULT_NUGET_IMAGE = "bagetter/bagetter:1.6.5";
 
     private final String mavenUrl;
     private final String mavenToken;
     private final String mavenImage;
     private final String npmImage;
     private final String pypiImage;
+    private final String nugetImage;
 
     private CodeArtifactConfig(Builder builder) {
         super(builder.enabled);
@@ -32,6 +34,7 @@ public class CodeArtifactConfig extends AbstractServiceConfig<CodeArtifactConfig
         this.mavenImage = builder.mavenImage;
         this.npmImage = builder.npmImage;
         this.pypiImage = builder.pypiImage;
+        this.nugetImage = builder.nugetImage;
     }
 
     /**
@@ -102,6 +105,15 @@ public class CodeArtifactConfig extends AbstractServiceConfig<CodeArtifactConfig
         return pypiImage;
     }
 
+    /**
+     * Returns the image of the per-repository BaGetter container backing the {@code nuget} format.
+     *
+     * @return the image of the per-repository BaGetter container backing the {@code nuget} format
+     */
+    public String getNugetImage() {
+        return nugetImage;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_CODEARTIFACT_ENABLED", String.valueOf(isEnabled()));
@@ -118,12 +130,13 @@ public class CodeArtifactConfig extends AbstractServiceConfig<CodeArtifactConfig
             container.withEnv("FLOCI_SERVICES_CODEARTIFACT_MAVEN_IMAGE", mavenImage);
             container.withEnv("FLOCI_SERVICES_CODEARTIFACT_NPM_IMAGE", npmImage);
             container.withEnv("FLOCI_SERVICES_CODEARTIFACT_PYPI_IMAGE", pypiImage);
+            container.withEnv("FLOCI_SERVICES_CODEARTIFACT_NUGET_IMAGE", nugetImage);
         }
     }
 
     @Override
     public boolean requiresDockerSocket() {
-        // Package formats are backed by sidecar containers (Reposilite, Verdaccio, pypiserver)
+        // Package formats are backed by sidecar containers (Reposilite, Verdaccio, pypiserver, BaGetter)
         return isEnabled();
     }
 
@@ -137,6 +150,7 @@ public class CodeArtifactConfig extends AbstractServiceConfig<CodeArtifactConfig
         private String mavenImage = DEFAULT_MAVEN_IMAGE;
         private String npmImage = DEFAULT_NPM_IMAGE;
         private String pypiImage = DEFAULT_PYPI_IMAGE;
+        private String nugetImage = DEFAULT_NUGET_IMAGE;
 
         private Builder() {
             // Allow instantiation only via CodeArtifactConfig.builder()
@@ -154,6 +168,7 @@ public class CodeArtifactConfig extends AbstractServiceConfig<CodeArtifactConfig
             this.mavenImage = instance.getMavenImage();
             this.npmImage = instance.getNpmImage();
             this.pypiImage = instance.getPypiImage();
+            this.nugetImage = instance.getNugetImage();
         }
 
         /**
@@ -211,6 +226,19 @@ public class CodeArtifactConfig extends AbstractServiceConfig<CodeArtifactConfig
          */
         public Builder pypiImage(String pypiImage) {
             this.pypiImage = pypiImage;
+            return this;
+        }
+
+        /**
+         * Sets the image of the per-repository BaGetter container backing the {@code nuget} format.
+         * BaGetter has no concept of multiple named feeds in one instance, so Floci starts one
+         * container per CodeArtifact repository.
+         *
+         * @param nugetImage the image of the per-repository BaGetter container backing the {@code nuget} format (default {@value DEFAULT_NUGET_IMAGE})
+         * @return this builder
+         */
+        public Builder nugetImage(String nugetImage) {
+            this.nugetImage = nugetImage;
             return this;
         }
 
