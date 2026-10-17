@@ -4,11 +4,17 @@ import io.floci.testcontainers.core.config.services.AbstractServiceConfig;
 import io.floci.testcontainers.core.config.services.AbstractServiceConfigBuilder;
 import org.testcontainers.containers.Container;
 
+import java.util.Locale;
+
 /**
  * Configuration for Oracle Container Engine for Kubernetes (OKE) of Floci OCI.
  *
  * <p>Each cluster is backed by a k3s container whose API server Floci OCI publishes on the Docker host; the
  * cluster's {@code kubernetes} endpoint points at that host port. In {@code mock} mode no k3s container is started.
+ *
+ * <p>A cluster stays {@code CREATING} until Floci OCI reaches its k3s API server, which requires a user-defined
+ * network ({@code FlociOciContainer.withDedicatedNetwork()}); on Docker's default bridge network the cluster goes
+ * {@code FAILED} after {@link #getReadyTimeoutSeconds()}.
  *
  * <p>Instances are created via {@link Builder}:
  * <pre>{@code
@@ -16,6 +22,7 @@ import org.testcontainers.containers.Container;
  *     .mock(true)
  *     .defaultImage("rancher/k3s:v1.31.4-k3s1")
  *     .apiServerPortRange(16443, 5)
+ *     .kubeconfigAuth(OkeConfig.KubeconfigAuth.TOKEN)
  *     .build();
  * }</pre>
  */
@@ -25,11 +32,15 @@ public class OkeConfig extends AbstractServiceConfig<OkeConfig.Builder> {
     private static final String DEFAULT_DEFAULT_IMAGE = "rancher/k3s:v1.30.1-k3s1";
     private static final int DEFAULT_API_SERVER_BASE_PORT = 6443;
     private static final int DEFAULT_API_SERVER_PORTS_COUNT = 10;
+    private static final KubeconfigAuth DEFAULT_KUBECONFIG_AUTH = KubeconfigAuth.EXEC;
+    private static final int DEFAULT_READY_TIMEOUT_SECONDS = 300;
 
     private final boolean mock;
     private final String defaultImage;
     private final int apiServerBasePort;
     private final int apiServerPortsCount;
+    private final KubeconfigAuth kubeconfigAuth;
+    private final int readyTimeoutSeconds;
 
     private OkeConfig(Builder builder) {
         super(builder);
@@ -37,6 +48,8 @@ public class OkeConfig extends AbstractServiceConfig<OkeConfig.Builder> {
         this.defaultImage = builder.defaultImage;
         this.apiServerBasePort = builder.apiServerBasePort;
         this.apiServerPortsCount = builder.apiServerPortsCount;
+        this.kubeconfigAuth = builder.kubeconfigAuth;
+        this.readyTimeoutSeconds = builder.readyTimeoutSeconds;
     }
 
     /**
@@ -105,6 +118,25 @@ public class OkeConfig extends AbstractServiceConfig<OkeConfig.Builder> {
         return apiServerBasePort + apiServerPortsCount - 1;
     }
 
+    /**
+     * Returns how the user of the kubeconfig returned by {@code CreateKubeconfig} authenticates.
+     *
+     * @return the kubeconfig authentication
+     */
+    public KubeconfigAuth getKubeconfigAuth() {
+        return kubeconfigAuth;
+    }
+
+    /**
+     * Returns how long a cluster may stay {@code CREATING} before its k3s API server answers; after that, the cluster
+     * and its work request go {@code FAILED}.
+     *
+     * @return the timeout in seconds
+     */
+    public int getReadyTimeoutSeconds() {
+        return readyTimeoutSeconds;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_OCI_SERVICES_OKE_ENABLED", String.valueOf(isEnabled()));
@@ -114,12 +146,31 @@ public class OkeConfig extends AbstractServiceConfig<OkeConfig.Builder> {
             container.withEnv("FLOCI_OCI_SERVICES_OKE_DEFAULT_IMAGE", defaultImage);
             container.withEnv("FLOCI_OCI_SERVICES_OKE_API_SERVER_BASE_PORT", String.valueOf(apiServerBasePort));
             container.withEnv("FLOCI_OCI_SERVICES_OKE_API_SERVER_MAX_PORT", String.valueOf(getApiServerMaxPort()));
+            container.withEnv("FLOCI_OCI_SERVICES_OKE_KUBECONFIG_AUTH", kubeconfigAuth.name().toLowerCase(Locale.ROOT));
+            container.withEnv("FLOCI_OCI_SERVICES_OKE_READY_TIMEOUT_SECONDS", String.valueOf(readyTimeoutSeconds));
         }
     }
 
     @Override
     public boolean requiresDockerSocket() {
         return isEnabled() && !mock;
+    }
+
+    /**
+     * How the user of the kubeconfig returned by {@code CreateKubeconfig} authenticates against the cluster.
+     */
+    public enum KubeconfigAuth {
+
+        /**
+         * Like real OKE (token version 2.0.0): {@code kubectl} runs {@code oci ce cluster generate-token}, so the oci
+         * CLI must be installed and configured for Floci OCI.
+         */
+        EXEC,
+
+        /**
+         * The kubeconfig embeds the cluster's static bearer token, for clients without the oci CLI.
+         */
+        TOKEN
     }
 
     /**
@@ -131,6 +182,8 @@ public class OkeConfig extends AbstractServiceConfig<OkeConfig.Builder> {
         private String defaultImage = DEFAULT_DEFAULT_IMAGE;
         private int apiServerBasePort = DEFAULT_API_SERVER_BASE_PORT;
         private int apiServerPortsCount = DEFAULT_API_SERVER_PORTS_COUNT;
+        private KubeconfigAuth kubeconfigAuth = DEFAULT_KUBECONFIG_AUTH;
+        private int readyTimeoutSeconds = DEFAULT_READY_TIMEOUT_SECONDS;
 
         private Builder() {
             // Allow instantiation only via OkeConfig.builder()
@@ -147,6 +200,8 @@ public class OkeConfig extends AbstractServiceConfig<OkeConfig.Builder> {
             this.defaultImage = instance.defaultImage;
             this.apiServerBasePort = instance.apiServerBasePort;
             this.apiServerPortsCount = instance.apiServerPortsCount;
+            this.kubeconfigAuth = instance.kubeconfigAuth;
+            this.readyTimeoutSeconds = instance.readyTimeoutSeconds;
         }
 
         /**
@@ -183,6 +238,30 @@ public class OkeConfig extends AbstractServiceConfig<OkeConfig.Builder> {
         public Builder apiServerPortRange(int basePort, int amount) {
             this.apiServerBasePort = basePort;
             this.apiServerPortsCount = amount;
+            return this;
+        }
+
+        /**
+         * Sets how the user of the kubeconfig returned by {@code CreateKubeconfig} authenticates. Use {@link
+         * KubeconfigAuth#TOKEN} for clients without the oci CLI, e.g. a Kubernetes client library in a test.
+         *
+         * @param kubeconfigAuth the kubeconfig authentication (default {@code EXEC})
+         * @return this builder
+         */
+        public Builder kubeconfigAuth(KubeconfigAuth kubeconfigAuth) {
+            this.kubeconfigAuth = kubeconfigAuth;
+            return this;
+        }
+
+        /**
+         * Sets how long a cluster may stay {@code CREATING} before its k3s API server answers; after that, the
+         * cluster and its work request go {@code FAILED}. Not applicable in {@code mock} mode.
+         *
+         * @param readyTimeoutSeconds the timeout in seconds (default {@value DEFAULT_READY_TIMEOUT_SECONDS})
+         * @return this builder
+         */
+        public Builder readyTimeoutSeconds(int readyTimeoutSeconds) {
+            this.readyTimeoutSeconds = readyTimeoutSeconds;
             return this;
         }
 

@@ -11,6 +11,7 @@ import com.oracle.bmc.containerengine.requests.DeleteClusterRequest;
 import com.oracle.bmc.containerengine.requests.GetClusterRequest;
 import com.oracle.bmc.containerengine.requests.ListClustersRequest;
 import io.floci.testcontainers.oci.FlociOciContainer;
+import io.floci.testcontainers.oci.config.services.OkeConfig;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -30,7 +31,7 @@ class OkeServiceTest extends AbstractServiceTest {
     void shouldCreateMockedClusterWithKubeconfig() throws Exception {
         try (FlociOciContainer mocked = new FlociOciContainer(NIGHTLY_IMAGE)
                 .disableAllServices()
-                .withOkeConfig(c -> c.enabled(true).mock(true));
+                .withOkeConfig(c -> c.enabled(true).mock(true).kubeconfigAuth(OkeConfig.KubeconfigAuth.TOKEN));
              ContainerEngineClient oke = startAndCreateClient(mocked)) {
             String clusterId = createCluster(oke, mocked.getTenancyId(), "mocked-cluster");
 
@@ -44,23 +45,33 @@ class OkeServiceTest extends AbstractServiceTest {
 
             assertThat(cluster.getLifecycleState()).isEqualTo(ClusterLifecycleState.Active);
             assertThat(kubeconfig).contains("clusters:");
+            // TOKEN embeds the cluster's bearer token instead of the oci CLI exec plugin
+            assertThat(kubeconfig).contains("token: ").doesNotContain("generate-token");
         }
     }
 
     @Test
     void shouldRunClusterInK3sContainer() {
-        try (ContainerEngineClient oke = client(ContainerEngineClient.builder())) {
-            String clusterId = createCluster(oke, tenancyId(), "k3s-cluster-" + System.nanoTime());
+        // Floci OCI probes the k3s API server on its own network before the cluster becomes ACTIVE, which needs a
+        // user-defined network
+        try (FlociOciContainer k3s = new FlociOciContainer(NIGHTLY_IMAGE)
+                .withDedicatedNetwork()
+                .disableAllServices()
+                .withOkeConfig(c -> c.enabled(true).readyTimeoutSeconds(120));
+             ContainerEngineClient oke = startAndCreateClient(k3s)) {
+            String clusterId = createCluster(oke, k3s.getTenancyId(), "k3s-cluster");
             try {
+                await().atMost(Duration.ofSeconds(k3s.getOkeConfig().getReadyTimeoutSeconds() + 10))
+                        .until(() -> getCluster(oke, clusterId).getLifecycleState(),
+                                state -> state != ClusterLifecycleState.Creating);
                 Cluster cluster = getCluster(oke, clusterId);
                 // the k3s API server is published by the k3s container on the Docker host
                 int apiServerPort = URI.create(cluster.getEndpoints().getKubernetes()).getPort();
 
                 assertThat(cluster.getLifecycleState()).isEqualTo(ClusterLifecycleState.Active);
                 assertThat(apiServerPort).isBetween(
-                        floci.getOkeConfig().getApiServerBasePort(), floci.getOkeConfig().getApiServerMaxPort());
-                await().atMost(Duration.ofSeconds(60))
-                        .untilAsserted(() -> assertThat(isListening(floci.getHost(), apiServerPort)).isTrue());
+                        k3s.getOkeConfig().getApiServerBasePort(), k3s.getOkeConfig().getApiServerMaxPort());
+                assertThat(isListening(k3s.getHost(), apiServerPort)).isTrue();
             } finally {
                 oke.deleteCluster(DeleteClusterRequest.builder().clusterId(clusterId).build());
             }
