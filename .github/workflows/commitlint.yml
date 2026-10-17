@@ -1,0 +1,40 @@
+name: Commit Lint
+
+# No path filters: every change, including docs-only and workflow-only ones, is released by release-please from its
+# conventional commit messages, so every commit and every PR title (the squash-merge commit message) is checked.
+on:
+  push:
+    branches: [ "main" , "releases/**" ]
+  pull_request:
+    branches: [ "main" , "releases/**" ]
+    types: [ opened, edited, reopened, synchronize ]
+
+permissions:
+  contents: read
+
+jobs:
+  commits:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: wagoid/commitlint-github-action@b948419dd99f3fd78a6548d48f94e3df7f6bf3ed # v6.2.1
+        with:
+          failOnErrors: ${{ github.event_name == 'pull_request' }}
+
+  pr-title:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install commitlint
+        run: npm install --no-save --no-package-lock @commitlint/cli@19.8.1 @commitlint/config-conventional@19.8.1
+
+      - name: Lint PR title
+        env:
+          # passed via the environment, never interpolated into the script
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: printf '%s\n' "$PR_TITLE" | npx --no-install commitlint --config commitlint.config.mjs
