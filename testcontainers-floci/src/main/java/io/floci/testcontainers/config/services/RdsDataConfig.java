@@ -10,18 +10,22 @@ import org.testcontainers.containers.Container;
  * RdsDataConfig config = RdsDataConfig.builder()
  *     .enabled(true)
  *     .transactionTtlSeconds(300)
+ *     .databaseResumingExceptionEnabled(true)
  *     .build();
  * }</pre>
  */
 public class RdsDataConfig extends AbstractServiceConfig<RdsDataConfig.Builder> {
 
     private static final long DEFAULT_TRANSACTION_TTL_SECONDS = 180;
+    private static final boolean DEFAULT_DATABASE_RESUMING_EXCEPTION_ENABLED = false;
 
     private final long transactionTtlSeconds;
+    private final boolean databaseResumingExceptionEnabled;
 
     private RdsDataConfig(Builder builder) {
         super(builder.enabled);
         this.transactionTtlSeconds = builder.transactionTtlSeconds;
+        this.databaseResumingExceptionEnabled = builder.databaseResumingExceptionEnabled;
     }
 
     /**
@@ -53,12 +57,23 @@ public class RdsDataConfig extends AbstractServiceConfig<RdsDataConfig.Builder> 
         return transactionTtlSeconds;
     }
 
+    /**
+     * Returns whether a retryable {@code DatabaseResumingException} (HTTP 400) is returned while an
+     * auto-paused Aurora backend resumes, instead of waiting for it.
+     *
+     * @return {@code true} if the resuming exception is returned
+     */
+    public boolean isDatabaseResumingExceptionEnabled() {
+        return databaseResumingExceptionEnabled;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_RDS_DATA_ENABLED", String.valueOf(isEnabled()));
 
         if (isEnabled()) {
             container.withEnv("FLOCI_SERVICES_RDS_DATA_TRANSACTION_TTL_SECONDS", String.valueOf(transactionTtlSeconds));
+            container.withEnv("FLOCI_SERVICES_RDS_DATA_DATABASE_RESUMING_EXCEPTION_ENABLED", String.valueOf(databaseResumingExceptionEnabled));
         }
     }
 
@@ -68,6 +83,7 @@ public class RdsDataConfig extends AbstractServiceConfig<RdsDataConfig.Builder> 
     public static class Builder extends AbstractServiceConfigBuilder<Builder, RdsDataConfig> {
 
         private long transactionTtlSeconds = DEFAULT_TRANSACTION_TTL_SECONDS;
+        private boolean databaseResumingExceptionEnabled = DEFAULT_DATABASE_RESUMING_EXCEPTION_ENABLED;
 
         private Builder() {
             // Allow instantiation only via RdsDataConfig.builder()
@@ -81,6 +97,7 @@ public class RdsDataConfig extends AbstractServiceConfig<RdsDataConfig.Builder> 
         private Builder(RdsDataConfig instance) {
             super(instance);
             this.transactionTtlSeconds = instance.getTransactionTtlSeconds();
+            this.databaseResumingExceptionEnabled = instance.isDatabaseResumingExceptionEnabled();
         }
 
         /**
@@ -91,6 +108,21 @@ public class RdsDataConfig extends AbstractServiceConfig<RdsDataConfig.Builder> 
          */
         public Builder transactionTtlSeconds(long transactionTtlSeconds) {
             this.transactionTtlSeconds = transactionTtlSeconds;
+            return this;
+        }
+
+        /**
+         * Sets whether a retryable {@code DatabaseResumingException} (HTTP 400) is returned while an
+         * auto-paused Aurora backend resumes. When enabled, {@code ExecuteStatement},
+         * {@code BatchExecuteStatement} and {@code BeginTransaction} start the resume in the background
+         * and return the error until the backend is ready, as AWS does; when disabled, they block until
+         * the resume completes.
+         *
+         * @param databaseResumingExceptionEnabled {@code true} to return the resuming exception (default {@value DEFAULT_DATABASE_RESUMING_EXCEPTION_ENABLED})
+         * @return this builder
+         */
+        public Builder databaseResumingExceptionEnabled(boolean databaseResumingExceptionEnabled) {
+            this.databaseResumingExceptionEnabled = databaseResumingExceptionEnabled;
             return this;
         }
 
