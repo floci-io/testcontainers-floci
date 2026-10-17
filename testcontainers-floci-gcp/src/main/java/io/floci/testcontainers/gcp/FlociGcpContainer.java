@@ -13,6 +13,9 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.function.Consumer;
 
 /**
@@ -146,6 +149,39 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
      */
     public String getEmulatorHost() {
         return getHost() + ":" + getMappedPort(PORT);
+    }
+
+    /**
+     * Returns the environment variables that point the Google Cloud client libraries at this container, all via
+     * plain HTTP (or plaintext gRPC):
+     *
+     * <ul>
+     *     <li>{@code PUBSUB_EMULATOR_HOST}, {@code FIRESTORE_EMULATOR_HOST}, {@code DATASTORE_EMULATOR_HOST},
+     *     {@code SECRET_MANAGER_EMULATOR_HOST}, {@code FIREBASE_AUTH_EMULATOR_HOST}, {@code LOGGING_EMULATOR_HOST},
+     *     {@code KMS_EMULATOR_HOST} and {@code STORAGE_EMULATOR_HOST_GRPC}: {@link #getEmulatorHost()};</li>
+     *     <li>{@code STORAGE_EMULATOR_HOST}: {@link #getEndpoint()} (the storage clients expect a URL);</li>
+     *     <li>{@code GOOGLE_CLOUD_PROJECT}: {@link #getProjectId()}.</li>
+     * </ul>
+     *
+     * <p>Useful to pass to a process under test, e.g. via {@link ProcessBuilder#environment()} or another
+     * container's {@code withEnv(Map)}.
+     *
+     * @return the emulator environment, in a stable order (unmodifiable)
+     */
+    public Map<String, String> getEmulatorEnv() {
+        String emulatorHost = getEmulatorHost();
+        Map<String, String> env = new LinkedHashMap<>();
+        env.put("PUBSUB_EMULATOR_HOST", emulatorHost);
+        env.put("FIRESTORE_EMULATOR_HOST", emulatorHost);
+        env.put("DATASTORE_EMULATOR_HOST", emulatorHost);
+        env.put("SECRET_MANAGER_EMULATOR_HOST", emulatorHost);
+        env.put("FIREBASE_AUTH_EMULATOR_HOST", emulatorHost);
+        env.put("LOGGING_EMULATOR_HOST", emulatorHost);
+        env.put("KMS_EMULATOR_HOST", emulatorHost);
+        env.put("STORAGE_EMULATOR_HOST", getEndpoint());
+        env.put("STORAGE_EMULATOR_HOST_GRPC", emulatorHost);
+        env.put("GOOGLE_CLOUD_PROJECT", getProjectId());
+        return Collections.unmodifiableMap(env);
     }
 
     /**
