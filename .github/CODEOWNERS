@@ -11,7 +11,7 @@
 # Default: no global owner (unowned files fall through to normal review rules).
 
 # Module code
-/testcontainers-floci/              @hectorvent @cfranzen
+/testcontainers-floci*/             @hectorvent @cfranzen
 
 # CI, release automation, workflow hygiene
 /.github/                           @hectorvent @cfranzen

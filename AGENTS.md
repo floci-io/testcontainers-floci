@@ -12,9 +12,13 @@ Testcontainers module for [Floci](https://github.com/floci-io/floci) — a local
   namespace with sibling cleanup on stop, `reset()`, graceful stop) and `AbstractServiceConfig`/
   `AbstractServiceConfigBuilder`. Publishes its test helpers (`ContainerUtils`, `TransferableCopyInspector`,
   `DockerSocketInspector`) as test-jar.
-- `testcontainers-floci/` — AWS module: `FlociContainer` extending `AbstractFlociContainer`. Its public API must stay
+- `testcontainers-floci-aws/` — AWS module (published as `testcontainers-floci` up to 2.16.1): `FlociContainer` extending `AbstractFlociContainer`. Its public API must stay
   compatible with 2.16.1 (`japicmp` in the module's `verify` phase); `config.services.AbstractServiceConfig`/
   `AbstractServiceConfigBuilder` remain as deprecated subclasses of the core types that every AWS config extends.
+- `testcontainers-floci/` — relocation POM (packaging `pom`) pointing the old AWS coordinates at
+  `testcontainers-floci-aws`; published with every 2.x release, removed in 3.0.0.
+- `testcontainers-floci-bom/` — BOM managing core, aws, az, gcp and oci at the project version and nothing else. It
+  does not inherit the parent; the parent imports it for its module versions.
 - `testcontainers-floci-az/` — Azure module: `FlociAzContainer` extending `AbstractFlociContainer`, for
   [Floci Azure](https://github.com/floci-io/floci-az) (`floci/floci-az`, port 4577)
 - `testcontainers-floci-gcp/` — GCP module: `FlociGcpContainer` extending `AbstractFlociContainer`, for
@@ -37,13 +41,13 @@ Docker-backed `*ServiceTest` integration tests in the same surefire phase; there
 split. Run a single test class or module with:
 
 ```
-mvn -pl testcontainers-floci test -Dtest=IamConfigTest
-mvn -pl testcontainers-floci test -Dtest=IamServiceTest
+mvn -pl testcontainers-floci-aws test -Dtest=IamConfigTest
+mvn -pl testcontainers-floci-aws test -Dtest=IamServiceTest
 ```
 
 ## Architecture
 
-`FlociContainer` (`testcontainers-floci/src/main/java/io/floci/testcontainers/FlociContainer.java`) is the single
+`FlociContainer` (`testcontainers-floci-aws/src/main/java/io/floci/testcontainers/FlociContainer.java`) is the single
 entry point; everything else hangs off it:
 
 - **Cross-cutting config** (`config/`: `TlsConfig`, `StorageConfig`, `DuckDbConfig`, `SecurityConfig`,
@@ -68,7 +72,7 @@ entry point; everything else hangs off it:
 ## Testing
 
 - `services/*ServiceTest` (Docker required) all extend package-private `AbstractServiceTest`
-  (`testcontainers-floci/src/test/java/io/floci/testcontainers/services/AbstractServiceTest.java`), which starts one
+  (`testcontainers-floci-aws/src/test/java/io/floci/testcontainers/services/AbstractServiceTest.java`), which starts one
   `FlociContainer` singleton per JVM in a static initializer and exposes a `client(builder)` helper that wires
   endpoint/region/credentials onto an AWS SDK client builder.
 - `config/services/*ConfigTest` (no Docker) test each config class's builder/env-var logic in isolation. They are
@@ -359,15 +363,15 @@ order of fields/getters/builder methods/env vars aligned with each other and wit
 `FlociContainer` `ServiceConfigRef` field/getter/`with…Config`, `<Service>ConfigTest`, a
 `shouldWire<Service>ConfigIntoContainer()` test in `FlociContainerServicesConfigTest`, the getter added to
 `FlociContainerTest.shouldDisableAllServices()`, the README service list if it enumerates services, the AWS SDK test
-dependency in `testcontainers-floci/pom.xml`, and a Docker-backed `services/<Service>ServiceTest` extending
+dependency in `testcontainers-floci-aws/pom.xml`, and a Docker-backed `services/<Service>ServiceTest` extending
 `AbstractServiceTest`. If the nightly Floci image doesn't serve the service yet, keep the service test but mark it
 `@Disabled` with a reason (as done for Connect/CodeGuru Reviewer).
 
 **Verify** each service before committing (pull the image fresh first: `docker pull floci/floci:nightly`):
 
 ```bash
-mvn -pl testcontainers-floci test -Dtest='<Service>ConfigTest,FlociContainerServicesConfigTest,FlociContainerTest'
-mvn -pl testcontainers-floci test -Dtest=<Service>ServiceTest     # new services / behaviour-relevant changes
+mvn -pl testcontainers-floci-aws test -Dtest='<Service>ConfigTest,FlociContainerServicesConfigTest,FlociContainerTest'
+mvn -pl testcontainers-floci-aws test -Dtest=<Service>ServiceTest     # new services / behaviour-relevant changes
 ```
 
 **Commit** each service separately, with only that service's files staged (`git add <paths>`, never `git add -A`),
@@ -383,17 +387,17 @@ Scope = lower-case service name as used in previous commits (`git log --oneline 
 ### Step 6 — Re-check disabled tests
 
 Floci moves fast, so tests that were disabled because the nightly image didn't support something may work by now. Go
-through every disabled test — class- or method-level `@Disabled` in `testcontainers-floci/src/test` — and check whether
+through every disabled test — class- or method-level `@Disabled` in `testcontainers-floci-aws/src/test` — and check whether
 it passes against the freshly pulled `floci/floci:nightly`:
 
 ```bash
-grep -rn '@Disabled' testcontainers-floci/src/test
+grep -rn '@Disabled' testcontainers-floci-aws/src/test
 ```
 
 For each hit, remove the `@Disabled` annotation (and the then-unused import) and run just that class:
 
 ```bash
-mvn -pl testcontainers-floci test -Dtest=<Service>ServiceTest
+mvn -pl testcontainers-floci-aws test -Dtest=<Service>ServiceTest
 ```
 
 - **Passes out of the box** → keep the annotation removed.

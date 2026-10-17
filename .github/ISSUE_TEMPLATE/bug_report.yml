@@ -35,11 +35,12 @@ body:
     attributes:
       label: Affected module
       options:
-        - testcontainers-floci
+        - testcontainers-floci-aws (formerly testcontainers-floci)
         - testcontainers-floci-az
         - testcontainers-floci-gcp
         - testcontainers-floci-oci
         - testcontainers-floci-core
+        - testcontainers-floci-bom
     validations:
       required: true
 

@@ -43,10 +43,15 @@ running for the integration tests to pass.
 testcontainers-floci-core/        Shared base of all modules (provider-independent)
   src/main/java/
     io/floci/testcontainers/core/
-      AbstractFlociContainer.java Service config registry, env var/port/file-mount wiring, Docker socket detection
+      AbstractFlociContainer.java Service config registry, env var/port/file-mount wiring, Docker socket detection,
+                                  resource namespace and sibling cleanup, reset()
+      CloudDescriptor.java        Image, port, paths and env var names of one emulator
       config/services/            AbstractServiceConfig, AbstractServiceConfigBuilder
-  src/test/java/                  Test helpers published as test-jar (ContainerUtils, TransferableCopyInspector)
-testcontainers-floci/             AWS module — FlociContainer and all config classes
+  src/test/java/                  Test helpers published as test-jar (ContainerUtils, TransferableCopyInspector,
+                                  DockerSocketInspector)
+testcontainers-floci-bom/         BOM with the versions of core, aws, az, gcp and oci (does not inherit the parent)
+testcontainers-floci/             Relocation of the former AWS coordinates to testcontainers-floci-aws (until 3.0.0)
+testcontainers-floci-aws/         AWS module — FlociContainer (extends AbstractFlociContainer) and all config classes
   src/main/java/
     io/floci/testcontainers/
       FlociContainer.java         Main container class
@@ -125,7 +130,7 @@ When in doubt, open the PR against `main` and mention in the description if a ba
 
 When Floci adds a new service, the typical steps are:
 
-1. Create `testcontainers-floci/src/main/java/io/floci/testcontainers/config/services/<Service>Config.java`
+1. Create `testcontainers-floci-aws/src/main/java/io/floci/testcontainers/config/services/<Service>Config.java`
    following the pattern of existing config classes (extend `AbstractServiceConfig`, inner `Builder`, env var naming
    `FLOCI_SERVICES_<SERVICE>_<PROPERTY>`). If the service creates sibling Docker containers (like RDS or Lambda),
    override `requiresDockerSocket()` to return `true` while enabled (and, for services with a docker-less `mock`
@@ -133,12 +138,12 @@ When Floci adds a new service, the typical steps are:
 2. Wire the config into `FlociContainer`: add a `ServiceConfigRef` field via `registerServiceConfig(...)` (this
    drives the env-var/port/file-mount wiring, `disableAllServices()` and the Docker socket decision), a
    `get<Service>Config()` getter and a `with<Service>Config(...)` method that delegates to `updateServiceConfig(...)`.
-3. Add a config unit test in `testcontainers-floci/src/test/java/io/floci/testcontainers/config/services/`.
+3. Add a config unit test in `testcontainers-floci-aws/src/test/java/io/floci/testcontainers/config/services/`.
 4. Add a test method to `FlociContainerServicesConfigTest` for the container wiring, and add the new
    `container.get<Service>Config()` to the assertion list in `FlociContainerTest.shouldDisableAllServices()`
    (that test enumerates every service config explicitly, so a new service must be added there or it goes
    unchecked).
-5. Add an integration test in `testcontainers-floci/src/test/java/io/floci/testcontainers/services/` extending
+5. Add an integration test in `testcontainers-floci-aws/src/test/java/io/floci/testcontainers/services/` extending
    `AbstractServiceTest`.
 
 ### Adding support for a new Floci Azure service

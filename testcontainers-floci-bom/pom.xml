@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+        Deliberately does not inherit testcontainers-floci-parent: an imported BOM contributes its whole effective
+        dependency management, and this one must manage the modules of this repository and nothing else (no
+        Testcontainers or test library versions). The parent imports this BOM for its module versions.
+    -->
+    <groupId>io.floci</groupId>
+    <artifactId>testcontainers-floci-bom</artifactId>
+    <version>2.16.1</version>
+    <packaging>pom</packaging>
+
+    <name>Testcontainers Floci BOM</name>
+    <description>Bill of materials of the Testcontainers modules for Floci — free, open-source local cloud emulators (AWS, Azure, GCP, OCI)</description>
+    <url>https://github.com/floci-io/testcontainers-floci</url>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>cfranzen</id>
+            <name>Christian Franzen</name>
+            <url>https://github.com/cfranzen</url>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/floci-io/testcontainers-floci.git</connection>
+        <developerConnection>scm:git:ssh://github.com:floci-io/testcontainers-floci.git</developerConnection>
+        <url>https://github.com/floci-io/testcontainers-floci</url>
+    </scm>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.floci</groupId>
+                <artifactId>testcontainers-floci-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.floci</groupId>
+                <artifactId>testcontainers-floci-aws</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.floci</groupId>
+                <artifactId>testcontainers-floci-az</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.floci</groupId>
+                <artifactId>testcontainers-floci-gcp</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.floci</groupId>
+                <artifactId>testcontainers-floci-oci</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <profiles>
+        <!-- Same as the parent's publishing profile, so the BOM is signed and part of the one Central deployment -->
+        <profile>
+            <id>publishing</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>0.12.0</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                            <autoPublish>true</autoPublish>
+                            <waitUntil>published</waitUntil>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>3.2.8</version>
+                        <configuration>
+                            <gpgArguments>
+                                <arg>--pinentry-mode</arg>
+                                <arg>loopback</arg>
+                            </gpgArguments>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+</project>
