@@ -18,16 +18,22 @@ public class S3Config extends AbstractServiceConfig<S3Config.Builder> {
     private static final int DEFAULT_PRESIGN_EXPIRY_SECONDS = 3600;
     private static final boolean DEFAULT_ENFORCE_AUTH = false;
     private static final boolean DEFAULT_GLOBAL_BUCKET_NAMESPACE = false;
+    private static final boolean DEFAULT_LIFECYCLE_SWEEP_ENABLED = true;
+    private static final long DEFAULT_LIFECYCLE_SWEEP_INTERVAL_SECONDS = 60;
 
     private final int defaultPresignExpirySeconds;
     private final boolean enforceAuth;
     private final boolean globalBucketNamespace;
+    private final boolean lifecycleSweepEnabled;
+    private final long lifecycleSweepIntervalSeconds;
 
     private S3Config(Builder builder) {
         super(builder.enabled);
         this.defaultPresignExpirySeconds = builder.defaultPresignExpirySeconds;
         this.enforceAuth = builder.enforceAuth;
         this.globalBucketNamespace = builder.globalBucketNamespace;
+        this.lifecycleSweepEnabled = builder.lifecycleSweepEnabled;
+        this.lifecycleSweepIntervalSeconds = builder.lifecycleSweepIntervalSeconds;
     }
 
     /**
@@ -78,6 +84,25 @@ public class S3Config extends AbstractServiceConfig<S3Config.Builder> {
         return globalBucketNamespace;
     }
 
+    /**
+     * Returns whether the background sweep applying bucket lifecycle expiration rules
+     * (Expiration, NoncurrentVersionExpiration, AbortIncompleteMultipartUpload) runs.
+     *
+     * @return {@code true} if the lifecycle sweep is enabled
+     */
+    public boolean isLifecycleSweepEnabled() {
+        return lifecycleSweepEnabled;
+    }
+
+    /**
+     * Returns how often the lifecycle sweep runs, in seconds.
+     *
+     * @return the lifecycle sweep interval in seconds
+     */
+    public long getLifecycleSweepIntervalSeconds() {
+        return lifecycleSweepIntervalSeconds;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_S3_ENABLED", String.valueOf(isEnabled()));
@@ -86,6 +111,8 @@ public class S3Config extends AbstractServiceConfig<S3Config.Builder> {
             container.withEnv("FLOCI_SERVICES_S3_DEFAULT_PRESIGN_EXPIRY_SECONDS", String.valueOf(defaultPresignExpirySeconds));
             container.withEnv("FLOCI_SERVICES_S3_ENFORCE_AUTH", String.valueOf(enforceAuth));
             container.withEnv("FLOCI_SERVICES_S3_GLOBAL_BUCKET_NAMESPACE", String.valueOf(globalBucketNamespace));
+            container.withEnv("FLOCI_SERVICES_S3_LIFECYCLE_SWEEP_ENABLED", String.valueOf(lifecycleSweepEnabled));
+            container.withEnv("FLOCI_SERVICES_S3_LIFECYCLE_SWEEP_INTERVAL_SECONDS", String.valueOf(lifecycleSweepIntervalSeconds));
         }
     }
 
@@ -97,6 +124,8 @@ public class S3Config extends AbstractServiceConfig<S3Config.Builder> {
         private int defaultPresignExpirySeconds = DEFAULT_PRESIGN_EXPIRY_SECONDS;
         private boolean enforceAuth = DEFAULT_ENFORCE_AUTH;
         private boolean globalBucketNamespace = DEFAULT_GLOBAL_BUCKET_NAMESPACE;
+        private boolean lifecycleSweepEnabled = DEFAULT_LIFECYCLE_SWEEP_ENABLED;
+        private long lifecycleSweepIntervalSeconds = DEFAULT_LIFECYCLE_SWEEP_INTERVAL_SECONDS;
 
         private Builder() {
             // Allow instantiation only via S3Config.builder()
@@ -112,6 +141,8 @@ public class S3Config extends AbstractServiceConfig<S3Config.Builder> {
             this.defaultPresignExpirySeconds = instance.getDefaultPresignExpirySeconds();
             this.enforceAuth = instance.isEnforceAuth();
             this.globalBucketNamespace = instance.isGlobalBucketNamespace();
+            this.lifecycleSweepEnabled = instance.isLifecycleSweepEnabled();
+            this.lifecycleSweepIntervalSeconds = instance.getLifecycleSweepIntervalSeconds();
         }
 
         /**
@@ -148,6 +179,32 @@ public class S3Config extends AbstractServiceConfig<S3Config.Builder> {
          */
         public Builder globalBucketNamespace(boolean globalBucketNamespace) {
             this.globalBucketNamespace = globalBucketNamespace;
+            return this;
+        }
+
+        /**
+         * Sets whether the background sweep applying bucket lifecycle expiration rules runs:
+         * Expiration, NoncurrentVersionExpiration and AbortIncompleteMultipartUpload. When off,
+         * rules are stored and reported in {@code x-amz-expiration} but nothing expires.
+         *
+         * @param lifecycleSweepEnabled {@code true} to run the lifecycle sweep (default {@value DEFAULT_LIFECYCLE_SWEEP_ENABLED})
+         * @return this builder
+         */
+        public Builder lifecycleSweepEnabled(boolean lifecycleSweepEnabled) {
+            this.lifecycleSweepEnabled = lifecycleSweepEnabled;
+            return this;
+        }
+
+        /**
+         * Sets how often the lifecycle sweep runs, in seconds. AWS applies lifecycle rules about
+         * once a day, to expiry times rounded to midnight UTC, so the interval only bounds how late
+         * Floci expires objects.
+         *
+         * @param lifecycleSweepIntervalSeconds the lifecycle sweep interval in seconds (default {@value DEFAULT_LIFECYCLE_SWEEP_INTERVAL_SECONDS})
+         * @return this builder
+         */
+        public Builder lifecycleSweepIntervalSeconds(long lifecycleSweepIntervalSeconds) {
+            this.lifecycleSweepIntervalSeconds = lifecycleSweepIntervalSeconds;
             return this;
         }
 
