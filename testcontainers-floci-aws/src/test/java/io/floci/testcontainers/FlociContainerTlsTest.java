@@ -1,5 +1,6 @@
 package io.floci.testcontainers;
 
+import io.floci.testcontainers.core.testing.TestImages;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
@@ -16,6 +17,8 @@ import javax.net.ssl.SSLContext;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class FlociContainerTlsTest {
+
+    private static final String IMAGE = TestImages.pinnedImage(FlociContainer.DESCRIPTOR);
 
     @Test
     void shouldStoreTlsConfigOnContainer() {
@@ -37,7 +40,7 @@ class FlociContainerTlsTest {
                 .setTlsSocketStrategy(new DefaultClientTlsStrategy(sslContext, NoopHostnameVerifier.INSTANCE))
                 .build();
 
-        try (FlociContainer container = new FlociContainer();
+        try (FlociContainer container = new FlociContainer(IMAGE);
              CloseableHttpClient httpClient = HttpClients.custom()
                      .setConnectionManager(connectionManager)
                      .build()) {
