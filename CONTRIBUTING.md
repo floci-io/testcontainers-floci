@@ -49,8 +49,7 @@ testcontainers-floci-core/        Shared base of all modules (provider-independe
                                   resource namespace and sibling cleanup, reset()
       CloudDescriptor.java        Image, port, paths and env var names of one emulator
       config/services/            AbstractServiceConfig, AbstractServiceConfigBuilder
-  src/test/java/                  Test helpers published as test-jar (ContainerUtils, TransferableCopyInspector,
-                                  DockerSocketInspector)
+  src/test/java/                  Test helpers published as test-jar (ContainerUtils, TransferableCopyInspector)
 testcontainers-floci-bom/         BOM with the versions of core, aws, az, gcp and oci (does not inherit the parent)
 testcontainers-floci/             Relocation of the former AWS coordinates to testcontainers-floci-aws (until 3.0.0)
 testcontainers-floci-aws/         AWS module — FlociContainer (extends AbstractFlociContainer) and all config classes

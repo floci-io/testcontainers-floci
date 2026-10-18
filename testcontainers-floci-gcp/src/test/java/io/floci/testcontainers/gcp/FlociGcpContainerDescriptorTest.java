@@ -1,9 +1,8 @@
 package io.floci.testcontainers.gcp;
 
+import io.floci.testcontainers.core.config.services.AbstractServiceConfig;
 import org.junit.jupiter.api.Test;
 
-import static io.floci.testcontainers.core.testing.DockerSocketInspector.configsRequiringDockerSocket;
-import static io.floci.testcontainers.core.testing.DockerSocketInspector.serviceConfigs;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -36,16 +35,22 @@ class FlociGcpContainerDescriptorTest {
     @Test
     void shouldRequireDockerSocketForReferenceServicesByDefault() {
         try (FlociGcpContainer container = new FlociGcpContainer()) {
-            assertThat(configsRequiringDockerSocket(container)).containsExactlyInAnyOrder(
-                    "BigQueryConfig", "CloudRunConfig", "CloudSqlConfig", "GkeConfig", "KafkaConfig");
+            assertThat(container.getServiceConfigs())
+                    .filteredOn(AbstractServiceConfig::requiresDockerSocket)
+                    .map(config -> config.getClass().getSimpleName())
+                    .containsExactlyInAnyOrder(
+                            "BigQueryConfig", "CloudRunConfig", "CloudSqlConfig", "GkeConfig", "KafkaConfig");
         }
     }
 
     @Test
     void shouldNotRequireDockerSocketWhenAllServicesAreDisabled() {
         try (FlociGcpContainer container = new FlociGcpContainer().disableAllServices()) {
-            assertThat(serviceConfigs(container)).isNotEmpty();
-            assertThat(configsRequiringDockerSocket(container)).isEmpty();
+            assertThat(container.getServiceConfigs()).isNotEmpty();
+            assertThat(container.getServiceConfigs())
+                    .filteredOn(AbstractServiceConfig::requiresDockerSocket)
+                    .map(config -> config.getClass().getSimpleName())
+                    .isEmpty();
         }
     }
 }

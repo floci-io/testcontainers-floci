@@ -439,6 +439,17 @@ public abstract class AbstractFlociContainer<SELF extends AbstractFlociContainer
     }
 
     /**
+     * Returns the current configurations of all registered services, in registration order.
+     *
+     * @return an unmodifiable snapshot of the current service configurations
+     */
+    public List<AbstractServiceConfig<?>> getServiceConfigs() {
+        return serviceConfigs.stream()
+                .<AbstractServiceConfig<?>>map(ServiceConfigRef::get)
+                .toList();
+    }
+
+    /**
      * Overrides whether the host Docker socket is mounted into the container, bypassing auto-detection.
      *
      * <p>By default (this method never called), the socket is mounted only if at least one currently

@@ -10,8 +10,8 @@ Testcontainers module for [Floci](https://github.com/floci-io/floci) — a local
   `CloudDescriptor` — image, port, health/reset paths and env-var names of one emulator; service config registry,
   env-var/port/file-mount wiring, Docker socket auto-detection, log level, dedicated network, per-start resource
   namespace with sibling cleanup on stop, `reset()`, graceful stop) and `AbstractServiceConfig`/
-  `AbstractServiceConfigBuilder`. Publishes its test helpers (`ContainerUtils`, `TransferableCopyInspector`,
-  `DockerSocketInspector`) as test-jar.
+  `AbstractServiceConfigBuilder`. Publishes its test helpers (`ContainerUtils`, `TransferableCopyInspector`)
+  as test-jar.
 - `testcontainers-floci-aws/` — AWS module (published as `testcontainers-floci` up to 2.16.1): `FlociContainer` extending `AbstractFlociContainer`. Its public API must stay
   compatible with 2.16.1 (`japicmp` in the module's `verify` phase); `config.services.AbstractServiceConfig`/
   `AbstractServiceConfigBuilder` remain as deprecated subclasses of the core types that every AWS config extends.

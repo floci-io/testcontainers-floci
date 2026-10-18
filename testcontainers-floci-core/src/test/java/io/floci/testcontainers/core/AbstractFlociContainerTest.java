@@ -154,6 +154,18 @@ class AbstractFlociContainerTest {
     }
 
     @Test
+    void shouldReturnCurrentServiceConfigsInRegistrationOrder() {
+        try (TestFlociContainer container = new TestFlociContainer()) {
+            container.withSimpleConfig(c -> c.value("custom"));
+
+            assertThat(container.getServiceConfigs())
+                    .containsExactly(container.getSimpleConfig(), container.getDockerBackedConfig());
+            assertThatThrownBy(() -> container.getServiceConfigs().clear())
+                    .isInstanceOf(UnsupportedOperationException.class);
+        }
+    }
+
+    @Test
     void shouldDisableAllServices() {
         try (TestFlociContainer container = new TestFlociContainer()) {
             container.withSimpleConfig(c -> c.value("custom"))
