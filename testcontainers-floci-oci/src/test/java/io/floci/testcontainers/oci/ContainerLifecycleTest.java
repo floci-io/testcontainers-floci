@@ -1,6 +1,7 @@
-package io.floci.testcontainers.oci.services;
+package io.floci.testcontainers.oci;
 
 import com.github.dockerjava.api.DockerClient;
+import com.oracle.bmc.common.ClientBuilderBase;
 import com.oracle.bmc.functions.FunctionsInvokeClient;
 import com.oracle.bmc.functions.FunctionsManagementClient;
 import com.oracle.bmc.functions.model.CreateApplicationDetails;
@@ -14,7 +15,8 @@ import com.oracle.bmc.objectstorage.model.CreateBucketDetails;
 import com.oracle.bmc.objectstorage.requests.CreateBucketRequest;
 import com.oracle.bmc.objectstorage.requests.GetBucketRequest;
 import com.oracle.bmc.util.StreamUtils;
-import io.floci.testcontainers.oci.FlociOciContainer;
+import io.floci.testcontainers.core.testing.TestImages;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.DockerClientFactory;
 
@@ -29,31 +31,39 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * Tests the provider-independent lifecycle features of the core against Floci OCI: {@code reset()} and the removal of
  * the sibling containers and volumes labelled with the container's resource namespace.
  */
-class LifecycleServiceTest extends AbstractServiceTest {
+@Tag("integration")
+class ContainerLifecycleTest {
 
+    private static final String IMAGE = TestImages.pinnedImage(FlociOciContainer.DESCRIPTOR);
     private static final String NAMESPACE_LABEL = "floci_namespace";
 
     @Test
     void shouldRemoveResourcesOnReset() {
         String bucket = "reset-" + System.nanoTime();
-        try (ObjectStorageClient objectStorage = client(ObjectStorageClient.builder())) {
-            objectStorage.createBucket(CreateBucketRequest.builder()
-                    .namespaceName(floci.getNamespace())
-                    .createBucketDetails(CreateBucketDetails.builder()
-                            .name(bucket)
-                            .compartmentId(tenancyId())
-                            .build())
-                    .build());
-            GetBucketRequest getBucket = GetBucketRequest.builder()
-                    .namespaceName(floci.getNamespace())
-                    .bucketName(bucket)
-                    .build();
-            assertThat(objectStorage.getBucket(getBucket).getBucket().getName()).isEqualTo(bucket);
+        try (FlociOciContainer container = new FlociOciContainer(IMAGE)
+                .disableAllServices()
+                .withObjectStorageConfig(c -> c.enabled(true))) {
+            container.start();
 
-            floci.reset();
+            try (ObjectStorageClient objectStorage = client(container, ObjectStorageClient.builder())) {
+                objectStorage.createBucket(CreateBucketRequest.builder()
+                        .namespaceName(container.getNamespace())
+                        .createBucketDetails(CreateBucketDetails.builder()
+                                .name(bucket)
+                                .compartmentId(container.getTenancyId())
+                                .build())
+                        .build());
+                GetBucketRequest getBucket = GetBucketRequest.builder()
+                        .namespaceName(container.getNamespace())
+                        .bucketName(bucket)
+                        .build();
+                assertThat(objectStorage.getBucket(getBucket).getBucket().getName()).isEqualTo(bucket);
 
-            assertThatThrownBy(() -> objectStorage.getBucket(getBucket))
-                    .isInstanceOfSatisfying(BmcException.class, e -> assertThat(e.getStatusCode()).isEqualTo(404));
+                container.reset();
+
+                assertThatThrownBy(() -> objectStorage.getBucket(getBucket))
+                        .isInstanceOfSatisfying(BmcException.class, e -> assertThat(e.getStatusCode()).isEqualTo(404));
+            }
         }
     }
 
@@ -111,6 +121,12 @@ class LifecycleServiceTest extends AbstractServiceTest {
         } catch (BmcException ignored) {
             // see above
         }
+    }
+
+    private static <C> C client(FlociOciContainer container, ClientBuilderBase<?, C> builder) {
+        // the auth provider supplies the region; an explicit endpoint takes precedence over the region's endpoint
+        builder.endpoint(container.getEndpoint());
+        return builder.build(TestAuthenticationProviders.forContainer(container));
     }
 
     private static List<?> siblingContainers(String namespace) {
