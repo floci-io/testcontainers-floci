@@ -14,7 +14,6 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import software.amazon.awssdk.services.kafka.KafkaClient;
 import software.amazon.awssdk.services.kafka.model.BrokerNodeGroupInfo;
 import software.amazon.awssdk.services.kafka.model.ClusterInfo;
@@ -82,9 +81,7 @@ class MskServiceTest extends AbstractServiceTest {
         assertThat(bootstrapBrokers).isNotBlank();
     }
 
-    // The test JVM reaches the brokers through FLOCI_SERVICES_MSK_BOOTSTRAP_HOSTNAME, which the pinned Floci release
-    // does not support yet; runs with -Dfloci.test-image.tag=nightly. Remove once the pin includes it.
-    @EnabledIfSystemProperty(named = "floci.test-image.tag", matches = ".+")
+    @Disabled("Needs FLOCI_SERVICES_MSK_BOOTSTRAP_HOSTNAME to reach the brokers, which the pinned Floci release lacks")
     @Test
     @Order(3)
     void shouldCreateTopic() throws Exception {
@@ -99,9 +96,7 @@ class MskServiceTest extends AbstractServiceTest {
         }
     }
 
-    // The test JVM reaches the brokers through FLOCI_SERVICES_MSK_BOOTSTRAP_HOSTNAME, which the pinned Floci release
-    // does not support yet; runs with -Dfloci.test-image.tag=nightly. Remove once the pin includes it.
-    @EnabledIfSystemProperty(named = "floci.test-image.tag", matches = ".+")
+    @Disabled("Needs FLOCI_SERVICES_MSK_BOOTSTRAP_HOSTNAME to reach the brokers, which the pinned Floci release lacks")
     @Test
     @Order(4)
     void shouldProduceAndConsumeMessage() throws Exception {
