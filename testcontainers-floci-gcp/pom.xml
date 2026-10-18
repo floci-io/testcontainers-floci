@@ -33,6 +33,11 @@
                 <artifactId>google-api-services-sqladmin</artifactId>
                 <version>v1beta4-rev20260819-2.0.0</version>
             </dependency>
+            <dependency>
+                <groupId>com.google.apis</groupId>
+                <artifactId>google-api-services-iam</artifactId>
+                <version>v1-rev20261012-2.0.0</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -166,6 +171,11 @@
         <dependency>
             <groupId>com.google.apis</groupId>
             <artifactId>google-api-services-sqladmin</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.apis</groupId>
+            <artifactId>google-api-services-iam</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
