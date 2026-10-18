@@ -2,6 +2,7 @@ package io.floci.testcontainers.core.testing;
 
 import io.floci.testcontainers.core.CloudDescriptor;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -9,9 +10,20 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestImagesTest {
 
-    @AfterEach
+    private String callerOverride;
+
+    @BeforeEach
     void clearOverride() {
-        System.clearProperty(TestImages.TAG_OVERRIDE_PROPERTY);
+        callerOverride = System.clearProperty(TestImages.TAG_OVERRIDE_PROPERTY);
+    }
+
+    @AfterEach
+    void restoreOverride() {
+        if (callerOverride == null) {
+            System.clearProperty(TestImages.TAG_OVERRIDE_PROPERTY);
+        } else {
+            System.setProperty(TestImages.TAG_OVERRIDE_PROPERTY, callerOverride);
+        }
     }
 
     @Test
