@@ -1,5 +1,5 @@
 name: Feature Request
-description: Suggest a new feature or improvement for testcontainers-floci
+description: Suggest a new feature or improvement for testcontainers-floci (AWS, Azure, GCP or OCI)
 labels: ["enhancement"]
 body:
   - type: markdown
@@ -7,15 +7,35 @@ body:
       value: |
         Thank you for suggesting an improvement! Please describe what you would like and why it would be useful.
 
+        This project only wraps the Floci emulators in Testcontainers. If the emulator itself is missing a service or
+        API, please request it upstream first: [Floci (AWS)](https://github.com/floci-io/floci),
+        [Floci Azure](https://github.com/floci-io/floci-az), [Floci GCP](https://github.com/floci-io/floci-gcp),
+        [Floci OCI](https://github.com/floci-io/floci-oci).
+
+  - type: dropdown
+    id: module
+    attributes:
+      label: Cloud provider / module
+      options:
+        - AWS (testcontainers-floci-aws, formerly testcontainers-floci)
+        - Azure (testcontainers-floci-az)
+        - GCP (testcontainers-floci-gcp)
+        - OCI (testcontainers-floci-oci)
+        - All providers (testcontainers-floci-core)
+        - BOM / build / publishing (testcontainers-floci-bom)
+    validations:
+      required: true
+
   - type: dropdown
     id: kind
     attributes:
       label: Type of feature
       options:
-        - Support for a new Floci service
-        - New configuration option for an existing service
-        - Improvement to FlociContainer (e.g. new helper method)
-        - Spring Boot integration improvement
+        - Support for a Floci service that has no config class yet
+        - New or changed configuration option of an existing service
+        - Global configuration (TLS, auth, storage, network, logging, ...)
+        - Container API (e.g. endpoint, credentials or SDK client helpers)
+        - Documentation
         - Other
     validations:
       required: true
@@ -23,9 +43,29 @@ body:
   - type: input
     id: service
     attributes:
-      label: AWS service (if applicable)
-      description: Which AWS service does this relate to?
-      placeholder: "e.g. AmazonSQS, AmazonRDS"
+      label: Service (if applicable)
+      description: The service as Floci names it.
+      placeholder: "e.g. sqs, rds (AWS) · blob, keyVault (Azure) · pubsub, secretmanager (GCP) · objectstorage (OCI)"
+
+  - type: input
+    id: floci-property
+    attributes:
+      label: Floci property or environment variable (if applicable)
+      description: For configuration options, the property as documented by Floci. This lets us map it directly.
+      placeholder: "e.g. floci.services.sqs.foo / FLOCI_SERVICES_SQS_FOO, FLOCI_AZ_SERVICES_…, FLOCI_GCP_SERVICES_…, FLOCI_OCI_SERVICES_…"
+
+  - type: dropdown
+    id: floci-support
+    attributes:
+      label: Is this already supported by the Floci emulator?
+      description: We can only wire up what the emulator image provides.
+      options:
+        - Yes, in a released image
+        - Only in the nightly image
+        - No, not yet (requested upstream)
+        - Not sure / not applicable
+    validations:
+      required: true
 
   - type: textarea
     id: motivation
@@ -39,8 +79,10 @@ body:
     id: proposal
     attributes:
       label: Proposed solution
-      description: |
-        Describe what you would like to see. If you have ideas for the API or implementation, share them here.
+      description: Describe what you would like to see. If you have ideas for the API, sketch them here.
+      placeholder: |
+        new FlociContainer()
+            .withSqsConfig(sqs -> sqs.foo(true));
     validations:
       required: true
 
@@ -48,11 +90,13 @@ body:
     id: alternatives
     attributes:
       label: Alternatives considered
-      description: Any alternative approaches or workarounds you have already tried.
+      description: Workarounds you have already tried (e.g. setting the `FLOCI_*` environment variable via `withEnv(...)`).
 
   - type: checkboxes
-    id: contribution
+    id: checks
     attributes:
-      label: Contribution
+      label: Checklist
       options:
+        - label: I searched the existing issues and this has not been requested yet.
+          required: true
         - label: I am willing to open a pull request for this feature.
