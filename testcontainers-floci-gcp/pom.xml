@@ -38,6 +38,11 @@
                 <artifactId>google-api-services-iam</artifactId>
                 <version>v1-rev20261012-2.0.0</version>
             </dependency>
+            <dependency>
+                <groupId>com.google.apis</groupId>
+                <artifactId>google-api-services-cloudresourcemanager</artifactId>
+                <version>v1-rev20261011-2.0.0</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -176,6 +181,11 @@
         <dependency>
             <groupId>com.google.apis</groupId>
             <artifactId>google-api-services-iam</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.apis</groupId>
+            <artifactId>google-api-services-cloudresourcemanager</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
