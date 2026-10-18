@@ -26,6 +26,13 @@
                 <artifactId>slf4j-simple</artifactId>
                 <version>${slf4j.version}</version>
             </dependency>
+            <!-- Discovery-based REST clients (not in the libraries-bom) for APIs that have no Cloud Client Library
+                 or whose Cloud Client Library speaks an API version Floci GCP does not serve -->
+            <dependency>
+                <groupId>com.google.apis</groupId>
+                <artifactId>google-api-services-sqladmin</artifactId>
+                <version>v1beta4-rev20260819-2.0.0</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -154,6 +161,11 @@
         <dependency>
             <groupId>com.google.cloud</groupId>
             <artifactId>google-cloud-bigquery</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.apis</groupId>
+            <artifactId>google-api-services-sqladmin</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
