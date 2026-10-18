@@ -168,8 +168,11 @@ list), with these differences:
   (or `<n>ms`). Enums (`iam.authorization-mode`) are public nested enums emitted in lower case. Port ranges and
   sidecar ports work as in the Azure module (default count 10, nothing exposed on the Floci container).
 - The shared `AbstractServiceTest` container runs without TLS and offers `grpcChannelProvider()` (plaintext gRPC
-  channel to `getEmulatorHost()`), `noCredentials()` and a plain `rest(...)` helper; HttpJson clients use
-  `setEndpoint(floci.getEndpoint())`. A shutdown hook stops it gracefully so Floci GCP removes its sidecars.
+  channel to `getEmulatorHost()`) and `noCredentials()`; HttpJson clients use `setEndpoint(floci.getEndpoint())`,
+  discovery-based `google-api-services-*` clients (for APIs Floci GCP serves over REST only, or in another version
+  than the Cloud Client Library) `setRootUrl(floci.getEndpoint() + "/")`. Tests call Floci over plain HTTP only where
+  no client library works (Firebase password sign-in, Kafka, locations), each with its own private helper.
+  A shutdown hook stops it gracefully so Floci GCP removes its sidecars.
   Docker-backed services (Kafka, Cloud SQL, Cloud Run, BigQuery) are tested for real against the shared container;
   GKE (privileged k3s) is tested against a dedicated `mock` container.
 

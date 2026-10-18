@@ -12,11 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.UUID;
 
 /**
@@ -32,8 +27,6 @@ abstract class AbstractServiceTest {
     private static final boolean DEBUG_LOGGING = false;
 
     protected static final FlociGcpContainer floci;
-
-    private static final HttpClient REST_CLIENT = HttpClient.newHttpClient();
 
     static {
         if (DEBUG_LOGGING) {
@@ -83,46 +76,4 @@ abstract class AbstractServiceTest {
         return prefix + "-" + UUID.randomUUID().toString().substring(0, 8);
     }
 
-    /**
-     * Sends a plain REST request to the shared container.
-     *
-     * @param method      the HTTP method
-     * @param path        the path including query string, relative to {@link FlociGcpContainer#getEndpoint()}
-     * @param contentType the content type of the body, or {@code null} for none
-     * @param body        the request body, or {@code null} for none
-     */
-    protected static RestResponse rest(String method, String path, String contentType, String body) {
-        return rest(floci, method, path, contentType, body);
-    }
-
-    /**
-     * Same as {@link #rest(String, String, String, String)}, but against the given container instead of the shared
-     * one.
-     */
-    protected static RestResponse rest(FlociGcpContainer container, String method, String path, String contentType,
-                                       String body) {
-        HttpRequest.Builder request = HttpRequest.newBuilder(URI.create(container.getEndpoint() + path));
-        if (body != null) {
-            request.header("Content-Type", contentType)
-                    .method(method, HttpRequest.BodyPublishers.ofString(body));
-        } else {
-            request.method(method, HttpRequest.BodyPublishers.noBody());
-        }
-
-        try {
-            HttpResponse<String> response = REST_CLIENT.send(request.build(), HttpResponse.BodyHandlers.ofString());
-            return new RestResponse(response.statusCode(), response.body());
-        } catch (IOException e) {
-            throw new IllegalStateException("REST call " + method + " " + path + " failed", e);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException("REST call " + method + " " + path + " interrupted", e);
-        }
-    }
-
-    /**
-     * Status and body of a {@link #rest(String, String, String, String)} call.
-     */
-    protected record RestResponse(int status, String body) {
-    }
 }
