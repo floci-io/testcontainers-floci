@@ -1,6 +1,7 @@
 package io.floci.testcontainers;
 
 import io.floci.testcontainers.config.services.AbstractServiceConfig;
+import io.floci.testcontainers.core.testing.TestImages;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -18,6 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FlociContainerTest {
+
+    private static final String IMAGE = TestImages.pinnedImage(FlociContainer.DESCRIPTOR);
 
     @Test
     void shouldCreateContainerWithDefaultImage() {
@@ -204,7 +207,7 @@ class FlociContainerTest {
     @Test
     @Tag("integration")
     void shouldWaitForStartScriptsToComplete() throws Exception {
-        try (FlociContainer container = new FlociContainer().disableAllServices()) {
+        try (FlociContainer container = new FlociContainer(IMAGE).disableAllServices()) {
             container.withCopyToContainer(Transferable.of("""
                     #!/bin/sh
                     set -eu
@@ -223,7 +226,7 @@ class FlociContainerTest {
     @Tag("integration")
     void shouldRunShutdownHooksWhenStopped(@TempDir Path temporaryDirectory) {
         Path shutdownMarker = temporaryDirectory.resolve("completed");
-        try (FlociContainer container = new FlociContainer().disableAllServices()
+        try (FlociContainer container = new FlociContainer(IMAGE).disableAllServices()
                 .withFileSystemBind(temporaryDirectory.toString(), "/tmp/floci-shutdown", BindMode.READ_WRITE)) {
             container.withCopyToContainer(Transferable.of("""
                     #!/bin/sh
@@ -240,7 +243,7 @@ class FlociContainerTest {
     @Test
     @Tag("integration")
     void shouldDeleteContainerOwnedPersistentStorage() throws Exception {
-        try (FlociContainer container = new FlociContainer().disableAllServices()
+        try (FlociContainer container = new FlociContainer(IMAGE).disableAllServices()
                 .withStorageConfig(c -> c.randomHostPersistentPath())) {
             Path persistentStorage = container.getStorageConfig().getHostPersistentPath().orElseThrow();
             try {
