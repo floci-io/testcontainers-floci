@@ -168,7 +168,7 @@ public final class CloudDescriptor {
      * @return the default environment, in insertion order (unmodifiable)
      */
     public Map<String, String> getDefaultEnv() {
-        return defaultEnv;
+        return Collections.unmodifiableMap(new LinkedHashMap<>(defaultEnv));
     }
 
     @Override
