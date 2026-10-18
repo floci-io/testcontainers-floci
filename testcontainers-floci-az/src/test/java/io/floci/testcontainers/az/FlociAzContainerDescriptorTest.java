@@ -1,9 +1,8 @@
 package io.floci.testcontainers.az;
 
+import io.floci.testcontainers.core.config.services.AbstractServiceConfig;
 import org.junit.jupiter.api.Test;
 
-import static io.floci.testcontainers.core.testing.DockerSocketInspector.configsRequiringDockerSocket;
-import static io.floci.testcontainers.core.testing.DockerSocketInspector.serviceConfigs;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -40,9 +39,12 @@ class FlociAzContainerDescriptorTest {
         // Service Bus, ACI, VM and Container Apps are mocked by default; Cosmos DB runs no engine sidecar and
         // Azure SQL has no data plane until the SQL Server EULA is accepted
         try (FlociAzContainer container = new FlociAzContainer()) {
-            assertThat(configsRequiringDockerSocket(container)).containsExactlyInAnyOrder(
-                    "AcrConfig", "AksConfig", "EventHubConfig", "FunctionsConfig", "MariaDbConfig",
-                    "MySqlConfig", "PostgresConfig", "RedisConfig");
+            assertThat(container.getServiceConfigs())
+                    .filteredOn(AbstractServiceConfig::requiresDockerSocket)
+                    .map(config -> config.getClass().getSimpleName())
+                    .containsExactlyInAnyOrder(
+                            "AcrConfig", "AksConfig", "EventHubConfig", "FunctionsConfig", "MariaDbConfig",
+                            "MySqlConfig", "PostgresConfig", "RedisConfig");
         }
     }
 
@@ -55,18 +57,24 @@ class FlociAzContainerDescriptorTest {
                 .withContainerAppsConfig(c -> c.mocked(false))
                 .withCosmosConfig(c -> c.mongodb(m -> m.enabled(true)))
                 .withSqlConfig(c -> c.acceptEula("Y"))) {
-            assertThat(configsRequiringDockerSocket(container)).containsExactlyInAnyOrder(
-                    "AciConfig", "AcrConfig", "AksConfig", "ContainerAppsConfig", "CosmosConfig", "EventHubConfig",
-                    "FunctionsConfig", "MariaDbConfig", "MySqlConfig", "PostgresConfig", "RedisConfig",
-                    "ServiceBusConfig", "SqlConfig", "VmConfig");
+            assertThat(container.getServiceConfigs())
+                    .filteredOn(AbstractServiceConfig::requiresDockerSocket)
+                    .map(config -> config.getClass().getSimpleName())
+                    .containsExactlyInAnyOrder(
+                            "AciConfig", "AcrConfig", "AksConfig", "ContainerAppsConfig", "CosmosConfig", "EventHubConfig",
+                            "FunctionsConfig", "MariaDbConfig", "MySqlConfig", "PostgresConfig", "RedisConfig",
+                            "ServiceBusConfig", "SqlConfig", "VmConfig");
         }
     }
 
     @Test
     void shouldNotRequireDockerSocketWhenAllServicesAreDisabled() {
         try (FlociAzContainer container = new FlociAzContainer().disableAllServices()) {
-            assertThat(serviceConfigs(container)).isNotEmpty();
-            assertThat(configsRequiringDockerSocket(container)).isEmpty();
+            assertThat(container.getServiceConfigs()).isNotEmpty();
+            assertThat(container.getServiceConfigs())
+                    .filteredOn(AbstractServiceConfig::requiresDockerSocket)
+                    .map(config -> config.getClass().getSimpleName())
+                    .isEmpty();
         }
     }
 }

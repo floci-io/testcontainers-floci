@@ -1,9 +1,8 @@
 package io.floci.testcontainers;
 
+import io.floci.testcontainers.core.config.services.AbstractServiceConfig;
 import org.junit.jupiter.api.Test;
 
-import static io.floci.testcontainers.core.testing.DockerSocketInspector.configsRequiringDockerSocket;
-import static io.floci.testcontainers.core.testing.DockerSocketInspector.serviceConfigs;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -30,27 +29,36 @@ class FlociContainerDescriptorTest {
     @Test
     void shouldRequireDockerSocketForReferenceServicesByDefault() {
         try (FlociContainer container = new FlociContainer()) {
-            assertThat(configsRequiringDockerSocket(container)).containsExactlyInAnyOrder(
-                    "AmazonMqConfig", "AppSyncConfig", "AthenaConfig", "CodeArtifactConfig",
-                    "CodeBuildConfig", "DocumentDbConfig", "Ec2Config", "EcrConfig", "EcsConfig", "EksConfig",
-                    "ElastiCacheConfig", "KinesisAnalyticsConfig", "LambdaConfig", "MemoryDbConfig", "MskConfig",
-                    "MwaaConfig", "NeptuneConfig", "OpenSearchConfig", "PipesConfig", "RdsConfig", "RedshiftConfig",
-                    "SageMakerConfig", "TimestreamInfluxDbConfig", "VerifiedPermissionsConfig");
+            assertThat(container.getServiceConfigs())
+                    .filteredOn(AbstractServiceConfig::requiresDockerSocket)
+                    .map(config -> config.getClass().getSimpleName())
+                    .containsExactlyInAnyOrder(
+                            "AmazonMqConfig", "AppSyncConfig", "AthenaConfig", "CodeArtifactConfig",
+                            "CodeBuildConfig", "DocumentDbConfig", "Ec2Config", "EcrConfig", "EcsConfig", "EksConfig",
+                            "ElastiCacheConfig", "KinesisAnalyticsConfig", "LambdaConfig", "MemoryDbConfig", "MskConfig",
+                            "MwaaConfig", "NeptuneConfig", "OpenSearchConfig", "PipesConfig", "RdsConfig", "RedshiftConfig",
+                            "SageMakerConfig", "TimestreamInfluxDbConfig", "VerifiedPermissionsConfig");
         }
     }
 
     @Test
     void shouldRequireDockerSocketForBatchOnlyInDockerRunnerMode() {
         try (FlociContainer container = new FlociContainer().withBatchConfig(c -> c.runnerMode("docker"))) {
-            assertThat(configsRequiringDockerSocket(container)).contains("BatchConfig");
+            assertThat(container.getServiceConfigs())
+                    .filteredOn(AbstractServiceConfig::requiresDockerSocket)
+                    .map(config -> config.getClass().getSimpleName())
+                    .contains("BatchConfig");
         }
     }
 
     @Test
     void shouldNotRequireDockerSocketWhenAllServicesAreDisabled() {
         try (FlociContainer container = new FlociContainer().disableAllServices()) {
-            assertThat(serviceConfigs(container)).hasSizeGreaterThan(100);
-            assertThat(configsRequiringDockerSocket(container)).isEmpty();
+            assertThat(container.getServiceConfigs()).hasSizeGreaterThan(100);
+            assertThat(container.getServiceConfigs())
+                    .filteredOn(AbstractServiceConfig::requiresDockerSocket)
+                    .map(config -> config.getClass().getSimpleName())
+                    .isEmpty();
         }
     }
 }
