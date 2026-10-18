@@ -3,6 +3,15 @@ contact_links:
   - name: Floci documentation
     url: https://floci.io/floci/services/
     about: Check the Floci service documentation for supported services and configuration options.
-  - name: Floci repository
+  - name: Floci (AWS) repository
     url: https://github.com/floci-io/floci
-    about: For issues with the Floci emulator itself (not this Testcontainers module), open an issue there.
+    about: For issues with the Floci AWS emulator itself (not this Testcontainers module), open an issue there.
+  - name: Floci Azure repository
+    url: https://github.com/floci-io/floci-az
+    about: For issues with the Floci Azure emulator itself (not this Testcontainers module), open an issue there.
+  - name: Floci GCP repository
+    url: https://github.com/floci-io/floci-gcp
+    about: For issues with the Floci GCP emulator itself (not this Testcontainers module), open an issue there.
+  - name: Floci OCI repository
+    url: https://github.com/floci-io/floci-oci
+    about: For issues with the Floci OCI emulator itself (not this Testcontainers module), open an issue there.
