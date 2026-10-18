@@ -1,48 +1,60 @@
 package io.floci.testcontainers.gcp.services;
 
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.services.sqladmin.SQLAdmin;
+import com.google.api.services.sqladmin.model.DatabaseInstance;
+import com.google.api.services.sqladmin.model.IpMapping;
+import com.google.api.services.sqladmin.model.Operation;
+import com.google.api.services.sqladmin.model.Settings;
 import org.junit.jupiter.api.Test;
 
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class CloudSqlServiceTest extends AbstractServiceTest {
 
-    private static final Pattern IP_ADDRESS = Pattern.compile("\"ipAddress\"\\s*:\\s*\"([^\"]+)\"");
-    private static final Pattern PORT = Pattern.compile("\"port\"\\s*:\\s*(\\d+)");
-
     @Test
     void shouldCreateReachablePostgresInstance() throws Exception {
-        String instances = "/sql/v1beta4/projects/" + projectId() + "/instances";
+        SQLAdmin client = sqlAdminClient();
         String instanceId = uniqueName("pg");
 
         try {
-            RestResponse created = rest("POST", instances, "application/json", """
-                    {
-                      "name": "%s",
-                      "region": "us-central1",
-                      "databaseVersion": "POSTGRES_17",
-                      "settings": {"tier": "db-custom-1-3840"}
-                    }
-                    """.formatted(instanceId));
-            RestResponse fetched = rest("GET", instances + "/" + instanceId, null, null);
+            Operation created = client.instances().insert(projectId(), new DatabaseInstance()
+                            .setName(instanceId)
+                            .setRegion("us-central1")
+                            .setDatabaseVersion("POSTGRES_17")
+                            .setSettings(new Settings().setTier("db-custom-1-3840")))
+                    .execute();
+            DatabaseInstance fetched = client.instances().get(projectId(), instanceId).execute();
 
-            assertThat(created.status()).as(created.body()).isEqualTo(200);
-            assertThat(fetched.body()).contains("\"state\":\"RUNNABLE\"");
+            assertThat(created.getStatus()).isEqualTo("DONE");
+            assertThat(fetched.getState()).isEqualTo("RUNNABLE");
 
-            // the database container's port is published on the Docker host
-            Matcher ipAddress = IP_ADDRESS.matcher(fetched.body());
-            Matcher port = PORT.matcher(fetched.body());
-            assertThat(ipAddress.find() && port.find()).as(fetched.body()).isTrue();
+            // the database container's port is published on the Docker host; Floci reports it in the
+            // non-standard "port" field of the IP mapping
+            IpMapping ipMapping = fetched.getIpAddresses().get(0);
+            Number port = (Number) ipMapping.get("port");
+            assertThat(port).as(ipMapping.toString()).isNotNull();
             try (Socket socket = new Socket()) {
-                socket.connect(new InetSocketAddress(ipAddress.group(1), Integer.parseInt(port.group(1))), 5000);
+                socket.connect(new InetSocketAddress(ipMapping.getIpAddress(), port.intValue()), 5000);
                 assertThat(socket.isConnected()).isTrue();
             }
         } finally {
-            rest("DELETE", instances + "/" + instanceId, null, null);
+            client.instances().delete(projectId(), instanceId).execute();
         }
+    }
+
+    private static SQLAdmin sqlAdminClient() {
+        // instances.insert only answers once the database container accepts connections
+        return new SQLAdmin.Builder(new NetHttpTransport(), GsonFactory.getDefaultInstance(),
+                request -> request.setReadTimeout(120_000))
+                .setApplicationName("testcontainers-floci")
+                .setRootUrl(floci.getEndpoint() + "/")
+                // the request paths of the generated client already start with sql/v1beta4/
+                .setServicePath("")
+                .build();
     }
 }
