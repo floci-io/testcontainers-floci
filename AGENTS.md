@@ -213,17 +213,23 @@ configuration through one SmallRye `@ConfigMapping` interface, `EmulatorConfig.j
 diff of that single file. Follow these steps in order whenever the user asks to "update to the latest Floci" / "migrate
 the Floci config changes" / similar.
 
+A run follows **released** Floci versions only. It first moves the pinned test image in `.github/docker-images.txt`
+to the latest Floci release, then migrates every config change up to that release's commit — and nothing after it.
+The feature branch is therefore tested exactly like CI tests it: against the pinned image, never against `nightly`.
+Changes that are on Floci's `main` but not released yet are left for a later run, even if they look ready.
+
 ### Moving parts
 
 | What                     | Where                                                                                                         |
 |--------------------------|---------------------------------------------------------------------------------------------------------------|
-| Upstream Floci           | https://github.com/floci-io/floci (releases: https://github.com/floci-io/floci/releases)                      |
+| Upstream Floci           | https://github.com/floci-io/floci (releases: https://github.com/floci-io/floci/releases; tags `x.y.z`, no `v`) |
 | The user's fork          | https://github.com/cfranzen/floci — kept in sync with upstream `main`                                          |
 | Migration marker         | Annotated tag `migrated-to-testcontainers` in the fork; points at the last Floci commit already migrated      |
 | The file to diff         | `src/main/java/io/github/hectorvent/floci/config/EmulatorConfig.java` (in the Floci repo)                     |
+| Pinned test image        | The `floci/floci:<x.y.z>` line in `.github/docker-images.txt` (the only file that names a pinned tag)         |
 
 The tag is maintained **manually by the user**. Never create, move, or push it yourself — at the end, report the
-commit you diffed against so the user can move the tag.
+release commit you diffed against and hand the user the commands to move the tag (step 10).
 
 ### Step 0 — Create a dedicated worktree for the run
 
@@ -241,7 +247,7 @@ cd .worktrees/$RUN
 
 - Run **every** later command (git, mvn, file edits) inside this worktree. Never switch the branch of, commit in, or
   modify the main checkout — its uncommitted changes are none of the run's business.
-- Keep run-specific scratch data (the Floci clone from step 2, temp files) under `<scratchpad>/$RUN/`, not in a path
+- Keep run-specific scratch data (the Floci clone from step 1, temp files) under `<scratchpad>/$RUN/`, not in a path
   another run could use too.
 - Parallel runs for **different** providers are fine. Never start two runs for the **same** provider at once — they
   would migrate the same Floci range and produce conflicting commits and branch names.
@@ -251,7 +257,7 @@ cd .worktrees/$RUN
   `.claude/worktrees/` on a temporary branch), that may be used instead. Step 8 then also deletes the temporary branch
   after the worktree is removed.
 
-### Step 1 — Make sure the fork is synced with upstream
+### Step 1 — Clone the fork and determine the target release
 
 The user normally syncs the fork before starting. Verify it rather than assume it:
 
@@ -262,35 +268,71 @@ gh api repos/cfranzen/floci/compare/main...floci-io:floci:main --jq '.ahead_by' 
 If this is not `0`, ask the user whether to sync (`gh repo sync cfranzen/floci --source floci-io/floci --branch main`)
 before continuing — don't silently diff against a stale fork.
 
-### Step 2 — Diff `EmulatorConfig.java` between the tag and `main`
-
-Use a local, blobless clone in the scratchpad directory (not inside this repo). Do **not** rely on the GitHub compare
-API for the file diff: its file list is truncated at 300 files, and the fork is usually hundreds/thousands of commits
-ahead, so `EmulatorConfig.java` is often missing from the response.
+Then determine the target release — the **latest published** Floci release, not a guessed next version — and the
+commit it was built from. Use a local, blobless clone of the fork in the scratchpad directory (not inside this repo);
+`gh repo sync` does not copy tags, so fetch the release tags from upstream:
 
 ```bash
+RELEASE=$(gh api repos/floci-io/floci/releases/latest --jq .tag_name)          # e.g. 2.4.0
 git clone --filter=blob:none https://github.com/cfranzen/floci.git <scratchpad>/$RUN/floci
 cd <scratchpad>/$RUN/floci
+git fetch --filter=blob:none https://github.com/floci-io/floci.git "refs/tags/$RELEASE:refs/tags/$RELEASE"
 git rev-parse migrated-to-testcontainers^{commit}   # base (the tag is annotated → dereference it)
-git rev-parse main                                  # head — note this SHA, it's what the user will move the tag to
-git diff migrated-to-testcontainers main -- src/main/java/io/github/hectorvent/floci/config/EmulatorConfig.java
+git rev-parse "$RELEASE^{commit}"                   # head — note this SHA, it's what the user will move the tag to
+git merge-base --is-ancestor migrated-to-testcontainers "$RELEASE" && echo "base is behind the release"
 ```
 
-Pin the head SHA you noted and keep diffing against that SHA (not `main`) for the rest of the session, so the result
-stays consistent even if the fork moves. `git log --oneline migrated-to-testcontainers..<head> -- <file>` lists the
-individual Floci commits that touched the file; their messages/PRs are useful context for javadoc and for deciding how a
-property behaves. When the diff is ambiguous, read the full file at `<head>` (and the code that consumes the property)
-rather than guessing.
+Use the noted head SHA (not the tag name, and never `main`) for the rest of the session. Compare it with the base:
 
-### Step 3 — Determine the target version
+- **Base is an ancestor of the release** (the normal case) → migrate the range `base..head` in steps 3–5.
+- **Base equals the release, or the release is an ancestor of the base** (an earlier run already migrated past it)
+  → there is no config change to migrate. Still do step 2 if the pinned tag is older than `$RELEASE`, and step 6;
+  report that the tag needs no move.
+- **Neither is an ancestor of the other** (e.g. the release was cut from a release branch) → stop and ask the user
+  which base to diff against.
+
+If the pinned tag in `.github/docker-images.txt` already is `$RELEASE` and the base is not behind the release, the
+run has nothing to do — report that and stop.
+
+### Step 2 — Update the pinned test image
+
+Move the provider's line in `.github/docker-images.txt` to the release (`floci/floci:2.3.0` → `floci/floci:$RELEASE`)
+and leave the other providers' lines alone. Pull the image to make sure it is published — Docker Hub can lag behind
+the GitHub release by a while; if the pull fails, stop and report instead of migrating against a missing image:
 
 ```bash
-gh api repos/floci-io/floci/releases/latest --jq .tag_name
+docker pull floci/floci:$RELEASE
 ```
 
-Assume the next Floci release bumps the **minor** version and resets the patch: latest `2.1.0` → target `2.2.0`;
-latest `2.1.3` → target `2.2.0`. The target version names the feature branch, but do **not** create the branch yet:
-all commits are made on the worktree's detached HEAD, and the branch is created from it in step 8.
+Before migrating anything, run the provider's integration tests once against the new pin, so regressions caused by the
+new Floci version are not mixed up with migration changes:
+
+```bash
+mvn -pl testcontainers-floci-aws -am verify
+```
+
+- **Commit** the pin change on its own: `test: update pinned floci/floci image to <release>`, body naming the
+  previous tag. Stage only `.github/docker-images.txt`.
+- An existing test that now fails because Floci's behaviour changed gets a small, obvious fix (as in step 6) in its
+  own commit, `test(<service>): adapt <Service>ServiceTest to Floci <release>`. A failure that points to a bug in this
+  library is fixed with `fix(<service>): …`. Never weaken a test until it no longer checks what it was written for.
+- A failure outside this repo (Floci bug, flaky Docker-in-Docker set-up) that can't be fixed quickly is reported in
+  step 9; don't disable a test that passed with the previous pin without asking the user.
+
+### Step 3 — Diff `EmulatorConfig.java` between the tag and the release
+
+Do **not** rely on the GitHub compare API for the file diff: its file list is truncated at 300 files, and a release is
+usually hundreds of commits ahead, so `EmulatorConfig.java` is often missing from the response. Use the clone from
+step 1:
+
+```bash
+git diff migrated-to-testcontainers <head> -- src/main/java/io/github/hectorvent/floci/config/EmulatorConfig.java
+```
+
+`git log --oneline migrated-to-testcontainers..<head> -- <file>` lists the individual Floci commits that touched the
+file; their messages/PRs are useful context for javadoc and for deciding how a property behaves. When the diff is
+ambiguous, read the full file at `<head>` (and the code that consumes the property) rather than guessing — always at
+`<head>`, not at `main`, which may already have changed the property again.
 
 ### Step 4 — Classify the diff
 
@@ -367,15 +409,15 @@ order of fields/getters/builder methods/env vars aligned with each other and wit
 `shouldWire<Service>ConfigIntoContainer()` test in `FlociContainerServicesConfigTest`, the getter added to
 `FlociContainerTest.shouldDisableAllServices()`, the README service list if it enumerates services, the AWS SDK test
 dependency in `testcontainers-floci-aws/pom.xml`, and a Docker-backed `services/<Service>ServiceTest` extending
-`AbstractServiceTest`. If the nightly Floci image doesn't serve the service yet, keep the service test but mark it
-`@Disabled` with a reason (as done for Connect/CodeGuru Reviewer).
+`AbstractServiceTest`. If the released image declares the service's config but doesn't serve its API yet, keep the
+service test but mark it `@Disabled` with a reason (as done for Connect/CodeGuru Reviewer).
 
-**Verify** each service before committing. A migration runs ahead of the pinned images, so run the service tests
-against the nightly image (pull it fresh first: `docker pull floci/floci:nightly`):
+**Verify** each service before committing, against the image pinned in step 2 (no `-Dfloci.test-image.tag`; every
+change being migrated is part of that release):
 
 ```bash
 mvn -pl testcontainers-floci-aws -am test -Dtest='<Service>ConfigTest,FlociContainerServicesConfigTest,FlociContainerTest' -Dsurefire.failIfNoSpecifiedTests=false
-mvn -pl testcontainers-floci-aws -am verify -Dit.test=<Service>ServiceTest -Dfloci.test-image.tag=nightly -Dtest=none -Dsurefire.failIfNoSpecifiedTests=false -Dfailsafe.failIfNoSpecifiedTests=false   # new services / behaviour-relevant changes
+mvn -pl testcontainers-floci-aws -am verify -Dit.test=<Service>ServiceTest -Dtest=none -Dsurefire.failIfNoSpecifiedTests=false -Dfailsafe.failIfNoSpecifiedTests=false   # new services / behaviour-relevant changes
 ```
 
 **Commit** each service separately, with only that service's files staged (`git add <paths>`, never `git add -A`),
@@ -390,9 +432,9 @@ Scope = lower-case service name as used in previous commits (`git log --oneline 
 
 ### Step 6 — Re-check disabled tests
 
-Floci moves fast, so tests that were disabled because the nightly image didn't support something may work by now. Go
-through every disabled test — class- or method-level `@Disabled` in `testcontainers-floci-aws/src/test` — and check whether
-it passes against the freshly pulled `floci/floci:nightly`:
+Tests are often disabled because the pinned release lacked something (e.g. "…which the pinned Floci release lacks").
+With the new pin and the properties migrated in step 5 they may work now. Go through every disabled test — class- or
+method-level `@Disabled` in `testcontainers-floci-aws/src/test` — and check whether it passes against the new pin:
 
 ```bash
 grep -rn '@Disabled' testcontainers-floci-aws/src/test
@@ -401,13 +443,13 @@ grep -rn '@Disabled' testcontainers-floci-aws/src/test
 For each hit, remove the `@Disabled` annotation (and the then-unused import) and run just that class:
 
 ```bash
-mvn -pl testcontainers-floci-aws -am verify -Dit.test=<Service>ServiceTest -Dfloci.test-image.tag=nightly -Dtest=none -Dsurefire.failIfNoSpecifiedTests=false -Dfailsafe.failIfNoSpecifiedTests=false
+mvn -pl testcontainers-floci-aws -am verify -Dit.test=<Service>ServiceTest -Dtest=none -Dsurefire.failIfNoSpecifiedTests=false -Dfailsafe.failIfNoSpecifiedTests=false
 ```
 
 - **Passes out of the box** → keep the annotation removed.
 - **Fails, but the fix is small and obvious** (an adjusted assertion, a missing prerequisite resource, a changed
-  request parameter, a longer timeout) → make that change and keep the test enabled. Never "fix" a test by weakening
-  it until it no longer checks what it was written for.
+  request parameter, a longer timeout, setting a property migrated in step 5) → make that change and keep the test
+  enabled. Never "fix" a test by weakening it until it no longer checks what it was written for.
 - **Still fails for a reason outside this repo** (service not registered, Floci bug, Docker-in-Docker limitation) or
   would need more than a few minor changes → restore `@Disabled`, and update its reason string if the cause changed.
 
@@ -423,9 +465,9 @@ revert it with `git checkout -- <path>`.
 
 ### Step 7 — Final check
 
-After all services are migrated run the full build once (`mvn verify`, Docker required) and report any failures
-honestly, distinguishing failures caused by the migration from pre-existing/flaky ones. Do not push or open a PR unless
-the user asks.
+After all services are migrated run the full build once (`mvn verify`, Docker required — the same build CI runs
+against the pinned images) and report any failures honestly, distinguishing failures caused by the migration from
+pre-existing/flaky ones. Do not push or open a PR unless the user asks.
 
 ### Step 8 — Create the feature branch and remove the worktree
 
@@ -434,15 +476,15 @@ Once the run is complete, turn the worktree's commits into a feature branch, the
 ```bash
 git status --porcelain                              # must be empty: every change committed or deliberately discarded
 git log --oneline origin/main..HEAD                 # the run's commits
-git branch --no-track feat/support-floci-2.2.0 HEAD # create the branch without checking it out
+git branch --no-track feat/support-floci-2.4.0 HEAD # create the branch without checking it out
 cd ../..                                            # back to the main checkout's root
 git worktree remove .worktrees/$RUN
-git log --oneline -1 feat/support-floci-2.2.0       # verify: the run's last commit
+git log --oneline -1 feat/support-floci-2.4.0       # verify: the run's last commit
 ```
 
-- Branch name: `feat/support-floci-<target>` for AWS, and `feat/support-floci-az-<target>`,
-  `feat/support-floci-gcp-<target>`, `feat/support-floci-oci-<target>` for the other providers (target version from
-  step 3, based on that provider's upstream releases). If the branch already exists (e.g. from an earlier, unmerged
+- Branch name: `feat/support-floci-<release>` for AWS, and `feat/support-floci-az-<release>`,
+  `feat/support-floci-gcp-<release>`, `feat/support-floci-oci-<release>` for the other providers (`<release>` from
+  step 1, i.e. the version the image was pinned to). If the branch already exists (e.g. from an earlier, unmerged
   run), never reset or overwrite it — append `-2`, `-3`, … and mention it in the report.
 - **Create the branch before removing the worktree.** Commits on a detached HEAD are only reachable through the
   worktree's reflog, which is deleted together with the worktree.
@@ -462,23 +504,46 @@ git log --oneline -1 feat/support-floci-2.2.0       # verify: the run's last com
 
 Finish with a report containing:
 
-1. **Floci range migrated**: base SHA (tag), head SHA, target version, branch name (and that the worktree was
-   removed) — and a reminder that the user can now move `migrated-to-testcontainers` to the head SHA.
-2. **Services migrated**: one line per commit (service, properties added/changed, commit SHA).
-3. **Skipped / needs a decision**: removed or renamed properties, anything that couldn't be mapped cleanly, disabled
+1. **Floci range migrated**: release version, previous and new pinned image tag, base SHA (tag), head SHA (the
+   release commit), branch name (and that the worktree was removed) — and a reminder that the user can now move
+   `migrated-to-testcontainers` to the head SHA with the commands from step 10 (or that it needs no move, see step 1).
+2. **Image update**: the pin commit, and any test fixes or failures caused by the new release (step 2).
+3. **Services migrated**: one line per commit (service, properties added/changed, commit SHA).
+4. **Skipped / needs a decision**: removed or renamed properties, anything that couldn't be mapped cleanly, disabled
    service tests, untouched Floci services that still have no config class here.
-4. **Disabled tests re-checked** (step 6): one line per re-enabled test class (what, if anything, had to change,
+5. **Disabled tests re-checked** (step 6): one line per re-enabled test class (what, if anything, had to change,
    commit SHA), and the tests that stay disabled with the reason they still fail.
-5. **Global (non-service) config changes — not migrated**: for each changed section outside `ServicesConfig` (excluding
+6. **Global (non-service) config changes — not migrated**: for each changed section outside `ServicesConfig` (excluding
    `ServiceStorageOverrides`): the property path and env var (`floci.dns.spoof-aws-endpoints` /
    `FLOCI_DNS_SPOOF_AWS_ENDPOINTS`), added/removed/changed default/relocated, a one-sentence description of what it
    does, and whether a matching class already exists in `config/` (so it would be an extension rather than a new
    class). Call out relocations/deprecations (e.g. a root property moved into `protocols`) explicitly, because they may
    affect env vars that existing classes already emit.
 
+### Step 10 — Hand over the commands to move the migration marker
+
+End the report with the commands that move `migrated-to-testcontainers` to the head SHA from step 1, with `<release>`
+and `<head>` filled in, for the **user** to run. Don't run them yourself (see "Moving parts"). Skip this step if
+step 1 found that the tag needs no move.
+
+In a checkout of the fork (fetch first: the release commit may not be local yet):
+
+```bash
+git fetch origin
+git tag -f -a migrated-to-testcontainers <head> -m "Migrated to testcontainers-floci up to Floci <release>"
+git push -f origin refs/tags/migrated-to-testcontainers
+```
+
+- The tag stays annotated (`-a`). Moving an existing tag needs `-f` both locally and on the push.
+- Recommend moving the tag only once the feature branch is merged. If the branch is dropped, the next run must diff
+  from the old base again.
+- For Azure, GCP and OCI, use the matching fork (`cfranzen/floci-az`, `cfranzen/floci-gcp`, `cfranzen/floci-oci`). The
+  tag name is the same in every fork.
+
 ### Floci Azure
 
-The same process applies to `testcontainers-floci-az`, with these values:
+The same process applies to `testcontainers-floci-az`, with these values (replace `floci/floci`, `floci-io/floci` and
+`testcontainers-floci-aws` in the commands accordingly):
 
 | What                     | Where                                                                                     |
 |--------------------------|-------------------------------------------------------------------------------------------|
@@ -486,7 +551,7 @@ The same process applies to `testcontainers-floci-az`, with these values:
 | The user's fork          | `cfranzen/floci-az` (to be created by the user), tag `migrated-to-testcontainers`         |
 | The file to diff         | `src/main/java/io/floci/az/config/EmulatorConfig.java` (`@ConfigMapping(prefix = "floci-az")`) |
 | Env-var prefix           | `FLOCI_AZ_…`, services `FLOCI_AZ_SERVICES_<ACCESSOR>_<PROPERTY>` (camelCase accessors are kebab-cased: `keyVault()` → `KEY_VAULT`) |
-| Image for service tests  | `floci/floci-az:nightly`, via `-Dfloci.test-image.tag=nightly` (CI uses the pinned tag) |
+| Pinned test image        | The `floci/floci-az:<x.y.z>` line in `.github/docker-images.txt`; target release from `gh api repos/floci-io/floci-az/releases/latest` (tags `x.y.z`) |
 
 Initial migration: `3d2d06c7508ce82362f42921c51b63f197b94089` (floci-az `main`, 2026-10-03). Classify the diff as for
 AWS: migrate `ServicesConfig`; `TlsConfig`, `AuthConfig`, `DirectoryConfig` (`cloud`, `tenants`, `subscriptions`) and
@@ -496,7 +561,7 @@ other root properties). Commit scope is `az` (e.g. `feat(az): add <property> con
 
 ### Floci GCP
 
-The same process applies to `testcontainers-floci-gcp`, with these values:
+The same process applies to `testcontainers-floci-gcp`, with these values (commands adapted as for Azure):
 
 | What                     | Where                                                                                     |
 |--------------------------|-------------------------------------------------------------------------------------------|
@@ -504,7 +569,7 @@ The same process applies to `testcontainers-floci-gcp`, with these values:
 | The user's fork          | `cfranzen/floci-gcp` (to be created by the user), tag `migrated-to-testcontainers`        |
 | The file to diff         | `src/main/java/io/floci/gcp/config/EmulatorConfig.java` (`@ConfigMapping(prefix = "floci-gcp")`) |
 | Env-var prefix           | `FLOCI_GCP_…`, services `FLOCI_GCP_SERVICES_<ACCESSOR>_<PROPERTY>` (accessors are single lower-case words: `secretmanager()` → `SECRETMANAGER`; digits are not separated: `postgres15Image()` → `POSTGRES15_IMAGE`) |
-| Image for service tests  | `floci/floci-gcp:nightly`, via `-Dfloci.test-image.tag=nightly` (CI uses the pinned tag) |
+| Pinned test image        | The `floci/floci-gcp:<x.y.z>` line in `.github/docker-images.txt`; target release from `gh api repos/floci-io/floci-gcp/releases/latest` (tags `x.y.z`) |
 
 Initial migration: `1bb0845c38b163ed28d58b5ff930f25cf90ab634` (floci-gcp `main`, 2026-10-04). Classify the diff as for
 AWS: migrate `ServicesConfig` (the shared `dockerNetwork()` is covered by `withDedicatedNetwork()`); `TlsConfig` and
@@ -514,7 +579,7 @@ properties). Commit scope is `gcp` (e.g. `feat(gcp): add <property> config prope
 
 ### Floci OCI
 
-The same process applies to `testcontainers-floci-oci`, with these values:
+The same process applies to `testcontainers-floci-oci`, with these values (commands adapted as for Azure):
 
 | What                     | Where                                                                                       |
 |--------------------------|---------------------------------------------------------------------------------------------|
@@ -522,7 +587,7 @@ The same process applies to `testcontainers-floci-oci`, with these values:
 | The user's fork          | `cfranzen/floci-oci` (to be created by the user), tag `migrated-to-testcontainers`          |
 | The file to diff         | `src/main/java/io/floci/oci/config/EmulatorConfig.java` (`@ConfigMapping(prefix = "floci-oci")`) |
 | Env-var prefix           | `FLOCI_OCI_…`, services `FLOCI_OCI_SERVICES_<ACCESSOR>_<PROPERTY>` (accessors are lowercase: `objectstorage()` → `OBJECTSTORAGE`) |
-| Image for service tests  | `floci/floci-oci:nightly`, via `-Dfloci.test-image.tag=nightly` (CI uses the pinned tag) |
+| Pinned test image        | The `floci/floci-oci:<x.y.z>` line in `.github/docker-images.txt`; target release from `gh api repos/floci-io/floci-oci/releases/latest` (tags `x.y.z`) |
 
 Initial migration: `c0dea6f2d6a8256f39564d08cda40ea9d443ea27` (floci-oci `main`, 2026-10-02). Classify the diff as for
 Azure: migrate `ServicesConfig`; `TlsConfig` and `AuthConfig` are migrated cross-cutting classes and must be kept in
