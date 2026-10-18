@@ -1,5 +1,10 @@
 package io.floci.testcontainers.oci;
 
+import com.oracle.bmc.auth.ConfigFileAuthenticationDetailsProvider;
+import com.oracle.bmc.objectstorage.ObjectStorageClient;
+import com.oracle.bmc.objectstorage.requests.GetNamespaceRequest;
+import io.floci.testcontainers.core.testing.TestImages;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -9,6 +14,8 @@ import java.nio.file.Path;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class OciConfigProfileTest {
+
+    private static final String IMAGE = TestImages.pinnedImage(FlociOciContainer.DESCRIPTOR);
 
     @Test
     void shouldDescribeContainer() {
@@ -55,6 +62,27 @@ class OciConfigProfileTest {
                     + "tenancy=" + container.getTenancyId() + "\n"
                     + "region=us-ashburn-1\n"
                     + "key_file=" + profile.getKeyFile().toAbsolutePath() + "\n");
+        }
+    }
+
+    @Test
+    @Tag("integration")
+    void shouldSignRequestsWithConfigFileAuthentication() throws Exception {
+        try (FlociOciContainer container = new FlociOciContainer(IMAGE)) {
+            container.start();
+
+            OciConfigProfile profile = container.getConfigProfile();
+            ConfigFileAuthenticationDetailsProvider auth = new ConfigFileAuthenticationDetailsProvider(
+                    profile.writeConfigFile().toString(), profile.getName());
+
+            try (ObjectStorageClient objectStorage = ObjectStorageClient.builder()
+                    .endpoint(container.getEndpoint())
+                    .build(auth)) {
+                String namespace = objectStorage.getNamespace(GetNamespaceRequest.builder().build()).getValue();
+
+                assertThat(auth.getTenantId()).isEqualTo(container.getTenancyId());
+                assertThat(namespace).isEqualTo(container.getNamespace());
+            }
         }
     }
 }
