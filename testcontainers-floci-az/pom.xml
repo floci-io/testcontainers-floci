@@ -13,7 +13,7 @@
     <description>Testcontainers module for Floci Azure — a free, open-source local Azure emulator</description>
 
     <properties>
-        <jackson.version>2.22.3</jackson.version>
+        <jackson.version>2.22.4</jackson.version>
     </properties>
 
     <dependencyManagement>
