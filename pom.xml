@@ -120,7 +120,7 @@
                     <!-- Unit tests: everything not tagged "integration", so `mvn test` needs no Docker -->
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.6.0</version>
+                    <version>3.6.1</version>
                     <configuration>
                         <excludedGroups>integration</excludedGroups>
                     </configuration>
