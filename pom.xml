@@ -129,7 +129,7 @@
                     <!-- Integration tests: every test tagged "integration" (they start containers), run by `mvn verify` -->
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-failsafe-plugin</artifactId>
-                    <version>3.6.0</version>
+                    <version>3.6.1</version>
                     <configuration>
                         <groups>integration</groups>
                         <includes>
