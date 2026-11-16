@@ -4,6 +4,8 @@ import com.github.dockerjava.api.command.InspectVolumeResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.api.model.InternetProtocol;
+import com.github.dockerjava.api.model.PortBinding;
 import io.floci.testcontainers.core.config.services.AbstractServiceConfig;
 import io.floci.testcontainers.core.config.services.AbstractServiceConfigBuilder;
 import org.slf4j.Logger;
@@ -24,9 +26,11 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -70,6 +74,9 @@ public abstract class AbstractFlociContainer<SELF extends AbstractFlociContainer
 
     // explicit override from withDockerSocket(), which takes full precedence over auto-detection
     private Boolean dockerSocketOverride;
+
+    // null keeps automatic service ports; an explicit selection survives later service-config updates
+    private List<Integer> publishedPortsOverride;
 
     // the namespace generated for the current start; a caller-set namespace is never replaced
     private String generatedResourceNamespace;
@@ -161,6 +168,16 @@ public abstract class AbstractFlociContainer<SELF extends AbstractFlociContainer
     @Override
     protected void configure() {
         super.configure();
+
+        if (publishedPortsOverride != null) {
+            for (String binding : getPortBindings()) {
+                var port = PortBinding.parse(binding).getExposedPort();
+                if (port.getProtocol() != InternetProtocol.TCP || !publishedPortsOverride.contains(port.getPort())) {
+                    throw new IllegalStateException("Fixed port binding is outside the explicit published-port selection: " + binding);
+                }
+            }
+            configureExposedPorts();
+        }
 
         Optional<Bind> dockerSocketBinding = findDockerSocketBinding();
         if (shouldBindDockerSocket()) {
@@ -471,7 +488,48 @@ public abstract class AbstractFlociContainer<SELF extends AbstractFlociContainer
         return self();
     }
 
+    /**
+     * Publishes only the emulator's API port and the additional container ports supplied here.
+     * Calling this method without arguments publishes just the API port.
+     *
+     * <p>By default, ports are selected automatically from all enabled service configurations.
+     * This explicit selection takes precedence over that automatic selection, including after later
+     * {@code with*Config(...)} or {@link #disableAllServices()} calls. Repeated calls replace the
+     * previous selection, and duplicate ports are ignored. The API port is always included so that
+     * endpoint access and readiness checks keep working.
+     *
+     * <p>This only changes published ports; it does not disable services or change their listening
+     * ports. Include every extra port your workload needs, such as database proxy ports. To change
+     * a service's listening port, also configure that service accordingly.
+     * Fixed port bindings are preserved only for selected TCP ports; a binding outside the selection
+     * causes container startup to fail before creation.
+     *
+     * @param ports additional TCP container ports to publish, each between 1 and 65535
+     * @return this container instance
+     * @throws IllegalArgumentException if the array or any port is null, or a port is out of range
+     */
+    public SELF withPublishedPorts(Integer... ports) {
+        if (ports == null) {
+            throw new IllegalArgumentException("Published ports must not be null");
+        }
+        Set<Integer> selected = new LinkedHashSet<>();
+        selected.add(descriptor.getPort());
+        for (Integer port : ports) {
+            if (port == null || port < 1 || port > 65535) {
+                throw new IllegalArgumentException("Published ports must be between 1 and 65535: " + port);
+            }
+            selected.add(port);
+        }
+        publishedPortsOverride = List.copyOf(selected);
+        configureExposedPorts();
+        return self();
+    }
+
     private void configureExposedPorts() {
+        if (publishedPortsOverride != null) {
+            withExposedPorts(publishedPortsOverride.toArray(Integer[]::new));
+            return;
+        }
         withExposedPorts(descriptor.getPort());
 
         serviceConfigs.forEach(ref -> ref.get().applyExposedPortsToContainer(this));

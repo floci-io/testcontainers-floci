@@ -491,6 +491,14 @@ public class FlociContainer extends AbstractFlociContainer<FlociContainer> {
     }
 
     /**
+     * {@inheritDoc}
+     */
+    @Override
+    public FlociContainer withPublishedPorts(Integer... ports) {
+        return super.withPublishedPorts(ports);
+    }
+
+    /**
      * Returns the TLS configuration.
      *
      * @return the TLS configuration

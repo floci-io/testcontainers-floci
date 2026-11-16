@@ -388,6 +388,7 @@ class ObjectStorageTest {
 | `withAiMockConfig(String)`            | Same, but takes the mock-response file content and copies it into the container for you                        |
 | `withDedicatedNetwork()`              | Creates a dedicated Docker network shared by Floci and its sibling containers (RDS, Lambda, ElastiCache, etc.) |
 | `withDockerSocket(boolean)`           | Overrides whether the host Docker socket is mounted, bypassing auto-detection (see below)                      |
+| `withPublishedPorts(Integer...)`      | Publishes the API port plus only the specified additional container ports (see below)                          |
 | `withTlsConfig(...)`                  | Configures TLS/HTTPS (self-signed by default; optionally provide cert/key paths)                               |
 | `withStorageConfig(...)`              | Configures persistent storage and volume behaviour                                                             |
 | `withSecurityConfig(...)`             | Configures security settings (CORS, private JWT issuer targets, network exposure)                              |
@@ -410,6 +411,35 @@ FlociContainer floci = new FlociContainer()
         .withSqsConfig(c -> c.defaultVisibilityTimeout(60).maxMessageSize(131072))
         .withDynamoDbConfig(c -> c.enabled(false));
 ```
+
+#### Publishing only the ports a test needs
+
+By default, the container publishes ports for every enabled service, including database proxy
+port ranges. Tests that only use the HTTP gateway can publish just that port:
+
+```java
+FlociContainer floci = new FlociContainer()
+        .withPublishedPorts(); // only 4566/tcp; use floci.getEndpoint() after start()
+```
+
+For a workload that also uses Redis, include the proxy port it needs:
+
+```java
+FlociContainer floci = new FlociContainer()
+        .withPublishedPorts(6379)
+        .withElastiCacheConfig(c -> c.proxyPortRange(6379, 1));
+```
+
+The API port is always included. The explicit selection survives later `with*Config(...)` and
+`disableAllServices()` calls; calling `withPublishedPorts(...)` again replaces it. It takes
+precedence over automatic service ports and other exposed-port additions when the container starts.
+Fixed port bindings outside the selected TCP ports are rejected before container creation.
+It does not disable services or change their listening ports, so include every additional port
+your workload actually uses. Callers that omit this method keep automatic port selection.
+
+Publishing fewer ports reduces Docker's port-forwarding setup and cleanup work. This is especially
+useful on shared CI hosts, where that work can delay other containers. This method is also available
+on the Azure, GCP and OCI containers, using each emulator's own API port.
 
 #### Docker socket
 

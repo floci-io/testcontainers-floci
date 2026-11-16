@@ -157,6 +157,23 @@ class FlociContainerTest {
     }
 
     @Test
+    void shouldKeepSelectedPublishedPortsWhenConfiguringAwsServices() {
+        try (FlociContainer container = new FlociContainer().withPublishedPorts()
+                .withS3Config(c -> c.enabled(true))
+                .withRdsConfig(c -> c.proxyPortRange(5100, 2))) {
+            assertThat(container.getExposedPorts()).containsExactly(FlociContainer.PORT);
+            assertThat(container.getS3Config().isEnabled()).isTrue();
+            assertThat(container.getRdsConfig().isEnabled()).isTrue();
+            assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_RDS_PROXY_BASE_PORT", "5100");
+
+            container.withPublishedPorts(6379)
+                    .withElastiCacheConfig(c -> c.proxyPortRange(6379, 1));
+
+            assertThat(container.getExposedPorts()).containsExactlyInAnyOrder(FlociContainer.PORT, 6379);
+        }
+    }
+
+    @Test
     void shouldReturnDefaultLogLevel() {
         try (FlociContainer container = new FlociContainer()) {
             assertThat(container.getLogLevel()).isEqualTo(Level.WARN);

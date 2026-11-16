@@ -6,6 +6,8 @@ import org.testcontainers.containers.TransferableCopyInspector;
 import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
 import org.testcontainers.utility.DockerImageName;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -33,6 +35,103 @@ class AbstractFlociContainerTest {
         try (TestFlociContainer container = new TestFlociContainer()) {
             assertThat(container.getPort()).isEqualTo(TestFlociContainer.PORT);
             assertThat(container.getExposedPorts()).contains(TestFlociContainer.PORT);
+        }
+    }
+
+    @Test
+    void shouldPublishOnlyApiPortWhenNoAdditionalPortsAreSelected() {
+        try (TestFlociContainer container = new TestFlociContainer().withPublishedPorts()) {
+            assertThat(container.getExposedPorts()).containsExactly(TestFlociContainer.PORT);
+            assertThat(container.getDockerBackedConfig().isEnabled()).isTrue();
+        }
+    }
+
+    @Test
+    void shouldIncludeApiPortAndCopyDistinctSelectedPorts() {
+        Integer[] selected = {1234, 1234, TestFlociContainer.PORT, 65535};
+        try (TestFlociContainer container = new TestFlociContainer().withPublishedPorts(selected)) {
+            selected[0] = 4321;
+
+            assertThat(container.getExposedPorts())
+                    .containsExactlyInAnyOrder(TestFlociContainer.PORT, 1234, 65535);
+        }
+    }
+
+    @Test
+    void shouldPreserveExplicitPortsAcrossServiceConfigurationChanges() {
+        try (TestFlociContainer container = new TestFlociContainer().withPublishedPorts(1234)) {
+            container.withDockerBackedConfig(c -> c.enabled(false))
+                    .withSimpleConfig(c -> c.value("custom"))
+                    .withDockerBackedConfig(c -> c.enabled(true));
+
+            assertThat(container.getExposedPorts()).containsExactlyInAnyOrder(TestFlociContainer.PORT, 1234);
+            assertThat(container.getSimpleConfig().getValue()).isEqualTo("custom");
+
+            container.disableAllServices().withDockerBackedConfig(c -> c.enabled(true));
+
+            assertThat(container.getExposedPorts()).containsExactlyInAnyOrder(TestFlociContainer.PORT, 1234);
+            assertThat(container.getDockerBackedConfig().isEnabled()).isTrue();
+        }
+    }
+
+    @Test
+    void shouldReplacePreviousPublishedPortSelection() {
+        try (TestFlociContainer container = new TestFlociContainer().withPublishedPorts(1234)) {
+            container.withPublishedPorts(1, 4321);
+            assertThat(container.getExposedPorts()).containsExactlyInAnyOrder(TestFlociContainer.PORT, 1, 4321);
+
+            container.withPublishedPorts();
+            assertThat(container.getExposedPorts()).containsExactly(TestFlociContainer.PORT);
+        }
+    }
+
+    @Test
+    void shouldRejectInvalidPortsWithoutChangingPreviousSelection() {
+        try (TestFlociContainer container = new TestFlociContainer().withPublishedPorts(1234)) {
+            for (Integer invalid : new Integer[]{null, -1, 0, 65536}) {
+                assertThatThrownBy(() -> container.withPublishedPorts(4321, invalid))
+                        .isInstanceOf(IllegalArgumentException.class);
+                assertThat(container.getExposedPorts()).containsExactlyInAnyOrder(TestFlociContainer.PORT, 1234);
+            }
+            assertThatThrownBy(() -> container.withPublishedPorts((Integer[]) null))
+                    .isInstanceOf(IllegalArgumentException.class);
+            assertThat(container.getExposedPorts()).containsExactlyInAnyOrder(TestFlociContainer.PORT, 1234);
+        }
+    }
+
+    @Test
+    void shouldApplyExplicitPortSelectionWhenFinalizingConfiguration() {
+        try (TestFlociContainer container = new TestFlociContainer().withPublishedPorts(1234)) {
+            container.withExposedPorts(4321);
+            container.addExposedPorts(5432);
+            container.withDockerSocket(false).configure();
+
+            assertThat(container.getExposedPorts()).containsExactlyInAnyOrder(TestFlociContainer.PORT, 1234);
+        }
+    }
+
+    @Test
+    void shouldPreserveFixedBindingForSelectedPort() {
+        try (TestFlociContainer container = new TestFlociContainer().withPublishedPorts()) {
+            String binding = "14500:" + TestFlociContainer.PORT;
+            container.setPortBindings(List.of(binding));
+            container.withDockerSocket(false).configure();
+
+            assertThat(container.getPortBindings()).containsExactly(binding + "/tcp");
+            assertThat(container.getExposedPorts()).containsExactly(TestFlociContainer.PORT);
+        }
+    }
+
+    @Test
+    void shouldRejectFixedBindingsOutsideExplicitTcpPortSelection() {
+        for (String binding : List.of("1234:1234", "14500:" + TestFlociContainer.PORT + "/udp")) {
+            try (TestFlociContainer container = new TestFlociContainer().withPublishedPorts().withDockerSocket(false)) {
+                container.setPortBindings(List.of(binding));
+
+                assertThatThrownBy(container::configure)
+                        .isInstanceOf(IllegalStateException.class)
+                        .hasMessageContaining("outside the explicit published-port selection");
+            }
         }
     }
 
