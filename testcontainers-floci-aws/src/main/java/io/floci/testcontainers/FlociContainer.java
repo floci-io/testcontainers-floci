@@ -234,6 +234,7 @@ public class FlociContainer extends AbstractFlociContainer<FlociContainer> {
     private final ServiceConfigRef<SignerConfig> signerConfig = registerServiceConfig(SignerConfig.builder().build());
     private final ServiceConfigRef<XrayConfig> xrayConfig = registerServiceConfig(XrayConfig.builder().build());
     private final ServiceConfigRef<Ec2InstanceConnectConfig> ec2InstanceConnectConfig = registerServiceConfig(Ec2InstanceConnectConfig.builder().build());
+    private final ServiceConfigRef<QuickSightConfig> quickSightConfig = registerServiceConfig(QuickSightConfig.builder().build());
 
     /**
      * Creates a new Floci container with the default image ({@code floci/floci:latest}).
@@ -4014,6 +4015,30 @@ public class FlociContainer extends AbstractFlociContainer<FlociContainer> {
      */
     public FlociContainer withEc2InstanceConnectConfig(Consumer<Ec2InstanceConnectConfig.Builder> configurer) {
         return updateServiceConfig(ec2InstanceConnectConfig, configurer);
+    }
+
+    /**
+     * QuickSight-specific settings.
+     *
+     * @return the QuickSight configuration
+     */
+    public QuickSightConfig getQuickSightConfig() {
+        return quickSightConfig.get();
+    }
+
+    /**
+     * Configures QuickSight-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withQuickSightConfig(c -> c.embedBaseUrl("https://quicksight.example.test"));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link QuickSightConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withQuickSightConfig(Consumer<QuickSightConfig.Builder> configurer) {
+        return updateServiceConfig(quickSightConfig, configurer);
     }
 
     private void preparePersistentStorageForCleanup() {

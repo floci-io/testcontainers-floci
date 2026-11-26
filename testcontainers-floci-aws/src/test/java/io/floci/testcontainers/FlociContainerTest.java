@@ -396,7 +396,8 @@ class FlociContainerTest {
                     container.getResourceGroupsConfig(),
                     container.getSignerConfig(),
                     container.getXrayConfig(),
-                    container.getEc2InstanceConnectConfig()
+                    container.getEc2InstanceConnectConfig(),
+                    container.getQuickSightConfig()
             )).noneMatch(AbstractServiceConfig::isEnabled);
         }
     }

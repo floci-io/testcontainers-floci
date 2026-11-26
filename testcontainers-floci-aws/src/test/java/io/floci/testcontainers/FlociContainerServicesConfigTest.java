@@ -1134,6 +1134,14 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_SERVICES_EC2INSTANCECONNECT_ENABLED", "false");
     }
 
+    @Test
+    void shouldWireQuickSightConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withQuickSightConfig(cfg -> cfg.embedBaseUrl("https://quicksight.example.test")),
+                c -> c.getQuickSightConfig().getEmbedBaseUrl(), Optional.of("https://quicksight.example.test"),
+                "FLOCI_SERVICES_QUICKSIGHT_EMBED_BASE_URL", "https://quicksight.example.test");
+    }
+
     // --- Cross-cutting configs (config/) --------------------------------------------------------
 
     @Test
