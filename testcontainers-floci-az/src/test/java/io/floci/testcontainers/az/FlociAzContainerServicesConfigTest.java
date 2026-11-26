@@ -198,9 +198,9 @@ class FlociAzContainerServicesConfigTest {
     @Test
     void shouldWireMonitorConfigIntoContainer() {
         assertConfigWired(
-                c -> c.withMonitorConfig(cfg -> cfg.enabled(false)),
-                c -> c.getMonitorConfig().isEnabled(), false,
-                "FLOCI_AZ_SERVICES_MONITOR_ENABLED", "false");
+                c -> c.withMonitorConfig(cfg -> cfg.activityLogPageSize(50)),
+                c -> c.getMonitorConfig().getActivityLogPageSize(), 50,
+                "FLOCI_AZ_SERVICES_MONITOR_ACTIVITY_LOG_PAGE_SIZE", "50");
     }
     @Test
     void shouldWireEntraConfigIntoContainer() {
