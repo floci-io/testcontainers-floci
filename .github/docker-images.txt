@@ -4,6 +4,6 @@
 # ignored. The library defaults stay the floating latest tag of each image. floci/floci uses the tag the other
 # testcontainers-floci ports pin.
 floci/floci:2.3.0
-floci/floci-az:0.15.0
+floci/floci-az:0.17.0
 floci/floci-gcp:0.11.0
 floci/floci-oci:0.5.0
