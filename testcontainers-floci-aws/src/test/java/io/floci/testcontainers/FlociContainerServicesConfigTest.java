@@ -1110,6 +1110,14 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_SERVICES_RESOURCE_GROUPS_ENABLED", "false");
     }
 
+    @Test
+    void shouldWireSignerConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withSignerConfig(cfg -> cfg.mockSigningJobs(true)),
+                c -> c.getSignerConfig().isMockSigningJobs(), true,
+                "FLOCI_SERVICES_SIGNER_MOCK_SIGNING_JOBS", "true");
+    }
+
     // --- Cross-cutting configs (config/) --------------------------------------------------------
 
     @Test

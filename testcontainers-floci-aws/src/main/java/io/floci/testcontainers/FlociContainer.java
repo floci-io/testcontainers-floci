@@ -231,6 +231,7 @@ public class FlociContainer extends AbstractFlociContainer<FlociContainer> {
     private final ServiceConfigRef<EventBridgeV2Config> eventBridgeV2Config = registerServiceConfig(EventBridgeV2Config.builder().build());
     private final ServiceConfigRef<PaymentCryptographyConfig> paymentCryptographyConfig = registerServiceConfig(PaymentCryptographyConfig.builder().build());
     private final ServiceConfigRef<ResourceGroupsConfig> resourceGroupsConfig = registerServiceConfig(ResourceGroupsConfig.builder().build());
+    private final ServiceConfigRef<SignerConfig> signerConfig = registerServiceConfig(SignerConfig.builder().build());
 
     /**
      * Creates a new Floci container with the default image ({@code floci/floci:latest}).
@@ -3939,6 +3940,30 @@ public class FlociContainer extends AbstractFlociContainer<FlociContainer> {
      */
     public FlociContainer withResourceGroupsConfig(Consumer<ResourceGroupsConfig.Builder> configurer) {
         return updateServiceConfig(resourceGroupsConfig, configurer);
+    }
+
+    /**
+     * Signer-specific settings.
+     *
+     * @return the Signer configuration
+     */
+    public SignerConfig getSignerConfig() {
+        return signerConfig.get();
+    }
+
+    /**
+     * Configures Signer-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withSignerConfig(c -> c.mockSigningJobs(true));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link SignerConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withSignerConfig(Consumer<SignerConfig.Builder> configurer) {
+        return updateServiceConfig(signerConfig, configurer);
     }
 
     private void preparePersistentStorageForCleanup() {
