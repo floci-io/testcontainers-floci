@@ -1078,6 +1078,14 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_SERVICES_ELB_MOCK", "true");
     }
 
+    @Test
+    void shouldWireDsqlConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withDsqlConfig(cfg -> cfg.port(15432)),
+                c -> c.getDsqlConfig().getPort(), 15432,
+                "FLOCI_SERVICES_DSQL_PORT", "15432", 15432);
+    }
+
     // --- Cross-cutting configs (config/) --------------------------------------------------------
 
     @Test

@@ -34,7 +34,7 @@ class FlociContainerDescriptorTest {
                     .map(config -> config.getClass().getSimpleName())
                     .containsExactlyInAnyOrder(
                             "AmazonMqConfig", "AppSyncConfig", "AthenaConfig", "CodeArtifactConfig",
-                            "CodeBuildConfig", "DocumentDbConfig", "Ec2Config", "EcrConfig", "EcsConfig", "EksConfig",
+                            "CodeBuildConfig", "DocumentDbConfig", "DsqlConfig", "Ec2Config", "EcrConfig", "EcsConfig", "EksConfig",
                             "ElastiCacheConfig", "KinesisAnalyticsConfig", "LambdaConfig", "MemoryDbConfig", "MskConfig",
                             "MwaaConfig", "NeptuneConfig", "OpenSearchConfig", "PipesConfig", "RdsConfig", "RedshiftConfig",
                             "SageMakerConfig", "TimestreamInfluxDbConfig", "VerifiedPermissionsConfig");

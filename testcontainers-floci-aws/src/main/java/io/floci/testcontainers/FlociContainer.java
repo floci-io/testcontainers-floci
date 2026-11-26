@@ -227,6 +227,7 @@ public class FlociContainer extends AbstractFlociContainer<FlociContainer> {
     private final ServiceConfigRef<MarketplaceConfig> marketplaceConfig = registerServiceConfig(MarketplaceConfig.builder().build());
     private final ServiceConfigRef<DmsConfig> dmsConfig = registerServiceConfig(DmsConfig.builder().build());
     private final ServiceConfigRef<ElbConfig> elbConfig = registerServiceConfig(ElbConfig.builder().build());
+    private final ServiceConfigRef<DsqlConfig> dsqlConfig = registerServiceConfig(DsqlConfig.builder().build());
 
     /**
      * Creates a new Floci container with the default image ({@code floci/floci:latest}).
@@ -3839,6 +3840,30 @@ public class FlociContainer extends AbstractFlociContainer<FlociContainer> {
      */
     public FlociContainer withElbConfig(Consumer<ElbConfig.Builder> configurer) {
         return updateServiceConfig(elbConfig, configurer);
+    }
+
+    /**
+     * Aurora DSQL-specific settings.
+     *
+     * @return the Aurora DSQL configuration
+     */
+    public DsqlConfig getDsqlConfig() {
+        return dsqlConfig.get();
+    }
+
+    /**
+     * Configures Aurora DSQL-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withDsqlConfig(c -> c.mock(true));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link DsqlConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withDsqlConfig(Consumer<DsqlConfig.Builder> configurer) {
+        return updateServiceConfig(dsqlConfig, configurer);
     }
 
     private void preparePersistentStorageForCleanup() {
