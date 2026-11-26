@@ -81,7 +81,6 @@ class MskServiceTest extends AbstractServiceTest {
         assertThat(bootstrapBrokers).isNotBlank();
     }
 
-    @Disabled("Needs FLOCI_SERVICES_MSK_BOOTSTRAP_HOSTNAME to reach the brokers, which the pinned Floci release lacks")
     @Test
     @Order(3)
     void shouldCreateTopic() throws Exception {
@@ -96,7 +95,6 @@ class MskServiceTest extends AbstractServiceTest {
         }
     }
 
-    @Disabled("Needs FLOCI_SERVICES_MSK_BOOTSTRAP_HOSTNAME to reach the brokers, which the pinned Floci release lacks")
     @Test
     @Order(4)
     void shouldProduceAndConsumeMessage() throws Exception {
