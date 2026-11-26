@@ -14,10 +14,6 @@ import org.testcontainers.containers.Container;
  */
 public class Route53Config extends AbstractServiceConfig<Route53Config.Builder> {
 
-    private static final String DEFAULT_NAMESERVER_1 = "ns-1.awsdns-01.org";
-    private static final String DEFAULT_NAMESERVER_2 = "ns-2.awsdns-02.net";
-    private static final String DEFAULT_NAMESERVER_3 = "ns-3.awsdns-03.com";
-    private static final String DEFAULT_NAMESERVER_4 = "ns-4.awsdns-04.co.uk";
     private static final long DEFAULT_VPC_ASSOCIATION_CONTROL_PLANE_DELAY_MS = 0L;
 
     private final String defaultNameserver1;
@@ -56,36 +52,44 @@ public class Route53Config extends AbstractServiceConfig<Route53Config.Builder> 
     }
 
     /**
-     * Returns the first default nameserver.
+     * Returns the first nameserver assigned to new hosted zones, if one is configured.
      *
-     * @return the first default nameserver
+     * <p>While unset, Floci assigns each delegation set its own distinct set of nameservers.
+     *
+     * @return the first default nameserver, or {@code null} if Floci assigns distinct nameservers
      */
     public String getDefaultNameserver1() {
         return defaultNameserver1;
     }
 
     /**
-     * Returns the second default nameserver.
+     * Returns the second nameserver assigned to new hosted zones, if one is configured.
      *
-     * @return the second default nameserver
+     * <p>While unset, Floci assigns each delegation set its own distinct set of nameservers.
+     *
+     * @return the second default nameserver, or {@code null} if Floci assigns distinct nameservers
      */
     public String getDefaultNameserver2() {
         return defaultNameserver2;
     }
 
     /**
-     * Returns the third default nameserver.
+     * Returns the third nameserver assigned to new hosted zones, if one is configured.
      *
-     * @return the third default nameserver
+     * <p>While unset, Floci assigns each delegation set its own distinct set of nameservers.
+     *
+     * @return the third default nameserver, or {@code null} if Floci assigns distinct nameservers
      */
     public String getDefaultNameserver3() {
         return defaultNameserver3;
     }
 
     /**
-     * Returns the fourth default nameserver.
+     * Returns the fourth nameserver assigned to new hosted zones, if one is configured.
      *
-     * @return the fourth default nameserver
+     * <p>While unset, Floci assigns each delegation set its own distinct set of nameservers.
+     *
+     * @return the fourth default nameserver, or {@code null} if Floci assigns distinct nameservers
      */
     public String getDefaultNameserver4() {
         return defaultNameserver4;
@@ -108,10 +112,18 @@ public class Route53Config extends AbstractServiceConfig<Route53Config.Builder> 
         container.withEnv("FLOCI_SERVICES_ROUTE53_ENABLED", String.valueOf(isEnabled()));
 
         if (isEnabled()) {
-            container.withEnv("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_1", defaultNameserver1);
-            container.withEnv("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_2", defaultNameserver2);
-            container.withEnv("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_3", defaultNameserver3);
-            container.withEnv("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_4", defaultNameserver4);
+            if (defaultNameserver1 != null) {
+                container.withEnv("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_1", defaultNameserver1);
+            }
+            if (defaultNameserver2 != null) {
+                container.withEnv("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_2", defaultNameserver2);
+            }
+            if (defaultNameserver3 != null) {
+                container.withEnv("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_3", defaultNameserver3);
+            }
+            if (defaultNameserver4 != null) {
+                container.withEnv("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_4", defaultNameserver4);
+            }
             container.withEnv("FLOCI_SERVICES_ROUTE53_VPC_ASSOCIATION_CONTROL_PLANE_DELAY_MS", String.valueOf(vpcAssociationControlPlaneDelayMs));
         }
     }
@@ -121,10 +133,10 @@ public class Route53Config extends AbstractServiceConfig<Route53Config.Builder> 
      */
     public static class Builder extends AbstractServiceConfigBuilder<Builder, Route53Config> {
 
-        private String defaultNameserver1 = DEFAULT_NAMESERVER_1;
-        private String defaultNameserver2 = DEFAULT_NAMESERVER_2;
-        private String defaultNameserver3 = DEFAULT_NAMESERVER_3;
-        private String defaultNameserver4 = DEFAULT_NAMESERVER_4;
+        private String defaultNameserver1;
+        private String defaultNameserver2;
+        private String defaultNameserver3;
+        private String defaultNameserver4;
         private long vpcAssociationControlPlaneDelayMs = DEFAULT_VPC_ASSOCIATION_CONTROL_PLANE_DELAY_MS;
 
         private Builder() {
@@ -148,7 +160,9 @@ public class Route53Config extends AbstractServiceConfig<Route53Config.Builder> 
         /**
          * Sets the first default nameserver assigned to new hosted zones.
          *
-         * @param defaultNameserver1 the first nameserver (default {@value DEFAULT_NAMESERVER_1})
+         * <p>While unset, Floci assigns each delegation set its own distinct set of nameservers.
+         *
+         * @param defaultNameserver1 the first nameserver, or {@code null} to let Floci assign distinct nameservers
          * @return this builder
          */
         public Builder defaultNameserver1(String defaultNameserver1) {
@@ -159,7 +173,9 @@ public class Route53Config extends AbstractServiceConfig<Route53Config.Builder> 
         /**
          * Sets the second default nameserver assigned to new hosted zones.
          *
-         * @param defaultNameserver2 the second nameserver (default {@value DEFAULT_NAMESERVER_2})
+         * <p>While unset, Floci assigns each delegation set its own distinct set of nameservers.
+         *
+         * @param defaultNameserver2 the second nameserver, or {@code null} to let Floci assign distinct nameservers
          * @return this builder
          */
         public Builder defaultNameserver2(String defaultNameserver2) {
@@ -170,7 +186,9 @@ public class Route53Config extends AbstractServiceConfig<Route53Config.Builder> 
         /**
          * Sets the third default nameserver assigned to new hosted zones.
          *
-         * @param defaultNameserver3 the third nameserver (default {@value DEFAULT_NAMESERVER_3})
+         * <p>While unset, Floci assigns each delegation set its own distinct set of nameservers.
+         *
+         * @param defaultNameserver3 the third nameserver, or {@code null} to let Floci assign distinct nameservers
          * @return this builder
          */
         public Builder defaultNameserver3(String defaultNameserver3) {
@@ -181,7 +199,9 @@ public class Route53Config extends AbstractServiceConfig<Route53Config.Builder> 
         /**
          * Sets the fourth default nameserver assigned to new hosted zones.
          *
-         * @param defaultNameserver4 the fourth nameserver (default {@value DEFAULT_NAMESERVER_4})
+         * <p>While unset, Floci assigns each delegation set its own distinct set of nameservers.
+         *
+         * @param defaultNameserver4 the fourth nameserver, or {@code null} to let Floci assign distinct nameservers
          * @return this builder
          */
         public Builder defaultNameserver4(String defaultNameserver4) {

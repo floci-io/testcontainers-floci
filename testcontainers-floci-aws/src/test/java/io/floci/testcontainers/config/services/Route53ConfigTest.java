@@ -12,10 +12,10 @@ class Route53ConfigTest {
     void shouldApplyDefaultRoute53Config() {
         Route53Config config = Route53Config.builder().build();
         assertThat(config.isEnabled()).isTrue();
-        assertThat(config.getDefaultNameserver1()).isEqualTo("ns-1.awsdns-01.org");
-        assertThat(config.getDefaultNameserver2()).isEqualTo("ns-2.awsdns-02.net");
-        assertThat(config.getDefaultNameserver3()).isEqualTo("ns-3.awsdns-03.com");
-        assertThat(config.getDefaultNameserver4()).isEqualTo("ns-4.awsdns-04.co.uk");
+        assertThat(config.getDefaultNameserver1()).isNull();
+        assertThat(config.getDefaultNameserver2()).isNull();
+        assertThat(config.getDefaultNameserver3()).isNull();
+        assertThat(config.getDefaultNameserver4()).isNull();
         assertThat(config.getVpcAssociationControlPlaneDelayMs()).isEqualTo(0L);
     }
 
@@ -44,10 +44,10 @@ class Route53ConfigTest {
 
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_SERVICES_ROUTE53_ENABLED", "true")
-                .containsEntry("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_1", "ns-1.awsdns-01.org")
-                .containsEntry("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_2", "ns-2.awsdns-02.net")
-                .containsEntry("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_3", "ns-3.awsdns-03.com")
-                .containsEntry("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_4", "ns-4.awsdns-04.co.uk")
+                .doesNotContainKey("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_1")
+                .doesNotContainKey("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_2")
+                .doesNotContainKey("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_3")
+                .doesNotContainKey("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_4")
                 .containsEntry("FLOCI_SERVICES_ROUTE53_VPC_ASSOCIATION_CONTROL_PLANE_DELAY_MS", "0");
     }
 
