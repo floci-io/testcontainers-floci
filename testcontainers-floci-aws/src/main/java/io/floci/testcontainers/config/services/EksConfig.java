@@ -59,6 +59,8 @@ public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
     private final boolean podIdentityWebhook;
     private final boolean embeddedDns;
     private final boolean vpcRouteProgramming;
+    private final String nodeInstanceType;
+    private final String endpointHost;
 
     private EksConfig(Builder builder) {
         super(builder);
@@ -82,6 +84,8 @@ public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
         this.podIdentityWebhook = builder.podIdentityWebhook;
         this.embeddedDns = builder.embeddedDns;
         this.vpcRouteProgramming = builder.vpcRouteProgramming;
+        this.nodeInstanceType = builder.nodeInstanceType;
+        this.endpointHost = builder.endpointHost;
     }
 
     /**
@@ -337,6 +341,28 @@ public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
         return vpcRouteProgramming;
     }
 
+    /**
+     * Returns the EC2 catalog instance type the k3s node container is sized from, in place of its first node group's type.
+     *
+     * <p>The node group, the node's {@code node.kubernetes.io/instance-type} label and the synthesized EC2 instance keep the requested type. A type absent from the catalog is ignored with a warning; the maximum memory and vCPU limits still apply.
+     *
+     * @return the EC2 catalog instance type the k3s node container is sized from, in place of its first node group's type, or empty to keep Floci's default
+     */
+    public Optional<String> getNodeInstanceType() {
+        return Optional.ofNullable(nodeInstanceType);
+    }
+
+    /**
+     * Returns the hostname advertised for {@code endpoint-mode=host} cluster endpoints instead of {@code localhost}, for clients on other machines.
+     *
+     * <p>It is also added to the k3s server certificate as a SAN, so the endpoint still verifies against the cluster CA.
+     *
+     * @return the hostname advertised for {@code endpoint-mode=host} cluster endpoints instead of {@code localhost}, for clients on other machines, or empty to keep Floci's default
+     */
+    public Optional<String> getEndpointHost() {
+        return Optional.ofNullable(endpointHost);
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_EKS_ENABLED", String.valueOf(isEnabled()));
@@ -370,6 +396,14 @@ public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
             container.withEnv("FLOCI_SERVICES_EKS_POD_IDENTITY_WEBHOOK", String.valueOf(podIdentityWebhook));
             container.withEnv("FLOCI_SERVICES_EKS_EMBEDDED_DNS", String.valueOf(embeddedDns));
             container.withEnv("FLOCI_SERVICES_EKS_VPC_ROUTE_PROGRAMMING", String.valueOf(vpcRouteProgramming));
+
+            if (nodeInstanceType != null) {
+                container.withEnv("FLOCI_SERVICES_EKS_NODE_INSTANCE_TYPE", nodeInstanceType);
+            }
+
+            if (endpointHost != null) {
+                container.withEnv("FLOCI_SERVICES_EKS_ENDPOINT_HOST", endpointHost);
+            }
         }
     }
 
@@ -412,6 +446,8 @@ public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
         private boolean podIdentityWebhook = DEFAULT_POD_IDENTITY_WEBHOOK;
         private boolean embeddedDns = DEFAULT_EMBEDDED_DNS;
         private boolean vpcRouteProgramming = DEFAULT_VPC_ROUTE_PROGRAMMING;
+        private String nodeInstanceType;
+        private String endpointHost;
 
         private Builder() {
             // Allow instantiation only via EksConfig.builder()
@@ -444,6 +480,8 @@ public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
             this.podIdentityWebhook = instance.isPodIdentityWebhook();
             this.embeddedDns = instance.isEmbeddedDns();
             this.vpcRouteProgramming = instance.isVpcRouteProgramming();
+            this.nodeInstanceType = instance.getNodeInstanceType().orElse(null);
+            this.endpointHost = instance.getEndpointHost().orElse(null);
         }
 
         /**
@@ -697,6 +735,32 @@ public class EksConfig extends AbstractServiceConfig<EksConfig.Builder> {
          */
         public Builder vpcRouteProgramming(boolean vpcRouteProgramming) {
             this.vpcRouteProgramming = vpcRouteProgramming;
+            return this;
+        }
+
+        /**
+         * Sets the EC2 catalog instance type the k3s node container is sized from, in place of its first node group's type.
+         *
+         * <p>The node group, the node's {@code node.kubernetes.io/instance-type} label and the synthesized EC2 instance keep the requested type. A type absent from the catalog is ignored with a warning; the maximum memory and vCPU limits still apply.
+         *
+         * @param nodeInstanceType the EC2 catalog instance type the k3s node container is sized from, in place of its first node group's type, or {@code null} to keep Floci's default
+         * @return this builder
+         */
+        public Builder nodeInstanceType(String nodeInstanceType) {
+            this.nodeInstanceType = nodeInstanceType;
+            return this;
+        }
+
+        /**
+         * Sets the hostname advertised for {@code endpoint-mode=host} cluster endpoints instead of {@code localhost}, for clients on other machines.
+         *
+         * <p>It is also added to the k3s server certificate as a SAN, so the endpoint still verifies against the cluster CA.
+         *
+         * @param endpointHost the hostname advertised for {@code endpoint-mode=host} cluster endpoints instead of {@code localhost}, for clients on other machines, or {@code null} to keep Floci's default
+         * @return this builder
+         */
+        public Builder endpointHost(String endpointHost) {
+            this.endpointHost = endpointHost;
             return this;
         }
 
