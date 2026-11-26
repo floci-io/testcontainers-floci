@@ -37,6 +37,11 @@ class Ec2ConfigTest {
         assertThat(config.getVpcNetworksFallbackPrefixLength()).isEqualTo(16);
         assertThat(config.isVpcNetworksReconcileOnStartup()).isTrue();
         assertThat(config.getVpcNetworksDriver()).isEqualTo("bridge");
+        assertThat(config.getManagedPrefixListCatalogPath()).isEmpty();
+        assertThat(config.isEnforceVcpuQuotas()).isFalse();
+        assertThat(config.isPublicIpFromServiceNetwork()).isFalse();
+        assertThat(config.getMockPublicAddresses()).isEqualTo(Ec2Config.MockPublicAddresses.NONE);
+        assertThat(config.getMockPublicAddress()).isEmpty();
     }
 
     @Test
@@ -62,6 +67,11 @@ class Ec2ConfigTest {
                 .vpcNetworksFallbackPrefixLength(20)
                 .vpcNetworksReconcileOnStartup(false)
                 .vpcNetworksDriver("macvlan")
+                .managedPrefixListCatalogPath("/opt/floci/prefix-lists.json")
+                .enforceVcpuQuotas(true)
+                .publicIpFromServiceNetwork(true)
+                .mockPublicAddresses(Ec2Config.MockPublicAddresses.FIXED)
+                .mockPublicAddress("192.0.2.10")
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.isMock()).isTrue();
@@ -86,6 +96,11 @@ class Ec2ConfigTest {
         assertThat(config.getVpcNetworksFallbackPrefixLength()).isEqualTo(20);
         assertThat(config.isVpcNetworksReconcileOnStartup()).isFalse();
         assertThat(config.getVpcNetworksDriver()).isEqualTo("macvlan");
+        assertThat(config.getManagedPrefixListCatalogPath()).contains("/opt/floci/prefix-lists.json");
+        assertThat(config.isEnforceVcpuQuotas()).isTrue();
+        assertThat(config.isPublicIpFromServiceNetwork()).isTrue();
+        assertThat(config.getMockPublicAddresses()).isEqualTo(Ec2Config.MockPublicAddresses.FIXED);
+        assertThat(config.getMockPublicAddress()).contains("192.0.2.10");
     }
 
     @Test
@@ -115,7 +130,12 @@ class Ec2ConfigTest {
                 .containsEntry("FLOCI_SERVICES_EC2_VPC_NETWORKS_FALLBACK_POOL", "10.240.0.0/12")
                 .containsEntry("FLOCI_SERVICES_EC2_VPC_NETWORKS_FALLBACK_PREFIX_LENGTH", "16")
                 .containsEntry("FLOCI_SERVICES_EC2_VPC_NETWORKS_RECONCILE_ON_STARTUP", "true")
-                .containsEntry("FLOCI_SERVICES_EC2_VPC_NETWORKS_DRIVER", "bridge");
+                .containsEntry("FLOCI_SERVICES_EC2_VPC_NETWORKS_DRIVER", "bridge")
+                .doesNotContainKey("FLOCI_SERVICES_EC2_MANAGED_PREFIX_LIST_CATALOG_PATH")
+                .containsEntry("FLOCI_SERVICES_EC2_ENFORCE_VCPU_QUOTAS", "false")
+                .containsEntry("FLOCI_SERVICES_EC2_PUBLIC_IP_FROM_SERVICE_NETWORK", "false")
+                .containsEntry("FLOCI_SERVICES_EC2_MOCK_PUBLIC_ADDRESSES", "none")
+                .doesNotContainKey("FLOCI_SERVICES_EC2_MOCK_PUBLIC_ADDRESS");
     }
 
     @Test
@@ -142,6 +162,11 @@ class Ec2ConfigTest {
                 .vpcNetworksFallbackPrefixLength(20)
                 .vpcNetworksReconcileOnStartup(false)
                 .vpcNetworksDriver("macvlan")
+                .managedPrefixListCatalogPath("/opt/floci/prefix-lists.json")
+                .enforceVcpuQuotas(true)
+                .publicIpFromServiceNetwork(true)
+                .mockPublicAddresses(Ec2Config.MockPublicAddresses.FIXED)
+                .mockPublicAddress("192.0.2.10")
                 .build()
                 .applyEnvVarsToContainer(container);
 
@@ -167,7 +192,12 @@ class Ec2ConfigTest {
                 .containsEntry("FLOCI_SERVICES_EC2_VPC_NETWORKS_FALLBACK_POOL", "10.200.0.0/14")
                 .containsEntry("FLOCI_SERVICES_EC2_VPC_NETWORKS_FALLBACK_PREFIX_LENGTH", "20")
                 .containsEntry("FLOCI_SERVICES_EC2_VPC_NETWORKS_RECONCILE_ON_STARTUP", "false")
-                .containsEntry("FLOCI_SERVICES_EC2_VPC_NETWORKS_DRIVER", "macvlan");
+                .containsEntry("FLOCI_SERVICES_EC2_VPC_NETWORKS_DRIVER", "macvlan")
+                .containsEntry("FLOCI_SERVICES_EC2_MANAGED_PREFIX_LIST_CATALOG_PATH", "/opt/floci/prefix-lists.json")
+                .containsEntry("FLOCI_SERVICES_EC2_ENFORCE_VCPU_QUOTAS", "true")
+                .containsEntry("FLOCI_SERVICES_EC2_PUBLIC_IP_FROM_SERVICE_NETWORK", "true")
+                .containsEntry("FLOCI_SERVICES_EC2_MOCK_PUBLIC_ADDRESSES", "fixed")
+                .containsEntry("FLOCI_SERVICES_EC2_MOCK_PUBLIC_ADDRESS", "192.0.2.10");
     }
 
     @Test
@@ -211,7 +241,12 @@ class Ec2ConfigTest {
                 .doesNotContainKey("FLOCI_SERVICES_EC2_VPC_NETWORKS_FALLBACK_POOL")
                 .doesNotContainKey("FLOCI_SERVICES_EC2_VPC_NETWORKS_FALLBACK_PREFIX_LENGTH")
                 .doesNotContainKey("FLOCI_SERVICES_EC2_VPC_NETWORKS_RECONCILE_ON_STARTUP")
-                .doesNotContainKey("FLOCI_SERVICES_EC2_VPC_NETWORKS_DRIVER");
+                .doesNotContainKey("FLOCI_SERVICES_EC2_VPC_NETWORKS_DRIVER")
+                .doesNotContainKey("FLOCI_SERVICES_EC2_MANAGED_PREFIX_LIST_CATALOG_PATH")
+                .doesNotContainKey("FLOCI_SERVICES_EC2_ENFORCE_VCPU_QUOTAS")
+                .doesNotContainKey("FLOCI_SERVICES_EC2_PUBLIC_IP_FROM_SERVICE_NETWORK")
+                .doesNotContainKey("FLOCI_SERVICES_EC2_MOCK_PUBLIC_ADDRESSES")
+                .doesNotContainKey("FLOCI_SERVICES_EC2_MOCK_PUBLIC_ADDRESS");
     }
 
     @Test
@@ -274,6 +309,11 @@ class Ec2ConfigTest {
                 .vpcNetworksFallbackPrefixLength(20)
                 .vpcNetworksReconcileOnStartup(false)
                 .vpcNetworksDriver("macvlan")
+                .managedPrefixListCatalogPath("/opt/floci/prefix-lists.json")
+                .enforceVcpuQuotas(true)
+                .publicIpFromServiceNetwork(true)
+                .mockPublicAddresses(Ec2Config.MockPublicAddresses.FIXED)
+                .mockPublicAddress("192.0.2.10")
                 .build();
         Ec2Config copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
@@ -298,6 +338,11 @@ class Ec2ConfigTest {
         assertThat(copy.getVpcNetworksFallbackPrefixLength()).isEqualTo(20);
         assertThat(copy.isVpcNetworksReconcileOnStartup()).isFalse();
         assertThat(copy.getVpcNetworksDriver()).isEqualTo("macvlan");
+        assertThat(copy.getManagedPrefixListCatalogPath()).contains("/opt/floci/prefix-lists.json");
+        assertThat(copy.isEnforceVcpuQuotas()).isTrue();
+        assertThat(copy.isPublicIpFromServiceNetwork()).isTrue();
+        assertThat(copy.getMockPublicAddresses()).isEqualTo(Ec2Config.MockPublicAddresses.FIXED);
+        assertThat(copy.getMockPublicAddress()).contains("192.0.2.10");
     }
 
     @Test
