@@ -56,6 +56,22 @@ class ArmServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    void shouldApplyConfiguredDefaultLocationOfCloud() {
+        try (FlociAzContainer armFloci = new FlociAzContainer(IMAGE)
+                .disableAllServices()
+                .withArmConfig(c -> c.enabled(true))
+                .withDirectoryConfig(c -> c.defaultLocation("AzureCloud", "westeurope"))) {
+            armFloci.start();
+
+            RestResponse created = rest(armFloci, "PUT",
+                    "/subscriptions/" + armFloci.getSubscriptionId() + "/resourceGroups/rg?api-version=2021-04-01", "{}");
+
+            assertThat(created.isSuccessful()).as(created.toString()).isTrue();
+            assertThat(created.json().path("location").asText()).isEqualTo("westeurope");
+        }
+    }
+
+    @Test
     void shouldRefuseUnknownSubscriptionWithStrictParity() {
         try (FlociAzContainer armFloci = new FlociAzContainer(IMAGE)
                 .disableAllServices()
