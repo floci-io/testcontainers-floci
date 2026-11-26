@@ -109,6 +109,7 @@ public class FlociOciContainer extends AbstractFlociContainer<FlociOciContainer>
     private final ServiceConfigRef<StreamingConfig> streamingConfig = registerServiceConfig(StreamingConfig.builder().build());
     private final ServiceConfigRef<FunctionsConfig> functionsConfig = registerServiceConfig(FunctionsConfig.builder().build());
     private final ServiceConfigRef<OkeConfig> okeConfig = registerServiceConfig(OkeConfig.builder().build());
+    private final ServiceConfigRef<OrganizationsConfig> organizationsConfig = registerServiceConfig(OrganizationsConfig.builder().build());
 
     /**
      * Creates a new Floci OCI container with the default image ({@code floci/floci-oci:latest}).
@@ -582,5 +583,29 @@ public class FlociOciContainer extends AbstractFlociContainer<FlociOciContainer>
      */
     public FlociOciContainer withOkeConfig(Consumer<OkeConfig.Builder> configurer) {
         return updateServiceConfig(okeConfig, configurer);
+    }
+
+    /**
+     * Returns the OCI Organizations configuration.
+     *
+     * @return the OCI Organizations configuration
+     */
+    public OrganizationsConfig getOrganizationsConfig() {
+        return organizationsConfig.get();
+    }
+
+    /**
+     * Configures OCI Organizations (Tenant Manager control plane): organizations, child tenancies and their links.
+     *
+     * <pre>{@code
+     * new FlociOciContainer()
+     *     .withOrganizationsConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link OrganizationsConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociOciContainer withOrganizationsConfig(Consumer<OrganizationsConfig.Builder> configurer) {
+        return updateServiceConfig(organizationsConfig, configurer);
     }
 }

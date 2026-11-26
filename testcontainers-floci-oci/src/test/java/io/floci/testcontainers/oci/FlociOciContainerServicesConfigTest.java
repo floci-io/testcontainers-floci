@@ -113,6 +113,14 @@ class FlociOciContainerServicesConfigTest {
                 "FLOCI_OCI_SERVICES_OKE_MOCK", "true");
     }
 
+    @Test
+    void shouldWireOrganizationsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withOrganizationsConfig(cfg -> cfg.enabled(false)),
+                c -> c.getOrganizationsConfig().isEnabled(), false,
+                "FLOCI_OCI_SERVICES_ORGANIZATIONS_ENABLED", "false");
+    }
+
     // --- Cross-cutting configs (config/) ----------------------------------------------------------
 
     @Test
