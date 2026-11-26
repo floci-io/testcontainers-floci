@@ -7,8 +7,10 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 class KafkaServiceTest extends AbstractServiceTest {
 
@@ -30,10 +32,12 @@ class KafkaServiceTest extends AbstractServiceTest {
 
         try {
             HttpResponse<String> created = rest("POST", clusters + "?clusterId=" + clusterId, CLUSTER_BODY);
-            HttpResponse<String> fetched = rest("GET", clusters + "/" + clusterId, null);
-
             assertThat(created.statusCode()).as(created.body()).isEqualTo(200);
-            assertThat(fetched.body()).contains("\"state\":\"ACTIVE\"", "\"bootstrapAddress\"");
+
+            // The cluster stays CREATING until its broker is up
+            await().atMost(Duration.ofMinutes(2)).pollInterval(Duration.ofSeconds(1)).untilAsserted(() ->
+                    assertThat(rest("GET", clusters + "/" + clusterId, null).body())
+                            .contains("\"state\":\"ACTIVE\"", "\"bootstrapAddress\""));
         } finally {
             rest("DELETE", clusters + "/" + clusterId, null);
         }
