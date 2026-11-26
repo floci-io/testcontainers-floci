@@ -69,6 +69,35 @@ class EntraServiceTest extends AbstractServiceTest {
         }
     }
 
+    @Test
+    void shouldValidatePasswordsOfSeededUsers() {
+        try (FlociAzContainer seededFloci = new FlociAzContainer(IMAGE)
+                .disableAllServices()
+                .withEntraConfig(c -> c.enabled(true).validateUserCredentials(true).seed("""
+                        {"users": [{"id": "bbbbbbbb-0000-0000-0000-000000000001",
+                                    "userPrincipalName": "reader@example.test",
+                                    "passwordProfile": {"password": "correct-horse"}}]}
+                        """))) {
+            seededFloci.start();
+
+            RestResponse accepted = passwordGrant(seededFloci, "correct-horse");
+            RestResponse rejected = passwordGrant(seededFloci, "wrong-password");
+
+            assertThat(accepted.status()).as(accepted.toString()).isEqualTo(200);
+            assertThat(accepted.json().path("access_token").asText()).isNotEmpty();
+            assertThat(rejected.status()).as(rejected.toString()).isEqualTo(400);
+            assertThat(rejected.json().path("error").asText()).isEqualTo("invalid_grant");
+            assertThat(rejected.json().path("error_description").asText()).contains("AADSTS50126");
+        }
+    }
+
+    private static RestResponse passwordGrant(FlociAzContainer container, String password) {
+        return restForm(container, "/organizations/oauth2/v2.0/token",
+                "grant_type=password&client_id=11111111-1111-1111-1111-111111111111"
+                        + "&username=reader%40example.test&password=" + password
+                        + "&scope=https%3A%2F%2Fmanagement.azure.com%2F.default");
+    }
+
     private static JsonNode claims(String jwt) throws IOException {
         return new ObjectMapper().readTree(Base64.getUrlDecoder().decode(jwt.split("\\.")[1]));
     }
