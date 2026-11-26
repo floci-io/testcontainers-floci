@@ -19,6 +19,7 @@ class BedrockRuntimeConfigTest {
         assertThat(config.getProxyModelMapping()).isNull();
         assertThat(config.isProxyPassthrough()).isFalse();
         assertThat(config.getProxyRequestTimeoutSeconds()).isEqualTo(60);
+        assertThat(config.getProxyErrorBodyTimeoutMillis()).isEqualTo(1000);
     }
 
     @Test
@@ -39,6 +40,7 @@ class BedrockRuntimeConfigTest {
                 .proxyModelMapping("anthropic.claude-3-sonnet-20240229-v1:0=claude-3-sonnet")
                 .proxyPassthrough(true)
                 .proxyRequestTimeoutSeconds(120)
+                .proxyErrorBodyTimeoutMillis(250)
                 .build();
 
         assertThat(config.getBackend()).isEqualTo("proxy");
@@ -48,6 +50,7 @@ class BedrockRuntimeConfigTest {
         assertThat(config.getProxyModelMapping()).isEqualTo("anthropic.claude-3-sonnet-20240229-v1:0=claude-3-sonnet");
         assertThat(config.isProxyPassthrough()).isTrue();
         assertThat(config.getProxyRequestTimeoutSeconds()).isEqualTo(120);
+        assertThat(config.getProxyErrorBodyTimeoutMillis()).isEqualTo(250);
     }
 
     @Test
@@ -55,7 +58,8 @@ class BedrockRuntimeConfigTest {
         GenericContainer<?> container = genericContainer();
         BedrockRuntimeConfig.builder().build().applyEnvVarsToContainer(container);
 
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_BEDROCK_RUNTIME_ENABLED", "true");
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_BEDROCK_RUNTIME_ENABLED", "true")
+                .containsEntry("FLOCI_SERVICES_BEDROCK_RUNTIME_PROXY_ERROR_BODY_TIMEOUT_MILLIS", "1000");
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_BEDROCK_RUNTIME_BACKEND", "stub");
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_BEDROCK_RUNTIME_PROXY_PASSTHROUGH", "false");
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_BEDROCK_RUNTIME_PROXY_REQUEST_TIMEOUT_SECONDS", "60");
@@ -76,6 +80,7 @@ class BedrockRuntimeConfigTest {
                 .proxyModelMapping("anthropic.claude-3-sonnet-20240229-v1:0=claude-3-sonnet")
                 .proxyPassthrough(true)
                 .proxyRequestTimeoutSeconds(120)
+                .proxyErrorBodyTimeoutMillis(250)
                 .build()
                 .applyEnvVarsToContainer(container);
 
@@ -87,6 +92,7 @@ class BedrockRuntimeConfigTest {
                 "anthropic.claude-3-sonnet-20240229-v1:0=claude-3-sonnet");
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_BEDROCK_RUNTIME_PROXY_PASSTHROUGH", "true");
         assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_BEDROCK_RUNTIME_PROXY_REQUEST_TIMEOUT_SECONDS", "120");
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_BEDROCK_RUNTIME_PROXY_ERROR_BODY_TIMEOUT_MILLIS", "250");
     }
 
     @Test
@@ -94,7 +100,8 @@ class BedrockRuntimeConfigTest {
         GenericContainer<?> container = genericContainer();
         BedrockRuntimeConfig.builder().enabled(false).build().applyEnvVarsToContainer(container);
 
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_BEDROCK_RUNTIME_ENABLED", "false");
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_BEDROCK_RUNTIME_ENABLED", "false")
+                .doesNotContainKey("FLOCI_SERVICES_BEDROCK_RUNTIME_PROXY_ERROR_BODY_TIMEOUT_MILLIS");
         assertThat(container.getEnvMap()).doesNotContainKey("FLOCI_SERVICES_BEDROCK_RUNTIME_BACKEND");
     }
 
@@ -109,6 +116,7 @@ class BedrockRuntimeConfigTest {
                 .proxyModelMapping("anthropic.claude-3-sonnet-20240229-v1:0=claude-3-sonnet")
                 .proxyPassthrough(true)
                 .proxyRequestTimeoutSeconds(120)
+                .proxyErrorBodyTimeoutMillis(250)
                 .build();
         BedrockRuntimeConfig copy = config.toBuilder().build();
 
@@ -120,6 +128,7 @@ class BedrockRuntimeConfigTest {
         assertThat(copy.getProxyModelMapping()).isEqualTo("anthropic.claude-3-sonnet-20240229-v1:0=claude-3-sonnet");
         assertThat(copy.isProxyPassthrough()).isTrue();
         assertThat(copy.getProxyRequestTimeoutSeconds()).isEqualTo(120);
+        assertThat(copy.getProxyErrorBodyTimeoutMillis()).isEqualTo(250);
     }
 
 }
