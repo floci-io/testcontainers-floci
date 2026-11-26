@@ -9,7 +9,6 @@ import com.oracle.bmc.model.BmcException;
 import com.oracle.bmc.queue.QueueAdminClient;
 import com.oracle.bmc.queue.model.CreateQueueDetails;
 import com.oracle.bmc.queue.requests.CreateQueueRequest;
-import io.floci.testcontainers.oci.FlociOciContainer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -51,26 +50,21 @@ class IdentityServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void shouldRejectUnknownCompartmentWithStrictCompartments() {
-        try (FlociOciContainer strict = new FlociOciContainer(IMAGE)
-                .disableAllServices()
-                .withIdentityConfig(c -> c.enabled(true).strictCompartments(true))
-                .withQueueConfig(c -> c.enabled(true))) {
-            strict.start();
-            try (QueueAdminClient admin = client(strict, QueueAdminClient.builder())) {
-                CreateQueueRequest request = CreateQueueRequest.builder()
-                        .createQueueDetails(CreateQueueDetails.builder()
-                                .compartmentId("ocid1.compartment.oc1..unknown")
-                                .displayName("queue-" + System.nanoTime())
-                                .build())
-                        .build();
+    void shouldRejectUnknownCompartment() {
+        // Floci OCI always validates the compartments other services' requests reference
+        try (QueueAdminClient admin = client(QueueAdminClient.builder())) {
+            CreateQueueRequest request = CreateQueueRequest.builder()
+                    .createQueueDetails(CreateQueueDetails.builder()
+                            .compartmentId("ocid1.compartment.oc1..unknown")
+                            .displayName("queue-" + System.nanoTime())
+                            .build())
+                    .build();
 
-                assertThatThrownBy(() -> admin.createQueue(request))
-                        .isInstanceOfSatisfying(BmcException.class, e -> {
-                            assertThat(e.getStatusCode()).isEqualTo(400);
-                            assertThat(e.getServiceCode()).isEqualTo("RelatedResourceNotAuthorizedOrNotFound");
-                        });
-            }
+            assertThatThrownBy(() -> admin.createQueue(request))
+                    .isInstanceOfSatisfying(BmcException.class, e -> {
+                        assertThat(e.getStatusCode()).isEqualTo(400);
+                        assertThat(e.getServiceCode()).isEqualTo("RelatedResourceNotAuthorizedOrNotFound");
+                    });
         }
     }
 }
