@@ -486,8 +486,10 @@ SecretClient secrets = new SecretClientBuilder()
 | `withProjectsConfig(...)`   | Configures the project registry, e.g. strict mode: only known projects exist (`c.strict(true)`) |
 | `with*Config(...)`          | Configures service-specific settings, e.g. `withCloudSqlConfig(c -> c.mock(true))`  |
 
-Docker-backed services (Managed Kafka, Cloud SQL, Cloud Run, GKE and the DuckDB query engine of BigQuery) mount the
-host Docker socket automatically while they are enabled and not `mock`ed, exactly like the other modules. Their
+Docker-backed services (Managed Kafka, Cloud SQL, Cloud Run, GKE, the DuckDB query engine of BigQuery and Compute
+Engine instances) mount the host Docker socket automatically while they are enabled and not `mock`ed, exactly like
+the other modules. Compute Engine is `mock`ed by default: with `withComputeConfig(c -> c.mock(false))` every instance
+runs as a Docker container, and `c.imageCatalog(...)` maps boot images to Docker images of your choice. Their
 sidecar containers publish their ports directly on the Docker host (e.g. the IP address and port of a Cloud SQL
 instance are reachable from the test); the GKE API server port range defaults to 10 ports
 (`withGkeConfig(c -> c.apiServerPortRange(6550, 10))`). Cloud Run services are invoked through the main port, addressed
