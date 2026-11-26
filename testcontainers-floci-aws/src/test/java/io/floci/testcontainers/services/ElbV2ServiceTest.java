@@ -3,6 +3,8 @@ package io.floci.testcontainers.services;
 import io.floci.testcontainers.FlociContainer;
 import org.junit.jupiter.api.*;
 import software.amazon.awssdk.core.SdkBytes;
+import software.amazon.awssdk.services.ec2.Ec2Client;
+import software.amazon.awssdk.services.ec2.model.AvailabilityZone;
 import software.amazon.awssdk.services.elasticloadbalancingv2.ElasticLoadBalancingV2Client;
 import software.amazon.awssdk.services.elasticloadbalancingv2.model.*;
 import software.amazon.awssdk.services.lambda.LambdaClient;
@@ -20,6 +22,7 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -31,17 +34,21 @@ class ElbV2ServiceTest extends AbstractServiceTest {
 
     static ElasticLoadBalancingV2Client elbV2;
     static LambdaClient lambda;
+    static Ec2Client ec2;
 
     static String functionName;
     static URI lbFunctionUri;
     static String tgArn;
     static String lbArn;
     static String listenerArn;
+    static String vpcId;
+    static List<String> subnetIds;
 
     @BeforeAll
     static void setUp() {
         elbV2 = client(ElasticLoadBalancingV2Client.builder());
         lambda = client(LambdaClient.builder());
+        ec2 = client(Ec2Client.builder());
     }
 
     @Test
@@ -102,8 +109,21 @@ class ElbV2ServiceTest extends AbstractServiceTest {
     @Test
     @Order(3)
     void shouldCreateLoadBalancerAndForwardToLambda() throws Exception {
+        // An Application Load Balancer needs subnets in at least two Availability Zones
+        vpcId = ec2.createVpc(b -> b.cidrBlock("10.42.0.0/16")).vpc().vpcId();
+        List<String> zones = ec2.describeAvailabilityZones().availabilityZones().stream()
+                .map(AvailabilityZone::zoneName)
+                .limit(2)
+                .toList();
+        subnetIds = List.of(
+                ec2.createSubnet(b -> b.vpcId(vpcId).cidrBlock("10.42.1.0/24").availabilityZone(zones.get(0)))
+                        .subnet().subnetId(),
+                ec2.createSubnet(b -> b.vpcId(vpcId).cidrBlock("10.42.2.0/24").availabilityZone(zones.get(1)))
+                        .subnet().subnetId());
+
         lbArn = elbV2.createLoadBalancer(b -> b
                         .name("lambda-lb-" + System.currentTimeMillis())
+                        .subnets(subnetIds)
                         .type(LoadBalancerTypeEnum.APPLICATION)
                         .scheme(LoadBalancerSchemeEnum.INTERNET_FACING))
                 .loadBalancers().get(0).loadBalancerArn();
@@ -138,8 +158,11 @@ class ElbV2ServiceTest extends AbstractServiceTest {
         elbV2.deleteTargetGroup(b -> b.targetGroupArn(tgArn));
         lambda.deleteFunctionUrlConfig(b -> b.functionName(functionName));
         lambda.deleteFunction(b -> b.functionName(functionName));
+        subnetIds.forEach(subnetId -> ec2.deleteSubnet(b -> b.subnetId(subnetId)));
+        ec2.deleteVpc(b -> b.vpcId(vpcId));
 
-        assertThat(elbV2.describeListeners(b -> b.listenerArns(listenerArn)).listeners()).isEmpty();
+        assertThatThrownBy(() -> elbV2.describeListeners(b -> b.listenerArns(listenerArn)))
+                .isInstanceOf(ListenerNotFoundException.class);
         assertThatThrownBy(() -> elbV2.describeLoadBalancers(b -> b.loadBalancerArns(lbArn)))
                 .isInstanceOf(LoadBalancerNotFoundException.class);
         assertThatThrownBy(() -> elbV2.describeTargetGroups(b -> b.targetGroupArns(tgArn)))
