@@ -261,6 +261,14 @@ class FlociGcpContainerServicesConfigTest {
     }
 
     @Test
+    void shouldWireProjectsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withProjectsConfig(cfg -> cfg.strict(true)),
+                c -> c.getProjectsConfig().isStrict(), true,
+                "FLOCI_GCP_PROJECTS_STRICT", "true");
+    }
+
+    @Test
     void shouldWireTlsConfigIntoContainer() {
         assertConfigWired(
                 c -> c.withTlsConfig(cfg -> cfg.enabled(true)),

@@ -3,6 +3,7 @@ package io.floci.testcontainers.gcp;
 import io.floci.testcontainers.core.AbstractFlociContainer;
 import io.floci.testcontainers.core.CloudDescriptor;
 import io.floci.testcontainers.gcp.config.LocationsConfig;
+import io.floci.testcontainers.gcp.config.ProjectsConfig;
 import io.floci.testcontainers.gcp.config.TlsConfig;
 import io.floci.testcontainers.gcp.config.services.*;
 import org.testcontainers.utility.DockerImageName;
@@ -78,6 +79,7 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
     private static final String DEFAULT_PROJECT_ID = "floci-local";
 
     private LocationsConfig locationsConfig = LocationsConfig.builder().build();
+    private ProjectsConfig projectsConfig = ProjectsConfig.builder().build();
     private TlsConfig tlsConfig = TlsConfig.builder().build();
 
     // Service configs
@@ -137,6 +139,7 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
     @Override
     protected void applyGlobalEnvVars() {
         locationsConfig.applyEnvVarsToContainer(this);
+        projectsConfig.applyEnvVarsToContainer(this);
         tlsConfig.applyEnvVarsToContainer(this);
     }
 
@@ -269,6 +272,35 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
         configurer.accept(builder);
         this.locationsConfig = builder.build();
         locationsConfig.applyEnvVarsToContainer(this);
+        return this;
+    }
+
+    /**
+     * Returns the configuration of the project registry.
+     *
+     * @return the projects configuration
+     */
+    public ProjectsConfig getProjectsConfig() {
+        return projectsConfig;
+    }
+
+    /**
+     * Configures the project registry of Floci GCP, e.g. strict mode, in which only the default project and
+     * projects created through Resource Manager exist.
+     *
+     * <pre>{@code
+     * new FlociGcpContainer()
+     *     .withProjectsConfig(c -> c.strict(true));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link ProjectsConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociGcpContainer withProjectsConfig(Consumer<ProjectsConfig.Builder> configurer) {
+        ProjectsConfig.Builder builder = projectsConfig.toBuilder();
+        configurer.accept(builder);
+        this.projectsConfig = builder.build();
+        projectsConfig.applyEnvVarsToContainer(this);
         return this;
     }
 

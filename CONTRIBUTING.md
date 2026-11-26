@@ -76,7 +76,7 @@ testcontainers-floci-gcp/         GCP module — FlociGcpContainer (extends Abst
   src/main/java/
     io/floci/testcontainers/gcp/
       FlociGcpContainer.java      Main container class
-      config/                     TlsConfig, LocationsConfig
+      config/                     TlsConfig, LocationsConfig, ProjectsConfig
       config/services/            Per-service config classes (one per Floci GCP service)
   src/test/java/                  Same layout as the AWS module (FlociGcpContainerServicesConfigTest, config/services/,
                                   services/ with gRPC/REST client helpers in AbstractServiceTest)
