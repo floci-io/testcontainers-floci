@@ -450,7 +450,7 @@ class FlociContainerServicesConfigTest {
     void shouldWireRoute53ConfigIntoContainer() {
         assertConfigWired(
                 c -> c.withRoute53Config(cfg -> cfg.defaultNameserver1("ns1.example.com")),
-                c -> c.getRoute53Config().getDefaultNameserver1(), "ns1.example.com",
+                c -> c.getRoute53Config().getDefaultNameserver1(), Optional.of("ns1.example.com"),
                 "FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_1", "ns1.example.com");
     }
 

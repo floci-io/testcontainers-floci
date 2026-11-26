@@ -12,10 +12,10 @@ class Route53ConfigTest {
     void shouldApplyDefaultRoute53Config() {
         Route53Config config = Route53Config.builder().build();
         assertThat(config.isEnabled()).isTrue();
-        assertThat(config.getDefaultNameserver1()).isNull();
-        assertThat(config.getDefaultNameserver2()).isNull();
-        assertThat(config.getDefaultNameserver3()).isNull();
-        assertThat(config.getDefaultNameserver4()).isNull();
+        assertThat(config.getDefaultNameserver1()).isEmpty();
+        assertThat(config.getDefaultNameserver2()).isEmpty();
+        assertThat(config.getDefaultNameserver3()).isEmpty();
+        assertThat(config.getDefaultNameserver4()).isEmpty();
         assertThat(config.getVpcAssociationControlPlaneDelayMs()).isEqualTo(0L);
     }
 
@@ -30,10 +30,10 @@ class Route53ConfigTest {
                 .vpcAssociationControlPlaneDelayMs(2000L)
                 .build();
         assertThat(config.isEnabled()).isFalse();
-        assertThat(config.getDefaultNameserver1()).isEqualTo("ns1.example.com");
-        assertThat(config.getDefaultNameserver2()).isEqualTo("ns2.example.com");
-        assertThat(config.getDefaultNameserver3()).isEqualTo("ns3.example.com");
-        assertThat(config.getDefaultNameserver4()).isEqualTo("ns4.example.com");
+        assertThat(config.getDefaultNameserver1()).contains("ns1.example.com");
+        assertThat(config.getDefaultNameserver2()).contains("ns2.example.com");
+        assertThat(config.getDefaultNameserver3()).contains("ns3.example.com");
+        assertThat(config.getDefaultNameserver4()).contains("ns4.example.com");
         assertThat(config.getVpcAssociationControlPlaneDelayMs()).isEqualTo(2000L);
     }
 
@@ -93,10 +93,10 @@ class Route53ConfigTest {
                 .build();
         Route53Config copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
-        assertThat(copy.getDefaultNameserver1()).isEqualTo("ns1.example.com");
-        assertThat(copy.getDefaultNameserver2()).isEqualTo("ns2.example.com");
-        assertThat(copy.getDefaultNameserver3()).isEqualTo("ns3.example.com");
-        assertThat(copy.getDefaultNameserver4()).isEqualTo("ns4.example.com");
+        assertThat(copy.getDefaultNameserver1()).contains("ns1.example.com");
+        assertThat(copy.getDefaultNameserver2()).contains("ns2.example.com");
+        assertThat(copy.getDefaultNameserver3()).contains("ns3.example.com");
+        assertThat(copy.getDefaultNameserver4()).contains("ns4.example.com");
         assertThat(copy.getVpcAssociationControlPlaneDelayMs()).isEqualTo(2000L);
     }
 

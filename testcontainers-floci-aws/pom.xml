@@ -861,6 +861,11 @@
                         <excludes>
                             <!-- Changed to Optional<String> after 2.16.1 (#9a28ace), before this check existed -->
                             <exclude>io.floci.testcontainers.config.services.CloudFrontConfig#getDomainSuffix()</exclude>
+                            <!-- Changed to Optional<String> when Floci 2.5.0 dropped the nameserver defaults -->
+                            <exclude>io.floci.testcontainers.config.services.Route53Config#getDefaultNameserver1()</exclude>
+                            <exclude>io.floci.testcontainers.config.services.Route53Config#getDefaultNameserver2()</exclude>
+                            <exclude>io.floci.testcontainers.config.services.Route53Config#getDefaultNameserver3()</exclude>
+                            <exclude>io.floci.testcontainers.config.services.Route53Config#getDefaultNameserver4()</exclude>
                         </excludes>
                         <overrideCompatibilityChangeParameters>
                             <!--

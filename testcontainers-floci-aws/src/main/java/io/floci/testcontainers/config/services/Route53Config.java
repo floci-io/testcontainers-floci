@@ -2,6 +2,8 @@ package io.floci.testcontainers.config.services;
 
 import org.testcontainers.containers.Container;
 
+import java.util.Optional;
+
 /**
  * Configuration for Route 53-specific container settings.
  *
@@ -56,10 +58,10 @@ public class Route53Config extends AbstractServiceConfig<Route53Config.Builder> 
      *
      * <p>While unset, Floci assigns each delegation set its own distinct set of nameservers.
      *
-     * @return the first default nameserver, or {@code null} if Floci assigns distinct nameservers
+     * @return the first default nameserver, or empty if Floci assigns distinct nameservers
      */
-    public String getDefaultNameserver1() {
-        return defaultNameserver1;
+    public Optional<String> getDefaultNameserver1() {
+        return Optional.ofNullable(defaultNameserver1);
     }
 
     /**
@@ -67,10 +69,10 @@ public class Route53Config extends AbstractServiceConfig<Route53Config.Builder> 
      *
      * <p>While unset, Floci assigns each delegation set its own distinct set of nameservers.
      *
-     * @return the second default nameserver, or {@code null} if Floci assigns distinct nameservers
+     * @return the second default nameserver, or empty if Floci assigns distinct nameservers
      */
-    public String getDefaultNameserver2() {
-        return defaultNameserver2;
+    public Optional<String> getDefaultNameserver2() {
+        return Optional.ofNullable(defaultNameserver2);
     }
 
     /**
@@ -78,10 +80,10 @@ public class Route53Config extends AbstractServiceConfig<Route53Config.Builder> 
      *
      * <p>While unset, Floci assigns each delegation set its own distinct set of nameservers.
      *
-     * @return the third default nameserver, or {@code null} if Floci assigns distinct nameservers
+     * @return the third default nameserver, or empty if Floci assigns distinct nameservers
      */
-    public String getDefaultNameserver3() {
-        return defaultNameserver3;
+    public Optional<String> getDefaultNameserver3() {
+        return Optional.ofNullable(defaultNameserver3);
     }
 
     /**
@@ -89,10 +91,10 @@ public class Route53Config extends AbstractServiceConfig<Route53Config.Builder> 
      *
      * <p>While unset, Floci assigns each delegation set its own distinct set of nameservers.
      *
-     * @return the fourth default nameserver, or {@code null} if Floci assigns distinct nameservers
+     * @return the fourth default nameserver, or empty if Floci assigns distinct nameservers
      */
-    public String getDefaultNameserver4() {
-        return defaultNameserver4;
+    public Optional<String> getDefaultNameserver4() {
+        return Optional.ofNullable(defaultNameserver4);
     }
 
     /**
@@ -150,10 +152,10 @@ public class Route53Config extends AbstractServiceConfig<Route53Config.Builder> 
          */
         private Builder(Route53Config instance) {
             super(instance);
-            this.defaultNameserver1 = instance.getDefaultNameserver1();
-            this.defaultNameserver2 = instance.getDefaultNameserver2();
-            this.defaultNameserver3 = instance.getDefaultNameserver3();
-            this.defaultNameserver4 = instance.getDefaultNameserver4();
+            this.defaultNameserver1 = instance.getDefaultNameserver1().orElse(null);
+            this.defaultNameserver2 = instance.getDefaultNameserver2().orElse(null);
+            this.defaultNameserver3 = instance.getDefaultNameserver3().orElse(null);
+            this.defaultNameserver4 = instance.getDefaultNameserver4().orElse(null);
             this.vpcAssociationControlPlaneDelayMs = instance.getVpcAssociationControlPlaneDelayMs();
         }
 
