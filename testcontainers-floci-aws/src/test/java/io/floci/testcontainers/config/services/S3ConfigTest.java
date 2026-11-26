@@ -17,6 +17,7 @@ class S3ConfigTest {
         assertThat(config.isGlobalBucketNamespace()).isFalse();
         assertThat(config.isLifecycleSweepEnabled()).isTrue();
         assertThat(config.getLifecycleSweepIntervalSeconds()).isEqualTo(60);
+        assertThat(config.getRestoreCompletionDelaySeconds()).isEqualTo(0L);
     }
 
     @Test
@@ -28,6 +29,7 @@ class S3ConfigTest {
                 .globalBucketNamespace(true)
                 .lifecycleSweepEnabled(false)
                 .lifecycleSweepIntervalSeconds(300)
+                .restoreCompletionDelaySeconds(30L)
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.getDefaultPresignExpirySeconds()).isEqualTo(7200);
@@ -35,6 +37,7 @@ class S3ConfigTest {
         assertThat(config.isGlobalBucketNamespace()).isTrue();
         assertThat(config.isLifecycleSweepEnabled()).isFalse();
         assertThat(config.getLifecycleSweepIntervalSeconds()).isEqualTo(300);
+        assertThat(config.getRestoreCompletionDelaySeconds()).isEqualTo(30L);
     }
 
     @Test
@@ -48,7 +51,8 @@ class S3ConfigTest {
                 .containsEntry("FLOCI_SERVICES_S3_ENFORCE_AUTH", "false")
                 .containsEntry("FLOCI_SERVICES_S3_GLOBAL_BUCKET_NAMESPACE", "false")
                 .containsEntry("FLOCI_SERVICES_S3_LIFECYCLE_SWEEP_ENABLED", "true")
-                .containsEntry("FLOCI_SERVICES_S3_LIFECYCLE_SWEEP_INTERVAL_SECONDS", "60");
+                .containsEntry("FLOCI_SERVICES_S3_LIFECYCLE_SWEEP_INTERVAL_SECONDS", "60")
+                .containsEntry("FLOCI_SERVICES_S3_RESTORE_COMPLETION_DELAY_SECONDS", "0");
     }
 
     @Test
@@ -60,6 +64,7 @@ class S3ConfigTest {
                 .globalBucketNamespace(true)
                 .lifecycleSweepEnabled(false)
                 .lifecycleSweepIntervalSeconds(300)
+                .restoreCompletionDelaySeconds(30L)
                 .build()
                 .applyEnvVarsToContainer(container);
 
@@ -68,7 +73,8 @@ class S3ConfigTest {
                 .containsEntry("FLOCI_SERVICES_S3_ENFORCE_AUTH", "true")
                 .containsEntry("FLOCI_SERVICES_S3_GLOBAL_BUCKET_NAMESPACE", "true")
                 .containsEntry("FLOCI_SERVICES_S3_LIFECYCLE_SWEEP_ENABLED", "false")
-                .containsEntry("FLOCI_SERVICES_S3_LIFECYCLE_SWEEP_INTERVAL_SECONDS", "300");
+                .containsEntry("FLOCI_SERVICES_S3_LIFECYCLE_SWEEP_INTERVAL_SECONDS", "300")
+                .containsEntry("FLOCI_SERVICES_S3_RESTORE_COMPLETION_DELAY_SECONDS", "30");
     }
 
     @Test
@@ -82,7 +88,8 @@ class S3ConfigTest {
                 .doesNotContainKey("FLOCI_SERVICES_S3_ENFORCE_AUTH")
                 .doesNotContainKey("FLOCI_SERVICES_S3_GLOBAL_BUCKET_NAMESPACE")
                 .doesNotContainKey("FLOCI_SERVICES_S3_LIFECYCLE_SWEEP_ENABLED")
-                .doesNotContainKey("FLOCI_SERVICES_S3_LIFECYCLE_SWEEP_INTERVAL_SECONDS");
+                .doesNotContainKey("FLOCI_SERVICES_S3_LIFECYCLE_SWEEP_INTERVAL_SECONDS")
+                .doesNotContainKey("FLOCI_SERVICES_S3_RESTORE_COMPLETION_DELAY_SECONDS");
     }
 
     @Test
@@ -94,6 +101,7 @@ class S3ConfigTest {
                 .globalBucketNamespace(true)
                 .lifecycleSweepEnabled(false)
                 .lifecycleSweepIntervalSeconds(300)
+                .restoreCompletionDelaySeconds(30L)
                 .build();
         S3Config copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
@@ -102,6 +110,7 @@ class S3ConfigTest {
         assertThat(copy.isGlobalBucketNamespace()).isTrue();
         assertThat(copy.isLifecycleSweepEnabled()).isFalse();
         assertThat(copy.getLifecycleSweepIntervalSeconds()).isEqualTo(300);
+        assertThat(copy.getRestoreCompletionDelaySeconds()).isEqualTo(30L);
     }
 
 }
