@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.17.1](https://github.com/floci-io/testcontainers-floci/compare/v2.17.0...v2.17.1) (2026-11-26)
+
+
+### Documentation
+
+* point Slack links at floci.io/slack ([#554](https://github.com/floci-io/testcontainers-floci/issues/554)) ([6ee4736](https://github.com/floci-io/testcontainers-floci/commit/6ee47366e4227bf537c44c4f3dd07c1df7f3565a))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+    * io.floci:testcontainers-floci-bom bumped to 2.17.1
+
 ## [2.17.0](https://github.com/floci-io/testcontainers-floci/compare/v2.16.1...v2.17.0) (2026-10-18)
 
 
