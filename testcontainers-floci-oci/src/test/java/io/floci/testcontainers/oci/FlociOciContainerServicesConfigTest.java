@@ -121,6 +121,14 @@ class FlociOciContainerServicesConfigTest {
                 "FLOCI_OCI_SERVICES_ORGANIZATIONS_ENABLED", "false");
     }
 
+    @Test
+    void shouldWireGovernanceRulesConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withGovernanceRulesConfig(cfg -> cfg.enabled(false)),
+                c -> c.getGovernanceRulesConfig().isEnabled(), false,
+                "FLOCI_OCI_SERVICES_GOVERNANCERULES_ENABLED", "false");
+    }
+
     // --- Cross-cutting configs (config/) ----------------------------------------------------------
 
     @Test

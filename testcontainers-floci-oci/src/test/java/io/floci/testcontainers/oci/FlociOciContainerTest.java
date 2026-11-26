@@ -89,7 +89,8 @@ class FlociOciContainerTest {
                     container.getStreamingConfig(),
                     container.getFunctionsConfig(),
                     container.getOkeConfig(),
-                    container.getOrganizationsConfig()
+                    container.getOrganizationsConfig(),
+                    container.getGovernanceRulesConfig()
             )).noneMatch(AbstractServiceConfig::isEnabled);
         }
     }

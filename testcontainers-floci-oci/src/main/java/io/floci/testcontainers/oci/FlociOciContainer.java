@@ -110,6 +110,7 @@ public class FlociOciContainer extends AbstractFlociContainer<FlociOciContainer>
     private final ServiceConfigRef<FunctionsConfig> functionsConfig = registerServiceConfig(FunctionsConfig.builder().build());
     private final ServiceConfigRef<OkeConfig> okeConfig = registerServiceConfig(OkeConfig.builder().build());
     private final ServiceConfigRef<OrganizationsConfig> organizationsConfig = registerServiceConfig(OrganizationsConfig.builder().build());
+    private final ServiceConfigRef<GovernanceRulesConfig> governanceRulesConfig = registerServiceConfig(GovernanceRulesConfig.builder().build());
 
     /**
      * Creates a new Floci OCI container with the default image ({@code floci/floci-oci:latest}).
@@ -607,5 +608,29 @@ public class FlociOciContainer extends AbstractFlociContainer<FlociOciContainer>
      */
     public FlociOciContainer withOrganizationsConfig(Consumer<OrganizationsConfig.Builder> configurer) {
         return updateServiceConfig(organizationsConfig, configurer);
+    }
+
+    /**
+     * Returns the OCI Governance Rules configuration.
+     *
+     * @return the OCI Governance Rules configuration
+     */
+    public GovernanceRulesConfig getGovernanceRulesConfig() {
+        return governanceRulesConfig.get();
+    }
+
+    /**
+     * Configures OCI Governance Rules: rules a parent tenancy defines for the child tenancies of its organization.
+     *
+     * <pre>{@code
+     * new FlociOciContainer()
+     *     .withGovernanceRulesConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link GovernanceRulesConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociOciContainer withGovernanceRulesConfig(Consumer<GovernanceRulesConfig.Builder> configurer) {
+        return updateServiceConfig(governanceRulesConfig, configurer);
     }
 }
