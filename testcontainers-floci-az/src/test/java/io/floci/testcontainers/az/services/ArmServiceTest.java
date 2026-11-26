@@ -96,6 +96,23 @@ class ArmServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    void shouldAcceptAnyTokenWhenStrictTokensAreOverriddenOff() {
+        try (FlociAzContainer armFloci = new FlociAzContainer(IMAGE)
+                .disableAllServices()
+                .withArmConfig(c -> c.enabled(true))
+                .withParityConfig(c -> c.level(ParityConfig.Level.STRICT).strictTokens(false))) {
+            armFloci.start();
+
+            RestResponse response = rest(armFloci, "GET",
+                    "/subscriptions/55555555-0000-0000-0000-000000000000?api-version=2022-12-01", null);
+
+            // The opaque test token passes, while the rest of the strict level still applies
+            assertThat(response.status()).as(response.toString()).isEqualTo(404);
+            assertThat(response.json().path("error").path("code").asText()).isEqualTo("SubscriptionNotFound");
+        }
+    }
+
+    @Test
     void shouldApplyParityOverrideOnTopOfLevel() {
         try (FlociAzContainer armFloci = new FlociAzContainer(IMAGE)
                 .disableAllServices()

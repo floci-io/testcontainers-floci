@@ -110,7 +110,8 @@ public class EntraConfig extends AbstractServiceConfig<EntraConfig.Builder> {
     /**
      * Returns whether ARM requests whose Bearer token is missing, not signed by the Entra signing key,
      * expired, or issued for another audience are refused with {@code 401}. This is another way to turn
-     * on the strict-tokens parity check; an explicit {@code strictTokens} parity override wins.
+     * on the strict-tokens parity check; an explicit
+     * {@link io.floci.testcontainers.az.config.ParityConfig#getStrictTokens() strictTokens} override wins.
      *
      * @return {@code true} if tokens are validated
      */
@@ -280,7 +281,8 @@ public class EntraConfig extends AbstractServiceConfig<EntraConfig.Builder> {
          * Sets whether ARM requests whose Bearer token is missing, not signed by the Entra signing key,
          * expired, or issued for another audience are refused with {@code 401}. This is another way to
          * turn on the strict-tokens parity check (on from the {@code STRICT} parity level); an explicit
-         * {@code strictTokens} parity override wins. By default any bearer token is accepted.
+         * {@link io.floci.testcontainers.az.config.ParityConfig.Builder#strictTokens(Boolean) strictTokens}
+         * parity override wins. By default any bearer token is accepted.
          *
          * @param validateTokens {@code true} to validate tokens (default {@value DEFAULT_VALIDATE_TOKENS})
          * @return this builder
