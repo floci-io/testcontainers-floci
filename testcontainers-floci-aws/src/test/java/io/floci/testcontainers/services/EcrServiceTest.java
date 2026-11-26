@@ -96,7 +96,7 @@ class EcrServiceTest extends AbstractServiceTest {
 
     @Test
     @Order(5)
-    @Disabled
+    @Disabled("ListImages does not report the image pushed to Floci's ECR registry")
     void shouldListPushedImage() {
         List<ImageIdentifier> imageIds = ecr.listImages(b -> b.repositoryName(repoName)).imageIds();
 
@@ -135,7 +135,6 @@ class EcrServiceTest extends AbstractServiceTest {
     // the published host ports. Re-enable once that's fixed upstream.
     @Test
     @Order(7)
-    @Disabled("Floci's ECR backing registry is unreachable by container name on Docker's default bridge network")
     void shouldDeleteRepository() {
         ecr.deleteRepository(b -> b.repositoryName(repoName).force(true));
 
