@@ -103,6 +103,7 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
     private final ServiceConfigRef<GkeConfig> gkeConfig = registerServiceConfig(GkeConfig.builder().build());
     private final ServiceConfigRef<ServiceUsageConfig> serviceUsageConfig = registerServiceConfig(ServiceUsageConfig.builder().build());
     private final ServiceConfigRef<ResourceManagerConfig> resourceManagerConfig = registerServiceConfig(ResourceManagerConfig.builder().build());
+    private final ServiceConfigRef<CloudBillingConfig> cloudBillingConfig = registerServiceConfig(CloudBillingConfig.builder().build());
     private final ServiceConfigRef<FirebaseAuthConfig> firebaseAuthConfig = registerServiceConfig(FirebaseAuthConfig.builder().build());
     private final ServiceConfigRef<BigQueryConfig> bigQueryConfig = registerServiceConfig(BigQueryConfig.builder().build());
 
@@ -830,6 +831,30 @@ public class FlociGcpContainer extends AbstractFlociContainer<FlociGcpContainer>
      */
     public FlociGcpContainer withResourceManagerConfig(Consumer<ResourceManagerConfig.Builder> configurer) {
         return updateServiceConfig(resourceManagerConfig, configurer);
+    }
+
+    /**
+     * Returns the Cloud Billing configuration.
+     *
+     * @return the Cloud Billing configuration
+     */
+    public CloudBillingConfig getCloudBillingConfig() {
+        return cloudBillingConfig.get();
+    }
+
+    /**
+     * Configures Cloud Billing.
+     *
+     * <pre>{@code
+     * new FlociGcpContainer()
+     *     .withCloudBillingConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link CloudBillingConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociGcpContainer withCloudBillingConfig(Consumer<CloudBillingConfig.Builder> configurer) {
+        return updateServiceConfig(cloudBillingConfig, configurer);
     }
 
     /**

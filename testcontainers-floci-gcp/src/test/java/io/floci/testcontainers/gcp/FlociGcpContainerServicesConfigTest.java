@@ -227,6 +227,14 @@ class FlociGcpContainerServicesConfigTest {
     }
 
     @Test
+    void shouldWireCloudBillingConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withCloudBillingConfig(cfg -> cfg.enabled(false)),
+                c -> c.getCloudBillingConfig().isEnabled(), false,
+                "FLOCI_GCP_SERVICES_CLOUDBILLING_ENABLED", "false");
+    }
+
+    @Test
     void shouldWireFirebaseAuthConfigIntoContainer() {
         assertConfigWired(
                 c -> c.withFirebaseAuthConfig(cfg -> cfg.enabled(false)),
