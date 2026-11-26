@@ -28,6 +28,7 @@ public class TlsConfig {
     private final boolean enabled;
     private final String certPath;
     private final String keyPath;
+    private final String extraCaPath;
     private final boolean selfSigned;
     private final int awsHttpsPort;
 
@@ -35,6 +36,7 @@ public class TlsConfig {
         this.enabled = builder.enabled;
         this.certPath = builder.certPath;
         this.keyPath = builder.keyPath;
+        this.extraCaPath = builder.extraCaPath;
         this.selfSigned = builder.selfSigned;
         this.awsHttpsPort = builder.awsHttpsPort;
     }
@@ -86,6 +88,20 @@ public class TlsConfig {
     }
 
     /**
+     * Returns the path to a PEM file of extra CA certificates, or empty if not set.
+     *
+     * <p>PEM file of extra CA certificates that Floci's own outbound HTTPS clients trust, on top of the JVM's default
+     * roots (and Floci's CA when TLS is enabled). It applies whether or not TLS is enabled; containers Floci launches
+     * are not affected. The path is resolved inside the Floci container, e.g. a file copied in with
+     * {@code withCopyFileToContainer(...)}.
+     *
+     * @return the extra CA certificates path, or empty
+     */
+    public Optional<String> getExtraCaPath() {
+        return Optional.ofNullable(extraCaPath);
+    }
+
+    /**
      * Returns whether a server certificate should be auto-generated when no
      * {@code certPath}/{@code keyPath} is provided. The leaf certificate is issued by Floci's local
      * root CA; clients trust that CA (served at {@code GET /_floci/ca.pem}), not the leaf.
@@ -125,6 +141,11 @@ public class TlsConfig {
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_TLS_ENABLED", String.valueOf(enabled));
 
+        // Applies to Floci's outbound HTTPS clients whether or not TLS is enabled on the server
+        if (extraCaPath != null) {
+            container.withEnv("FLOCI_TLS_EXTRA_CA_PATH", extraCaPath);
+        }
+
         if (enabled) {
             container.withEnv("FLOCI_TLS_SELF_SIGNED", String.valueOf(selfSigned));
 
@@ -147,6 +168,7 @@ public class TlsConfig {
         private boolean enabled = DEFAULT_ENABLED;
         private String certPath;
         private String keyPath;
+        private String extraCaPath;
         private boolean selfSigned = DEFAULT_SELF_SIGNED;
         private int awsHttpsPort = DEFAULT_AWS_HTTPS_PORT;
 
@@ -158,6 +180,7 @@ public class TlsConfig {
             this.enabled = instance.enabled;
             this.certPath = instance.certPath;
             this.keyPath = instance.keyPath;
+            this.extraCaPath = instance.extraCaPath;
             this.selfSigned = instance.selfSigned;
             this.awsHttpsPort = instance.awsHttpsPort;
         }
@@ -195,6 +218,23 @@ public class TlsConfig {
          */
         public Builder keyPath(String keyPath) {
             this.keyPath = keyPath;
+            return this;
+        }
+
+        /**
+         * Sets the path to a PEM file of extra CA certificates.
+         *
+         * <p>PEM file of extra CA certificates that Floci's own outbound HTTPS clients trust, on top of the JVM's default
+         * roots (and Floci's CA when TLS is enabled). It applies whether or not TLS is enabled; containers Floci launches
+         * are not affected. The path is resolved inside the Floci container, e.g. a file copied in with
+         * {@code withCopyFileToContainer(...)}.
+         *
+         * @param extraCaPath the path to the PEM file of extra CA certificates inside the container, or {@code null}
+         *                    to unset
+         * @return this builder
+         */
+        public Builder extraCaPath(String extraCaPath) {
+            this.extraCaPath = extraCaPath;
             return this;
         }
 
