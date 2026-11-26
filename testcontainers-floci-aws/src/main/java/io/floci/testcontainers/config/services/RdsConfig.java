@@ -27,6 +27,7 @@ public class RdsConfig extends AbstractServiceConfig<RdsConfig.Builder> {
     private static final int DEFAULT_PROXY_MAX_CONNECTIONS = 100;
     private static final boolean DEFAULT_AURORA_AUTO_PAUSE_ENABLED = true;
     private static final int DEFAULT_AURORA_RESUME_DELAY_MILLIS = 0;
+    private static final String DEFAULT_EXPORT_STAGING_BUCKET = "floci-rds-export-staging";
 
     private final boolean mock;
     private final int proxyBasePort;
@@ -43,6 +44,7 @@ public class RdsConfig extends AbstractServiceConfig<RdsConfig.Builder> {
     private final int proxyMaxConnections;
     private final boolean auroraAutoPauseEnabled;
     private final int auroraResumeDelayMillis;
+    private final String exportStagingBucket;
 
     private RdsConfig(Builder builder) {
         super(builder);
@@ -61,6 +63,7 @@ public class RdsConfig extends AbstractServiceConfig<RdsConfig.Builder> {
         this.proxyMaxConnections = builder.proxyMaxConnections;
         this.auroraAutoPauseEnabled = builder.auroraAutoPauseEnabled;
         this.auroraResumeDelayMillis = builder.auroraResumeDelayMillis;
+        this.exportStagingBucket = builder.exportStagingBucket;
     }
 
     /**
@@ -244,6 +247,17 @@ public class RdsConfig extends AbstractServiceConfig<RdsConfig.Builder> {
         return auroraResumeDelayMillis;
     }
 
+    /**
+     * Returns the S3 bucket a DB snapshot export stages each table's rows and Parquet in, before the finished Parquet is written to the export's own bucket.
+     *
+     * <p>Floci creates it on first use if it doesn't exist.
+     *
+     * @return the S3 bucket a DB snapshot export stages each table's rows and Parquet in, before the finished Parquet is written to the export's own bucket
+     */
+    public String getExportStagingBucket() {
+        return exportStagingBucket;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_RDS_ENABLED", String.valueOf(isEnabled()));
@@ -279,6 +293,7 @@ public class RdsConfig extends AbstractServiceConfig<RdsConfig.Builder> {
             container.withEnv("FLOCI_SERVICES_RDS_PROXY_MAX_CONNECTIONS", String.valueOf(proxyMaxConnections));
             container.withEnv("FLOCI_SERVICES_RDS_AURORA_AUTO_PAUSE_ENABLED", String.valueOf(auroraAutoPauseEnabled));
             container.withEnv("FLOCI_SERVICES_RDS_AURORA_RESUME_DELAY_MILLIS", String.valueOf(auroraResumeDelayMillis));
+            container.withEnv("FLOCI_SERVICES_RDS_EXPORT_STAGING_BUCKET", exportStagingBucket);
         }
     }
 
@@ -317,6 +332,7 @@ public class RdsConfig extends AbstractServiceConfig<RdsConfig.Builder> {
         private int proxyMaxConnections = DEFAULT_PROXY_MAX_CONNECTIONS;
         private boolean auroraAutoPauseEnabled = DEFAULT_AURORA_AUTO_PAUSE_ENABLED;
         private int auroraResumeDelayMillis = DEFAULT_AURORA_RESUME_DELAY_MILLIS;
+        private String exportStagingBucket = DEFAULT_EXPORT_STAGING_BUCKET;
 
         private Builder() {
             // Allow instantiation only via RdsConfig.builder()
@@ -344,6 +360,7 @@ public class RdsConfig extends AbstractServiceConfig<RdsConfig.Builder> {
             this.proxyMaxConnections = instance.getProxyMaxConnections();
             this.auroraAutoPauseEnabled = instance.isAuroraAutoPauseEnabled();
             this.auroraResumeDelayMillis = instance.getAuroraResumeDelayMillis();
+            this.exportStagingBucket = instance.getExportStagingBucket();
         }
 
         /**
@@ -515,6 +532,19 @@ public class RdsConfig extends AbstractServiceConfig<RdsConfig.Builder> {
          */
         public Builder auroraResumeDelayMillis(int auroraResumeDelayMillis) {
             this.auroraResumeDelayMillis = auroraResumeDelayMillis;
+            return this;
+        }
+
+        /**
+         * Sets the S3 bucket a DB snapshot export stages each table's rows and Parquet in, before the finished Parquet is written to the export's own bucket.
+         *
+         * <p>Floci creates it on first use if it doesn't exist.
+         *
+         * @param exportStagingBucket the S3 bucket a DB snapshot export stages each table's rows and Parquet in, before the finished Parquet is written to the export's own bucket (default {@value DEFAULT_EXPORT_STAGING_BUCKET})
+         * @return this builder
+         */
+        public Builder exportStagingBucket(String exportStagingBucket) {
+            this.exportStagingBucket = exportStagingBucket;
             return this;
         }
 

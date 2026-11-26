@@ -29,6 +29,7 @@ class RdsConfigTest {
         assertThat(config.getProxyMaxConnections()).isEqualTo(100);
         assertThat(config.isAuroraAutoPauseEnabled()).isTrue();
         assertThat(config.getAuroraResumeDelayMillis()).isEqualTo(0);
+        assertThat(config.getExportStagingBucket()).isEqualTo("floci-rds-export-staging");
     }
 
     @Test
@@ -49,6 +50,7 @@ class RdsConfigTest {
                 .proxyMaxConnections(20)
                 .auroraAutoPauseEnabled(false)
                 .auroraResumeDelayMillis(15000)
+                .exportStagingBucket("my-staging-bucket")
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.isMock()).isTrue();
@@ -67,6 +69,7 @@ class RdsConfigTest {
         assertThat(config.getProxyMaxConnections()).isEqualTo(20);
         assertThat(config.isAuroraAutoPauseEnabled()).isFalse();
         assertThat(config.getAuroraResumeDelayMillis()).isEqualTo(15000);
+        assertThat(config.getExportStagingBucket()).isEqualTo("my-staging-bucket");
     }
 
     @Test
@@ -90,7 +93,8 @@ class RdsConfigTest {
                 .containsEntry("FLOCI_SERVICES_RDS_PROXY_BACKEND_CONNECT_TIMEOUT_MILLIS", "5000")
                 .containsEntry("FLOCI_SERVICES_RDS_PROXY_MAX_CONNECTIONS", "100")
                 .containsEntry("FLOCI_SERVICES_RDS_AURORA_AUTO_PAUSE_ENABLED", "true")
-                .containsEntry("FLOCI_SERVICES_RDS_AURORA_RESUME_DELAY_MILLIS", "0");
+                .containsEntry("FLOCI_SERVICES_RDS_AURORA_RESUME_DELAY_MILLIS", "0")
+                .containsEntry("FLOCI_SERVICES_RDS_EXPORT_STAGING_BUCKET", "floci-rds-export-staging");
     }
 
     @Test
@@ -112,6 +116,7 @@ class RdsConfigTest {
                 .proxyMaxConnections(20)
                 .auroraAutoPauseEnabled(false)
                 .auroraResumeDelayMillis(15000)
+                .exportStagingBucket("my-staging-bucket")
                 .build()
                 .applyEnvVarsToContainer(container);
 
@@ -131,7 +136,8 @@ class RdsConfigTest {
                 .containsEntry("FLOCI_SERVICES_RDS_PROXY_BACKEND_CONNECT_TIMEOUT_MILLIS", "1000")
                 .containsEntry("FLOCI_SERVICES_RDS_PROXY_MAX_CONNECTIONS", "20")
                 .containsEntry("FLOCI_SERVICES_RDS_AURORA_AUTO_PAUSE_ENABLED", "false")
-                .containsEntry("FLOCI_SERVICES_RDS_AURORA_RESUME_DELAY_MILLIS", "15000");
+                .containsEntry("FLOCI_SERVICES_RDS_AURORA_RESUME_DELAY_MILLIS", "15000")
+                .containsEntry("FLOCI_SERVICES_RDS_EXPORT_STAGING_BUCKET", "my-staging-bucket");
     }
 
     @Test
@@ -147,7 +153,8 @@ class RdsConfigTest {
                 .doesNotContainKey("FLOCI_SERVICES_RDS_PROXY_BACKEND_CONNECT_TIMEOUT_MILLIS")
                 .doesNotContainKey("FLOCI_SERVICES_RDS_PROXY_MAX_CONNECTIONS")
                 .doesNotContainKey("FLOCI_SERVICES_RDS_AURORA_AUTO_PAUSE_ENABLED")
-                .doesNotContainKey("FLOCI_SERVICES_RDS_AURORA_RESUME_DELAY_MILLIS");
+                .doesNotContainKey("FLOCI_SERVICES_RDS_AURORA_RESUME_DELAY_MILLIS")
+                .doesNotContainKey("FLOCI_SERVICES_RDS_EXPORT_STAGING_BUCKET");
     }
 
     @Test
@@ -198,6 +205,7 @@ class RdsConfigTest {
                 .proxyMaxConnections(20)
                 .auroraAutoPauseEnabled(false)
                 .auroraResumeDelayMillis(15000)
+                .exportStagingBucket("my-staging-bucket")
                 .build();
         RdsConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
@@ -216,6 +224,7 @@ class RdsConfigTest {
         assertThat(copy.getProxyMaxConnections()).isEqualTo(20);
         assertThat(copy.isAuroraAutoPauseEnabled()).isFalse();
         assertThat(copy.getAuroraResumeDelayMillis()).isEqualTo(15000);
+        assertThat(copy.getExportStagingBucket()).isEqualTo("my-staging-bucket");
     }
 
     @Test
