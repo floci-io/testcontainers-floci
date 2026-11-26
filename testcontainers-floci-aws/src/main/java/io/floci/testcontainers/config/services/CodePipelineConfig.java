@@ -14,12 +14,15 @@ import org.testcontainers.containers.Container;
 public class CodePipelineConfig extends AbstractServiceConfig<CodePipelineConfig.Builder> {
 
     private static final long DEFAULT_SOURCE_POLL_INTERVAL_MS = 500L;
+    private static final long DEFAULT_WORKER_POLL_INTERVAL_MS = 100L;
 
     private final long sourcePollIntervalMs;
+    private final long workerPollIntervalMs;
 
     private CodePipelineConfig(Builder builder) {
         super(builder);
         this.sourcePollIntervalMs = builder.sourcePollIntervalMs;
+        this.workerPollIntervalMs = builder.workerPollIntervalMs;
     }
 
     /**
@@ -51,12 +54,22 @@ public class CodePipelineConfig extends AbstractServiceConfig<CodePipelineConfig
         return sourcePollIntervalMs;
     }
 
+    /**
+     * Returns how often, in milliseconds, pipeline execution workers check for progress.
+     *
+     * @return how often, in milliseconds, pipeline execution workers check for progress
+     */
+    public long getWorkerPollIntervalMs() {
+        return workerPollIntervalMs;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_CODEPIPELINE_ENABLED", String.valueOf(isEnabled()));
 
         if (isEnabled()) {
             container.withEnv("FLOCI_SERVICES_CODEPIPELINE_SOURCE_POLL_INTERVAL_MS", String.valueOf(sourcePollIntervalMs));
+            container.withEnv("FLOCI_SERVICES_CODEPIPELINE_WORKER_POLL_INTERVAL_MS", String.valueOf(workerPollIntervalMs));
         }
     }
 
@@ -66,6 +79,7 @@ public class CodePipelineConfig extends AbstractServiceConfig<CodePipelineConfig
     public static class Builder extends AbstractServiceConfigBuilder<Builder, CodePipelineConfig> {
 
         private long sourcePollIntervalMs = DEFAULT_SOURCE_POLL_INTERVAL_MS;
+        private long workerPollIntervalMs = DEFAULT_WORKER_POLL_INTERVAL_MS;
 
         private Builder() {
             // Allow instantiation only via CodePipelineConfig.builder()
@@ -79,6 +93,7 @@ public class CodePipelineConfig extends AbstractServiceConfig<CodePipelineConfig
         private Builder(CodePipelineConfig instance) {
             super(instance);
             this.sourcePollIntervalMs = instance.getSourcePollIntervalMs();
+            this.workerPollIntervalMs = instance.getWorkerPollIntervalMs();
         }
 
         /**
@@ -89,6 +104,17 @@ public class CodePipelineConfig extends AbstractServiceConfig<CodePipelineConfig
          */
         public Builder sourcePollIntervalMs(long sourcePollIntervalMs) {
             this.sourcePollIntervalMs = sourcePollIntervalMs;
+            return this;
+        }
+
+        /**
+         * Sets how often, in milliseconds, pipeline execution workers check for progress.
+         *
+         * @param workerPollIntervalMs how often, in milliseconds, pipeline execution workers check for progress (default {@value DEFAULT_WORKER_POLL_INTERVAL_MS})
+         * @return this builder
+         */
+        public Builder workerPollIntervalMs(long workerPollIntervalMs) {
+            this.workerPollIntervalMs = workerPollIntervalMs;
             return this;
         }
 
