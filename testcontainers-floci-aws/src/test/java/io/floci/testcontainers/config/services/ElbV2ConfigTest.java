@@ -13,6 +13,8 @@ class ElbV2ConfigTest {
         ElbV2Config config = ElbV2Config.builder().build();
         assertThat(config.isEnabled()).isTrue();
         assertThat(config.isMock()).isFalse();
+        assertThat(config.isBackendKeepAlive()).isTrue();
+        assertThat(config.getBackendKeepAliveTimeoutSeconds()).isEqualTo(60);
     }
 
     @Test
@@ -20,9 +22,13 @@ class ElbV2ConfigTest {
         ElbV2Config config = ElbV2Config.builder()
                 .enabled(false)
                 .mock(true)
+                .backendKeepAlive(false)
+                .backendKeepAliveTimeoutSeconds(5)
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.isMock()).isTrue();
+        assertThat(config.isBackendKeepAlive()).isFalse();
+        assertThat(config.getBackendKeepAliveTimeoutSeconds()).isEqualTo(5);
     }
 
     @Test
@@ -32,7 +38,9 @@ class ElbV2ConfigTest {
 
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_SERVICES_ELBV2_ENABLED", "true")
-                .containsEntry("FLOCI_SERVICES_ELBV2_MOCK", "false");
+                .containsEntry("FLOCI_SERVICES_ELBV2_MOCK", "false")
+                .containsEntry("FLOCI_SERVICES_ELBV2_BACKEND_KEEP_ALIVE", "true")
+                .containsEntry("FLOCI_SERVICES_ELBV2_BACKEND_KEEP_ALIVE_TIMEOUT_SECONDS", "60");
     }
 
     @Test
@@ -41,12 +49,16 @@ class ElbV2ConfigTest {
         ElbV2Config.builder()
                 .enabled(true)
                 .mock(true)
+                .backendKeepAlive(false)
+                .backendKeepAliveTimeoutSeconds(5)
                 .build()
                 .applyEnvVarsToContainer(container);
 
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_SERVICES_ELBV2_ENABLED", "true")
-                .containsEntry("FLOCI_SERVICES_ELBV2_MOCK", "true");
+                .containsEntry("FLOCI_SERVICES_ELBV2_MOCK", "true")
+                .containsEntry("FLOCI_SERVICES_ELBV2_BACKEND_KEEP_ALIVE", "false")
+                .containsEntry("FLOCI_SERVICES_ELBV2_BACKEND_KEEP_ALIVE_TIMEOUT_SECONDS", "5");
     }
 
     @Test
@@ -54,7 +66,9 @@ class ElbV2ConfigTest {
         GenericContainer<?> container = genericContainer();
         ElbV2Config.builder().enabled(false).build().applyEnvVarsToContainer(container);
 
-        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_ELBV2_ENABLED", "false");
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_SERVICES_ELBV2_ENABLED", "false")
+                .doesNotContainKey("FLOCI_SERVICES_ELBV2_BACKEND_KEEP_ALIVE")
+                .doesNotContainKey("FLOCI_SERVICES_ELBV2_BACKEND_KEEP_ALIVE_TIMEOUT_SECONDS");
     }
 
     @Test
@@ -87,11 +101,15 @@ class ElbV2ConfigTest {
                 .enabled(false)
                 .mock(true)
                 .listenerPort(8080)
+                .backendKeepAlive(false)
+                .backendKeepAliveTimeoutSeconds(5)
                 .build();
         ElbV2Config copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
         assertThat(copy.isMock()).isTrue();
         assertThat(copy.getListenerPorts()).contains(8080);
+        assertThat(copy.isBackendKeepAlive()).isFalse();
+        assertThat(copy.getBackendKeepAliveTimeoutSeconds()).isEqualTo(5);
     }
 
 }

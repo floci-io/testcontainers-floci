@@ -18,14 +18,20 @@ import java.util.List;
 public class ElbV2Config extends AbstractServiceConfig<ElbV2Config.Builder> {
 
     private static final boolean DEFAULT_MOCK = false;
+    private static final boolean DEFAULT_BACKEND_KEEP_ALIVE = true;
+    private static final int DEFAULT_BACKEND_KEEP_ALIVE_TIMEOUT_SECONDS = 60;
 
     private final boolean mock;
     private final List<Integer> listenerPorts;
+    private final boolean backendKeepAlive;
+    private final int backendKeepAliveTimeoutSeconds;
 
     private ElbV2Config(Builder builder) {
         super(builder);
         this.mock = builder.mock;
         this.listenerPorts = List.copyOf(builder.listenerPorts);
+        this.backendKeepAlive = builder.backendKeepAlive;
+        this.backendKeepAliveTimeoutSeconds = builder.backendKeepAliveTimeoutSeconds;
     }
 
     /**
@@ -75,12 +81,34 @@ public class ElbV2Config extends AbstractServiceConfig<ElbV2Config.Builder> {
         }
     }
 
+    /**
+     * Returns whether backend HTTP/1.x connections are reused between ordinary forwarded requests.
+     *
+     * @return whether backend HTTP/1.x connections are reused between ordinary forwarded requests
+     */
+    public boolean isBackendKeepAlive() {
+        return backendKeepAlive;
+    }
+
+    /**
+     * Returns the default idle timeout, in seconds, of pooled backend connections.
+     *
+     * <p>{@code 0} disables expiry; a target's {@code Keep-Alive} header may override it.
+     *
+     * @return the default idle timeout, in seconds, of pooled backend connections
+     */
+    public int getBackendKeepAliveTimeoutSeconds() {
+        return backendKeepAliveTimeoutSeconds;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_ELBV2_ENABLED", String.valueOf(isEnabled()));
 
         if (isEnabled()) {
             container.withEnv("FLOCI_SERVICES_ELBV2_MOCK", String.valueOf(mock));
+            container.withEnv("FLOCI_SERVICES_ELBV2_BACKEND_KEEP_ALIVE", String.valueOf(backendKeepAlive));
+            container.withEnv("FLOCI_SERVICES_ELBV2_BACKEND_KEEP_ALIVE_TIMEOUT_SECONDS", String.valueOf(backendKeepAliveTimeoutSeconds));
         }
     }
 
@@ -91,6 +119,8 @@ public class ElbV2Config extends AbstractServiceConfig<ElbV2Config.Builder> {
 
         private boolean mock = DEFAULT_MOCK;
         private final List<Integer> listenerPorts = new ArrayList<>();
+        private boolean backendKeepAlive = DEFAULT_BACKEND_KEEP_ALIVE;
+        private int backendKeepAliveTimeoutSeconds = DEFAULT_BACKEND_KEEP_ALIVE_TIMEOUT_SECONDS;
 
         private Builder() {
             // Allow instantiation only via ElbV2Config.builder()
@@ -105,6 +135,8 @@ public class ElbV2Config extends AbstractServiceConfig<ElbV2Config.Builder> {
             super(instance);
             this.mock = instance.isMock();
             this.listenerPorts.addAll(instance.getListenerPorts());
+            this.backendKeepAlive = instance.isBackendKeepAlive();
+            this.backendKeepAliveTimeoutSeconds = instance.getBackendKeepAliveTimeoutSeconds();
         }
 
         /**
@@ -127,6 +159,30 @@ public class ElbV2Config extends AbstractServiceConfig<ElbV2Config.Builder> {
          */
         public Builder listenerPort(int port) {
             this.listenerPorts.add(port);
+            return this;
+        }
+
+        /**
+         * Sets whether backend HTTP/1.x connections are reused between ordinary forwarded requests.
+         *
+         * @param backendKeepAlive whether backend HTTP/1.x connections are reused between ordinary forwarded requests (default {@value DEFAULT_BACKEND_KEEP_ALIVE})
+         * @return this builder
+         */
+        public Builder backendKeepAlive(boolean backendKeepAlive) {
+            this.backendKeepAlive = backendKeepAlive;
+            return this;
+        }
+
+        /**
+         * Sets the default idle timeout, in seconds, of pooled backend connections.
+         *
+         * <p>{@code 0} disables expiry; a target's {@code Keep-Alive} header may override it.
+         *
+         * @param backendKeepAliveTimeoutSeconds the default idle timeout, in seconds, of pooled backend connections (default {@value DEFAULT_BACKEND_KEEP_ALIVE_TIMEOUT_SECONDS})
+         * @return this builder
+         */
+        public Builder backendKeepAliveTimeoutSeconds(int backendKeepAliveTimeoutSeconds) {
+            this.backendKeepAliveTimeoutSeconds = backendKeepAliveTimeoutSeconds;
             return this;
         }
 
