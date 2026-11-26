@@ -16,7 +16,7 @@ class MwaaConfigTest {
         assertThat(config.isEnabled()).isTrue();
         assertThat(config.isMock()).isFalse();
         assertThat(config.getDefaultPostgresImage()).isEqualTo("postgres:16-alpine");
-        assertThat(config.getSupportedVersions()).containsExactly("2.10.5", "2.9.3", "2.8.4");
+        assertThat(config.getSupportedVersions()).containsExactly("2.11.2", "2.11.0", "2.10.5", "2.10.3", "2.10.1", "2.9.3", "2.9.2", "2.8.4", "2.8.1", "2.7.2");
         assertThat(config.getDefaultVersion()).isEqualTo("2.10.5");
         assertThat(config.getProxyBasePort()).isEqualTo(8700);
         assertThat(config.getProxyMaxPort()).isEqualTo(8709);
@@ -64,7 +64,7 @@ class MwaaConfigTest {
                 .containsEntry("FLOCI_SERVICES_MWAA_ENABLED", "true")
                 .containsEntry("FLOCI_SERVICES_MWAA_MOCK", "false")
                 .containsEntry("FLOCI_SERVICES_MWAA_DEFAULT_POSTGRES_IMAGE", "postgres:16-alpine")
-                .containsEntry("FLOCI_SERVICES_MWAA_SUPPORTED_VERSIONS", "2.10.5,2.9.3,2.8.4")
+                .containsEntry("FLOCI_SERVICES_MWAA_SUPPORTED_VERSIONS", "2.11.2,2.11.0,2.10.5,2.10.3,2.10.1,2.9.3,2.9.2,2.8.4,2.8.1,2.7.2")
                 .containsEntry("FLOCI_SERVICES_MWAA_DEFAULT_VERSION", "2.10.5")
                 .containsEntry("FLOCI_SERVICES_MWAA_PROXY_BASE_PORT", "8700")
                 .containsEntry("FLOCI_SERVICES_MWAA_PROXY_MAX_PORT", "8709")

@@ -21,7 +21,8 @@ public class MwaaConfig extends AbstractServiceConfig<MwaaConfig.Builder> {
 
     private static final boolean DEFAULT_MOCK = false;
     private static final String DEFAULT_POSTGRES_IMAGE = "postgres:16-alpine";
-    private static final List<String> DEFAULT_SUPPORTED_VERSIONS = List.of("2.10.5", "2.9.3", "2.8.4");
+    private static final List<String> DEFAULT_SUPPORTED_VERSIONS = List.of("2.11.2", "2.11.0", "2.10.5", "2.10.3", "2.10.1",
+            "2.9.3", "2.9.2", "2.8.4", "2.8.1", "2.7.2");
     private static final String DEFAULT_VERSION = "2.10.5";
     private static final int DEFAULT_PROXY_BASE_PORT = 8700;
     private static final int DEFAULT_PROXY_PORTS_COUNT = 10;
@@ -283,7 +284,7 @@ public class MwaaConfig extends AbstractServiceConfig<MwaaConfig.Builder> {
          * Amazon MWAA runs for that Airflow version ({@code python3.11} through 2.10.x,
          * {@code python3.12} from 2.11.0 on).
          *
-         * @param supportedVersions the list of supported Airflow versions (default {@code ["2.10.5", "2.9.3", "2.8.4"]})
+         * @param supportedVersions the list of supported Airflow versions (default: every Airflow 2.x version Amazon MWAA offers, plus 2.10.5, 2.9.3 and 2.8.4, i.e. {@code ["2.11.2", "2.11.0", "2.10.5", "2.10.3", "2.10.1", "2.9.3", "2.9.2", "2.8.4", "2.8.1", "2.7.2"]})
          * @return this builder
          */
         public Builder supportedVersions(List<String> supportedVersions) {
