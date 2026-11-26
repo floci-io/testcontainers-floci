@@ -13,6 +13,7 @@ class CognitoConfigTest {
         CognitoConfig config = CognitoConfig.builder().build();
         assertThat(config.isEnabled()).isTrue();
         assertThat(config.isEnforceTokenValidityLimits()).isTrue();
+        assertThat(config.getGoogleIssuer()).isEqualTo("https://accounts.google.com");
     }
 
     @Test
@@ -20,9 +21,11 @@ class CognitoConfigTest {
         CognitoConfig config = CognitoConfig.builder()
                 .enabled(false)
                 .enforceTokenValidityLimits(false)
+                .googleIssuer("http://oidc.local:8080")
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.isEnforceTokenValidityLimits()).isFalse();
+        assertThat(config.getGoogleIssuer()).isEqualTo("http://oidc.local:8080");
     }
 
     @Test
@@ -32,7 +35,8 @@ class CognitoConfigTest {
 
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_SERVICES_COGNITO_ENABLED", "true")
-                .containsEntry("FLOCI_SERVICES_COGNITO_ENFORCE_TOKEN_VALIDITY_LIMITS", "true");
+                .containsEntry("FLOCI_SERVICES_COGNITO_ENFORCE_TOKEN_VALIDITY_LIMITS", "true")
+                .containsEntry("FLOCI_SERVICES_COGNITO_GOOGLE_ISSUER", "https://accounts.google.com");
     }
 
     @Test
@@ -40,11 +44,13 @@ class CognitoConfigTest {
         GenericContainer<?> container = genericContainer();
         CognitoConfig.builder()
                 .enforceTokenValidityLimits(false)
+                .googleIssuer("http://oidc.local:8080")
                 .build()
                 .applyEnvVarsToContainer(container);
 
         assertThat(container.getEnvMap())
-                .containsEntry("FLOCI_SERVICES_COGNITO_ENFORCE_TOKEN_VALIDITY_LIMITS", "false");
+                .containsEntry("FLOCI_SERVICES_COGNITO_ENFORCE_TOKEN_VALIDITY_LIMITS", "false")
+                .containsEntry("FLOCI_SERVICES_COGNITO_GOOGLE_ISSUER", "http://oidc.local:8080");
     }
 
     @Test
@@ -54,7 +60,8 @@ class CognitoConfigTest {
 
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_SERVICES_COGNITO_ENABLED", "false")
-                .doesNotContainKey("FLOCI_SERVICES_COGNITO_ENFORCE_TOKEN_VALIDITY_LIMITS");
+                .doesNotContainKey("FLOCI_SERVICES_COGNITO_ENFORCE_TOKEN_VALIDITY_LIMITS")
+                .doesNotContainKey("FLOCI_SERVICES_COGNITO_GOOGLE_ISSUER");
     }
 
     @Test
@@ -62,10 +69,12 @@ class CognitoConfigTest {
         CognitoConfig config = CognitoConfig.builder()
                 .enabled(false)
                 .enforceTokenValidityLimits(false)
+                .googleIssuer("http://oidc.local:8080")
                 .build();
         CognitoConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
         assertThat(copy.isEnforceTokenValidityLimits()).isFalse();
+        assertThat(copy.getGoogleIssuer()).isEqualTo("http://oidc.local:8080");
     }
 
 }
