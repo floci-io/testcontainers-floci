@@ -1094,6 +1094,14 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_SERVICES_EVENTBRIDGEV2_ENABLED", "false");
     }
 
+    @Test
+    void shouldWirePaymentCryptographyConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withPaymentCryptographyConfig(cfg -> cfg.enabled(false)),
+                c -> c.getPaymentCryptographyConfig().isEnabled(), false,
+                "FLOCI_SERVICES_PAYMENTCRYPTOGRAPHY_ENABLED", "false");
+    }
+
     // --- Cross-cutting configs (config/) --------------------------------------------------------
 
     @Test

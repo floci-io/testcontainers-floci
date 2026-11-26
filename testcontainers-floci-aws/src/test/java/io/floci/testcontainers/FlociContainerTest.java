@@ -391,7 +391,8 @@ class FlociContainerTest {
                     container.getDmsConfig(),
                     container.getElbConfig(),
                     container.getDsqlConfig(),
-                    container.getEventBridgeV2Config()
+                    container.getEventBridgeV2Config(),
+                    container.getPaymentCryptographyConfig()
             )).noneMatch(AbstractServiceConfig::isEnabled);
         }
     }

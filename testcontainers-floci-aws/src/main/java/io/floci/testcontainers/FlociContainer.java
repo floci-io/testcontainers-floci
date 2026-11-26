@@ -229,6 +229,7 @@ public class FlociContainer extends AbstractFlociContainer<FlociContainer> {
     private final ServiceConfigRef<ElbConfig> elbConfig = registerServiceConfig(ElbConfig.builder().build());
     private final ServiceConfigRef<DsqlConfig> dsqlConfig = registerServiceConfig(DsqlConfig.builder().build());
     private final ServiceConfigRef<EventBridgeV2Config> eventBridgeV2Config = registerServiceConfig(EventBridgeV2Config.builder().build());
+    private final ServiceConfigRef<PaymentCryptographyConfig> paymentCryptographyConfig = registerServiceConfig(PaymentCryptographyConfig.builder().build());
 
     /**
      * Creates a new Floci container with the default image ({@code floci/floci:latest}).
@@ -3889,6 +3890,30 @@ public class FlociContainer extends AbstractFlociContainer<FlociContainer> {
      */
     public FlociContainer withEventBridgeV2Config(Consumer<EventBridgeV2Config.Builder> configurer) {
         return updateServiceConfig(eventBridgeV2Config, configurer);
+    }
+
+    /**
+     * Payment Cryptography-specific settings.
+     *
+     * @return the Payment Cryptography configuration
+     */
+    public PaymentCryptographyConfig getPaymentCryptographyConfig() {
+        return paymentCryptographyConfig.get();
+    }
+
+    /**
+     * Configures Payment Cryptography-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withPaymentCryptographyConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link PaymentCryptographyConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withPaymentCryptographyConfig(Consumer<PaymentCryptographyConfig.Builder> configurer) {
+        return updateServiceConfig(paymentCryptographyConfig, configurer);
     }
 
     private void preparePersistentStorageForCleanup() {
