@@ -129,6 +129,14 @@ class FlociOciContainerServicesConfigTest {
                 "FLOCI_OCI_SERVICES_GOVERNANCERULES_ENABLED", "false");
     }
 
+    @Test
+    void shouldWirePsqlConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withPsqlConfig(cfg -> cfg.mock(true)),
+                c -> c.getPsqlConfig().isMock(), true,
+                "FLOCI_OCI_SERVICES_PSQL_MOCK", "true");
+    }
+
     // --- Cross-cutting configs (config/) ----------------------------------------------------------
 
     @Test

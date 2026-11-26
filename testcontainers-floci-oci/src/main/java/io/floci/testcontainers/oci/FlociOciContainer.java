@@ -32,7 +32,7 @@ import java.util.regex.Pattern;
  * Floci OCI parses, but never verifies, request signatures, so an authentication provider with any
  * locally generated RSA key works.
  *
- * <p>Container-based services (Functions and OKE) require access to the Docker daemon. This module automatically
+ * <p>Container-based services (Functions, OKE and Database with PostgreSQL) require access to the Docker daemon. This module automatically
  * mounts the Docker socket only when at least one currently enabled service actually needs it. Use
  * {@link #withDockerSocket(boolean)} to override this auto-detection.
  *
@@ -111,6 +111,7 @@ public class FlociOciContainer extends AbstractFlociContainer<FlociOciContainer>
     private final ServiceConfigRef<OkeConfig> okeConfig = registerServiceConfig(OkeConfig.builder().build());
     private final ServiceConfigRef<OrganizationsConfig> organizationsConfig = registerServiceConfig(OrganizationsConfig.builder().build());
     private final ServiceConfigRef<GovernanceRulesConfig> governanceRulesConfig = registerServiceConfig(GovernanceRulesConfig.builder().build());
+    private final ServiceConfigRef<PsqlConfig> psqlConfig = registerServiceConfig(PsqlConfig.builder().build());
 
     /**
      * Creates a new Floci OCI container with the default image ({@code floci/floci-oci:latest}).
@@ -632,5 +633,29 @@ public class FlociOciContainer extends AbstractFlociContainer<FlociOciContainer>
      */
     public FlociOciContainer withGovernanceRulesConfig(Consumer<GovernanceRulesConfig.Builder> configurer) {
         return updateServiceConfig(governanceRulesConfig, configurer);
+    }
+
+    /**
+     * Returns the OCI Database with PostgreSQL configuration.
+     *
+     * @return the OCI Database with PostgreSQL configuration
+     */
+    public PsqlConfig getPsqlConfig() {
+        return psqlConfig.get();
+    }
+
+    /**
+     * Configures OCI Database with PostgreSQL, which runs each DB system in a sibling PostgreSQL container and therefore requires the Docker socket unless mocked.
+     *
+     * <pre>{@code
+     * new FlociOciContainer()
+     *     .withPsqlConfig(c -> c.mock(true));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link PsqlConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociOciContainer withPsqlConfig(Consumer<PsqlConfig.Builder> configurer) {
+        return updateServiceConfig(psqlConfig, configurer);
     }
 }

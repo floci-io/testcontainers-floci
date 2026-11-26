@@ -90,7 +90,8 @@ class FlociOciContainerTest {
                     container.getFunctionsConfig(),
                     container.getOkeConfig(),
                     container.getOrganizationsConfig(),
-                    container.getGovernanceRulesConfig()
+                    container.getGovernanceRulesConfig(),
+                    container.getPsqlConfig()
             )).noneMatch(AbstractServiceConfig::isEnabled);
         }
     }
