@@ -1126,6 +1126,14 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_SERVICES_XRAY_ENABLED", "false");
     }
 
+    @Test
+    void shouldWireEc2InstanceConnectConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withEc2InstanceConnectConfig(cfg -> cfg.enabled(false)),
+                c -> c.getEc2InstanceConnectConfig().isEnabled(), false,
+                "FLOCI_SERVICES_EC2INSTANCECONNECT_ENABLED", "false");
+    }
+
     // --- Cross-cutting configs (config/) --------------------------------------------------------
 
     @Test

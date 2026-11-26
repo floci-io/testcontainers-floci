@@ -395,7 +395,8 @@ class FlociContainerTest {
                     container.getPaymentCryptographyConfig(),
                     container.getResourceGroupsConfig(),
                     container.getSignerConfig(),
-                    container.getXrayConfig()
+                    container.getXrayConfig(),
+                    container.getEc2InstanceConnectConfig()
             )).noneMatch(AbstractServiceConfig::isEnabled);
         }
     }

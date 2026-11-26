@@ -233,6 +233,7 @@ public class FlociContainer extends AbstractFlociContainer<FlociContainer> {
     private final ServiceConfigRef<ResourceGroupsConfig> resourceGroupsConfig = registerServiceConfig(ResourceGroupsConfig.builder().build());
     private final ServiceConfigRef<SignerConfig> signerConfig = registerServiceConfig(SignerConfig.builder().build());
     private final ServiceConfigRef<XrayConfig> xrayConfig = registerServiceConfig(XrayConfig.builder().build());
+    private final ServiceConfigRef<Ec2InstanceConnectConfig> ec2InstanceConnectConfig = registerServiceConfig(Ec2InstanceConnectConfig.builder().build());
 
     /**
      * Creates a new Floci container with the default image ({@code floci/floci:latest}).
@@ -3989,6 +3990,30 @@ public class FlociContainer extends AbstractFlociContainer<FlociContainer> {
      */
     public FlociContainer withXrayConfig(Consumer<XrayConfig.Builder> configurer) {
         return updateServiceConfig(xrayConfig, configurer);
+    }
+
+    /**
+     * EC2 Instance Connect-specific settings.
+     *
+     * @return the EC2 Instance Connect configuration
+     */
+    public Ec2InstanceConnectConfig getEc2InstanceConnectConfig() {
+        return ec2InstanceConnectConfig.get();
+    }
+
+    /**
+     * Configures EC2 Instance Connect-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withEc2InstanceConnectConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link Ec2InstanceConnectConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withEc2InstanceConnectConfig(Consumer<Ec2InstanceConnectConfig.Builder> configurer) {
+        return updateServiceConfig(ec2InstanceConnectConfig, configurer);
     }
 
     private void preparePersistentStorageForCleanup() {
