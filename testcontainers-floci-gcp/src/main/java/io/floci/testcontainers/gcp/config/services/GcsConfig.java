@@ -15,6 +15,7 @@ import org.testcontainers.containers.Container;
  * GcsConfig config = GcsConfig.builder()
  *     .uploadSessionIdleTimeoutSeconds(3600)
  *     .uploadSessionSweepIntervalSeconds(60)
+ *     .softDeleteSweepIntervalSeconds(60)
  *     .build();
  * }</pre>
  */
@@ -22,14 +23,17 @@ public class GcsConfig extends AbstractServiceConfig<GcsConfig.Builder> {
 
     private static final long DEFAULT_UPLOAD_SESSION_IDLE_TIMEOUT_SECONDS = 604800;
     private static final long DEFAULT_UPLOAD_SESSION_SWEEP_INTERVAL_SECONDS = 3600;
+    private static final long DEFAULT_SOFT_DELETE_SWEEP_INTERVAL_SECONDS = 3600;
 
     private final long uploadSessionIdleTimeoutSeconds;
     private final long uploadSessionSweepIntervalSeconds;
+    private final long softDeleteSweepIntervalSeconds;
 
     private GcsConfig(Builder builder) {
         super(builder);
         this.uploadSessionIdleTimeoutSeconds = builder.uploadSessionIdleTimeoutSeconds;
         this.uploadSessionSweepIntervalSeconds = builder.uploadSessionSweepIntervalSeconds;
+        this.softDeleteSweepIntervalSeconds = builder.softDeleteSweepIntervalSeconds;
     }
 
     /**
@@ -72,6 +76,16 @@ public class GcsConfig extends AbstractServiceConfig<GcsConfig.Builder> {
         return uploadSessionSweepIntervalSeconds;
     }
 
+    /**
+     * Returns the interval in seconds between sweeps that permanently delete soft-deleted objects past their
+     * {@code hardDeleteTime}. Zero or less disables the sweeper.
+     *
+     * @return the soft delete sweep interval in seconds
+     */
+    public long getSoftDeleteSweepIntervalSeconds() {
+        return softDeleteSweepIntervalSeconds;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_GCP_SERVICES_GCS_ENABLED", String.valueOf(isEnabled()));
@@ -81,6 +95,8 @@ public class GcsConfig extends AbstractServiceConfig<GcsConfig.Builder> {
                     String.valueOf(uploadSessionIdleTimeoutSeconds));
             container.withEnv("FLOCI_GCP_SERVICES_GCS_UPLOAD_SESSION_SWEEP_INTERVAL_SECONDS",
                     String.valueOf(uploadSessionSweepIntervalSeconds));
+            container.withEnv("FLOCI_GCP_SERVICES_GCS_SOFT_DELETE_SWEEP_INTERVAL_SECONDS",
+                    String.valueOf(softDeleteSweepIntervalSeconds));
         }
     }
 
@@ -91,6 +107,7 @@ public class GcsConfig extends AbstractServiceConfig<GcsConfig.Builder> {
 
         private long uploadSessionIdleTimeoutSeconds = DEFAULT_UPLOAD_SESSION_IDLE_TIMEOUT_SECONDS;
         private long uploadSessionSweepIntervalSeconds = DEFAULT_UPLOAD_SESSION_SWEEP_INTERVAL_SECONDS;
+        private long softDeleteSweepIntervalSeconds = DEFAULT_SOFT_DELETE_SWEEP_INTERVAL_SECONDS;
 
         private Builder() {
             // Allow instantiation only via GcsConfig.builder()
@@ -105,6 +122,7 @@ public class GcsConfig extends AbstractServiceConfig<GcsConfig.Builder> {
             super(instance);
             this.uploadSessionIdleTimeoutSeconds = instance.uploadSessionIdleTimeoutSeconds;
             this.uploadSessionSweepIntervalSeconds = instance.uploadSessionSweepIntervalSeconds;
+            this.softDeleteSweepIntervalSeconds = instance.softDeleteSweepIntervalSeconds;
         }
 
         /**
@@ -129,6 +147,19 @@ public class GcsConfig extends AbstractServiceConfig<GcsConfig.Builder> {
          */
         public Builder uploadSessionSweepIntervalSeconds(long uploadSessionSweepIntervalSeconds) {
             this.uploadSessionSweepIntervalSeconds = uploadSessionSweepIntervalSeconds;
+            return this;
+        }
+
+        /**
+         * Sets the interval in seconds between sweeps that permanently delete soft-deleted objects past their
+         * {@code hardDeleteTime}. Zero or less disables the sweeper. Floci GCP enables soft delete for new buckets
+         * by default, with a 7-day retention policy, as Cloud Storage does.
+         *
+         * @param softDeleteSweepIntervalSeconds the sweep interval in seconds (default {@value DEFAULT_SOFT_DELETE_SWEEP_INTERVAL_SECONDS})
+         * @return this builder
+         */
+        public Builder softDeleteSweepIntervalSeconds(long softDeleteSweepIntervalSeconds) {
+            this.softDeleteSweepIntervalSeconds = softDeleteSweepIntervalSeconds;
             return this;
         }
 
