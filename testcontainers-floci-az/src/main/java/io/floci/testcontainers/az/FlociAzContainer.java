@@ -114,6 +114,7 @@ public class FlociAzContainer extends AbstractFlociContainer<FlociAzContainer> {
     private final ServiceConfigRef<ContainerAppsConfig> containerAppsConfig = registerServiceConfig(ContainerAppsConfig.builder().build());
     private final ServiceConfigRef<PolicyConfig> policyConfig = registerServiceConfig(PolicyConfig.builder().build());
     private final ServiceConfigRef<AuthorizationConfig> authorizationConfig = registerServiceConfig(AuthorizationConfig.builder().build());
+    private final ServiceConfigRef<ResourceGraphConfig> resourceGraphConfig = registerServiceConfig(ResourceGraphConfig.builder().build());
     private final ServiceConfigRef<EmailConfig> emailConfig = registerServiceConfig(EmailConfig.builder().build());
 
     /**
@@ -1124,6 +1125,30 @@ public class FlociAzContainer extends AbstractFlociContainer<FlociAzContainer> {
      */
     public FlociAzContainer withAuthorizationConfig(Consumer<AuthorizationConfig.Builder> configurer) {
         return updateServiceConfig(authorizationConfig, configurer);
+    }
+    /**
+     * Returns the Azure Resource Graph configuration.
+     *
+     * @return the Resource Graph configuration
+     */
+    public ResourceGraphConfig getResourceGraphConfig() {
+        return resourceGraphConfig.get();
+    }
+
+    /**
+     * Configures Azure Resource Graph (KQL queries over the resources, resource containers and policy
+     * resources Floci Azure holds).
+     *
+     * <pre>{@code
+     * new FlociAzContainer()
+     *     .withResourceGraphConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link ResourceGraphConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociAzContainer withResourceGraphConfig(Consumer<ResourceGraphConfig.Builder> configurer) {
+        return updateServiceConfig(resourceGraphConfig, configurer);
     }
     /**
      * Returns the Azure Communication Services Email configuration.

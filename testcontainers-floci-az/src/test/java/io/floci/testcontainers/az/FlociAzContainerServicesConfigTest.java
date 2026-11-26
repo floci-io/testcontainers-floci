@@ -273,6 +273,13 @@ class FlociAzContainerServicesConfigTest {
                 "FLOCI_AZ_SERVICES_AUTHORIZATION_ENABLED", "false");
     }
     @Test
+    void shouldWireResourceGraphConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withResourceGraphConfig(cfg -> cfg.enabled(false)),
+                c -> c.getResourceGraphConfig().isEnabled(), false,
+                "FLOCI_AZ_SERVICES_RESOURCE_GRAPH_ENABLED", "false");
+    }
+    @Test
     void shouldWireEmailConfigIntoContainer() {
         assertConfigWired(
                 c -> c.withEmailConfig(cfg -> cfg.enabled(false)),
