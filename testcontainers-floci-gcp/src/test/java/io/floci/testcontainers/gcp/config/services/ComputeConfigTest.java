@@ -2,6 +2,7 @@ package io.floci.testcontainers.gcp.config.services;
 
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.TransferableCopyInspector;
 
 import java.time.Duration;
 import java.util.List;
@@ -10,6 +11,9 @@ import static io.floci.testcontainers.core.testing.ContainerUtils.genericContain
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ComputeConfigTest {
+
+    private static final String IMAGE_CATALOG =
+            "{\"images\": [{\"family\": \"golden\", \"prefixes\": [\"golden-\"], \"dockerImage\": \"registry.local/golden:1\"}]}";
 
     @Test
     void shouldApplyDefaultComputeConfig() {
@@ -20,6 +24,7 @@ class ComputeConfigTest {
         assertThat(config.isMock()).isTrue();
         assertThat(config.getDefaultImage()).isEqualTo("debian:12");
         assertThat(config.getImageCatalogPath()).isEmpty();
+        assertThat(config.getImageCatalog()).isEmpty();
         assertThat(config.getDockerNetwork()).isEmpty();
         assertThat(config.isInstanceResourceLimits()).isTrue();
         assertThat(config.isAllowPrivilegedContainers()).isFalse();
@@ -122,6 +127,63 @@ class ComputeConfigTest {
         assertThat(ComputeConfig.builder().enabled(false).mock(false).build().requiresDockerSocket()).isFalse();
     }
 
+    @Test
+    void shouldCopyImageCatalogContentIntoContainer() {
+        GenericContainer<?> container = genericContainer();
+        ComputeConfig config = ComputeConfig.builder().imageCatalog(IMAGE_CATALOG).build();
+
+        config.applyEnvVarsToContainer(container);
+        config.applyFileMountsToContainer(container);
+
+        String imageCatalogPath = config.getImageCatalogPath().orElseThrow();
+        assertThat(imageCatalogPath).startsWith("/tmp/floci-gcp-compute-image-catalog-").endsWith(".json");
+        assertThat(config.getImageCatalog()).contains(IMAGE_CATALOG);
+        assertThat(container.getEnvMap()).containsEntry("FLOCI_GCP_SERVICES_COMPUTE_IMAGE_CATALOG_PATH", imageCatalogPath);
+        assertThat(TransferableCopyInspector.contentCopiedTo(container, imageCatalogPath)).contains(IMAGE_CATALOG);
+    }
+
+    @Test
+    void shouldNotCopyAnythingForExplicitImageCatalogPath() {
+        GenericContainer<?> container = genericContainer();
+        ComputeConfig config = ComputeConfig.builder().imageCatalogPath("/config/image-catalog.json").build();
+
+        config.applyFileMountsToContainer(container);
+
+        assertThat(config.getImageCatalog()).isEmpty();
+        assertThat(TransferableCopyInspector.pendingCopies(container)).isEmpty();
+    }
+
+    @Test
+    void shouldNotCopyImageCatalogWhenDisabled() {
+        GenericContainer<?> container = genericContainer();
+        ComputeConfig.builder().enabled(false).imageCatalog(IMAGE_CATALOG).build().applyFileMountsToContainer(container);
+
+        assertThat(TransferableCopyInspector.pendingCopies(container)).isEmpty();
+    }
+
+    @Test
+    void shouldReplaceImageCatalogPathAndContentWithEachOther() {
+        ComputeConfig pathAfterContent = ComputeConfig.builder()
+                .imageCatalog(IMAGE_CATALOG).imageCatalogPath("/config/image-catalog.json").build();
+        ComputeConfig contentAfterPath = ComputeConfig.builder()
+                .imageCatalogPath("/config/image-catalog.json").imageCatalog(IMAGE_CATALOG).build();
+
+        assertThat(pathAfterContent.getImageCatalogPath()).contains("/config/image-catalog.json");
+        assertThat(pathAfterContent.getImageCatalog()).isEmpty();
+        assertThat(contentAfterPath.getImageCatalogPath()).hasValueSatisfying(path -> assertThat(path).startsWith("/tmp/"));
+        assertThat(contentAfterPath.getImageCatalog()).contains(IMAGE_CATALOG);
+    }
+
+    @Test
+    void shouldPreserveImageCatalogContentOnToBuilder() {
+        ComputeConfig config = ComputeConfig.builder().imageCatalog(IMAGE_CATALOG).build();
+
+        ComputeConfig copy = config.toBuilder().build();
+
+        assertThat(copy.getImageCatalog()).contains(IMAGE_CATALOG);
+        assertThat(copy.getImageCatalogPath()).isEqualTo(config.getImageCatalogPath());
+    }
+
     private static ComputeConfig.Builder customConfig() {
         return ComputeConfig.builder()
                 .operationDelayMs(0)
@@ -146,6 +208,7 @@ class ComputeConfigTest {
         assertThat(config.isMock()).isFalse();
         assertThat(config.getDefaultImage()).isEqualTo("ubuntu:24.04");
         assertThat(config.getImageCatalogPath()).contains("/tmp/image-catalog.json");
+        assertThat(config.getImageCatalog()).isEmpty();
         assertThat(config.getDockerNetwork()).contains("compute-net");
         assertThat(config.isInstanceResourceLimits()).isFalse();
         assertThat(config.isAllowPrivilegedContainers()).isTrue();

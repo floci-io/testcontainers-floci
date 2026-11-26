@@ -64,10 +64,17 @@ class ComputeServiceTest extends AbstractServiceTest {
     void shouldRunStartupScriptInInstanceContainer() throws Exception {
         String zone = "us-central1-a";
         String name = uniqueName("vm");
+        // Replaces the bundled catalog, which maps debian-12 to debian:12
+        String imageCatalog = """
+                {"images": [{"family": "debian-12", "prefixes": ["debian-12"], "dockerImage": "ubuntu:24.04"}]}
+                """;
 
         try (FlociGcpContainer containerFloci = new FlociGcpContainer(IMAGE)
                 .disableAllServices()
-                .withComputeConfig(c -> c.enabled(true).mock(false).shutdownScriptTimeout(Duration.ofSeconds(5)))) {
+                .withComputeConfig(c -> c.enabled(true)
+                        .mock(false)
+                        .imageCatalog(imageCatalog)
+                        .shutdownScriptTimeout(Duration.ofSeconds(5)))) {
             containerFloci.start();
             String project = containerFloci.getProjectId();
 
@@ -103,7 +110,7 @@ class ComputeServiceTest extends AbstractServiceTest {
                                 .setMetadata(Metadata.newBuilder()
                                         .addItems(Items.newBuilder()
                                                 .setKey("startup-script")
-                                                .setValue("#!/bin/sh\necho \"hello from $(hostname)\"")))
+                                                .setValue("#!/bin/sh\n. /etc/os-release\necho \"hello from $ID\"")))
                                 .build())
                         .get(6, TimeUnit.MINUTES);
 
@@ -111,7 +118,7 @@ class ComputeServiceTest extends AbstractServiceTest {
                     assertThat(instances.get(project, zone, name).getStatus()).isEqualTo("RUNNING");
                     await().atMost(Duration.ofMinutes(2)).pollInterval(Duration.ofSeconds(1)).untilAsserted(() ->
                             assertThat(instances.getSerialPortOutput(project, zone, name).getContents())
-                                    .contains("startup-script: hello from")
+                                    .contains("startup-script: hello from ubuntu")
                                     .contains("startup-script exit status 0"));
                 } finally {
                     instances.deleteAsync(project, zone, name).get(2, TimeUnit.MINUTES);

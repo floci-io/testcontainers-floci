@@ -3,10 +3,12 @@ package io.floci.testcontainers.gcp.config.services;
 import io.floci.testcontainers.core.config.services.AbstractServiceConfig;
 import io.floci.testcontainers.core.config.services.AbstractServiceConfigBuilder;
 import org.testcontainers.containers.Container;
+import org.testcontainers.images.builder.Transferable;
 
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Configuration for Compute Engine of Floci GCP.
@@ -24,6 +26,7 @@ import java.util.Optional;
  *     .regions(List.of("us-central1", "europe-west3"))
  *     .mock(false)
  *     .startupScriptTimeout(Duration.ofMinutes(5))
+ *     .imageCatalog(Files.readString(Path.of("image-catalog.json")))
  *     .build();
  * }</pre>
  */
@@ -40,12 +43,15 @@ public class ComputeConfig extends AbstractServiceConfig<ComputeConfig.Builder> 
     private static final Duration DEFAULT_SHUTDOWN_SCRIPT_TIMEOUT = Duration.ofSeconds(90);
     private static final boolean DEFAULT_METADATA_SERVER_ENABLED = true;
     private static final Duration DEFAULT_METADATA_SERVER_DEFAULT_WAIT_TIMEOUT = Duration.ofSeconds(300);
+    private static final String IMAGE_CATALOG_FILE_PREFIX = "/tmp/floci-gcp-compute-image-catalog-";
+    private static final String IMAGE_CATALOG_FILE_SUFFIX = ".json";
 
     private final long operationDelayMs;
     private final List<String> regions;
     private final boolean mock;
     private final String defaultImage;
     private final String imageCatalogPath;
+    private final String imageCatalog;
     private final String dockerNetwork;
     private final boolean instanceResourceLimits;
     private final boolean allowPrivilegedContainers;
@@ -63,6 +69,7 @@ public class ComputeConfig extends AbstractServiceConfig<ComputeConfig.Builder> 
         this.mock = builder.mock;
         this.defaultImage = builder.defaultImage;
         this.imageCatalogPath = builder.imageCatalogPath;
+        this.imageCatalog = builder.imageCatalog;
         this.dockerNetwork = builder.dockerNetwork;
         this.instanceResourceLimits = builder.instanceResourceLimits;
         this.allowPrivilegedContainers = builder.allowPrivilegedContainers;
@@ -138,10 +145,23 @@ public class ComputeConfig extends AbstractServiceConfig<ComputeConfig.Builder> 
      * Returns the path, inside the Floci GCP container, of a JSON file that replaces Floci GCP's bundled
      * boot-image-to-Docker-image catalog.
      *
+     * <p>The path is either the one passed to {@link Builder#imageCatalogPath(String)} verbatim, or a generated
+     * path pointing at the file whose content was passed to {@link Builder#imageCatalog(String)}.
+     *
      * @return the image catalog path, or empty if the bundled catalog is used
      */
     public Optional<String> getImageCatalogPath() {
         return Optional.ofNullable(imageCatalogPath);
+    }
+
+    /**
+     * Returns the image catalog content supplied via {@link Builder#imageCatalog(String)}, if any. When present,
+     * this content is copied into the container at {@link #getImageCatalogPath()}.
+     *
+     * @return the image catalog content, or empty if the image catalog was not configured by content
+     */
+    public Optional<String> getImageCatalog() {
+        return Optional.ofNullable(imageCatalog);
     }
 
     /**
@@ -266,6 +286,13 @@ public class ComputeConfig extends AbstractServiceConfig<ComputeConfig.Builder> 
     }
 
     @Override
+    public void applyFileMountsToContainer(Container<?> container) {
+        if (isEnabled() && imageCatalogPath != null && imageCatalog != null) {
+            container.withCopyToContainer(Transferable.of(imageCatalog), imageCatalogPath);
+        }
+    }
+
+    @Override
     public boolean requiresDockerSocket() {
         return isEnabled() && !mock;
     }
@@ -285,6 +312,7 @@ public class ComputeConfig extends AbstractServiceConfig<ComputeConfig.Builder> 
         private boolean mock = DEFAULT_MOCK;
         private String defaultImage = DEFAULT_DEFAULT_IMAGE;
         private String imageCatalogPath;
+        private String imageCatalog;
         private String dockerNetwork;
         private boolean instanceResourceLimits = DEFAULT_INSTANCE_RESOURCE_LIMITS;
         private boolean allowPrivilegedContainers = DEFAULT_ALLOW_PRIVILEGED_CONTAINERS;
@@ -311,6 +339,7 @@ public class ComputeConfig extends AbstractServiceConfig<ComputeConfig.Builder> 
             this.mock = instance.mock;
             this.defaultImage = instance.defaultImage;
             this.imageCatalogPath = instance.imageCatalogPath;
+            this.imageCatalog = instance.imageCatalog;
             this.dockerNetwork = instance.dockerNetwork;
             this.instanceResourceLimits = instance.instanceResourceLimits;
             this.allowPrivilegedContainers = instance.allowPrivilegedContainers;
@@ -376,14 +405,40 @@ public class ComputeConfig extends AbstractServiceConfig<ComputeConfig.Builder> 
 
         /**
          * Sets the path, inside the Floci GCP container, of a JSON file that replaces Floci GCP's bundled
-         * boot-image-to-Docker-image catalog (same format as Floci GCP's {@code compute/image-catalog.json}).
-         * Copy the file into the container yourself, e.g. with {@code withCopyFileToContainer(...)}.
+         * boot-image-to-Docker-image catalog (same format as Floci GCP's {@code compute/image-catalog.json}) and
+         * that already exists in the container (for example one added through a volume or another
+         * {@code withCopy*} call).
+         *
+         * <p>Use {@link #imageCatalog(String)} instead to hand over just the file content and let
+         * {@link ComputeConfig} take care of placing the file into the container.
+         *
+         * <p>Calling this method clears any content previously set via {@link #imageCatalog(String)}.
          *
          * @param imageCatalogPath the image catalog path, or {@code null} to use the bundled catalog (default)
          * @return this builder
          */
         public Builder imageCatalogPath(String imageCatalogPath) {
             this.imageCatalogPath = imageCatalogPath;
+            this.imageCatalog = null;
+            return this;
+        }
+
+        /**
+         * Sets the content of a JSON file that replaces Floci GCP's bundled boot-image-to-Docker-image catalog
+         * (same format as Floci GCP's {@code compute/image-catalog.json}), e.g.
+         * {@code {"images": [{"family": "golden", "prefixes": ["golden-"], "dockerImage": "registry.local/golden:1"}]}}.
+         *
+         * <p>The content is copied into the container under a generated, randomized path, which is then used as
+         * {@link ComputeConfig#getImageCatalogPath()}.
+         *
+         * <p>Calling this method clears any path previously set via {@link #imageCatalogPath(String)}.
+         *
+         * @param imageCatalog the image catalog content, or {@code null} to use the bundled catalog (default)
+         * @return this builder
+         */
+        public Builder imageCatalog(String imageCatalog) {
+            this.imageCatalog = imageCatalog;
+            this.imageCatalogPath = null;
             return this;
         }
 
@@ -508,6 +563,9 @@ public class ComputeConfig extends AbstractServiceConfig<ComputeConfig.Builder> 
          */
         @Override
         public ComputeConfig build() {
+            if (imageCatalog != null && imageCatalogPath == null) {
+                this.imageCatalogPath = IMAGE_CATALOG_FILE_PREFIX + UUID.randomUUID() + IMAGE_CATALOG_FILE_SUFFIX;
+            }
             return new ComputeConfig(this);
         }
     }
