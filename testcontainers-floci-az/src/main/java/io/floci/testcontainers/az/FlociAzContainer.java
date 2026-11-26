@@ -115,6 +115,7 @@ public class FlociAzContainer extends AbstractFlociContainer<FlociAzContainer> {
     private final ServiceConfigRef<PolicyConfig> policyConfig = registerServiceConfig(PolicyConfig.builder().build());
     private final ServiceConfigRef<AuthorizationConfig> authorizationConfig = registerServiceConfig(AuthorizationConfig.builder().build());
     private final ServiceConfigRef<ResourceGraphConfig> resourceGraphConfig = registerServiceConfig(ResourceGraphConfig.builder().build());
+    private final ServiceConfigRef<ManagementGroupsConfig> managementGroupsConfig = registerServiceConfig(ManagementGroupsConfig.builder().build());
     private final ServiceConfigRef<EmailConfig> emailConfig = registerServiceConfig(EmailConfig.builder().build());
 
     /**
@@ -1149,6 +1150,30 @@ public class FlociAzContainer extends AbstractFlociContainer<FlociAzContainer> {
      */
     public FlociAzContainer withResourceGraphConfig(Consumer<ResourceGraphConfig.Builder> configurer) {
         return updateServiceConfig(resourceGraphConfig, configurer);
+    }
+    /**
+     * Returns the Azure Management Groups configuration.
+     *
+     * @return the Management Groups configuration
+     */
+    public ManagementGroupsConfig getManagementGroupsConfig() {
+        return managementGroupsConfig.get();
+    }
+
+    /**
+     * Configures Azure Management Groups ({@code Microsoft.Management}: the tenant hierarchy of groups and
+     * subscriptions).
+     *
+     * <pre>{@code
+     * new FlociAzContainer()
+     *     .withManagementGroupsConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link ManagementGroupsConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociAzContainer withManagementGroupsConfig(Consumer<ManagementGroupsConfig.Builder> configurer) {
+        return updateServiceConfig(managementGroupsConfig, configurer);
     }
     /**
      * Returns the Azure Communication Services Email configuration.

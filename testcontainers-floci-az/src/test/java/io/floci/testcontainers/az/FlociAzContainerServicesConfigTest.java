@@ -280,6 +280,13 @@ class FlociAzContainerServicesConfigTest {
                 "FLOCI_AZ_SERVICES_RESOURCE_GRAPH_ENABLED", "false");
     }
     @Test
+    void shouldWireManagementGroupsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withManagementGroupsConfig(cfg -> cfg.enabled(false)),
+                c -> c.getManagementGroupsConfig().isEnabled(), false,
+                "FLOCI_AZ_SERVICES_MANAGEMENT_GROUPS_ENABLED", "false");
+    }
+    @Test
     void shouldWireEmailConfigIntoContainer() {
         assertConfigWired(
                 c -> c.withEmailConfig(cfg -> cfg.enabled(false)),
