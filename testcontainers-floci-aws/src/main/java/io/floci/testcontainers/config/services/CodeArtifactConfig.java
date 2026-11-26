@@ -19,6 +19,7 @@ public class CodeArtifactConfig extends AbstractServiceConfig<CodeArtifactConfig
     private static final String DEFAULT_NPM_IMAGE = "verdaccio/verdaccio:6.10.4";
     private static final String DEFAULT_PYPI_IMAGE = "pypiserver/pypiserver:v2.4.2";
     private static final String DEFAULT_NUGET_IMAGE = "bagetter/bagetter:1.6.5";
+    private static final String DEFAULT_CARGO_IMAGE = "ghcr.io/kellnr/kellnr:5.14.1";
 
     private final String mavenUrl;
     private final String mavenToken;
@@ -26,6 +27,7 @@ public class CodeArtifactConfig extends AbstractServiceConfig<CodeArtifactConfig
     private final String npmImage;
     private final String pypiImage;
     private final String nugetImage;
+    private final String cargoImage;
 
     private CodeArtifactConfig(Builder builder) {
         super(builder);
@@ -35,6 +37,7 @@ public class CodeArtifactConfig extends AbstractServiceConfig<CodeArtifactConfig
         this.npmImage = builder.npmImage;
         this.pypiImage = builder.pypiImage;
         this.nugetImage = builder.nugetImage;
+        this.cargoImage = builder.cargoImage;
     }
 
     /**
@@ -114,6 +117,15 @@ public class CodeArtifactConfig extends AbstractServiceConfig<CodeArtifactConfig
         return nugetImage;
     }
 
+    /**
+     * Returns the image of the per-repository Kellnr container backing the {@code cargo} package format.
+     *
+     * @return the image of the per-repository Kellnr container backing the {@code cargo} package format
+     */
+    public String getCargoImage() {
+        return cargoImage;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_CODEARTIFACT_ENABLED", String.valueOf(isEnabled()));
@@ -131,6 +143,7 @@ public class CodeArtifactConfig extends AbstractServiceConfig<CodeArtifactConfig
             container.withEnv("FLOCI_SERVICES_CODEARTIFACT_NPM_IMAGE", npmImage);
             container.withEnv("FLOCI_SERVICES_CODEARTIFACT_PYPI_IMAGE", pypiImage);
             container.withEnv("FLOCI_SERVICES_CODEARTIFACT_NUGET_IMAGE", nugetImage);
+            container.withEnv("FLOCI_SERVICES_CODEARTIFACT_CARGO_IMAGE", cargoImage);
         }
     }
 
@@ -151,6 +164,7 @@ public class CodeArtifactConfig extends AbstractServiceConfig<CodeArtifactConfig
         private String npmImage = DEFAULT_NPM_IMAGE;
         private String pypiImage = DEFAULT_PYPI_IMAGE;
         private String nugetImage = DEFAULT_NUGET_IMAGE;
+        private String cargoImage = DEFAULT_CARGO_IMAGE;
 
         private Builder() {
             // Allow instantiation only via CodeArtifactConfig.builder()
@@ -169,6 +183,7 @@ public class CodeArtifactConfig extends AbstractServiceConfig<CodeArtifactConfig
             this.npmImage = instance.getNpmImage();
             this.pypiImage = instance.getPypiImage();
             this.nugetImage = instance.getNugetImage();
+            this.cargoImage = instance.getCargoImage();
         }
 
         /**
@@ -239,6 +254,17 @@ public class CodeArtifactConfig extends AbstractServiceConfig<CodeArtifactConfig
          */
         public Builder nugetImage(String nugetImage) {
             this.nugetImage = nugetImage;
+            return this;
+        }
+
+        /**
+         * Sets the image of the per-repository Kellnr container backing the {@code cargo} package format.
+         *
+         * @param cargoImage the image of the per-repository Kellnr container backing the {@code cargo} package format (default {@value DEFAULT_CARGO_IMAGE})
+         * @return this builder
+         */
+        public Builder cargoImage(String cargoImage) {
+            this.cargoImage = cargoImage;
             return this;
         }
 
