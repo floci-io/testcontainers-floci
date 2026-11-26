@@ -110,6 +110,7 @@ public class FlociAzContainer extends AbstractFlociContainer<FlociAzContainer> {
     private final ServiceConfigRef<NetworkConfig> networkConfig = registerServiceConfig(NetworkConfig.builder().build());
     private final ServiceConfigRef<EventGridConfig> eventGridConfig = registerServiceConfig(EventGridConfig.builder().build());
     private final ServiceConfigRef<ManagedIdentityConfig> managedIdentityConfig = registerServiceConfig(ManagedIdentityConfig.builder().build());
+    private final ServiceConfigRef<DeploymentsConfig> deploymentsConfig = registerServiceConfig(DeploymentsConfig.builder().build());
     private final ServiceConfigRef<ContainerAppsConfig> containerAppsConfig = registerServiceConfig(ContainerAppsConfig.builder().build());
     private final ServiceConfigRef<PolicyConfig> policyConfig = registerServiceConfig(PolicyConfig.builder().build());
     private final ServiceConfigRef<EmailConfig> emailConfig = registerServiceConfig(EmailConfig.builder().build());
@@ -1028,6 +1029,29 @@ public class FlociAzContainer extends AbstractFlociContainer<FlociAzContainer> {
      */
     public FlociAzContainer withManagedIdentityConfig(Consumer<ManagedIdentityConfig.Builder> configurer) {
         return updateServiceConfig(managedIdentityConfig, configurer);
+    }
+    /**
+     * Returns the Azure Resource Manager template deployments configuration.
+     *
+     * @return the Deployments configuration
+     */
+    public DeploymentsConfig getDeploymentsConfig() {
+        return deploymentsConfig.get();
+    }
+
+    /**
+     * Configures ARM template deployments ({@code Microsoft.Resources/deployments}).
+     *
+     * <pre>{@code
+     * new FlociAzContainer()
+     *     .withDeploymentsConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link DeploymentsConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociAzContainer withDeploymentsConfig(Consumer<DeploymentsConfig.Builder> configurer) {
+        return updateServiceConfig(deploymentsConfig, configurer);
     }
     /**
      * Returns the Azure Container Apps configuration.

@@ -112,6 +112,7 @@ class FlociAzContainerTest {
                     container.getNetworkConfig(),
                     container.getEventGridConfig(),
                     container.getManagedIdentityConfig(),
+                    container.getDeploymentsConfig(),
                     container.getContainerAppsConfig(),
                     container.getPolicyConfig(),
                     container.getEmailConfig()

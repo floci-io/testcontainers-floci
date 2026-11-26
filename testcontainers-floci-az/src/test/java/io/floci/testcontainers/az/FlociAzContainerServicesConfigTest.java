@@ -245,6 +245,13 @@ class FlociAzContainerServicesConfigTest {
                 "FLOCI_AZ_SERVICES_MANAGED_IDENTITY_SYSTEM_ASSIGNED_SCOPE", "subscriptions/sub/resourceGroups/rg");
     }
     @Test
+    void shouldWireDeploymentsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withDeploymentsConfig(cfg -> cfg.enabled(false)),
+                c -> c.getDeploymentsConfig().isEnabled(), false,
+                "FLOCI_AZ_SERVICES_DEPLOYMENTS_ENABLED", "false");
+    }
+    @Test
     void shouldWireContainerAppsConfigIntoContainer() {
         assertConfigWired(
                 c -> c.withContainerAppsConfig(cfg -> cfg.mocked(false)),
