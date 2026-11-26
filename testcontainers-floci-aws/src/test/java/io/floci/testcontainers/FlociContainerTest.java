@@ -390,7 +390,8 @@ class FlociContainerTest {
                     container.getMarketplaceConfig(),
                     container.getDmsConfig(),
                     container.getElbConfig(),
-                    container.getDsqlConfig()
+                    container.getDsqlConfig(),
+                    container.getEventBridgeV2Config()
             )).noneMatch(AbstractServiceConfig::isEnabled);
         }
     }

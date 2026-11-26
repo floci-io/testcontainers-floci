@@ -1086,6 +1086,14 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_SERVICES_DSQL_PORT", "15432", 15432);
     }
 
+    @Test
+    void shouldWireEventBridgeV2ConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withEventBridgeV2Config(cfg -> cfg.enabled(false)),
+                c -> c.getEventBridgeV2Config().isEnabled(), false,
+                "FLOCI_SERVICES_EVENTBRIDGEV2_ENABLED", "false");
+    }
+
     // --- Cross-cutting configs (config/) --------------------------------------------------------
 
     @Test

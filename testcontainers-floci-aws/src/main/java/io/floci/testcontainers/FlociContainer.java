@@ -228,6 +228,7 @@ public class FlociContainer extends AbstractFlociContainer<FlociContainer> {
     private final ServiceConfigRef<DmsConfig> dmsConfig = registerServiceConfig(DmsConfig.builder().build());
     private final ServiceConfigRef<ElbConfig> elbConfig = registerServiceConfig(ElbConfig.builder().build());
     private final ServiceConfigRef<DsqlConfig> dsqlConfig = registerServiceConfig(DsqlConfig.builder().build());
+    private final ServiceConfigRef<EventBridgeV2Config> eventBridgeV2Config = registerServiceConfig(EventBridgeV2Config.builder().build());
 
     /**
      * Creates a new Floci container with the default image ({@code floci/floci:latest}).
@@ -3864,6 +3865,30 @@ public class FlociContainer extends AbstractFlociContainer<FlociContainer> {
      */
     public FlociContainer withDsqlConfig(Consumer<DsqlConfig.Builder> configurer) {
         return updateServiceConfig(dsqlConfig, configurer);
+    }
+
+    /**
+     * EventBridge V2-specific settings.
+     *
+     * @return the EventBridge V2 configuration
+     */
+    public EventBridgeV2Config getEventBridgeV2Config() {
+        return eventBridgeV2Config.get();
+    }
+
+    /**
+     * Configures EventBridge V2-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withEventBridgeV2Config(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link EventBridgeV2Config.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withEventBridgeV2Config(Consumer<EventBridgeV2Config.Builder> configurer) {
+        return updateServiceConfig(eventBridgeV2Config, configurer);
     }
 
     private void preparePersistentStorageForCleanup() {
