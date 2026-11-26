@@ -266,6 +266,13 @@ class FlociAzContainerServicesConfigTest {
                 "FLOCI_AZ_SERVICES_POLICY_ENFORCEMENT", "false");
     }
     @Test
+    void shouldWireAuthorizationConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withAuthorizationConfig(cfg -> cfg.enabled(false)),
+                c -> c.getAuthorizationConfig().isEnabled(), false,
+                "FLOCI_AZ_SERVICES_AUTHORIZATION_ENABLED", "false");
+    }
+    @Test
     void shouldWireEmailConfigIntoContainer() {
         assertConfigWired(
                 c -> c.withEmailConfig(cfg -> cfg.enabled(false)),

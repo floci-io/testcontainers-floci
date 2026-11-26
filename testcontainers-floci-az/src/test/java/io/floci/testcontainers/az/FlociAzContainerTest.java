@@ -115,6 +115,7 @@ class FlociAzContainerTest {
                     container.getDeploymentsConfig(),
                     container.getContainerAppsConfig(),
                     container.getPolicyConfig(),
+                    container.getAuthorizationConfig(),
                     container.getEmailConfig()
             )).noneMatch(AbstractServiceConfig::isEnabled);
         }

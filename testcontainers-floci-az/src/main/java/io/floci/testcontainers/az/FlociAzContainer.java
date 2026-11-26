@@ -113,6 +113,7 @@ public class FlociAzContainer extends AbstractFlociContainer<FlociAzContainer> {
     private final ServiceConfigRef<DeploymentsConfig> deploymentsConfig = registerServiceConfig(DeploymentsConfig.builder().build());
     private final ServiceConfigRef<ContainerAppsConfig> containerAppsConfig = registerServiceConfig(ContainerAppsConfig.builder().build());
     private final ServiceConfigRef<PolicyConfig> policyConfig = registerServiceConfig(PolicyConfig.builder().build());
+    private final ServiceConfigRef<AuthorizationConfig> authorizationConfig = registerServiceConfig(AuthorizationConfig.builder().build());
     private final ServiceConfigRef<EmailConfig> emailConfig = registerServiceConfig(EmailConfig.builder().build());
 
     /**
@@ -1099,6 +1100,30 @@ public class FlociAzContainer extends AbstractFlociContainer<FlociAzContainer> {
      */
     public FlociAzContainer withPolicyConfig(Consumer<PolicyConfig.Builder> configurer) {
         return updateServiceConfig(policyConfig, configurer);
+    }
+    /**
+     * Returns the Azure role-based access control configuration.
+     *
+     * @return the Authorization configuration
+     */
+    public AuthorizationConfig getAuthorizationConfig() {
+        return authorizationConfig.get();
+    }
+
+    /**
+     * Configures Azure role-based access control (built-in role definitions and role assignments under
+     * {@code Microsoft.Authorization}).
+     *
+     * <pre>{@code
+     * new FlociAzContainer()
+     *     .withAuthorizationConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link AuthorizationConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociAzContainer withAuthorizationConfig(Consumer<AuthorizationConfig.Builder> configurer) {
+        return updateServiceConfig(authorizationConfig, configurer);
     }
     /**
      * Returns the Azure Communication Services Email configuration.
