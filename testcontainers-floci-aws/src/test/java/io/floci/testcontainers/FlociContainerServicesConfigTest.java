@@ -1118,6 +1118,14 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_SERVICES_SIGNER_MOCK_SIGNING_JOBS", "true");
     }
 
+    @Test
+    void shouldWireXrayConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withXrayConfig(cfg -> cfg.enabled(false)),
+                c -> c.getXrayConfig().isEnabled(), false,
+                "FLOCI_SERVICES_XRAY_ENABLED", "false");
+    }
+
     // --- Cross-cutting configs (config/) --------------------------------------------------------
 
     @Test

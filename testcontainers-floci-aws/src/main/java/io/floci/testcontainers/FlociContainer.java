@@ -232,6 +232,7 @@ public class FlociContainer extends AbstractFlociContainer<FlociContainer> {
     private final ServiceConfigRef<PaymentCryptographyConfig> paymentCryptographyConfig = registerServiceConfig(PaymentCryptographyConfig.builder().build());
     private final ServiceConfigRef<ResourceGroupsConfig> resourceGroupsConfig = registerServiceConfig(ResourceGroupsConfig.builder().build());
     private final ServiceConfigRef<SignerConfig> signerConfig = registerServiceConfig(SignerConfig.builder().build());
+    private final ServiceConfigRef<XrayConfig> xrayConfig = registerServiceConfig(XrayConfig.builder().build());
 
     /**
      * Creates a new Floci container with the default image ({@code floci/floci:latest}).
@@ -3964,6 +3965,30 @@ public class FlociContainer extends AbstractFlociContainer<FlociContainer> {
      */
     public FlociContainer withSignerConfig(Consumer<SignerConfig.Builder> configurer) {
         return updateServiceConfig(signerConfig, configurer);
+    }
+
+    /**
+     * X-Ray-specific settings.
+     *
+     * @return the X-Ray configuration
+     */
+    public XrayConfig getXrayConfig() {
+        return xrayConfig.get();
+    }
+
+    /**
+     * Configures X-Ray-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withXrayConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link XrayConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withXrayConfig(Consumer<XrayConfig.Builder> configurer) {
+        return updateServiceConfig(xrayConfig, configurer);
     }
 
     private void preparePersistentStorageForCleanup() {
