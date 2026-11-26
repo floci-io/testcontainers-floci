@@ -1086,7 +1086,8 @@ public class FlociAzContainer extends AbstractFlociContainer<FlociAzContainer> {
     }
 
     /**
-     * Configures the Azure Policy control plane (definitions, set definitions, assignments and exemptions).
+     * Configures Azure Policy (definitions, set definitions, assignments and exemptions, rule evaluation on
+     * resource writes and Policy Insights).
      *
      * <pre>{@code
      * new FlociAzContainer()
