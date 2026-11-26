@@ -19,8 +19,16 @@ class RedshiftConfigTest {
         assertThat(config.getDefaultCredentialDurationSeconds()).isEqualTo(900);
         assertThat(config.getProxyHandshakeTimeoutMillis()).isEqualTo(10000);
         assertThat(config.getProxyBackendConnectTimeoutMillis()).isEqualTo(5000);
-        assertThat(config.getProxyMaxConnections()).isEqualTo(100);
+        assertThat(config.getProxyMaxConnections()).isEqualTo(2000);
         assertThat(config.getSpectrumMaxRows()).isEqualTo(1000000L);
+        assertThat(config.isAutomatedSnapshotsEnabled()).isTrue();
+        assertThat(config.isCloudwatchMetricsEnabled()).isTrue();
+        assertThat(config.getSnapshotSweepIntervalSeconds()).isEqualTo(60L);
+        assertThat(config.isSnapshotCopyEnabled()).isTrue();
+        assertThat(config.getSnapshotCopySweepIntervalSeconds()).isEqualTo(60L);
+        assertThat(config.isScheduledActionsEnabled()).isTrue();
+        assertThat(config.getScheduledActionSweepIntervalSeconds()).isEqualTo(60L);
+        assertThat(config.isSpectrumLakeFormationEnforcement()).isFalse();
     }
 
     @Test
@@ -36,6 +44,14 @@ class RedshiftConfigTest {
                 .proxyBackendConnectTimeoutMillis(1000)
                 .proxyMaxConnections(20)
                 .spectrumMaxRows(500L)
+                .automatedSnapshotsEnabled(false)
+                .cloudwatchMetricsEnabled(false)
+                .snapshotSweepIntervalSeconds(5L)
+                .snapshotCopyEnabled(false)
+                .snapshotCopySweepIntervalSeconds(6L)
+                .scheduledActionsEnabled(false)
+                .scheduledActionSweepIntervalSeconds(7L)
+                .spectrumLakeFormationEnforcement(true)
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.getDefaultPort()).isEqualTo(5000);
@@ -47,6 +63,14 @@ class RedshiftConfigTest {
         assertThat(config.getProxyBackendConnectTimeoutMillis()).isEqualTo(1000);
         assertThat(config.getProxyMaxConnections()).isEqualTo(20);
         assertThat(config.getSpectrumMaxRows()).isEqualTo(500L);
+        assertThat(config.isAutomatedSnapshotsEnabled()).isFalse();
+        assertThat(config.isCloudwatchMetricsEnabled()).isFalse();
+        assertThat(config.getSnapshotSweepIntervalSeconds()).isEqualTo(5L);
+        assertThat(config.isSnapshotCopyEnabled()).isFalse();
+        assertThat(config.getSnapshotCopySweepIntervalSeconds()).isEqualTo(6L);
+        assertThat(config.isScheduledActionsEnabled()).isFalse();
+        assertThat(config.getScheduledActionSweepIntervalSeconds()).isEqualTo(7L);
+        assertThat(config.isSpectrumLakeFormationEnforcement()).isTrue();
     }
 
     @Test
@@ -63,8 +87,16 @@ class RedshiftConfigTest {
                 .containsEntry("FLOCI_SERVICES_REDSHIFT_DEFAULT_CREDENTIAL_DURATION_SECONDS", "900")
                 .containsEntry("FLOCI_SERVICES_REDSHIFT_PROXY_HANDSHAKE_TIMEOUT_MILLIS", "10000")
                 .containsEntry("FLOCI_SERVICES_REDSHIFT_PROXY_BACKEND_CONNECT_TIMEOUT_MILLIS", "5000")
-                .containsEntry("FLOCI_SERVICES_REDSHIFT_PROXY_MAX_CONNECTIONS", "100")
-                .containsEntry("FLOCI_SERVICES_REDSHIFT_SPECTRUM_MAX_ROWS", "1000000");
+                .containsEntry("FLOCI_SERVICES_REDSHIFT_PROXY_MAX_CONNECTIONS", "2000")
+                .containsEntry("FLOCI_SERVICES_REDSHIFT_SPECTRUM_MAX_ROWS", "1000000")
+                .containsEntry("FLOCI_SERVICES_REDSHIFT_AUTOMATED_SNAPSHOTS_ENABLED", "true")
+                .containsEntry("FLOCI_SERVICES_REDSHIFT_CLOUDWATCH_METRICS_ENABLED", "true")
+                .containsEntry("FLOCI_SERVICES_REDSHIFT_SNAPSHOT_SWEEP_INTERVAL_SECONDS", "60")
+                .containsEntry("FLOCI_SERVICES_REDSHIFT_SNAPSHOT_COPY_ENABLED", "true")
+                .containsEntry("FLOCI_SERVICES_REDSHIFT_SNAPSHOT_COPY_SWEEP_INTERVAL_SECONDS", "60")
+                .containsEntry("FLOCI_SERVICES_REDSHIFT_SCHEDULED_ACTIONS_ENABLED", "true")
+                .containsEntry("FLOCI_SERVICES_REDSHIFT_SCHEDULED_ACTION_SWEEP_INTERVAL_SECONDS", "60")
+                .containsEntry("FLOCI_SERVICES_REDSHIFT_SPECTRUM_LAKE_FORMATION_ENFORCEMENT", "false");
     }
 
     @Test
@@ -80,6 +112,14 @@ class RedshiftConfigTest {
                 .proxyBackendConnectTimeoutMillis(1000)
                 .proxyMaxConnections(20)
                 .spectrumMaxRows(500L)
+                .automatedSnapshotsEnabled(false)
+                .cloudwatchMetricsEnabled(false)
+                .snapshotSweepIntervalSeconds(5L)
+                .snapshotCopyEnabled(false)
+                .snapshotCopySweepIntervalSeconds(6L)
+                .scheduledActionsEnabled(false)
+                .scheduledActionSweepIntervalSeconds(7L)
+                .spectrumLakeFormationEnforcement(true)
                 .build()
                 .applyEnvVarsToContainer(container);
 
@@ -93,7 +133,15 @@ class RedshiftConfigTest {
                 .containsEntry("FLOCI_SERVICES_REDSHIFT_PROXY_HANDSHAKE_TIMEOUT_MILLIS", "2000")
                 .containsEntry("FLOCI_SERVICES_REDSHIFT_PROXY_BACKEND_CONNECT_TIMEOUT_MILLIS", "1000")
                 .containsEntry("FLOCI_SERVICES_REDSHIFT_PROXY_MAX_CONNECTIONS", "20")
-                .containsEntry("FLOCI_SERVICES_REDSHIFT_SPECTRUM_MAX_ROWS", "500");
+                .containsEntry("FLOCI_SERVICES_REDSHIFT_SPECTRUM_MAX_ROWS", "500")
+                .containsEntry("FLOCI_SERVICES_REDSHIFT_AUTOMATED_SNAPSHOTS_ENABLED", "false")
+                .containsEntry("FLOCI_SERVICES_REDSHIFT_CLOUDWATCH_METRICS_ENABLED", "false")
+                .containsEntry("FLOCI_SERVICES_REDSHIFT_SNAPSHOT_SWEEP_INTERVAL_SECONDS", "5")
+                .containsEntry("FLOCI_SERVICES_REDSHIFT_SNAPSHOT_COPY_ENABLED", "false")
+                .containsEntry("FLOCI_SERVICES_REDSHIFT_SNAPSHOT_COPY_SWEEP_INTERVAL_SECONDS", "6")
+                .containsEntry("FLOCI_SERVICES_REDSHIFT_SCHEDULED_ACTIONS_ENABLED", "false")
+                .containsEntry("FLOCI_SERVICES_REDSHIFT_SCHEDULED_ACTION_SWEEP_INTERVAL_SECONDS", "7")
+                .containsEntry("FLOCI_SERVICES_REDSHIFT_SPECTRUM_LAKE_FORMATION_ENFORCEMENT", "true");
     }
 
     @Test
@@ -110,7 +158,15 @@ class RedshiftConfigTest {
                 .doesNotContainKey("FLOCI_SERVICES_REDSHIFT_PROXY_HANDSHAKE_TIMEOUT_MILLIS")
                 .doesNotContainKey("FLOCI_SERVICES_REDSHIFT_PROXY_BACKEND_CONNECT_TIMEOUT_MILLIS")
                 .doesNotContainKey("FLOCI_SERVICES_REDSHIFT_PROXY_MAX_CONNECTIONS")
-                .doesNotContainKey("FLOCI_SERVICES_REDSHIFT_SPECTRUM_MAX_ROWS");
+                .doesNotContainKey("FLOCI_SERVICES_REDSHIFT_SPECTRUM_MAX_ROWS")
+                .doesNotContainKey("FLOCI_SERVICES_REDSHIFT_AUTOMATED_SNAPSHOTS_ENABLED")
+                .doesNotContainKey("FLOCI_SERVICES_REDSHIFT_CLOUDWATCH_METRICS_ENABLED")
+                .doesNotContainKey("FLOCI_SERVICES_REDSHIFT_SNAPSHOT_SWEEP_INTERVAL_SECONDS")
+                .doesNotContainKey("FLOCI_SERVICES_REDSHIFT_SNAPSHOT_COPY_ENABLED")
+                .doesNotContainKey("FLOCI_SERVICES_REDSHIFT_SNAPSHOT_COPY_SWEEP_INTERVAL_SECONDS")
+                .doesNotContainKey("FLOCI_SERVICES_REDSHIFT_SCHEDULED_ACTIONS_ENABLED")
+                .doesNotContainKey("FLOCI_SERVICES_REDSHIFT_SCHEDULED_ACTION_SWEEP_INTERVAL_SECONDS")
+                .doesNotContainKey("FLOCI_SERVICES_REDSHIFT_SPECTRUM_LAKE_FORMATION_ENFORCEMENT");
     }
 
     @Test
@@ -126,6 +182,14 @@ class RedshiftConfigTest {
                 .proxyBackendConnectTimeoutMillis(1000)
                 .proxyMaxConnections(20)
                 .spectrumMaxRows(500L)
+                .automatedSnapshotsEnabled(false)
+                .cloudwatchMetricsEnabled(false)
+                .snapshotSweepIntervalSeconds(5L)
+                .snapshotCopyEnabled(false)
+                .snapshotCopySweepIntervalSeconds(6L)
+                .scheduledActionsEnabled(false)
+                .scheduledActionSweepIntervalSeconds(7L)
+                .spectrumLakeFormationEnforcement(true)
                 .build();
         RedshiftConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
@@ -138,6 +202,14 @@ class RedshiftConfigTest {
         assertThat(copy.getProxyBackendConnectTimeoutMillis()).isEqualTo(1000);
         assertThat(copy.getProxyMaxConnections()).isEqualTo(20);
         assertThat(copy.getSpectrumMaxRows()).isEqualTo(500L);
+        assertThat(copy.isAutomatedSnapshotsEnabled()).isFalse();
+        assertThat(copy.isCloudwatchMetricsEnabled()).isFalse();
+        assertThat(copy.getSnapshotSweepIntervalSeconds()).isEqualTo(5L);
+        assertThat(copy.isSnapshotCopyEnabled()).isFalse();
+        assertThat(copy.getSnapshotCopySweepIntervalSeconds()).isEqualTo(6L);
+        assertThat(copy.isScheduledActionsEnabled()).isFalse();
+        assertThat(copy.getScheduledActionSweepIntervalSeconds()).isEqualTo(7L);
+        assertThat(copy.isSpectrumLakeFormationEnforcement()).isTrue();
     }
 
     @Test
