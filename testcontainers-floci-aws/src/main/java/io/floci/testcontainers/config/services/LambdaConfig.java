@@ -38,6 +38,9 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
     private static final boolean DEFAULT_HONOUR_ARCHITECTURES = false;
     private static final int DEFAULT_WARM_POOL_MAX_TOTAL = 0;
     private static final boolean DEFAULT_ACCEPT_EXTERNAL_LAYER_ARNS = false;
+    private static final boolean DEFAULT_RECONCILE_CONTAINERS_ON_STARTUP = true;
+    private static final int DEFAULT_INIT_TIMEOUT_SECONDS = 10;
+    private static final int DEFAULT_CONTAINER_DRAIN_TIMEOUT_SECONDS = 15;
 
     private final boolean ephemeral;
     private final boolean exposeRuntimePorts;
@@ -53,6 +56,7 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
     private final int regionConcurrencyLimit;
     private final int unreservedConcurrencyMin;
     private final HotReload hotReload;
+    private final ReactiveS3Sync reactiveS3Sync;
     private final String awsConfigPath;
     private final List<String> extraHosts;
     private final String ecrBaseUri;
@@ -66,6 +70,9 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
     private final int warmPoolMaxTotal;
     private final String dockerFlags;
     private final boolean acceptExternalLayerArns;
+    private final boolean reconcileContainersOnStartup;
+    private final int initTimeoutSeconds;
+    private final int containerDrainTimeoutSeconds;
 
     private LambdaConfig(Builder builder) {
         super(builder);
@@ -83,6 +90,7 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
         this.regionConcurrencyLimit = builder.regionConcurrencyLimit;
         this.unreservedConcurrencyMin = builder.unreservedConcurrencyMin;
         this.hotReload = builder.hotReload;
+        this.reactiveS3Sync = builder.reactiveS3Sync;
         this.awsConfigPath = builder.awsConfigPath;
         this.extraHosts = builder.extraHosts;
         this.ecrBaseUri = builder.ecrBaseUri;
@@ -96,6 +104,9 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
         this.warmPoolMaxTotal = builder.warmPoolMaxTotal;
         this.dockerFlags = builder.dockerFlags;
         this.acceptExternalLayerArns = builder.acceptExternalLayerArns;
+        this.reconcileContainersOnStartup = builder.reconcileContainersOnStartup;
+        this.initTimeoutSeconds = builder.initTimeoutSeconds;
+        this.containerDrainTimeoutSeconds = builder.containerDrainTimeoutSeconds;
     }
 
     /**
@@ -264,6 +275,16 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
     }
 
     /**
+     * Returns the reactive S3 sync configuration: whether uploading a new object to the S3 bucket and key a function
+     * was deployed from re-deploys that function.
+     *
+     * @return the reactive S3 sync configuration
+     */
+    public ReactiveS3Sync getReactiveS3Sync() {
+        return reactiveS3Sync;
+    }
+
+    /**
      * Returns the host path to bind-mount (read-only) into Lambda containers at
      * {@code /opt/aws-config}, or {@code null} if not set.
      *
@@ -429,6 +450,39 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
         return acceptExternalLayerArns;
     }
 
+    /**
+     * Returns whether Floci removes the Docker Lambda containers of a previous run at startup and retries incomplete cleanup on cold starts.
+     *
+     * <p>Disable it when deployments share a Docker daemon and the same owner identity.
+     *
+     * @return whether Floci removes the Docker Lambda containers of a previous run at startup and retries incomplete cleanup on cold starts
+     */
+    public boolean isReconcileContainersOnStartup() {
+        return reconcileContainersOnStartup;
+    }
+
+    /**
+     * Returns the time, in seconds, a newly started runtime has to finish its init and request its first invocation.
+     *
+     * <p>Matches the 10 second Init phase AWS allows. A function whose timeout is longer waits that long instead; the function's timeout itself starts when the invocation is dispatched.
+     *
+     * @return the time, in seconds, a newly started runtime has to finish its init and request its first invocation
+     */
+    public int getInitTimeoutSeconds() {
+        return initTimeoutSeconds;
+    }
+
+    /**
+     * Returns the shutdown drain budget, in seconds, shared by provisioned and on-demand Lambda containers.
+     *
+     * <p>Values outside 1 through 300 seconds make Floci fail to start.
+     *
+     * @return the shutdown drain budget, in seconds, shared by provisioned and on-demand Lambda containers
+     */
+    public int getContainerDrainTimeoutSeconds() {
+        return containerDrainTimeoutSeconds;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_LAMBDA_ENABLED", String.valueOf(isEnabled()));
@@ -453,6 +507,9 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
             if (hotReload.allowedPaths().isPresent() && !hotReload.allowedPaths().get().isEmpty()) {
                 container.withEnv("FLOCI_SERVICES_LAMBDA_HOT_RELOAD_ALLOWED_PATHS", String.join(",", hotReload.allowedPaths().get()));
             }
+
+            container.withEnv("FLOCI_SERVICES_LAMBDA_REACTIVE_S3_SYNC_ENABLED", String.valueOf(reactiveS3Sync.enabled()));
+            container.withEnv("FLOCI_SERVICES_LAMBDA_REACTIVE_S3_SYNC_ASYNC", String.valueOf(reactiveS3Sync.async()));
 
             if (dockerNetwork != null) {
                 container.withEnv("FLOCI_SERVICES_LAMBDA_DOCKER_NETWORK", dockerNetwork);
@@ -490,6 +547,9 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
             }
 
             container.withEnv("FLOCI_SERVICES_LAMBDA_ACCEPT_EXTERNAL_LAYER_ARNS", String.valueOf(acceptExternalLayerArns));
+            container.withEnv("FLOCI_SERVICES_LAMBDA_RECONCILE_CONTAINERS_ON_STARTUP", String.valueOf(reconcileContainersOnStartup));
+            container.withEnv("FLOCI_SERVICES_LAMBDA_INIT_TIMEOUT_SECONDS", String.valueOf(initTimeoutSeconds));
+            container.withEnv("FLOCI_SERVICES_LAMBDA_CONTAINER_DRAIN_TIMEOUT_SECONDS", String.valueOf(containerDrainTimeoutSeconds));
         }
     }
 
@@ -538,6 +598,29 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
         Optional<List<String>> allowedPaths();
     }
 
+    /**
+     * Configuration for re-deploying functions when their code object in S3 changes.
+     */
+    public interface ReactiveS3Sync {
+        /**
+         * When true, uploading a new object to the S3 bucket and key a function was deployed from re-deploys that
+         * function's {@code $LATEST} and drains its warm containers. When false, the object is only stored, as in
+         * AWS. Enabled by default.
+         *
+         * @return {@code true} if reactive S3 sync is enabled
+         */
+        boolean enabled();
+
+        /**
+         * When true, the re-deploy runs in the background so the S3 upload returns at once; the function reports
+         * {@code LastUpdateStatus=InProgress} until it finishes. When false (the default), the upload returns only
+         * after the function has been re-deployed.
+         *
+         * @return {@code true} if the re-deploy runs asynchronously
+         */
+        boolean async();
+    }
+
     @Override
     public boolean requiresDockerSocket() {
         return isEnabled();
@@ -562,6 +645,7 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
         private int regionConcurrencyLimit = DEFAULT_REGION_CONCURRENCY_LIMIT;
         private int unreservedConcurrencyMin = DEFAULT_UNRESERVED_CONCURRENCY_MIN;
         private HotReload hotReload = new DefaultHotReload(false, null);
+        private ReactiveS3Sync reactiveS3Sync = new DefaultReactiveS3Sync(true, false);
         private String awsConfigPath;
         private List<String> extraHosts;
         private String ecrBaseUri = DEFAULT_ECR_BASE_URI;
@@ -575,6 +659,9 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
         private int warmPoolMaxTotal = DEFAULT_WARM_POOL_MAX_TOTAL;
         private String dockerFlags;
         private boolean acceptExternalLayerArns = DEFAULT_ACCEPT_EXTERNAL_LAYER_ARNS;
+        private boolean reconcileContainersOnStartup = DEFAULT_RECONCILE_CONTAINERS_ON_STARTUP;
+        private int initTimeoutSeconds = DEFAULT_INIT_TIMEOUT_SECONDS;
+        private int containerDrainTimeoutSeconds = DEFAULT_CONTAINER_DRAIN_TIMEOUT_SECONDS;
 
         private Builder() {
             // Allow instantiation only via LambdaConfig.builder()
@@ -601,6 +688,7 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
             this.regionConcurrencyLimit = instance.getRegionConcurrencyLimit();
             this.unreservedConcurrencyMin = instance.getUnreservedConcurrencyMin();
             this.hotReload = instance.getHotReload();
+            this.reactiveS3Sync = instance.getReactiveS3Sync();
             this.awsConfigPath = instance.getAwsConfigPath();
             this.extraHosts = instance.getExtraHosts().orElse(null);
             this.ecrBaseUri = instance.getEcrBaseUri();
@@ -614,6 +702,9 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
             this.warmPoolMaxTotal = instance.getWarmPoolMaxTotal();
             this.dockerFlags = instance.getDockerFlags().orElse(null);
             this.acceptExternalLayerArns = instance.isAcceptExternalLayerArns();
+            this.reconcileContainersOnStartup = instance.isReconcileContainersOnStartup();
+            this.initTimeoutSeconds = instance.getInitTimeoutSeconds();
+            this.containerDrainTimeoutSeconds = instance.getContainerDrainTimeoutSeconds();
         }
 
         /**
@@ -784,6 +875,20 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
         }
 
         /**
+         * Sets whether uploading a new object to the S3 bucket and key a function was deployed from re-deploys that
+         * function, and whether that re-deploy runs in the background (see {@link ReactiveS3Sync}).
+         *
+         * @param enabled whether reactive S3 sync is enabled (default {@code true})
+         * @param async whether the re-deploy runs in the background so the S3 upload returns at once
+         *              (default {@code false})
+         * @return this builder
+         */
+        public Builder reactiveS3Sync(boolean enabled, boolean async) {
+            this.reactiveS3Sync = new DefaultReactiveS3Sync(enabled, async);
+            return this;
+        }
+
+        /**
          * Sets the host path to bind-mount (read-only) into Lambda containers at
          * {@code /opt/aws-config}. When set, no AWS credential env vars are injected;
          * instead {@code AWS_SHARED_CREDENTIALS_FILE} and {@code AWS_CONFIG_FILE} are
@@ -831,6 +936,10 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
          * Sets full image references that override the default image of individual runtimes, keyed by
          * Lambda runtime identifier, e.g. {@code Map.of("python3.12",
          * "public.ecr.aws/lambda/python:3.12@sha256:<digest>")} to pin a runtime to a digest.
+         *
+         * <p>A key of the form {@code <runtime>.<os>.<arch>} (e.g. {@code python3.12.linux.arm64}) overrides the
+         * image only for that Docker platform, and takes precedence over the runtime-wide key when Floci launches
+         * the runtime for that platform.
          *
          * <p>Runtimes without an entry keep the image derived from the {@link #ecrBaseUri(String) ECR base
          * URI}. The overrides apply to zip-based functions only; image-package functions are unaffected.
@@ -972,6 +1081,45 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
         }
 
         /**
+         * Sets whether Floci removes the Docker Lambda containers of a previous run at startup and retries incomplete cleanup on cold starts.
+         *
+         * <p>Disable it when deployments share a Docker daemon and the same owner identity.
+         *
+         * @param reconcileContainersOnStartup whether Floci removes the Docker Lambda containers of a previous run at startup and retries incomplete cleanup on cold starts (default {@value DEFAULT_RECONCILE_CONTAINERS_ON_STARTUP})
+         * @return this builder
+         */
+        public Builder reconcileContainersOnStartup(boolean reconcileContainersOnStartup) {
+            this.reconcileContainersOnStartup = reconcileContainersOnStartup;
+            return this;
+        }
+
+        /**
+         * Sets the time, in seconds, a newly started runtime has to finish its init and request its first invocation.
+         *
+         * <p>Matches the 10 second Init phase AWS allows. A function whose timeout is longer waits that long instead; the function's timeout itself starts when the invocation is dispatched.
+         *
+         * @param initTimeoutSeconds the time, in seconds, a newly started runtime has to finish its init and request its first invocation (default {@value DEFAULT_INIT_TIMEOUT_SECONDS})
+         * @return this builder
+         */
+        public Builder initTimeoutSeconds(int initTimeoutSeconds) {
+            this.initTimeoutSeconds = initTimeoutSeconds;
+            return this;
+        }
+
+        /**
+         * Sets the shutdown drain budget, in seconds, shared by provisioned and on-demand Lambda containers.
+         *
+         * <p>Values outside 1 through 300 seconds make Floci fail to start.
+         *
+         * @param containerDrainTimeoutSeconds the shutdown drain budget, in seconds, shared by provisioned and on-demand Lambda containers (default {@value DEFAULT_CONTAINER_DRAIN_TIMEOUT_SECONDS})
+         * @return this builder
+         */
+        public Builder containerDrainTimeoutSeconds(int containerDrainTimeoutSeconds) {
+            this.containerDrainTimeoutSeconds = containerDrainTimeoutSeconds;
+            return this;
+        }
+
+        /**
          * Creates an immutable {@link LambdaConfig} from this builder.
          *
          * @return the Lambda configuration
@@ -990,5 +1138,11 @@ public class LambdaConfig extends AbstractServiceConfig<LambdaConfig.Builder> {
         public Optional<List<String>> allowedPaths() {
             return Optional.ofNullable(allowedPathsList);
         }
+    }
+
+    /**
+     * Default implementation of {@link ReactiveS3Sync}.
+     */
+    private record DefaultReactiveS3Sync(boolean enabled, boolean async) implements ReactiveS3Sync {
     }
 }

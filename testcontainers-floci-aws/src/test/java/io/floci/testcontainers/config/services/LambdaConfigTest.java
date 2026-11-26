@@ -40,6 +40,11 @@ class LambdaConfigTest {
         assertThat(config.getWarmPoolMaxTotal()).isEqualTo(0);
         assertThat(config.getDockerFlags()).isEmpty();
         assertThat(config.isAcceptExternalLayerArns()).isFalse();
+        assertThat(config.isReconcileContainersOnStartup()).isTrue();
+        assertThat(config.getInitTimeoutSeconds()).isEqualTo(10);
+        assertThat(config.getContainerDrainTimeoutSeconds()).isEqualTo(15);
+        assertThat(config.getReactiveS3Sync().enabled()).isTrue();
+        assertThat(config.getReactiveS3Sync().async()).isFalse();
     }
 
     @Test
@@ -71,6 +76,10 @@ class LambdaConfigTest {
                 .warmPoolMaxTotal(8)
                 .dockerFlags("--cpus=1 --memory=512m")
                 .acceptExternalLayerArns(true)
+                .reconcileContainersOnStartup(false)
+                .initTimeoutSeconds(30)
+                .containerDrainTimeoutSeconds(5)
+                .reactiveS3Sync(false, true)
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.isEphemeral()).isTrue();
@@ -103,6 +112,11 @@ class LambdaConfigTest {
         assertThat(config.getWarmPoolMaxTotal()).isEqualTo(8);
         assertThat(config.getDockerFlags()).contains("--cpus=1 --memory=512m");
         assertThat(config.isAcceptExternalLayerArns()).isTrue();
+        assertThat(config.isReconcileContainersOnStartup()).isFalse();
+        assertThat(config.getInitTimeoutSeconds()).isEqualTo(30);
+        assertThat(config.getContainerDrainTimeoutSeconds()).isEqualTo(5);
+        assertThat(config.getReactiveS3Sync().enabled()).isFalse();
+        assertThat(config.getReactiveS3Sync().async()).isTrue();
     }
 
     @Test
@@ -136,7 +150,12 @@ class LambdaConfigTest {
                 .doesNotContainKey("FLOCI_SERVICES_LAMBDA_WARM_POOL_MAX_PER_FUNCTION")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_WARM_POOL_MAX_TOTAL", "0")
                 .doesNotContainKey("FLOCI_SERVICES_LAMBDA_DOCKER_FLAGS")
-                .containsEntry("FLOCI_SERVICES_LAMBDA_ACCEPT_EXTERNAL_LAYER_ARNS", "false");
+                .containsEntry("FLOCI_SERVICES_LAMBDA_ACCEPT_EXTERNAL_LAYER_ARNS", "false")
+                .containsEntry("FLOCI_SERVICES_LAMBDA_RECONCILE_CONTAINERS_ON_STARTUP", "true")
+                .containsEntry("FLOCI_SERVICES_LAMBDA_INIT_TIMEOUT_SECONDS", "10")
+                .containsEntry("FLOCI_SERVICES_LAMBDA_CONTAINER_DRAIN_TIMEOUT_SECONDS", "15")
+                .containsEntry("FLOCI_SERVICES_LAMBDA_REACTIVE_S3_SYNC_ENABLED", "true")
+                .containsEntry("FLOCI_SERVICES_LAMBDA_REACTIVE_S3_SYNC_ASYNC", "false");
     }
 
     @Test
@@ -168,6 +187,10 @@ class LambdaConfigTest {
                 .warmPoolMaxTotal(8)
                 .dockerFlags("--cpus=1 --memory=512m")
                 .acceptExternalLayerArns(true)
+                .reconcileContainersOnStartup(false)
+                .initTimeoutSeconds(30)
+                .containerDrainTimeoutSeconds(5)
+                .reactiveS3Sync(false, true)
                 .build()
                 .applyEnvVarsToContainer(container);
 
@@ -198,7 +221,12 @@ class LambdaConfigTest {
                 .containsEntry("FLOCI_SERVICES_LAMBDA_WARM_POOL_MAX_PER_FUNCTION", "2")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_WARM_POOL_MAX_TOTAL", "8")
                 .containsEntry("FLOCI_SERVICES_LAMBDA_DOCKER_FLAGS", "--cpus=1 --memory=512m")
-                .containsEntry("FLOCI_SERVICES_LAMBDA_ACCEPT_EXTERNAL_LAYER_ARNS", "true");
+                .containsEntry("FLOCI_SERVICES_LAMBDA_ACCEPT_EXTERNAL_LAYER_ARNS", "true")
+                .containsEntry("FLOCI_SERVICES_LAMBDA_RECONCILE_CONTAINERS_ON_STARTUP", "false")
+                .containsEntry("FLOCI_SERVICES_LAMBDA_INIT_TIMEOUT_SECONDS", "30")
+                .containsEntry("FLOCI_SERVICES_LAMBDA_CONTAINER_DRAIN_TIMEOUT_SECONDS", "5")
+                .containsEntry("FLOCI_SERVICES_LAMBDA_REACTIVE_S3_SYNC_ENABLED", "false")
+                .containsEntry("FLOCI_SERVICES_LAMBDA_REACTIVE_S3_SYNC_ASYNC", "true");
     }
 
     @Test
@@ -216,7 +244,12 @@ class LambdaConfigTest {
                 .doesNotContainKey("FLOCI_SERVICES_LAMBDA_WARM_POOL_MAX_PER_FUNCTION")
                 .doesNotContainKey("FLOCI_SERVICES_LAMBDA_WARM_POOL_MAX_TOTAL")
                 .doesNotContainKey("FLOCI_SERVICES_LAMBDA_DOCKER_FLAGS")
-                .doesNotContainKey("FLOCI_SERVICES_LAMBDA_ACCEPT_EXTERNAL_LAYER_ARNS");
+                .doesNotContainKey("FLOCI_SERVICES_LAMBDA_ACCEPT_EXTERNAL_LAYER_ARNS")
+                .doesNotContainKey("FLOCI_SERVICES_LAMBDA_RECONCILE_CONTAINERS_ON_STARTUP")
+                .doesNotContainKey("FLOCI_SERVICES_LAMBDA_INIT_TIMEOUT_SECONDS")
+                .doesNotContainKey("FLOCI_SERVICES_LAMBDA_CONTAINER_DRAIN_TIMEOUT_SECONDS")
+                .doesNotContainKey("FLOCI_SERVICES_LAMBDA_REACTIVE_S3_SYNC_ENABLED")
+                .doesNotContainKey("FLOCI_SERVICES_LAMBDA_REACTIVE_S3_SYNC_ASYNC");
     }
 
     @Test
@@ -397,6 +430,10 @@ class LambdaConfigTest {
                 .warmPoolMaxTotal(8)
                 .dockerFlags("--cpus=1 --memory=512m")
                 .acceptExternalLayerArns(true)
+                .reconcileContainersOnStartup(false)
+                .initTimeoutSeconds(30)
+                .containerDrainTimeoutSeconds(5)
+                .reactiveS3Sync(false, true)
                 .build();
         LambdaConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
@@ -429,6 +466,11 @@ class LambdaConfigTest {
         assertThat(copy.getWarmPoolMaxTotal()).isEqualTo(8);
         assertThat(copy.getDockerFlags()).contains("--cpus=1 --memory=512m");
         assertThat(copy.isAcceptExternalLayerArns()).isTrue();
+        assertThat(copy.isReconcileContainersOnStartup()).isFalse();
+        assertThat(copy.getInitTimeoutSeconds()).isEqualTo(30);
+        assertThat(copy.getContainerDrainTimeoutSeconds()).isEqualTo(5);
+        assertThat(copy.getReactiveS3Sync().enabled()).isFalse();
+        assertThat(copy.getReactiveS3Sync().async()).isTrue();
     }
 
     @Test
