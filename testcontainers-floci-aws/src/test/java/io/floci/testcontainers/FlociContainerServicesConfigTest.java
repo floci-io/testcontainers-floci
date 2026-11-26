@@ -1102,6 +1102,14 @@ class FlociContainerServicesConfigTest {
                 "FLOCI_SERVICES_PAYMENTCRYPTOGRAPHY_ENABLED", "false");
     }
 
+    @Test
+    void shouldWireResourceGroupsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withResourceGroupsConfig(cfg -> cfg.enabled(false)),
+                c -> c.getResourceGroupsConfig().isEnabled(), false,
+                "FLOCI_SERVICES_RESOURCE_GROUPS_ENABLED", "false");
+    }
+
     // --- Cross-cutting configs (config/) --------------------------------------------------------
 
     @Test
