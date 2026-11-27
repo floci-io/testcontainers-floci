@@ -227,6 +227,14 @@ class FlociGcpContainerServicesConfigTest {
     }
 
     @Test
+    void shouldWireCloudBillingConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withCloudBillingConfig(cfg -> cfg.enabled(false)),
+                c -> c.getCloudBillingConfig().isEnabled(), false,
+                "FLOCI_GCP_SERVICES_CLOUDBILLING_ENABLED", "false");
+    }
+
+    @Test
     void shouldWireFirebaseAuthConfigIntoContainer() {
         assertConfigWired(
                 c -> c.withFirebaseAuthConfig(cfg -> cfg.enabled(false)),
@@ -250,6 +258,14 @@ class FlociGcpContainerServicesConfigTest {
                 c -> c.withLocationsConfig(cfg -> cfg.strict(true)),
                 c -> c.getLocationsConfig().isStrict(), true,
                 "FLOCI_GCP_LOCATIONS_STRICT", "true");
+    }
+
+    @Test
+    void shouldWireProjectsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withProjectsConfig(cfg -> cfg.strict(true)),
+                c -> c.getProjectsConfig().isStrict(), true,
+                "FLOCI_GCP_PROJECTS_STRICT", "true");
     }
 
     @Test

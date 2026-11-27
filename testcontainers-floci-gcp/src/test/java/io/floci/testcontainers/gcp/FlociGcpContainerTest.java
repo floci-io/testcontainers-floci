@@ -85,6 +85,7 @@ class FlociGcpContainerTest {
                     container.getGkeConfig(),
                     container.getServiceUsageConfig(),
                     container.getResourceManagerConfig(),
+                    container.getCloudBillingConfig(),
                     container.getFirebaseAuthConfig(),
                     container.getBigQueryConfig()
             )).noneMatch(AbstractServiceConfig::isEnabled);

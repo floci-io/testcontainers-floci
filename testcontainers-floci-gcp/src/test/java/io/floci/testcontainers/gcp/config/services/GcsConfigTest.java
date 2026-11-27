@@ -14,6 +14,7 @@ class GcsConfigTest {
         assertThat(config.isEnabled()).isTrue();
         assertThat(config.getUploadSessionIdleTimeoutSeconds()).isEqualTo(604800);
         assertThat(config.getUploadSessionSweepIntervalSeconds()).isEqualTo(3600);
+        assertThat(config.getSoftDeleteSweepIntervalSeconds()).isEqualTo(3600);
     }
 
     @Test
@@ -22,10 +23,12 @@ class GcsConfigTest {
                 .enabled(false)
                 .uploadSessionIdleTimeoutSeconds(3600)
                 .uploadSessionSweepIntervalSeconds(60)
+                .softDeleteSweepIntervalSeconds(0)
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.getUploadSessionIdleTimeoutSeconds()).isEqualTo(3600);
         assertThat(config.getUploadSessionSweepIntervalSeconds()).isEqualTo(60);
+        assertThat(config.getSoftDeleteSweepIntervalSeconds()).isZero();
     }
 
     @Test
@@ -36,7 +39,8 @@ class GcsConfigTest {
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_GCP_SERVICES_GCS_ENABLED", "true")
                 .containsEntry("FLOCI_GCP_SERVICES_GCS_UPLOAD_SESSION_IDLE_TIMEOUT_SECONDS", "604800")
-                .containsEntry("FLOCI_GCP_SERVICES_GCS_UPLOAD_SESSION_SWEEP_INTERVAL_SECONDS", "3600");
+                .containsEntry("FLOCI_GCP_SERVICES_GCS_UPLOAD_SESSION_SWEEP_INTERVAL_SECONDS", "3600")
+                .containsEntry("FLOCI_GCP_SERVICES_GCS_SOFT_DELETE_SWEEP_INTERVAL_SECONDS", "3600");
     }
 
     @Test
@@ -45,13 +49,15 @@ class GcsConfigTest {
         GcsConfig.builder()
                 .uploadSessionIdleTimeoutSeconds(3600)
                 .uploadSessionSweepIntervalSeconds(60)
+                .softDeleteSweepIntervalSeconds(0)
                 .build()
                 .applyEnvVarsToContainer(container);
 
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_GCP_SERVICES_GCS_ENABLED", "true")
                 .containsEntry("FLOCI_GCP_SERVICES_GCS_UPLOAD_SESSION_IDLE_TIMEOUT_SECONDS", "3600")
-                .containsEntry("FLOCI_GCP_SERVICES_GCS_UPLOAD_SESSION_SWEEP_INTERVAL_SECONDS", "60");
+                .containsEntry("FLOCI_GCP_SERVICES_GCS_UPLOAD_SESSION_SWEEP_INTERVAL_SECONDS", "60")
+                .containsEntry("FLOCI_GCP_SERVICES_GCS_SOFT_DELETE_SWEEP_INTERVAL_SECONDS", "0");
     }
 
     @Test
@@ -62,7 +68,8 @@ class GcsConfigTest {
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_GCP_SERVICES_GCS_ENABLED", "false")
                 .doesNotContainKey("FLOCI_GCP_SERVICES_GCS_UPLOAD_SESSION_IDLE_TIMEOUT_SECONDS")
-                .doesNotContainKey("FLOCI_GCP_SERVICES_GCS_UPLOAD_SESSION_SWEEP_INTERVAL_SECONDS");
+                .doesNotContainKey("FLOCI_GCP_SERVICES_GCS_UPLOAD_SESSION_SWEEP_INTERVAL_SECONDS")
+                .doesNotContainKey("FLOCI_GCP_SERVICES_GCS_SOFT_DELETE_SWEEP_INTERVAL_SECONDS");
     }
 
     @Test
@@ -71,10 +78,12 @@ class GcsConfigTest {
                 .enabled(false)
                 .uploadSessionIdleTimeoutSeconds(3600)
                 .uploadSessionSweepIntervalSeconds(60)
+                .softDeleteSweepIntervalSeconds(0)
                 .build();
         GcsConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
         assertThat(copy.getUploadSessionIdleTimeoutSeconds()).isEqualTo(3600);
         assertThat(copy.getUploadSessionSweepIntervalSeconds()).isEqualTo(60);
+        assertThat(copy.getSoftDeleteSweepIntervalSeconds()).isZero();
     }
 }

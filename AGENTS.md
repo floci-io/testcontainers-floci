@@ -159,8 +159,8 @@ Built like the Azure module (`registerServiceConfig(...)`/`updateServiceConfig(.
 `*ConfigTest`s, `FlociGcpContainerServicesConfigTest`, explicit `FlociGcpContainerTest.shouldDisableAllServices()`
 list), with these differences:
 
-- The migrated cross-cutting configs are `config/TlsConfig` and `config/LocationsConfig` (`locations.strict`); Floci
-  GCP has no `auth` section. The root property `default-project-id` is exposed as `withProjectId(...)`/`getProjectId()` on the container. `getEmulatorHost()`
+- The migrated cross-cutting configs are `config/TlsConfig`, `config/LocationsConfig` (`locations.strict`) and
+  `config/ProjectsConfig` (`projects.strict`); Floci GCP has no `auth` section. The root property `default-project-id` is exposed as `withProjectId(...)`/`getProjectId()` on the container. `getEmulatorHost()`
   returns `host:port` for gRPC channels and `*_EMULATOR_HOST`-style settings.
 - Naming follows Floci GCP (`mock`, not `mocked`). Nested groups that occur only once are flattened into plain
   properties (`cloudrun.execution.*` → `CloudRunConfig.startupTimeout(...)` etc., `bigquery.duck.*` →
@@ -575,8 +575,8 @@ The same process applies to `testcontainers-floci-gcp`, with these values (comma
 | Pinned test image        | The `floci/floci-gcp:<x.y.z>` line in `.github/docker-images.txt`; target release from `gh api repos/floci-io/floci-gcp/releases/latest` (tags `x.y.z`) |
 
 Initial migration: `1bb0845c38b163ed28d58b5ff930f25cf90ab634` (floci-gcp `main`, 2026-10-04). Classify the diff as for
-AWS: migrate `ServicesConfig` (the shared `dockerNetwork()` is covered by `withDedicatedNetwork()`); `TlsConfig` and
-`LocationsConfig` are migrated cross-cutting classes and must be kept in sync too; `defaultProjectId` maps to
+AWS: migrate `ServicesConfig` (the shared `dockerNetwork()` is covered by `withDedicatedNetwork()`); `TlsConfig`,
+`LocationsConfig` and `ProjectsConfig` are migrated cross-cutting classes and must be kept in sync too; `defaultProjectId` maps to
 `withProjectId(...)`; only summarize everything else (`dns`, `storage`, `docker`, `init-hooks`, other root
 properties). Commit scope is `gcp` (e.g. `feat(gcp): add <property> config property`).
 
