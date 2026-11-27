@@ -20,12 +20,14 @@ public class S3Config extends AbstractServiceConfig<S3Config.Builder> {
     private static final boolean DEFAULT_GLOBAL_BUCKET_NAMESPACE = false;
     private static final boolean DEFAULT_LIFECYCLE_SWEEP_ENABLED = true;
     private static final long DEFAULT_LIFECYCLE_SWEEP_INTERVAL_SECONDS = 60;
+    private static final long DEFAULT_RESTORE_COMPLETION_DELAY_SECONDS = 0L;
 
     private final int defaultPresignExpirySeconds;
     private final boolean enforceAuth;
     private final boolean globalBucketNamespace;
     private final boolean lifecycleSweepEnabled;
     private final long lifecycleSweepIntervalSeconds;
+    private final long restoreCompletionDelaySeconds;
 
     private S3Config(Builder builder) {
         super(builder);
@@ -34,6 +36,7 @@ public class S3Config extends AbstractServiceConfig<S3Config.Builder> {
         this.globalBucketNamespace = builder.globalBucketNamespace;
         this.lifecycleSweepEnabled = builder.lifecycleSweepEnabled;
         this.lifecycleSweepIntervalSeconds = builder.lifecycleSweepIntervalSeconds;
+        this.restoreCompletionDelaySeconds = builder.restoreCompletionDelaySeconds;
     }
 
     /**
@@ -103,6 +106,15 @@ public class S3Config extends AbstractServiceConfig<S3Config.Builder> {
         return lifecycleSweepIntervalSeconds;
     }
 
+    /**
+     * Returns the time, in seconds, before RestoreObject reports a completed temporary copy.
+     *
+     * @return the time, in seconds, before RestoreObject reports a completed temporary copy
+     */
+    public long getRestoreCompletionDelaySeconds() {
+        return restoreCompletionDelaySeconds;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_S3_ENABLED", String.valueOf(isEnabled()));
@@ -113,6 +125,7 @@ public class S3Config extends AbstractServiceConfig<S3Config.Builder> {
             container.withEnv("FLOCI_SERVICES_S3_GLOBAL_BUCKET_NAMESPACE", String.valueOf(globalBucketNamespace));
             container.withEnv("FLOCI_SERVICES_S3_LIFECYCLE_SWEEP_ENABLED", String.valueOf(lifecycleSweepEnabled));
             container.withEnv("FLOCI_SERVICES_S3_LIFECYCLE_SWEEP_INTERVAL_SECONDS", String.valueOf(lifecycleSweepIntervalSeconds));
+            container.withEnv("FLOCI_SERVICES_S3_RESTORE_COMPLETION_DELAY_SECONDS", String.valueOf(restoreCompletionDelaySeconds));
         }
     }
 
@@ -126,6 +139,7 @@ public class S3Config extends AbstractServiceConfig<S3Config.Builder> {
         private boolean globalBucketNamespace = DEFAULT_GLOBAL_BUCKET_NAMESPACE;
         private boolean lifecycleSweepEnabled = DEFAULT_LIFECYCLE_SWEEP_ENABLED;
         private long lifecycleSweepIntervalSeconds = DEFAULT_LIFECYCLE_SWEEP_INTERVAL_SECONDS;
+        private long restoreCompletionDelaySeconds = DEFAULT_RESTORE_COMPLETION_DELAY_SECONDS;
 
         private Builder() {
             // Allow instantiation only via S3Config.builder()
@@ -143,6 +157,7 @@ public class S3Config extends AbstractServiceConfig<S3Config.Builder> {
             this.globalBucketNamespace = instance.isGlobalBucketNamespace();
             this.lifecycleSweepEnabled = instance.isLifecycleSweepEnabled();
             this.lifecycleSweepIntervalSeconds = instance.getLifecycleSweepIntervalSeconds();
+            this.restoreCompletionDelaySeconds = instance.getRestoreCompletionDelaySeconds();
         }
 
         /**
@@ -205,6 +220,17 @@ public class S3Config extends AbstractServiceConfig<S3Config.Builder> {
          */
         public Builder lifecycleSweepIntervalSeconds(long lifecycleSweepIntervalSeconds) {
             this.lifecycleSweepIntervalSeconds = lifecycleSweepIntervalSeconds;
+            return this;
+        }
+
+        /**
+         * Sets the time, in seconds, before RestoreObject reports a completed temporary copy.
+         *
+         * @param restoreCompletionDelaySeconds the time, in seconds, before RestoreObject reports a completed temporary copy (default {@value DEFAULT_RESTORE_COMPLETION_DELAY_SECONDS})
+         * @return this builder
+         */
+        public Builder restoreCompletionDelaySeconds(long restoreCompletionDelaySeconds) {
+            this.restoreCompletionDelaySeconds = restoreCompletionDelaySeconds;
             return this;
         }
 

@@ -15,6 +15,7 @@ class TlsConfigTest {
         assertThat(config.isSelfSigned()).isTrue();
         assertThat(config.getCertPath()).isEmpty();
         assertThat(config.getKeyPath()).isEmpty();
+        assertThat(config.getExtraCaPath()).isEmpty();
         assertThat(config.getAwsHttpsPort()).isEqualTo(443);
     }
 
@@ -25,12 +26,14 @@ class TlsConfigTest {
                 .selfSigned(false)
                 .certPath("/certs/server.crt")
                 .keyPath("/certs/server.key")
+                .extraCaPath("/certs/extra-ca.pem")
                 .awsHttpsPort(8443)
                 .build();
         assertThat(config.isEnabled()).isTrue();
         assertThat(config.isSelfSigned()).isFalse();
         assertThat(config.getCertPath()).contains("/certs/server.crt");
         assertThat(config.getKeyPath()).contains("/certs/server.key");
+        assertThat(config.getExtraCaPath()).contains("/certs/extra-ca.pem");
         assertThat(config.getAwsHttpsPort()).isEqualTo(8443);
     }
 
@@ -51,7 +54,22 @@ class TlsConfigTest {
                 .containsEntry("FLOCI_TLS_ENABLED", "false")
                 .doesNotContainKey("FLOCI_TLS_SELF_SIGNED")
                 .doesNotContainKey("FLOCI_TLS_CERT_PATH")
-                .doesNotContainKey("FLOCI_TLS_KEY_PATH");
+                .doesNotContainKey("FLOCI_TLS_KEY_PATH")
+                .doesNotContainKey("FLOCI_TLS_EXTRA_CA_PATH");
+    }
+
+    @Test
+    void shouldApplyExtraCaPathEnvVarWhileTlsIsDisabled() {
+        GenericContainer<?> container = genericContainer();
+        TlsConfig.builder()
+                .extraCaPath("/certs/extra-ca.pem")
+                .build()
+                .applyEnvVarsToContainer(container);
+
+        assertThat(container.getEnvMap())
+                .containsEntry("FLOCI_TLS_ENABLED", "false")
+                .containsEntry("FLOCI_TLS_EXTRA_CA_PATH", "/certs/extra-ca.pem")
+                .doesNotContainKey("FLOCI_TLS_SELF_SIGNED");
     }
 
     @Test
@@ -78,6 +96,7 @@ class TlsConfigTest {
                 .selfSigned(false)
                 .certPath("/certs/server.crt")
                 .keyPath("/certs/server.key")
+                .extraCaPath("/certs/extra-ca.pem")
                 .awsHttpsPort(8443)
                 .build()
                 .applyEnvVarsToContainer(container);
@@ -87,6 +106,7 @@ class TlsConfigTest {
                 .containsEntry("FLOCI_TLS_SELF_SIGNED", "false")
                 .containsEntry("FLOCI_TLS_CERT_PATH", "/certs/server.crt")
                 .containsEntry("FLOCI_TLS_KEY_PATH", "/certs/server.key")
+                .containsEntry("FLOCI_TLS_EXTRA_CA_PATH", "/certs/extra-ca.pem")
                 .containsEntry("FLOCI_TLS_AWS_HTTPS_PORT", "8443");
     }
 
@@ -110,6 +130,7 @@ class TlsConfigTest {
                 .selfSigned(false)
                 .certPath("/certs/server.crt")
                 .keyPath("/certs/server.key")
+                .extraCaPath("/certs/extra-ca.pem")
                 .awsHttpsPort(8443)
                 .build();
 
@@ -119,6 +140,7 @@ class TlsConfigTest {
         assertThat(copy.isSelfSigned()).isFalse();
         assertThat(copy.getCertPath()).contains("/certs/server.crt");
         assertThat(copy.getKeyPath()).contains("/certs/server.key");
+        assertThat(copy.getExtraCaPath()).contains("/certs/extra-ca.pem");
         assertThat(copy.getAwsHttpsPort()).isEqualTo(8443);
     }
 }

@@ -12,10 +12,10 @@ class Route53ConfigTest {
     void shouldApplyDefaultRoute53Config() {
         Route53Config config = Route53Config.builder().build();
         assertThat(config.isEnabled()).isTrue();
-        assertThat(config.getDefaultNameserver1()).isEqualTo("ns-1.awsdns-01.org");
-        assertThat(config.getDefaultNameserver2()).isEqualTo("ns-2.awsdns-02.net");
-        assertThat(config.getDefaultNameserver3()).isEqualTo("ns-3.awsdns-03.com");
-        assertThat(config.getDefaultNameserver4()).isEqualTo("ns-4.awsdns-04.co.uk");
+        assertThat(config.getDefaultNameserver1()).isEmpty();
+        assertThat(config.getDefaultNameserver2()).isEmpty();
+        assertThat(config.getDefaultNameserver3()).isEmpty();
+        assertThat(config.getDefaultNameserver4()).isEmpty();
         assertThat(config.getVpcAssociationControlPlaneDelayMs()).isEqualTo(0L);
     }
 
@@ -30,10 +30,10 @@ class Route53ConfigTest {
                 .vpcAssociationControlPlaneDelayMs(2000L)
                 .build();
         assertThat(config.isEnabled()).isFalse();
-        assertThat(config.getDefaultNameserver1()).isEqualTo("ns1.example.com");
-        assertThat(config.getDefaultNameserver2()).isEqualTo("ns2.example.com");
-        assertThat(config.getDefaultNameserver3()).isEqualTo("ns3.example.com");
-        assertThat(config.getDefaultNameserver4()).isEqualTo("ns4.example.com");
+        assertThat(config.getDefaultNameserver1()).contains("ns1.example.com");
+        assertThat(config.getDefaultNameserver2()).contains("ns2.example.com");
+        assertThat(config.getDefaultNameserver3()).contains("ns3.example.com");
+        assertThat(config.getDefaultNameserver4()).contains("ns4.example.com");
         assertThat(config.getVpcAssociationControlPlaneDelayMs()).isEqualTo(2000L);
     }
 
@@ -44,10 +44,10 @@ class Route53ConfigTest {
 
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_SERVICES_ROUTE53_ENABLED", "true")
-                .containsEntry("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_1", "ns-1.awsdns-01.org")
-                .containsEntry("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_2", "ns-2.awsdns-02.net")
-                .containsEntry("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_3", "ns-3.awsdns-03.com")
-                .containsEntry("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_4", "ns-4.awsdns-04.co.uk")
+                .doesNotContainKey("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_1")
+                .doesNotContainKey("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_2")
+                .doesNotContainKey("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_3")
+                .doesNotContainKey("FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_4")
                 .containsEntry("FLOCI_SERVICES_ROUTE53_VPC_ASSOCIATION_CONTROL_PLANE_DELAY_MS", "0");
     }
 
@@ -93,10 +93,10 @@ class Route53ConfigTest {
                 .build();
         Route53Config copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
-        assertThat(copy.getDefaultNameserver1()).isEqualTo("ns1.example.com");
-        assertThat(copy.getDefaultNameserver2()).isEqualTo("ns2.example.com");
-        assertThat(copy.getDefaultNameserver3()).isEqualTo("ns3.example.com");
-        assertThat(copy.getDefaultNameserver4()).isEqualTo("ns4.example.com");
+        assertThat(copy.getDefaultNameserver1()).contains("ns1.example.com");
+        assertThat(copy.getDefaultNameserver2()).contains("ns2.example.com");
+        assertThat(copy.getDefaultNameserver3()).contains("ns3.example.com");
+        assertThat(copy.getDefaultNameserver4()).contains("ns4.example.com");
         assertThat(copy.getVpcAssociationControlPlaneDelayMs()).isEqualTo(2000L);
     }
 

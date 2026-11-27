@@ -227,6 +227,14 @@ public class FlociContainer extends AbstractFlociContainer<FlociContainer> {
     private final ServiceConfigRef<MarketplaceConfig> marketplaceConfig = registerServiceConfig(MarketplaceConfig.builder().build());
     private final ServiceConfigRef<DmsConfig> dmsConfig = registerServiceConfig(DmsConfig.builder().build());
     private final ServiceConfigRef<ElbConfig> elbConfig = registerServiceConfig(ElbConfig.builder().build());
+    private final ServiceConfigRef<DsqlConfig> dsqlConfig = registerServiceConfig(DsqlConfig.builder().build());
+    private final ServiceConfigRef<EventBridgeV2Config> eventBridgeV2Config = registerServiceConfig(EventBridgeV2Config.builder().build());
+    private final ServiceConfigRef<PaymentCryptographyConfig> paymentCryptographyConfig = registerServiceConfig(PaymentCryptographyConfig.builder().build());
+    private final ServiceConfigRef<ResourceGroupsConfig> resourceGroupsConfig = registerServiceConfig(ResourceGroupsConfig.builder().build());
+    private final ServiceConfigRef<SignerConfig> signerConfig = registerServiceConfig(SignerConfig.builder().build());
+    private final ServiceConfigRef<XrayConfig> xrayConfig = registerServiceConfig(XrayConfig.builder().build());
+    private final ServiceConfigRef<Ec2InstanceConnectConfig> ec2InstanceConnectConfig = registerServiceConfig(Ec2InstanceConnectConfig.builder().build());
+    private final ServiceConfigRef<QuickSightConfig> quickSightConfig = registerServiceConfig(QuickSightConfig.builder().build());
 
     /**
      * Creates a new Floci container with the default image ({@code floci/floci:latest}).
@@ -3839,6 +3847,198 @@ public class FlociContainer extends AbstractFlociContainer<FlociContainer> {
      */
     public FlociContainer withElbConfig(Consumer<ElbConfig.Builder> configurer) {
         return updateServiceConfig(elbConfig, configurer);
+    }
+
+    /**
+     * Aurora DSQL-specific settings.
+     *
+     * @return the Aurora DSQL configuration
+     */
+    public DsqlConfig getDsqlConfig() {
+        return dsqlConfig.get();
+    }
+
+    /**
+     * Configures Aurora DSQL-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withDsqlConfig(c -> c.mock(true));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link DsqlConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withDsqlConfig(Consumer<DsqlConfig.Builder> configurer) {
+        return updateServiceConfig(dsqlConfig, configurer);
+    }
+
+    /**
+     * EventBridge V2-specific settings.
+     *
+     * @return the EventBridge V2 configuration
+     */
+    public EventBridgeV2Config getEventBridgeV2Config() {
+        return eventBridgeV2Config.get();
+    }
+
+    /**
+     * Configures EventBridge V2-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withEventBridgeV2Config(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link EventBridgeV2Config.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withEventBridgeV2Config(Consumer<EventBridgeV2Config.Builder> configurer) {
+        return updateServiceConfig(eventBridgeV2Config, configurer);
+    }
+
+    /**
+     * Payment Cryptography-specific settings.
+     *
+     * @return the Payment Cryptography configuration
+     */
+    public PaymentCryptographyConfig getPaymentCryptographyConfig() {
+        return paymentCryptographyConfig.get();
+    }
+
+    /**
+     * Configures Payment Cryptography-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withPaymentCryptographyConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link PaymentCryptographyConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withPaymentCryptographyConfig(Consumer<PaymentCryptographyConfig.Builder> configurer) {
+        return updateServiceConfig(paymentCryptographyConfig, configurer);
+    }
+
+    /**
+     * Resource Groups-specific settings.
+     *
+     * @return the Resource Groups configuration
+     */
+    public ResourceGroupsConfig getResourceGroupsConfig() {
+        return resourceGroupsConfig.get();
+    }
+
+    /**
+     * Configures Resource Groups-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withResourceGroupsConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link ResourceGroupsConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withResourceGroupsConfig(Consumer<ResourceGroupsConfig.Builder> configurer) {
+        return updateServiceConfig(resourceGroupsConfig, configurer);
+    }
+
+    /**
+     * Signer-specific settings.
+     *
+     * @return the Signer configuration
+     */
+    public SignerConfig getSignerConfig() {
+        return signerConfig.get();
+    }
+
+    /**
+     * Configures Signer-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withSignerConfig(c -> c.mockSigningJobs(true));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link SignerConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withSignerConfig(Consumer<SignerConfig.Builder> configurer) {
+        return updateServiceConfig(signerConfig, configurer);
+    }
+
+    /**
+     * X-Ray-specific settings.
+     *
+     * @return the X-Ray configuration
+     */
+    public XrayConfig getXrayConfig() {
+        return xrayConfig.get();
+    }
+
+    /**
+     * Configures X-Ray-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withXrayConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link XrayConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withXrayConfig(Consumer<XrayConfig.Builder> configurer) {
+        return updateServiceConfig(xrayConfig, configurer);
+    }
+
+    /**
+     * EC2 Instance Connect-specific settings.
+     *
+     * @return the EC2 Instance Connect configuration
+     */
+    public Ec2InstanceConnectConfig getEc2InstanceConnectConfig() {
+        return ec2InstanceConnectConfig.get();
+    }
+
+    /**
+     * Configures EC2 Instance Connect-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withEc2InstanceConnectConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link Ec2InstanceConnectConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withEc2InstanceConnectConfig(Consumer<Ec2InstanceConnectConfig.Builder> configurer) {
+        return updateServiceConfig(ec2InstanceConnectConfig, configurer);
+    }
+
+    /**
+     * QuickSight-specific settings.
+     *
+     * @return the QuickSight configuration
+     */
+    public QuickSightConfig getQuickSightConfig() {
+        return quickSightConfig.get();
+    }
+
+    /**
+     * Configures QuickSight-specific settings.
+     *
+     * <pre>{@code
+     * new FlociContainer()
+     *     .withQuickSightConfig(c -> c.embedBaseUrl("https://quicksight.example.test"));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link QuickSightConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociContainer withQuickSightConfig(Consumer<QuickSightConfig.Builder> configurer) {
+        return updateServiceConfig(quickSightConfig, configurer);
     }
 
     private void preparePersistentStorageForCleanup() {

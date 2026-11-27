@@ -20,6 +20,7 @@ public class DynamoDbConfig extends AbstractServiceConfig<DynamoDbConfig.Builder
     private static final String DEFAULT_BACKEND = "native";
     private static final int DEFAULT_LOCAL_CONNECT_TIMEOUT_SECONDS = 2;
     private static final int DEFAULT_LOCAL_REQUEST_TIMEOUT_SECONDS = 10;
+    private static final int DEFAULT_LATEST_RESTORABLE_LAG_SECONDS = 300;
 
     private final int vectorIndexAllocationSeconds;
     private final int vectorIndexBackfillSeconds;
@@ -27,6 +28,7 @@ public class DynamoDbConfig extends AbstractServiceConfig<DynamoDbConfig.Builder
     private final String localEndpoint;
     private final int localConnectTimeoutSeconds;
     private final int localRequestTimeoutSeconds;
+    private final int latestRestorableLagSeconds;
 
     private DynamoDbConfig(Builder builder) {
         super(builder);
@@ -36,6 +38,7 @@ public class DynamoDbConfig extends AbstractServiceConfig<DynamoDbConfig.Builder
         this.localEndpoint = builder.localEndpoint;
         this.localConnectTimeoutSeconds = builder.localConnectTimeoutSeconds;
         this.localRequestTimeoutSeconds = builder.localRequestTimeoutSeconds;
+        this.latestRestorableLagSeconds = builder.latestRestorableLagSeconds;
     }
 
     /**
@@ -125,6 +128,17 @@ public class DynamoDbConfig extends AbstractServiceConfig<DynamoDbConfig.Builder
         return localRequestTimeoutSeconds;
     }
 
+    /**
+     * Returns the time, in seconds, the {@code LatestRestorableDateTime} of point-in-time recovery trails the current time.
+     *
+     * <p>AWS keeps it about five minutes behind.
+     *
+     * @return the time, in seconds, the {@code LatestRestorableDateTime} of point-in-time recovery trails the current time
+     */
+    public int getLatestRestorableLagSeconds() {
+        return latestRestorableLagSeconds;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_DYNAMODB_ENABLED", String.valueOf(isEnabled()));
@@ -140,6 +154,7 @@ public class DynamoDbConfig extends AbstractServiceConfig<DynamoDbConfig.Builder
 
             container.withEnv("FLOCI_SERVICES_DYNAMODB_LOCAL_CONNECT_TIMEOUT_SECONDS", String.valueOf(localConnectTimeoutSeconds));
             container.withEnv("FLOCI_SERVICES_DYNAMODB_LOCAL_REQUEST_TIMEOUT_SECONDS", String.valueOf(localRequestTimeoutSeconds));
+            container.withEnv("FLOCI_SERVICES_DYNAMODB_LATEST_RESTORABLE_LAG_SECONDS", String.valueOf(latestRestorableLagSeconds));
         }
     }
 
@@ -154,6 +169,7 @@ public class DynamoDbConfig extends AbstractServiceConfig<DynamoDbConfig.Builder
         private String localEndpoint;
         private int localConnectTimeoutSeconds = DEFAULT_LOCAL_CONNECT_TIMEOUT_SECONDS;
         private int localRequestTimeoutSeconds = DEFAULT_LOCAL_REQUEST_TIMEOUT_SECONDS;
+        private int latestRestorableLagSeconds = DEFAULT_LATEST_RESTORABLE_LAG_SECONDS;
 
         private Builder() {
             // Allow instantiation only via DynamoDbConfig.builder()
@@ -172,6 +188,7 @@ public class DynamoDbConfig extends AbstractServiceConfig<DynamoDbConfig.Builder
             this.localEndpoint = instance.getLocalEndpoint().orElse(null);
             this.localConnectTimeoutSeconds = instance.getLocalConnectTimeoutSeconds();
             this.localRequestTimeoutSeconds = instance.getLocalRequestTimeoutSeconds();
+            this.latestRestorableLagSeconds = instance.getLatestRestorableLagSeconds();
         }
 
         /**
@@ -250,6 +267,19 @@ public class DynamoDbConfig extends AbstractServiceConfig<DynamoDbConfig.Builder
          */
         public Builder localRequestTimeoutSeconds(int localRequestTimeoutSeconds) {
             this.localRequestTimeoutSeconds = localRequestTimeoutSeconds;
+            return this;
+        }
+
+        /**
+         * Sets the time, in seconds, the {@code LatestRestorableDateTime} of point-in-time recovery trails the current time.
+         *
+         * <p>AWS keeps it about five minutes behind.
+         *
+         * @param latestRestorableLagSeconds the time, in seconds, the {@code LatestRestorableDateTime} of point-in-time recovery trails the current time (default {@value DEFAULT_LATEST_RESTORABLE_LAG_SECONDS})
+         * @return this builder
+         */
+        public Builder latestRestorableLagSeconds(int latestRestorableLagSeconds) {
+            this.latestRestorableLagSeconds = latestRestorableLagSeconds;
             return this;
         }
 

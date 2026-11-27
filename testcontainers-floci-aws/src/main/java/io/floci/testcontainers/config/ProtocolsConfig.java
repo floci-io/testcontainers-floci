@@ -54,7 +54,8 @@ public class ProtocolsConfig {
      * protocol claims are rejected per the Smithy wire-protocol-selection guide (e.g. an
      * unknown Smithy-Protocol header value, a recognized-but-unimplemented rpc-v2-json
      * request, or an X-Amz-Target post with a foreign content type). When disabled such
-     * requests are only logged and pass through to JAX-RS matching.
+     * requests are logged and pass through to JAX-RS matching, and are then handled as the
+     * protocol of the route that serves them.
      *
      * @return {@code true} if strict RPC protocol claiming is enabled
      */
@@ -122,6 +123,9 @@ public class ProtocolsConfig {
 
         /**
          * Sets whether strict RPC protocol claiming is enabled.
+         *
+         * <p>When disabled, requests carrying an RPC protocol signal that no supported wire
+         * protocol claims are logged and handled as the protocol of the route that serves them.
          *
          * @param strictClaiming {@code true} to reject requests carrying an RPC protocol
          *                       signal that no supported wire protocol claims (default {@value DEFAULT_STRICT_CLAIMING})

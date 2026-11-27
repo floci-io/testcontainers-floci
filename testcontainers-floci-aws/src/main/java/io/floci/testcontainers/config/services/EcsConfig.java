@@ -30,6 +30,9 @@ public class EcsConfig extends AbstractServiceConfig<EcsConfig.Builder> {
     private static final long DEFAULT_TASK_ROLE_CREDENTIALS_TTL_SECONDS = 21600L;
     private static final int DEFAULT_TASK_ROLE_CREDENTIALS_PORT = 51679;
     private static final String DEFAULT_TASK_ROLE_CREDENTIALS_PROXY_IMAGE = "floci/network-helper:local";
+    private static final boolean DEFAULT_DYNAMIC_AWSVPC_HOST_PORTS = false;
+    private static final String DEFAULT_HOST_PORT_BIND_ADDRESS = "127.0.0.1";
+    private static final boolean DEFAULT_ALLOW_PRIVILEGED_CONTAINERS = false;
 
     private final boolean mock;
     private final String dockerNetwork;
@@ -44,6 +47,9 @@ public class EcsConfig extends AbstractServiceConfig<EcsConfig.Builder> {
     private final long taskRoleCredentialsTtlSeconds;
     private final int taskRoleCredentialsPort;
     private final String taskRoleCredentialsProxyImage;
+    private final boolean dynamicAwsvpcHostPorts;
+    private final String hostPortBindAddress;
+    private final boolean allowPrivilegedContainers;
 
     private EcsConfig(Builder builder) {
         super(builder);
@@ -60,6 +66,9 @@ public class EcsConfig extends AbstractServiceConfig<EcsConfig.Builder> {
         this.taskRoleCredentialsTtlSeconds = builder.taskRoleCredentialsTtlSeconds;
         this.taskRoleCredentialsPort = builder.taskRoleCredentialsPort;
         this.taskRoleCredentialsProxyImage = builder.taskRoleCredentialsProxyImage;
+        this.dynamicAwsvpcHostPorts = builder.dynamicAwsvpcHostPorts;
+        this.hostPortBindAddress = builder.hostPortBindAddress;
+        this.allowPrivilegedContainers = builder.allowPrivilegedContainers;
     }
 
     /**
@@ -133,10 +142,10 @@ public class EcsConfig extends AbstractServiceConfig<EcsConfig.Builder> {
 
     /**
      * Returns the approved parent directories for task definition host volume bind mounts
-     * ({@code volumes[].host.sourcePath}).
+     * ({@code volumes[].host.sourcePath}) and container devices ({@code linuxParameters.devices[].hostPath}).
      *
-     * <p>A {@code sourcePath} must resolve under one of these roots. Unset rejects every host volume
-     * {@code sourcePath} unless unsafe host volumes are allowed. Traversal segments, the bare root and the
+     * <p>A host path must resolve under one of these roots. Unset rejects every host volume
+     * {@code sourcePath} and device {@code hostPath} unless unsafe host volumes are allowed. Traversal segments, the bare root and the
      * Docker socket are always rejected.
      *
      * @return the approved parent directories for task definition host volume bind mounts ({@code volumes[].host.sourcePath}), or {@link Optional#empty()} if not configured
@@ -146,7 +155,7 @@ public class EcsConfig extends AbstractServiceConfig<EcsConfig.Builder> {
     }
 
     /**
-     * Returns whether the host volume roots allowlist check is bypassed, allowing any absolute host volume
+     * Returns whether the host volume roots allowlist check is bypassed, allowing any absolute host volume or device
      * path.
      *
      * <p>Traversal segments, the bare root {@code /} and the Docker socket (or any ancestor directory
@@ -228,6 +237,33 @@ public class EcsConfig extends AbstractServiceConfig<EcsConfig.Builder> {
         return taskRoleCredentialsProxyImage;
     }
 
+    /**
+     * Returns whether a free host port is allocated per {@code awsvpc} task when publishing its ports to the host is enabled, instead of stable host ports.
+     *
+     * @return whether a free host port is allocated per {@code awsvpc} task when publishing its ports to the host is enabled, instead of stable host ports
+     */
+    public boolean isDynamicAwsvpcHostPorts() {
+        return dynamicAwsvpcHostPorts;
+    }
+
+    /**
+     * Returns the host interface published {@code awsvpc} task ports, including firewall namespaces, are bound to.
+     *
+     * @return the host interface published {@code awsvpc} task ports, including firewall namespaces, are bound to
+     */
+    public String getHostPortBindAddress() {
+        return hostPortBindAddress;
+    }
+
+    /**
+     * Returns whether ECS task definitions may launch Docker containers with host-level privilege.
+     *
+     * @return whether ECS task definitions may launch Docker containers with host-level privilege
+     */
+    public boolean isAllowPrivilegedContainers() {
+        return allowPrivilegedContainers;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_ECS_ENABLED", String.valueOf(isEnabled()));
@@ -254,6 +290,9 @@ public class EcsConfig extends AbstractServiceConfig<EcsConfig.Builder> {
             container.withEnv("FLOCI_SERVICES_ECS_TASK_ROLE_CREDENTIALS_TTL_SECONDS", String.valueOf(taskRoleCredentialsTtlSeconds));
             container.withEnv("FLOCI_SERVICES_ECS_TASK_ROLE_CREDENTIALS_PORT", String.valueOf(taskRoleCredentialsPort));
             container.withEnv("FLOCI_SERVICES_ECS_TASK_ROLE_CREDENTIALS_PROXY_IMAGE", taskRoleCredentialsProxyImage);
+            container.withEnv("FLOCI_SERVICES_ECS_DYNAMIC_AWSVPC_HOST_PORTS", String.valueOf(dynamicAwsvpcHostPorts));
+            container.withEnv("FLOCI_SERVICES_ECS_HOST_PORT_BIND_ADDRESS", hostPortBindAddress);
+            container.withEnv("FLOCI_SERVICES_ECS_ALLOW_PRIVILEGED_CONTAINERS", String.valueOf(allowPrivilegedContainers));
         }
     }
 
@@ -280,6 +319,9 @@ public class EcsConfig extends AbstractServiceConfig<EcsConfig.Builder> {
         private long taskRoleCredentialsTtlSeconds = DEFAULT_TASK_ROLE_CREDENTIALS_TTL_SECONDS;
         private int taskRoleCredentialsPort = DEFAULT_TASK_ROLE_CREDENTIALS_PORT;
         private String taskRoleCredentialsProxyImage = DEFAULT_TASK_ROLE_CREDENTIALS_PROXY_IMAGE;
+        private boolean dynamicAwsvpcHostPorts = DEFAULT_DYNAMIC_AWSVPC_HOST_PORTS;
+        private String hostPortBindAddress = DEFAULT_HOST_PORT_BIND_ADDRESS;
+        private boolean allowPrivilegedContainers = DEFAULT_ALLOW_PRIVILEGED_CONTAINERS;
 
         private Builder() {
             // Allow instantiation only via EcsConfig.builder()
@@ -305,6 +347,9 @@ public class EcsConfig extends AbstractServiceConfig<EcsConfig.Builder> {
             this.taskRoleCredentialsTtlSeconds = instance.getTaskRoleCredentialsTtlSeconds();
             this.taskRoleCredentialsPort = instance.getTaskRoleCredentialsPort();
             this.taskRoleCredentialsProxyImage = instance.getTaskRoleCredentialsProxyImage();
+            this.dynamicAwsvpcHostPorts = instance.isDynamicAwsvpcHostPorts();
+            this.hostPortBindAddress = instance.getHostPortBindAddress();
+            this.allowPrivilegedContainers = instance.isAllowPrivilegedContainers();
         }
 
         /**
@@ -368,10 +413,10 @@ public class EcsConfig extends AbstractServiceConfig<EcsConfig.Builder> {
 
         /**
          * Sets the approved parent directories for task definition host volume bind mounts
-         * ({@code volumes[].host.sourcePath}).
+         * ({@code volumes[].host.sourcePath}) and container devices ({@code linuxParameters.devices[].hostPath}).
          *
-         * <p>A {@code sourcePath} must resolve under one of these roots. Unset rejects every host volume
-         * {@code sourcePath} unless unsafe host volumes are allowed. Traversal segments, the bare root and
+         * <p>A host path must resolve under one of these roots. Unset rejects every host volume
+         * {@code sourcePath} and device {@code hostPath} unless unsafe host volumes are allowed. Traversal segments, the bare root and
          * the Docker socket are always rejected.
          *
          * @param hostVolumeRoots the approved parent directories for task definition host volume bind mounts ({@code volumes[].host.sourcePath}), or {@code null} to use Floci's default
@@ -383,7 +428,7 @@ public class EcsConfig extends AbstractServiceConfig<EcsConfig.Builder> {
         }
 
         /**
-         * Sets whether the host volume roots allowlist check is bypassed, allowing any absolute host volume
+         * Sets whether the host volume roots allowlist check is bypassed, allowing any absolute host volume or device
          * path.
          *
          * <p>Traversal segments, the bare root {@code /} and the Docker socket (or any ancestor directory
@@ -476,6 +521,39 @@ public class EcsConfig extends AbstractServiceConfig<EcsConfig.Builder> {
          */
         public Builder taskRoleCredentialsProxyImage(String taskRoleCredentialsProxyImage) {
             this.taskRoleCredentialsProxyImage = taskRoleCredentialsProxyImage;
+            return this;
+        }
+
+        /**
+         * Sets whether a free host port is allocated per {@code awsvpc} task when publishing its ports to the host is enabled, instead of stable host ports.
+         *
+         * @param dynamicAwsvpcHostPorts whether a free host port is allocated per {@code awsvpc} task when publishing its ports to the host is enabled, instead of stable host ports (default {@value DEFAULT_DYNAMIC_AWSVPC_HOST_PORTS})
+         * @return this builder
+         */
+        public Builder dynamicAwsvpcHostPorts(boolean dynamicAwsvpcHostPorts) {
+            this.dynamicAwsvpcHostPorts = dynamicAwsvpcHostPorts;
+            return this;
+        }
+
+        /**
+         * Sets the host interface published {@code awsvpc} task ports, including firewall namespaces, are bound to.
+         *
+         * @param hostPortBindAddress the host interface published {@code awsvpc} task ports, including firewall namespaces, are bound to (default {@value DEFAULT_HOST_PORT_BIND_ADDRESS})
+         * @return this builder
+         */
+        public Builder hostPortBindAddress(String hostPortBindAddress) {
+            this.hostPortBindAddress = hostPortBindAddress;
+            return this;
+        }
+
+        /**
+         * Sets whether ECS task definitions may launch Docker containers with host-level privilege.
+         *
+         * @param allowPrivilegedContainers whether ECS task definitions may launch Docker containers with host-level privilege (default {@value DEFAULT_ALLOW_PRIVILEGED_CONTAINERS})
+         * @return this builder
+         */
+        public Builder allowPrivilegedContainers(boolean allowPrivilegedContainers) {
+            this.allowPrivilegedContainers = allowPrivilegedContainers;
             return this;
         }
 

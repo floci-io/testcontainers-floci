@@ -27,6 +27,9 @@ class EcsConfigTest {
         assertThat(config.getTaskRoleCredentialsTtlSeconds()).isEqualTo(21600L);
         assertThat(config.getTaskRoleCredentialsPort()).isEqualTo(51679);
         assertThat(config.getTaskRoleCredentialsProxyImage()).isEqualTo("floci/network-helper:local");
+        assertThat(config.isDynamicAwsvpcHostPorts()).isFalse();
+        assertThat(config.getHostPortBindAddress()).isEqualTo("127.0.0.1");
+        assertThat(config.isAllowPrivilegedContainers()).isFalse();
     }
 
     @Test
@@ -46,6 +49,9 @@ class EcsConfigTest {
                 .taskRoleCredentialsTtlSeconds(900L)
                 .taskRoleCredentialsPort(51680)
                 .taskRoleCredentialsProxyImage("floci/network-helper:1.0")
+                .dynamicAwsvpcHostPorts(true)
+                .hostPortBindAddress("0.0.0.0")
+                .allowPrivilegedContainers(true)
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.isMock()).isTrue();
@@ -61,6 +67,9 @@ class EcsConfigTest {
         assertThat(config.getTaskRoleCredentialsTtlSeconds()).isEqualTo(900L);
         assertThat(config.getTaskRoleCredentialsPort()).isEqualTo(51680);
         assertThat(config.getTaskRoleCredentialsProxyImage()).isEqualTo("floci/network-helper:1.0");
+        assertThat(config.isDynamicAwsvpcHostPorts()).isTrue();
+        assertThat(config.getHostPortBindAddress()).isEqualTo("0.0.0.0");
+        assertThat(config.isAllowPrivilegedContainers()).isTrue();
     }
 
     @Test
@@ -82,7 +91,10 @@ class EcsConfigTest {
                 .containsEntry("FLOCI_SERVICES_ECS_TASK_ROLE_CREDENTIALS_ENABLED", "false")
                 .containsEntry("FLOCI_SERVICES_ECS_TASK_ROLE_CREDENTIALS_TTL_SECONDS", "21600")
                 .containsEntry("FLOCI_SERVICES_ECS_TASK_ROLE_CREDENTIALS_PORT", "51679")
-                .containsEntry("FLOCI_SERVICES_ECS_TASK_ROLE_CREDENTIALS_PROXY_IMAGE", "floci/network-helper:local");
+                .containsEntry("FLOCI_SERVICES_ECS_TASK_ROLE_CREDENTIALS_PROXY_IMAGE", "floci/network-helper:local")
+                .containsEntry("FLOCI_SERVICES_ECS_DYNAMIC_AWSVPC_HOST_PORTS", "false")
+                .containsEntry("FLOCI_SERVICES_ECS_HOST_PORT_BIND_ADDRESS", "127.0.0.1")
+                .containsEntry("FLOCI_SERVICES_ECS_ALLOW_PRIVILEGED_CONTAINERS", "false");
     }
 
     @Test
@@ -103,6 +115,9 @@ class EcsConfigTest {
                 .taskRoleCredentialsTtlSeconds(900L)
                 .taskRoleCredentialsPort(51680)
                 .taskRoleCredentialsProxyImage("floci/network-helper:1.0")
+                .dynamicAwsvpcHostPorts(true)
+                .hostPortBindAddress("0.0.0.0")
+                .allowPrivilegedContainers(true)
                 .build()
                 .applyEnvVarsToContainer(container);
 
@@ -120,7 +135,10 @@ class EcsConfigTest {
                 .containsEntry("FLOCI_SERVICES_ECS_TASK_ROLE_CREDENTIALS_ENABLED", "true")
                 .containsEntry("FLOCI_SERVICES_ECS_TASK_ROLE_CREDENTIALS_TTL_SECONDS", "900")
                 .containsEntry("FLOCI_SERVICES_ECS_TASK_ROLE_CREDENTIALS_PORT", "51680")
-                .containsEntry("FLOCI_SERVICES_ECS_TASK_ROLE_CREDENTIALS_PROXY_IMAGE", "floci/network-helper:1.0");
+                .containsEntry("FLOCI_SERVICES_ECS_TASK_ROLE_CREDENTIALS_PROXY_IMAGE", "floci/network-helper:1.0")
+                .containsEntry("FLOCI_SERVICES_ECS_DYNAMIC_AWSVPC_HOST_PORTS", "true")
+                .containsEntry("FLOCI_SERVICES_ECS_HOST_PORT_BIND_ADDRESS", "0.0.0.0")
+                .containsEntry("FLOCI_SERVICES_ECS_ALLOW_PRIVILEGED_CONTAINERS", "true");
     }
 
     @Test
@@ -138,7 +156,10 @@ class EcsConfigTest {
                 .doesNotContainKey("FLOCI_SERVICES_ECS_TASK_ROLE_CREDENTIALS_ENABLED")
                 .doesNotContainKey("FLOCI_SERVICES_ECS_TASK_ROLE_CREDENTIALS_TTL_SECONDS")
                 .doesNotContainKey("FLOCI_SERVICES_ECS_TASK_ROLE_CREDENTIALS_PORT")
-                .doesNotContainKey("FLOCI_SERVICES_ECS_TASK_ROLE_CREDENTIALS_PROXY_IMAGE");
+                .doesNotContainKey("FLOCI_SERVICES_ECS_TASK_ROLE_CREDENTIALS_PROXY_IMAGE")
+                .doesNotContainKey("FLOCI_SERVICES_ECS_DYNAMIC_AWSVPC_HOST_PORTS")
+                .doesNotContainKey("FLOCI_SERVICES_ECS_HOST_PORT_BIND_ADDRESS")
+                .doesNotContainKey("FLOCI_SERVICES_ECS_ALLOW_PRIVILEGED_CONTAINERS");
     }
 
     @Test
@@ -158,6 +179,9 @@ class EcsConfigTest {
                 .taskRoleCredentialsTtlSeconds(900L)
                 .taskRoleCredentialsPort(51680)
                 .taskRoleCredentialsProxyImage("floci/network-helper:1.0")
+                .dynamicAwsvpcHostPorts(true)
+                .hostPortBindAddress("0.0.0.0")
+                .allowPrivilegedContainers(true)
                 .build();
         EcsConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
@@ -174,6 +198,9 @@ class EcsConfigTest {
         assertThat(copy.getTaskRoleCredentialsTtlSeconds()).isEqualTo(900L);
         assertThat(copy.getTaskRoleCredentialsPort()).isEqualTo(51680);
         assertThat(copy.getTaskRoleCredentialsProxyImage()).isEqualTo("floci/network-helper:1.0");
+        assertThat(copy.isDynamicAwsvpcHostPorts()).isTrue();
+        assertThat(copy.getHostPortBindAddress()).isEqualTo("0.0.0.0");
+        assertThat(copy.isAllowPrivilegedContainers()).isTrue();
     }
 
     @Test

@@ -4,6 +4,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.testcontainers.containers.Container;
+
+import java.util.Locale;
 import org.testcontainers.images.builder.Transferable;
 
 /**
@@ -40,6 +42,9 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
     private static final int DEFAULT_VPC_NETWORKS_FALLBACK_PREFIX_LENGTH = 16;
     private static final boolean DEFAULT_VPC_NETWORKS_RECONCILE_ON_STARTUP = true;
     private static final String DEFAULT_VPC_NETWORKS_DRIVER = "bridge";
+    private static final boolean DEFAULT_ENFORCE_VCPU_QUOTAS = false;
+    private static final boolean DEFAULT_PUBLIC_IP_FROM_SERVICE_NETWORK = false;
+    private static final MockPublicAddresses DEFAULT_MOCK_PUBLIC_ADDRESSES = MockPublicAddresses.NONE;
 
     private final boolean mock;
     private final int imdsPort;
@@ -64,6 +69,11 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
     private final int vpcNetworksFallbackPrefixLength;
     private final boolean vpcNetworksReconcileOnStartup;
     private final String vpcNetworksDriver;
+    private final String managedPrefixListCatalogPath;
+    private final boolean enforceVcpuQuotas;
+    private final boolean publicIpFromServiceNetwork;
+    private final MockPublicAddresses mockPublicAddresses;
+    private final String mockPublicAddress;
 
     private Ec2Config(Builder builder) {
         super(builder);
@@ -90,6 +100,11 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
         this.vpcNetworksFallbackPrefixLength = builder.vpcNetworksFallbackPrefixLength;
         this.vpcNetworksReconcileOnStartup = builder.vpcNetworksReconcileOnStartup;
         this.vpcNetworksDriver = builder.vpcNetworksDriver;
+        this.managedPrefixListCatalogPath = builder.managedPrefixListCatalogPath;
+        this.enforceVcpuQuotas = builder.enforceVcpuQuotas;
+        this.publicIpFromServiceNetwork = builder.publicIpFromServiceNetwork;
+        this.mockPublicAddresses = builder.mockPublicAddresses;
+        this.mockPublicAddress = builder.mockPublicAddress;
     }
 
     /**
@@ -375,6 +390,59 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
         return Optional.ofNullable(imageCatalog);
     }
 
+    /**
+     * Returns the path, inside the container, of a JSON file of additional regional AWS-managed prefix lists.
+     *
+     * @return the path, inside the container, of a JSON file of additional regional AWS-managed prefix lists, or empty to keep Floci's default
+     */
+    public Optional<String> getManagedPrefixListCatalogPath() {
+        return Optional.ofNullable(managedPrefixListCatalogPath);
+    }
+
+    /**
+     * Returns whether RunInstances and StartInstances are checked against the current running vCPU usage.
+     *
+     * <p>The applied On-Demand Standard quota is set with {@link ServiceQuotasConfig.Builder#standardOnDemandVcpus(int)}.
+     *
+     * @return whether RunInstances and StartInstances are checked against the current running vCPU usage
+     */
+    public boolean isEnforceVcpuQuotas() {
+        return enforceVcpuQuotas;
+    }
+
+    /**
+     * Returns whether, when Floci itself runs as a container, an instance's address on Floci's own Docker network is reported as its public IP.
+     *
+     * <p>Clients on that network then reach the guest's real ports there, as they would an AWS public IP.
+     *
+     * @return whether, when Floci itself runs as a container, an instance's address on Floci's own Docker network is reported as its public IP
+     */
+    public boolean isPublicIpFromServiceNetwork() {
+        return publicIpFromServiceNetwork;
+    }
+
+    /**
+     * Returns the automatic public IPv4 address a mock instance gets when its launch asks for one.
+     *
+     * <p>Elastic IPs are allocated from 203.0.113.0/24 whatever this says, and instances with containers always report the container's reachable address.
+     *
+     * @return the automatic public IPv4 address a mock instance gets when its launch asks for one
+     */
+    public MockPublicAddresses getMockPublicAddresses() {
+        return mockPublicAddresses;
+    }
+
+    /**
+     * Returns the public IPv4 address of every mock instance due an automatic one while {@link MockPublicAddresses#FIXED} is selected.
+     *
+     * <p>Use an address the caller can reach, such as this host's own. Floci uses 127.0.0.1 while unset.
+     *
+     * @return the public IPv4 address of every mock instance due an automatic one while {@link MockPublicAddresses#FIXED} is selected, or empty to keep Floci's default
+     */
+    public Optional<String> getMockPublicAddress() {
+        return Optional.ofNullable(mockPublicAddress);
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_EC2_ENABLED", String.valueOf(isEnabled()));
@@ -409,6 +477,18 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
             if (imageCatalogFile != null) {
                 container.withEnv("FLOCI_SERVICES_EC2_IMAGE_CATALOG_PATH", imageCatalogFile);
             }
+
+            if (managedPrefixListCatalogPath != null) {
+                container.withEnv("FLOCI_SERVICES_EC2_MANAGED_PREFIX_LIST_CATALOG_PATH", managedPrefixListCatalogPath);
+            }
+
+            container.withEnv("FLOCI_SERVICES_EC2_ENFORCE_VCPU_QUOTAS", String.valueOf(enforceVcpuQuotas));
+            container.withEnv("FLOCI_SERVICES_EC2_PUBLIC_IP_FROM_SERVICE_NETWORK", String.valueOf(publicIpFromServiceNetwork));
+            container.withEnv("FLOCI_SERVICES_EC2_MOCK_PUBLIC_ADDRESSES", mockPublicAddresses.name().toLowerCase(Locale.ROOT));
+
+            if (mockPublicAddress != null) {
+                container.withEnv("FLOCI_SERVICES_EC2_MOCK_PUBLIC_ADDRESS", mockPublicAddress);
+            }
         }
     }
 
@@ -435,6 +515,27 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
     @Override
     public boolean requiresDockerSocket() {
         return isEnabled() && !mock;
+    }
+
+    /**
+     * Automatic public IPv4 addresses of mock instances, see {@link Builder#mockPublicAddresses(MockPublicAddresses)}.
+     */
+    public enum MockPublicAddresses {
+        /**
+         * No automatic public address. Mock instances have no container to reach, so an address from a real AWS range
+         * would send a client that connects to it to someone else's host.
+         */
+        NONE,
+        /**
+         * An address from 203.0.113.0/24, a range reserved for documentation that routes nowhere, distinct from other
+         * live instances while one is free.
+         */
+        DOCUMENTATION,
+        /**
+         * The address configured with {@link Builder#mockPublicAddress(String)}, which an Elastic IP on the instance's
+         * primary private address then shows too.
+         */
+        FIXED
     }
 
     /**
@@ -465,6 +566,11 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
         private int vpcNetworksFallbackPrefixLength = DEFAULT_VPC_NETWORKS_FALLBACK_PREFIX_LENGTH;
         private boolean vpcNetworksReconcileOnStartup = DEFAULT_VPC_NETWORKS_RECONCILE_ON_STARTUP;
         private String vpcNetworksDriver = DEFAULT_VPC_NETWORKS_DRIVER;
+        private String managedPrefixListCatalogPath;
+        private boolean enforceVcpuQuotas = DEFAULT_ENFORCE_VCPU_QUOTAS;
+        private boolean publicIpFromServiceNetwork = DEFAULT_PUBLIC_IP_FROM_SERVICE_NETWORK;
+        private MockPublicAddresses mockPublicAddresses = DEFAULT_MOCK_PUBLIC_ADDRESSES;
+        private String mockPublicAddress;
 
         private Builder() {
             // Allow instantiation only via Ec2Config.builder()
@@ -500,6 +606,11 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
             this.vpcNetworksFallbackPrefixLength = instance.getVpcNetworksFallbackPrefixLength();
             this.vpcNetworksReconcileOnStartup = instance.isVpcNetworksReconcileOnStartup();
             this.vpcNetworksDriver = instance.getVpcNetworksDriver();
+            this.managedPrefixListCatalogPath = instance.getManagedPrefixListCatalogPath().orElse(null);
+            this.enforceVcpuQuotas = instance.isEnforceVcpuQuotas();
+            this.publicIpFromServiceNetwork = instance.isPublicIpFromServiceNetwork();
+            this.mockPublicAddresses = instance.getMockPublicAddresses();
+            this.mockPublicAddress = instance.getMockPublicAddress().orElse(null);
         }
 
         /**
@@ -790,6 +901,69 @@ public class Ec2Config extends AbstractServiceConfig<Ec2Config.Builder> {
         public Builder imageCatalog(String imageCatalog) {
             this.imageCatalog = imageCatalog;
             this.imageCatalogFile = null;
+            return this;
+        }
+
+        /**
+         * Sets the path, inside the container, of a JSON file of additional regional AWS-managed prefix lists.
+         *
+         * @param managedPrefixListCatalogPath the path, inside the container, of a JSON file of additional regional AWS-managed prefix lists, or {@code null} to keep Floci's default
+         * @return this builder
+         */
+        public Builder managedPrefixListCatalogPath(String managedPrefixListCatalogPath) {
+            this.managedPrefixListCatalogPath = managedPrefixListCatalogPath;
+            return this;
+        }
+
+        /**
+         * Sets whether RunInstances and StartInstances are checked against the current running vCPU usage.
+         *
+         * <p>The applied On-Demand Standard quota is set with {@link ServiceQuotasConfig.Builder#standardOnDemandVcpus(int)}.
+         *
+         * @param enforceVcpuQuotas whether RunInstances and StartInstances are checked against the current running vCPU usage (default {@value DEFAULT_ENFORCE_VCPU_QUOTAS})
+         * @return this builder
+         */
+        public Builder enforceVcpuQuotas(boolean enforceVcpuQuotas) {
+            this.enforceVcpuQuotas = enforceVcpuQuotas;
+            return this;
+        }
+
+        /**
+         * Sets whether, when Floci itself runs as a container, an instance's address on Floci's own Docker network is reported as its public IP.
+         *
+         * <p>Clients on that network then reach the guest's real ports there, as they would an AWS public IP.
+         *
+         * @param publicIpFromServiceNetwork whether, when Floci itself runs as a container, an instance's address on Floci's own Docker network is reported as its public IP (default {@value DEFAULT_PUBLIC_IP_FROM_SERVICE_NETWORK})
+         * @return this builder
+         */
+        public Builder publicIpFromServiceNetwork(boolean publicIpFromServiceNetwork) {
+            this.publicIpFromServiceNetwork = publicIpFromServiceNetwork;
+            return this;
+        }
+
+        /**
+         * Sets the automatic public IPv4 address a mock instance gets when its launch asks for one.
+         *
+         * <p>Elastic IPs are allocated from 203.0.113.0/24 whatever this says, and instances with containers always report the container's reachable address.
+         *
+         * @param mockPublicAddresses the automatic public IPv4 address a mock instance gets when its launch asks for one (default {@link MockPublicAddresses#NONE})
+         * @return this builder
+         */
+        public Builder mockPublicAddresses(MockPublicAddresses mockPublicAddresses) {
+            this.mockPublicAddresses = mockPublicAddresses;
+            return this;
+        }
+
+        /**
+         * Sets the public IPv4 address of every mock instance due an automatic one while {@link MockPublicAddresses#FIXED} is selected.
+         *
+         * <p>Use an address the caller can reach, such as this host's own. Floci uses 127.0.0.1 while unset.
+         *
+         * @param mockPublicAddress the public IPv4 address of every mock instance due an automatic one while {@link MockPublicAddresses#FIXED} is selected, or {@code null} to keep Floci's default
+         * @return this builder
+         */
+        public Builder mockPublicAddress(String mockPublicAddress) {
+            this.mockPublicAddress = mockPublicAddress;
             return this;
         }
 

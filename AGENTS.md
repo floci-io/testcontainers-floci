@@ -228,7 +228,7 @@ Changes that are on Floci's `main` but not released yet are left for a later run
 | Upstream Floci           | https://github.com/floci-io/floci (releases: https://github.com/floci-io/floci/releases; tags `x.y.z`, no `v`) |
 | The user's fork          | https://github.com/cfranzen/floci — kept in sync with upstream `main`                                          |
 | Migration marker         | Annotated tag `migrated-to-testcontainers` in the fork; points at the last Floci commit already migrated      |
-| The file to diff         | `src/main/java/io/github/hectorvent/floci/config/EmulatorConfig.java` (in the Floci repo)                     |
+| The file to diff         | `src/main/java/io/floci/aws/config/EmulatorConfig.java` (in the Floci repo)                                   |
 | Pinned test image        | The `floci/floci:<x.y.z>` line in `.github/docker-images.txt` (the only file that names a pinned tag)         |
 
 The tag is maintained **manually by the user**. Never create, move, or push it yourself — at the end, report the
@@ -329,7 +329,16 @@ usually hundreds of commits ahead, so `EmulatorConfig.java` is often missing fro
 step 1:
 
 ```bash
-git diff migrated-to-testcontainers <head> -- src/main/java/io/github/hectorvent/floci/config/EmulatorConfig.java
+git diff migrated-to-testcontainers <head> -- src/main/java/io/floci/aws/config/EmulatorConfig.java
+```
+
+Floci moved its Java package from `io.github.hectorvent.floci` to `io.floci.aws` in 2.5.0 (floci-io/floci#7689). If
+the base still predates that rename, the path-limited diff above shows the whole file as deleted; diff the two paths
+explicitly instead (also when reading code that consumes a property, which moved the same way):
+
+```bash
+git diff migrated-to-testcontainers:src/main/java/io/github/hectorvent/floci/config/EmulatorConfig.java \
+         <head>:src/main/java/io/floci/aws/config/EmulatorConfig.java
 ```
 
 `git log --oneline migrated-to-testcontainers..<head> -- <file>` lists the individual Floci commits that touched the

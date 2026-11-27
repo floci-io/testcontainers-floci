@@ -389,7 +389,15 @@ class FlociContainerTest {
                     container.getCodeArtifactConfig(),
                     container.getMarketplaceConfig(),
                     container.getDmsConfig(),
-                    container.getElbConfig()
+                    container.getElbConfig(),
+                    container.getDsqlConfig(),
+                    container.getEventBridgeV2Config(),
+                    container.getPaymentCryptographyConfig(),
+                    container.getResourceGroupsConfig(),
+                    container.getSignerConfig(),
+                    container.getXrayConfig(),
+                    container.getEc2InstanceConnectConfig(),
+                    container.getQuickSightConfig()
             )).noneMatch(AbstractServiceConfig::isEnabled);
         }
     }

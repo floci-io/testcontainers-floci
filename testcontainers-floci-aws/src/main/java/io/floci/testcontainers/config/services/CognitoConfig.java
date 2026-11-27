@@ -15,12 +15,15 @@ import org.testcontainers.containers.Container;
 public class CognitoConfig extends AbstractServiceConfig<CognitoConfig.Builder> {
 
     private static final boolean DEFAULT_ENFORCE_TOKEN_VALIDITY_LIMITS = true;
+    private static final String DEFAULT_GOOGLE_ISSUER = "https://accounts.google.com";
 
     private final boolean enforceTokenValidityLimits;
+    private final String googleIssuer;
 
     private CognitoConfig(Builder builder) {
         super(builder);
         this.enforceTokenValidityLimits = builder.enforceTokenValidityLimits;
+        this.googleIssuer = builder.googleIssuer;
     }
 
     /**
@@ -52,12 +55,24 @@ public class CognitoConfig extends AbstractServiceConfig<CognitoConfig.Builder> 
         return enforceTokenValidityLimits;
     }
 
+    /**
+     * Returns the issuer of Google identity provider federation.
+     *
+     * <p>Override it to use a local OIDC provider for testing.
+     *
+     * @return the issuer of Google identity provider federation
+     */
+    public String getGoogleIssuer() {
+        return googleIssuer;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_COGNITO_ENABLED", String.valueOf(isEnabled()));
 
         if (isEnabled()) {
             container.withEnv("FLOCI_SERVICES_COGNITO_ENFORCE_TOKEN_VALIDITY_LIMITS", String.valueOf(enforceTokenValidityLimits));
+            container.withEnv("FLOCI_SERVICES_COGNITO_GOOGLE_ISSUER", googleIssuer);
         }
     }
 
@@ -67,6 +82,7 @@ public class CognitoConfig extends AbstractServiceConfig<CognitoConfig.Builder> 
     public static class Builder extends AbstractServiceConfigBuilder<Builder, CognitoConfig> {
 
         private boolean enforceTokenValidityLimits = DEFAULT_ENFORCE_TOKEN_VALIDITY_LIMITS;
+        private String googleIssuer = DEFAULT_GOOGLE_ISSUER;
 
         private Builder() {
             // Allow instantiation only via CognitoConfig.builder()
@@ -80,6 +96,7 @@ public class CognitoConfig extends AbstractServiceConfig<CognitoConfig.Builder> 
         private Builder(CognitoConfig instance) {
             super(instance);
             this.enforceTokenValidityLimits = instance.isEnforceTokenValidityLimits();
+            this.googleIssuer = instance.getGoogleIssuer();
         }
 
         /**
@@ -94,6 +111,19 @@ public class CognitoConfig extends AbstractServiceConfig<CognitoConfig.Builder> 
          */
         public Builder enforceTokenValidityLimits(boolean enforceTokenValidityLimits) {
             this.enforceTokenValidityLimits = enforceTokenValidityLimits;
+            return this;
+        }
+
+        /**
+         * Sets the issuer of Google identity provider federation.
+         *
+         * <p>Override it to use a local OIDC provider for testing.
+         *
+         * @param googleIssuer the issuer of Google identity provider federation (default {@value DEFAULT_GOOGLE_ISSUER})
+         * @return this builder
+         */
+        public Builder googleIssuer(String googleIssuer) {
+            this.googleIssuer = googleIssuer;
             return this;
         }
 

@@ -24,12 +24,14 @@ public class MskConfig extends AbstractServiceConfig<MskConfig.Builder> {
     private static final String DEFAULT_IMAGE = "redpandadata/redpanda:latest";
     private static final int DEFAULT_KAFKA_HOST_PORT_BASE = 9300;
     private static final int DEFAULT_KAFKA_HOST_PORTS_COUNT = 10;
+    private static final long DEFAULT_SCRAM_RECONCILIATION_INTERVAL_MS = 5000L;
 
     private final boolean mock;
     private final String defaultImage;
     private final int kafkaHostPortBase;
     private final int kafkaHostPortsCount;
     private final String bootstrapHostname;
+    private final long scramReconciliationIntervalMs;
 
     private MskConfig(Builder builder) {
         super(builder);
@@ -38,6 +40,7 @@ public class MskConfig extends AbstractServiceConfig<MskConfig.Builder> {
         this.kafkaHostPortBase = builder.kafkaHostPortBase;
         this.kafkaHostPortsCount = builder.kafkaHostPortsCount;
         this.bootstrapHostname = builder.bootstrapHostname;
+        this.scramReconciliationIntervalMs = builder.scramReconciliationIntervalMs;
     }
 
     /**
@@ -115,6 +118,17 @@ public class MskConfig extends AbstractServiceConfig<MskConfig.Builder> {
         return Optional.ofNullable(bootstrapHostname);
     }
 
+    /**
+     * Returns the interval, in milliseconds, at which Floci re-reads the SCRAM secrets associated with clusters and applies their changes to the brokers.
+     *
+     * <p>Must be greater than zero.
+     *
+     * @return the interval, in milliseconds, at which Floci re-reads the SCRAM secrets associated with clusters and applies their changes to the brokers
+     */
+    public long getScramReconciliationIntervalMs() {
+        return scramReconciliationIntervalMs;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_MSK_ENABLED", String.valueOf(isEnabled()));
@@ -128,6 +142,8 @@ public class MskConfig extends AbstractServiceConfig<MskConfig.Builder> {
             if (bootstrapHostname != null) {
                 container.withEnv("FLOCI_SERVICES_MSK_BOOTSTRAP_HOSTNAME", bootstrapHostname);
             }
+
+            container.withEnv("FLOCI_SERVICES_MSK_SCRAM_RECONCILIATION_INTERVAL_MS", String.valueOf(scramReconciliationIntervalMs));
         }
     }
 
@@ -156,6 +172,7 @@ public class MskConfig extends AbstractServiceConfig<MskConfig.Builder> {
         private int kafkaHostPortBase = DEFAULT_KAFKA_HOST_PORT_BASE;
         private int kafkaHostPortsCount = DEFAULT_KAFKA_HOST_PORTS_COUNT;
         private String bootstrapHostname;
+        private long scramReconciliationIntervalMs = DEFAULT_SCRAM_RECONCILIATION_INTERVAL_MS;
 
         private Builder() {
             // Allow instantiation only via MskConfig.builder()
@@ -173,6 +190,7 @@ public class MskConfig extends AbstractServiceConfig<MskConfig.Builder> {
             this.kafkaHostPortBase = instance.getKafkaHostPortBase();
             this.kafkaHostPortsCount = instance.getKafkaHostPortsCount();
             this.bootstrapHostname = instance.getBootstrapHostname().orElse(null);
+            this.scramReconciliationIntervalMs = instance.getScramReconciliationIntervalMs();
         }
 
         /**
@@ -224,6 +242,19 @@ public class MskConfig extends AbstractServiceConfig<MskConfig.Builder> {
          */
         public Builder bootstrapHostname(String bootstrapHostname) {
             this.bootstrapHostname = bootstrapHostname;
+            return this;
+        }
+
+        /**
+         * Sets the interval, in milliseconds, at which Floci re-reads the SCRAM secrets associated with clusters and applies their changes to the brokers.
+         *
+         * <p>Must be greater than zero.
+         *
+         * @param scramReconciliationIntervalMs the interval, in milliseconds, at which Floci re-reads the SCRAM secrets associated with clusters and applies their changes to the brokers (default {@value DEFAULT_SCRAM_RECONCILIATION_INTERVAL_MS})
+         * @return this builder
+         */
+        public Builder scramReconciliationIntervalMs(long scramReconciliationIntervalMs) {
+            this.scramReconciliationIntervalMs = scramReconciliationIntervalMs;
             return this;
         }
 

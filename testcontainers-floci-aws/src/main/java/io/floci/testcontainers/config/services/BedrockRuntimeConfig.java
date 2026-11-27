@@ -19,6 +19,7 @@ public class BedrockRuntimeConfig extends AbstractServiceConfig<BedrockRuntimeCo
     private static final String DEFAULT_BACKEND = "stub";
     private static final boolean DEFAULT_PROXY_PASSTHROUGH = false;
     private static final int DEFAULT_PROXY_REQUEST_TIMEOUT_SECONDS = 60;
+    private static final int DEFAULT_PROXY_ERROR_BODY_TIMEOUT_MILLIS = 1000;
 
     private final String backend;
     private final String proxyUrl;
@@ -27,6 +28,7 @@ public class BedrockRuntimeConfig extends AbstractServiceConfig<BedrockRuntimeCo
     private final String proxyModelMapping;
     private final boolean proxyPassthrough;
     private final int proxyRequestTimeoutSeconds;
+    private final int proxyErrorBodyTimeoutMillis;
 
     private BedrockRuntimeConfig(Builder builder) {
         super(builder);
@@ -37,6 +39,7 @@ public class BedrockRuntimeConfig extends AbstractServiceConfig<BedrockRuntimeCo
         this.proxyModelMapping = builder.proxyModelMapping;
         this.proxyPassthrough = builder.proxyPassthrough;
         this.proxyRequestTimeoutSeconds = builder.proxyRequestTimeoutSeconds;
+        this.proxyErrorBodyTimeoutMillis = builder.proxyErrorBodyTimeoutMillis;
     }
 
     /**
@@ -131,6 +134,17 @@ public class BedrockRuntimeConfig extends AbstractServiceConfig<BedrockRuntimeCo
         return proxyRequestTimeoutSeconds;
     }
 
+    /**
+     * Returns the time, in milliseconds, the proxy collects an upstream error response body before returning the known model error without its details.
+     *
+     * <p>Bounds a backend that sends an error status and then stalls, since the request timeout stops at the headers.
+     *
+     * @return the time, in milliseconds, the proxy collects an upstream error response body before returning the known model error without its details
+     */
+    public int getProxyErrorBodyTimeoutMillis() {
+        return proxyErrorBodyTimeoutMillis;
+    }
+
     @Override
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_SERVICES_BEDROCK_RUNTIME_ENABLED", String.valueOf(isEnabled()));
@@ -140,6 +154,7 @@ public class BedrockRuntimeConfig extends AbstractServiceConfig<BedrockRuntimeCo
             container.withEnv("FLOCI_SERVICES_BEDROCK_RUNTIME_PROXY_PASSTHROUGH", String.valueOf(proxyPassthrough));
             container.withEnv("FLOCI_SERVICES_BEDROCK_RUNTIME_PROXY_REQUEST_TIMEOUT_SECONDS",
                     String.valueOf(proxyRequestTimeoutSeconds));
+            container.withEnv("FLOCI_SERVICES_BEDROCK_RUNTIME_PROXY_ERROR_BODY_TIMEOUT_MILLIS", String.valueOf(proxyErrorBodyTimeoutMillis));
 
             if (proxyUrl != null) {
                 container.withEnv("FLOCI_SERVICES_BEDROCK_RUNTIME_PROXY_URL", proxyUrl);
@@ -168,6 +183,7 @@ public class BedrockRuntimeConfig extends AbstractServiceConfig<BedrockRuntimeCo
         private String proxyModelMapping;
         private boolean proxyPassthrough = DEFAULT_PROXY_PASSTHROUGH;
         private int proxyRequestTimeoutSeconds = DEFAULT_PROXY_REQUEST_TIMEOUT_SECONDS;
+        private int proxyErrorBodyTimeoutMillis = DEFAULT_PROXY_ERROR_BODY_TIMEOUT_MILLIS;
 
         private Builder() {
             // Allow instantiation only via BedrockRuntimeConfig.builder()
@@ -187,6 +203,7 @@ public class BedrockRuntimeConfig extends AbstractServiceConfig<BedrockRuntimeCo
             this.proxyModelMapping = instance.getProxyModelMapping();
             this.proxyPassthrough = instance.isProxyPassthrough();
             this.proxyRequestTimeoutSeconds = instance.getProxyRequestTimeoutSeconds();
+            this.proxyErrorBodyTimeoutMillis = instance.getProxyErrorBodyTimeoutMillis();
         }
 
         /**
@@ -275,6 +292,19 @@ public class BedrockRuntimeConfig extends AbstractServiceConfig<BedrockRuntimeCo
          */
         public Builder proxyRequestTimeoutSeconds(int proxyRequestTimeoutSeconds) {
             this.proxyRequestTimeoutSeconds = proxyRequestTimeoutSeconds;
+            return this;
+        }
+
+        /**
+         * Sets the time, in milliseconds, the proxy collects an upstream error response body before returning the known model error without its details.
+         *
+         * <p>Bounds a backend that sends an error status and then stalls, since the request timeout stops at the headers.
+         *
+         * @param proxyErrorBodyTimeoutMillis the time, in milliseconds, the proxy collects an upstream error response body before returning the known model error without its details (default {@value DEFAULT_PROXY_ERROR_BODY_TIMEOUT_MILLIS})
+         * @return this builder
+         */
+        public Builder proxyErrorBodyTimeoutMillis(int proxyErrorBodyTimeoutMillis) {
+            this.proxyErrorBodyTimeoutMillis = proxyErrorBodyTimeoutMillis;
             return this;
         }
 

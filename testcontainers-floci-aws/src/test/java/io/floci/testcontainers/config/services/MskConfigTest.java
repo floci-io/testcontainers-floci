@@ -19,6 +19,7 @@ class MskConfigTest {
         assertThat(config.getKafkaHostPortMax()).isEqualTo(9309);
         assertThat(config.getKafkaHostPortsCount()).isEqualTo(10);
         assertThat(config.getBootstrapHostname()).isEmpty();
+        assertThat(config.getScramReconciliationIntervalMs()).isEqualTo(5000L);
     }
 
     @Test
@@ -29,6 +30,7 @@ class MskConfigTest {
                 .defaultImage("redpandadata/redpanda:v24")
                 .kafkaHostPortRange(9500, 20)
                 .bootstrapHostname("kafka.example.com")
+                .scramReconciliationIntervalMs(1000L)
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.isMock()).isTrue();
@@ -37,6 +39,7 @@ class MskConfigTest {
         assertThat(config.getKafkaHostPortMax()).isEqualTo(9519);
         assertThat(config.getKafkaHostPortsCount()).isEqualTo(20);
         assertThat(config.getBootstrapHostname()).contains("kafka.example.com");
+        assertThat(config.getScramReconciliationIntervalMs()).isEqualTo(1000L);
     }
 
     @Test
@@ -50,7 +53,8 @@ class MskConfigTest {
                 .containsEntry("FLOCI_SERVICES_MSK_DEFAULT_IMAGE", "redpandadata/redpanda:latest")
                 .containsEntry("FLOCI_SERVICES_MSK_KAFKA_HOST_PORT_BASE", "9300")
                 .containsEntry("FLOCI_SERVICES_MSK_KAFKA_HOST_PORT_MAX", "9309")
-                .doesNotContainKey("FLOCI_SERVICES_MSK_BOOTSTRAP_HOSTNAME");
+                .doesNotContainKey("FLOCI_SERVICES_MSK_BOOTSTRAP_HOSTNAME")
+                .containsEntry("FLOCI_SERVICES_MSK_SCRAM_RECONCILIATION_INTERVAL_MS", "5000");
     }
 
     @Test
@@ -62,6 +66,7 @@ class MskConfigTest {
                 .defaultImage("redpandadata/redpanda:v24")
                 .kafkaHostPortRange(9500, 20)
                 .bootstrapHostname("kafka.example.com")
+                .scramReconciliationIntervalMs(1000L)
                 .build()
                 .applyEnvVarsToContainer(container);
 
@@ -71,7 +76,8 @@ class MskConfigTest {
                 .containsEntry("FLOCI_SERVICES_MSK_DEFAULT_IMAGE", "redpandadata/redpanda:v24")
                 .containsEntry("FLOCI_SERVICES_MSK_KAFKA_HOST_PORT_BASE", "9500")
                 .containsEntry("FLOCI_SERVICES_MSK_KAFKA_HOST_PORT_MAX", "9519")
-                .containsEntry("FLOCI_SERVICES_MSK_BOOTSTRAP_HOSTNAME", "kafka.example.com");
+                .containsEntry("FLOCI_SERVICES_MSK_BOOTSTRAP_HOSTNAME", "kafka.example.com")
+                .containsEntry("FLOCI_SERVICES_MSK_SCRAM_RECONCILIATION_INTERVAL_MS", "1000");
     }
 
     @Test
@@ -85,7 +91,8 @@ class MskConfigTest {
                 .doesNotContainKey("FLOCI_SERVICES_MSK_DEFAULT_IMAGE")
                 .doesNotContainKey("FLOCI_SERVICES_MSK_KAFKA_HOST_PORT_BASE")
                 .doesNotContainKey("FLOCI_SERVICES_MSK_KAFKA_HOST_PORT_MAX")
-                .doesNotContainKey("FLOCI_SERVICES_MSK_BOOTSTRAP_HOSTNAME");
+                .doesNotContainKey("FLOCI_SERVICES_MSK_BOOTSTRAP_HOSTNAME")
+                .doesNotContainKey("FLOCI_SERVICES_MSK_SCRAM_RECONCILIATION_INTERVAL_MS");
     }
 
     @Test
@@ -107,6 +114,7 @@ class MskConfigTest {
                 .defaultImage("test-image")
                 .kafkaHostPortRange(9400, 5)
                 .bootstrapHostname("test-bootstrap-host")
+                .scramReconciliationIntervalMs(1000L)
                 .build();
         MskConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
@@ -115,6 +123,7 @@ class MskConfigTest {
         assertThat(copy.getKafkaHostPortBase()).isEqualTo(9400);
         assertThat(copy.getKafkaHostPortsCount()).isEqualTo(5);
         assertThat(copy.getBootstrapHostname()).contains("test-bootstrap-host");
+        assertThat(copy.getScramReconciliationIntervalMs()).isEqualTo(1000L);
     }
 
     @Test

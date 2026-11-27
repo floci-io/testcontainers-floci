@@ -20,7 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 @TestMethodOrder(OrderAnnotation.class)
-@Disabled
 class EcsServiceTest extends AbstractServiceTest {
 
     static EcsClient ecs;
@@ -96,6 +95,7 @@ class EcsServiceTest extends AbstractServiceTest {
 
     @Test
     @Order(5)
+    @Disabled("The task reaches RUNNING, but its published port 80 is not reachable from the test JVM")
     void shouldConnectToTaskWebServer() {
         int hostPort = ecs.describeTasks(b -> b
                         .cluster(clusterName)

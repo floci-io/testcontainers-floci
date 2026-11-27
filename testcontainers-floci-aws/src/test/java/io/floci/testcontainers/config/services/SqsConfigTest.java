@@ -16,6 +16,8 @@ class SqsConfigTest {
         assertThat(config.getMaxMessageSize()).isEqualTo(1048576);
         assertThat(config.isClearFifoDeduplicationCacheOnPurge()).isTrue();
         assertThat(config.getReceiptHandleSecret()).isEqualTo("local-emulator-secret");
+        assertThat(config.isCloudwatchMetricsEnabled()).isTrue();
+        assertThat(config.getEndpointStrategy()).isEqualTo(SqsConfig.EndpointStrategy.FLOCI);
     }
 
     @Test
@@ -26,12 +28,16 @@ class SqsConfigTest {
                 .maxMessageSize(131072)
                 .clearFifoDeduplicationCacheOnPurge(false)
                 .receiptHandleSecret("my-secret")
+                .cloudwatchMetricsEnabled(false)
+                .endpointStrategy(SqsConfig.EndpointStrategy.AWS)
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.getDefaultVisibilityTimeout()).isEqualTo(60);
         assertThat(config.getMaxMessageSize()).isEqualTo(131072);
         assertThat(config.isClearFifoDeduplicationCacheOnPurge()).isFalse();
         assertThat(config.getReceiptHandleSecret()).isEqualTo("my-secret");
+        assertThat(config.isCloudwatchMetricsEnabled()).isFalse();
+        assertThat(config.getEndpointStrategy()).isEqualTo(SqsConfig.EndpointStrategy.AWS);
     }
 
     @Test
@@ -44,7 +50,9 @@ class SqsConfigTest {
                 .containsEntry("FLOCI_SERVICES_SQS_DEFAULT_VISIBILITY_TIMEOUT", "30")
                 .containsEntry("FLOCI_SERVICES_SQS_MAX_MESSAGE_SIZE", "1048576")
                 .containsEntry("FLOCI_SERVICES_SQS_CLEAR_FIFO_DEDUPLICATION_CACHE_ON_PURGE", "true")
-                .containsEntry("FLOCI_SERVICES_SQS_RECEIPT_HANDLE_SECRET", "local-emulator-secret");
+                .containsEntry("FLOCI_SERVICES_SQS_RECEIPT_HANDLE_SECRET", "local-emulator-secret")
+                .containsEntry("FLOCI_SERVICES_SQS_CLOUDWATCH_METRICS_ENABLED", "true")
+                .containsEntry("FLOCI_SERVICES_SQS_ENDPOINT_STRATEGY", "floci");
     }
 
     @Test
@@ -55,6 +63,8 @@ class SqsConfigTest {
                 .maxMessageSize(131072)
                 .clearFifoDeduplicationCacheOnPurge(false)
                 .receiptHandleSecret("my-secret")
+                .cloudwatchMetricsEnabled(false)
+                .endpointStrategy(SqsConfig.EndpointStrategy.AWS)
                 .build()
                 .applyEnvVarsToContainer(container);
 
@@ -62,7 +72,9 @@ class SqsConfigTest {
                 .containsEntry("FLOCI_SERVICES_SQS_DEFAULT_VISIBILITY_TIMEOUT", "60")
                 .containsEntry("FLOCI_SERVICES_SQS_MAX_MESSAGE_SIZE", "131072")
                 .containsEntry("FLOCI_SERVICES_SQS_CLEAR_FIFO_DEDUPLICATION_CACHE_ON_PURGE", "false")
-                .containsEntry("FLOCI_SERVICES_SQS_RECEIPT_HANDLE_SECRET", "my-secret");
+                .containsEntry("FLOCI_SERVICES_SQS_RECEIPT_HANDLE_SECRET", "my-secret")
+                .containsEntry("FLOCI_SERVICES_SQS_CLOUDWATCH_METRICS_ENABLED", "false")
+                .containsEntry("FLOCI_SERVICES_SQS_ENDPOINT_STRATEGY", "aws");
     }
 
     @Test
@@ -72,7 +84,9 @@ class SqsConfigTest {
 
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_SERVICES_SQS_ENABLED", "false")
-                .doesNotContainKey("FLOCI_SERVICES_SQS_RECEIPT_HANDLE_SECRET");
+                .doesNotContainKey("FLOCI_SERVICES_SQS_RECEIPT_HANDLE_SECRET")
+                .doesNotContainKey("FLOCI_SERVICES_SQS_CLOUDWATCH_METRICS_ENABLED")
+                .doesNotContainKey("FLOCI_SERVICES_SQS_ENDPOINT_STRATEGY");
     }
 
     @Test
@@ -83,6 +97,8 @@ class SqsConfigTest {
                 .maxMessageSize(65536)
                 .clearFifoDeduplicationCacheOnPurge(false)
                 .receiptHandleSecret("my-secret")
+                .cloudwatchMetricsEnabled(false)
+                .endpointStrategy(SqsConfig.EndpointStrategy.AWS)
                 .build();
         SqsConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
@@ -90,6 +106,8 @@ class SqsConfigTest {
         assertThat(copy.getMaxMessageSize()).isEqualTo(65536);
         assertThat(copy.isClearFifoDeduplicationCacheOnPurge()).isFalse();
         assertThat(copy.getReceiptHandleSecret()).isEqualTo("my-secret");
+        assertThat(copy.isCloudwatchMetricsEnabled()).isFalse();
+        assertThat(copy.getEndpointStrategy()).isEqualTo(SqsConfig.EndpointStrategy.AWS);
     }
 
 }

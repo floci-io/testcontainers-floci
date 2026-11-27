@@ -450,7 +450,7 @@ class FlociContainerServicesConfigTest {
     void shouldWireRoute53ConfigIntoContainer() {
         assertConfigWired(
                 c -> c.withRoute53Config(cfg -> cfg.defaultNameserver1("ns1.example.com")),
-                c -> c.getRoute53Config().getDefaultNameserver1(), "ns1.example.com",
+                c -> c.getRoute53Config().getDefaultNameserver1(), Optional.of("ns1.example.com"),
                 "FLOCI_SERVICES_ROUTE53_DEFAULT_NAMESERVER_1", "ns1.example.com");
     }
 
@@ -1076,6 +1076,70 @@ class FlociContainerServicesConfigTest {
                 c -> c.withElbConfig(cfg -> cfg.mock(true)),
                 c -> c.getElbConfig().isMock(), true,
                 "FLOCI_SERVICES_ELB_MOCK", "true");
+    }
+
+    @Test
+    void shouldWireDsqlConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withDsqlConfig(cfg -> cfg.port(15432)),
+                c -> c.getDsqlConfig().getPort(), 15432,
+                "FLOCI_SERVICES_DSQL_PORT", "15432", 15432);
+    }
+
+    @Test
+    void shouldWireEventBridgeV2ConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withEventBridgeV2Config(cfg -> cfg.enabled(false)),
+                c -> c.getEventBridgeV2Config().isEnabled(), false,
+                "FLOCI_SERVICES_EVENTBRIDGEV2_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWirePaymentCryptographyConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withPaymentCryptographyConfig(cfg -> cfg.enabled(false)),
+                c -> c.getPaymentCryptographyConfig().isEnabled(), false,
+                "FLOCI_SERVICES_PAYMENTCRYPTOGRAPHY_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireResourceGroupsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withResourceGroupsConfig(cfg -> cfg.enabled(false)),
+                c -> c.getResourceGroupsConfig().isEnabled(), false,
+                "FLOCI_SERVICES_RESOURCE_GROUPS_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireSignerConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withSignerConfig(cfg -> cfg.mockSigningJobs(true)),
+                c -> c.getSignerConfig().isMockSigningJobs(), true,
+                "FLOCI_SERVICES_SIGNER_MOCK_SIGNING_JOBS", "true");
+    }
+
+    @Test
+    void shouldWireXrayConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withXrayConfig(cfg -> cfg.enabled(false)),
+                c -> c.getXrayConfig().isEnabled(), false,
+                "FLOCI_SERVICES_XRAY_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireEc2InstanceConnectConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withEc2InstanceConnectConfig(cfg -> cfg.enabled(false)),
+                c -> c.getEc2InstanceConnectConfig().isEnabled(), false,
+                "FLOCI_SERVICES_EC2INSTANCECONNECT_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireQuickSightConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withQuickSightConfig(cfg -> cfg.embedBaseUrl("https://quicksight.example.test")),
+                c -> c.getQuickSightConfig().getEmbedBaseUrl(), Optional.of("https://quicksight.example.test"),
+                "FLOCI_SERVICES_QUICKSIGHT_EMBED_BASE_URL", "https://quicksight.example.test");
     }
 
     // --- Cross-cutting configs (config/) --------------------------------------------------------

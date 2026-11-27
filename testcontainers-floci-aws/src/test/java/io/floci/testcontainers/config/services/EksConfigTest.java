@@ -34,6 +34,8 @@ class EksConfigTest {
         assertThat(config.isPodIdentityWebhook()).isTrue();
         assertThat(config.isEmbeddedDns()).isTrue();
         assertThat(config.isVpcRouteProgramming()).isTrue();
+        assertThat(config.getNodeInstanceType()).isEmpty();
+        assertThat(config.getEndpointHost()).isEmpty();
     }
 
     @Test
@@ -59,6 +61,8 @@ class EksConfigTest {
                 .podIdentityWebhook(false)
                 .embeddedDns(false)
                 .vpcRouteProgramming(false)
+                .nodeInstanceType("t3.large")
+                .endpointHost("eks.example.test")
                 .build();
         assertThat(config.isEnabled()).isFalse();
         assertThat(config.isMock()).isTrue();
@@ -82,6 +86,8 @@ class EksConfigTest {
         assertThat(config.isPodIdentityWebhook()).isFalse();
         assertThat(config.isEmbeddedDns()).isFalse();
         assertThat(config.isVpcRouteProgramming()).isFalse();
+        assertThat(config.getNodeInstanceType()).contains("t3.large");
+        assertThat(config.getEndpointHost()).contains("eks.example.test");
     }
 
     @Test
@@ -110,7 +116,9 @@ class EksConfigTest {
                 .containsEntry("FLOCI_SERVICES_EKS_IRSA_SIGNING_KEY", "true")
                 .containsEntry("FLOCI_SERVICES_EKS_POD_IDENTITY_WEBHOOK", "true")
                 .containsEntry("FLOCI_SERVICES_EKS_EMBEDDED_DNS", "true")
-                .containsEntry("FLOCI_SERVICES_EKS_VPC_ROUTE_PROGRAMMING", "true");
+                .containsEntry("FLOCI_SERVICES_EKS_VPC_ROUTE_PROGRAMMING", "true")
+                .doesNotContainKey("FLOCI_SERVICES_EKS_NODE_INSTANCE_TYPE")
+                .doesNotContainKey("FLOCI_SERVICES_EKS_ENDPOINT_HOST");
     }
 
     @Test
@@ -137,6 +145,8 @@ class EksConfigTest {
                 .podIdentityWebhook(false)
                 .embeddedDns(false)
                 .vpcRouteProgramming(false)
+                .nodeInstanceType("t3.large")
+                .endpointHost("eks.example.test")
                 .build()
                 .applyEnvVarsToContainer(container);
 
@@ -161,7 +171,9 @@ class EksConfigTest {
                 .containsEntry("FLOCI_SERVICES_EKS_IRSA_SIGNING_KEY", "false")
                 .containsEntry("FLOCI_SERVICES_EKS_POD_IDENTITY_WEBHOOK", "false")
                 .containsEntry("FLOCI_SERVICES_EKS_EMBEDDED_DNS", "false")
-                .containsEntry("FLOCI_SERVICES_EKS_VPC_ROUTE_PROGRAMMING", "false");
+                .containsEntry("FLOCI_SERVICES_EKS_VPC_ROUTE_PROGRAMMING", "false")
+                .containsEntry("FLOCI_SERVICES_EKS_NODE_INSTANCE_TYPE", "t3.large")
+                .containsEntry("FLOCI_SERVICES_EKS_ENDPOINT_HOST", "eks.example.test");
     }
 
     @Test
@@ -183,7 +195,9 @@ class EksConfigTest {
                 .doesNotContainKey("FLOCI_SERVICES_EKS_IRSA_SIGNING_KEY")
                 .doesNotContainKey("FLOCI_SERVICES_EKS_POD_IDENTITY_WEBHOOK")
                 .doesNotContainKey("FLOCI_SERVICES_EKS_EMBEDDED_DNS")
-                .doesNotContainKey("FLOCI_SERVICES_EKS_VPC_ROUTE_PROGRAMMING");
+                .doesNotContainKey("FLOCI_SERVICES_EKS_VPC_ROUTE_PROGRAMMING")
+                .doesNotContainKey("FLOCI_SERVICES_EKS_NODE_INSTANCE_TYPE")
+                .doesNotContainKey("FLOCI_SERVICES_EKS_ENDPOINT_HOST");
     }
 
     @Test
@@ -220,6 +234,8 @@ class EksConfigTest {
                 .podIdentityWebhook(false)
                 .embeddedDns(false)
                 .vpcRouteProgramming(false)
+                .nodeInstanceType("t3.large")
+                .endpointHost("eks.example.test")
                 .build();
         EksConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
@@ -243,6 +259,8 @@ class EksConfigTest {
         assertThat(copy.isPodIdentityWebhook()).isFalse();
         assertThat(copy.isEmbeddedDns()).isFalse();
         assertThat(copy.isVpcRouteProgramming()).isFalse();
+        assertThat(copy.getNodeInstanceType()).contains("t3.large");
+        assertThat(copy.getEndpointHost()).contains("eks.example.test");
     }
 
     @Test
