@@ -5,6 +5,21 @@ updates:
     ignore:
       # Pinned to the last JSON-protocol client, see testcontainers-floci-aws/pom.xml
       - dependency-name: "software.amazon.awssdk:translate"
+      # Pinned to the last JSON-protocol clients (aws-sdk-json-protocol.version in testcontainers-floci-aws/pom.xml):
+      # from 2.58.0 they speak Smithy RPC v2 CBOR, which Floci does not serve for them yet
+      - dependency-name: "software.amazon.awssdk:textract"
+      - dependency-name: "software.amazon.awssdk:cloudhsmv2"
+      - dependency-name: "software.amazon.awssdk:comprehend"
+      - dependency-name: "software.amazon.awssdk:networkfirewall"
+      - dependency-name: "software.amazon.awssdk:datasync"
+      - dependency-name: "software.amazon.awssdk:transcribe"
+      - dependency-name: "software.amazon.awssdk:servicediscovery"
+      - dependency-name: "software.amazon.awssdk:codepipeline"
+      - dependency-name: "software.amazon.awssdk:codebuild"
+      - dependency-name: "software.amazon.awssdk:resourcegroupstaggingapi"
+      - dependency-name: "software.amazon.awssdk:memorydb"
+      - dependency-name: "software.amazon.awssdk:codedeploy"
+      - dependency-name: "software.amazon.awssdk:servicecatalog"
       # The test OCI SDK is pinned to the version of Floci OCI's compatibility-tests/sdk-test-java;
       # newer SDKs call API versions Floci OCI does not serve.
       - dependency-name: "com.oracle.oci.sdk:*"

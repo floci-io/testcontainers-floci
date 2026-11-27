@@ -19,6 +19,12 @@
         -->
         <japicmp.baseline.version>2.16.1</japicmp.baseline.version>
         <japicmp.baseline.directory>${project.build.directory}/japicmp-baseline</japicmp.baseline.directory>
+        <!--
+            Last AWS SDK release whose clients for the services pinned to it below still speak AWS JSON 1.1. From 2.58.0
+            these clients speak Smithy RPC v2 CBOR, which Floci does not serve for them yet (404). Remove the property,
+            the pins and the dependabot ignores once Floci supports it.
+        -->
+        <aws-sdk-json-protocol.version>2.57.13</aws-sdk-json-protocol.version>
     </properties>
 
     <dependencyManagement>
@@ -243,6 +249,8 @@
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>resourcegroupstaggingapi</artifactId>
+            <!-- Pinned to the last JSON-protocol client, see aws-sdk-json-protocol.version -->
+            <version>${aws-sdk-json-protocol.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -273,11 +281,15 @@
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>codebuild</artifactId>
+            <!-- Pinned to the last JSON-protocol client, see aws-sdk-json-protocol.version -->
+            <version>${aws-sdk-json-protocol.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>codedeploy</artifactId>
+            <!-- Pinned to the last JSON-protocol client, see aws-sdk-json-protocol.version -->
+            <version>${aws-sdk-json-protocol.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -313,6 +325,8 @@
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>textract</artifactId>
+            <!-- Pinned to the last JSON-protocol client, see aws-sdk-json-protocol.version -->
+            <version>${aws-sdk-json-protocol.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -343,6 +357,8 @@
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>servicediscovery</artifactId>
+            <!-- Pinned to the last JSON-protocol client, see aws-sdk-json-protocol.version -->
+            <version>${aws-sdk-json-protocol.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -423,6 +439,8 @@
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>codepipeline</artifactId>
+            <!-- Pinned to the last JSON-protocol client, see aws-sdk-json-protocol.version -->
+            <version>${aws-sdk-json-protocol.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -433,6 +451,8 @@
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>memorydb</artifactId>
+            <!-- Pinned to the last JSON-protocol client, see aws-sdk-json-protocol.version -->
+            <version>${aws-sdk-json-protocol.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -473,6 +493,8 @@
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>cloudhsmv2</artifactId>
+            <!-- Pinned to the last JSON-protocol client, see aws-sdk-json-protocol.version -->
+            <version>${aws-sdk-json-protocol.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -493,11 +515,15 @@
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>comprehend</artifactId>
+            <!-- Pinned to the last JSON-protocol client, see aws-sdk-json-protocol.version -->
+            <version>${aws-sdk-json-protocol.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>transcribe</artifactId>
+            <!-- Pinned to the last JSON-protocol client, see aws-sdk-json-protocol.version -->
+            <version>${aws-sdk-json-protocol.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -538,11 +564,15 @@
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>servicecatalog</artifactId>
+            <!-- Pinned to the last JSON-protocol client, see aws-sdk-json-protocol.version -->
+            <version>${aws-sdk-json-protocol.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>networkfirewall</artifactId>
+            <!-- Pinned to the last JSON-protocol client, see aws-sdk-json-protocol.version -->
+            <version>${aws-sdk-json-protocol.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -696,6 +726,8 @@
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>datasync</artifactId>
+            <!-- Pinned to the last JSON-protocol client, see aws-sdk-json-protocol.version -->
+            <version>${aws-sdk-json-protocol.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
