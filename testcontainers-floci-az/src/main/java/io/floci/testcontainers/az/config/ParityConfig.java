@@ -39,19 +39,31 @@ public class ParityConfig {
     private static final Level DEFAULT_LEVEL = Level.COMPAT;
 
     private final Level level;
+    private final Boolean strictTokens;
     private final Boolean subscriptionListing;
     private final Boolean strictSubscriptions;
     private final Boolean resourceGroupSemantics;
     private final Boolean resourceGroupDelete;
     private final Boolean strictResourceGroups;
+    private final Boolean strictProviders;
+    private final Boolean strictNames;
+    private final Boolean locationNormalize;
+    private final Boolean strictLocations;
+    private final Boolean tenantScoping;
 
     private ParityConfig(Builder builder) {
         this.level = builder.level;
+        this.strictTokens = builder.strictTokens;
         this.subscriptionListing = builder.subscriptionListing;
         this.strictSubscriptions = builder.strictSubscriptions;
         this.resourceGroupSemantics = builder.resourceGroupSemantics;
         this.resourceGroupDelete = builder.resourceGroupDelete;
         this.strictResourceGroups = builder.strictResourceGroups;
+        this.strictProviders = builder.strictProviders;
+        this.strictNames = builder.strictNames;
+        this.locationNormalize = builder.locationNormalize;
+        this.strictLocations = builder.strictLocations;
+        this.tenantScoping = builder.tenantScoping;
     }
 
     /**
@@ -80,6 +92,17 @@ public class ParityConfig {
      */
     public Level getLevel() {
         return level;
+    }
+
+    /**
+     * Returns whether an ARM request whose Bearer token is missing, not signed by the Entra signing key,
+     * expired, or issued for another audience is refused with {@code 401}. When empty, it is on from
+     * {@link Level#STRICT} or when Entra's {@code validateTokens} is set.
+     *
+     * @return the override, or {@link Optional#empty()} if it follows the level
+     */
+    public Optional<Boolean> getStrictTokens() {
+        return Optional.ofNullable(strictTokens);
     }
 
     /**
@@ -139,6 +162,60 @@ public class ParityConfig {
     }
 
     /**
+     * Returns whether resource providers start {@code NotRegistered} in each subscription, so a request for
+     * a resource type of an unregistered namespace is refused with {@code 409 MissingSubscriptionRegistration}
+     * until the namespace is registered. When empty, it is on from {@link Level#STRICT}.
+     *
+     * @return the override, or {@link Optional#empty()} if it follows the level
+     */
+    public Optional<Boolean> getStrictProviders() {
+        return Optional.ofNullable(strictProviders);
+    }
+
+    /**
+     * Returns whether a PUT whose resource name breaks its type's naming rule is refused with {@code 400}
+     * before its handler runs. When empty, it is on from {@link Level#STRICT}.
+     *
+     * @return the override, or {@link Optional#empty()} if it follows the level
+     */
+    public Optional<Boolean> getStrictNames() {
+        return Optional.ofNullable(strictNames);
+    }
+
+    /**
+     * Returns whether ARM locations are stored canonical, as Azure stores them: a PUT or PATCH body's
+     * {@code location} is normalized for the subscription's cloud ({@code "East US"} becomes {@code eastus})
+     * before its handler runs, a type that inherits its group's location gets it when the body names none,
+     * and a global type gets {@code global}. When empty, it is on from {@link Level#AZURE}.
+     *
+     * @return the override, or {@link Optional#empty()} if it follows the level
+     */
+    public Optional<Boolean> getLocationNormalize() {
+        return Optional.ofNullable(locationNormalize);
+    }
+
+    /**
+     * Returns whether a resource PUT naming a location its subscription's cloud does not offer is refused
+     * with {@code 400 NoRegisteredProviderFound}. When empty, it is on from {@link Level#STRICT}.
+     *
+     * @return the override, or {@link Optional#empty()} if it follows the level
+     */
+    public Optional<Boolean> getStrictLocations() {
+        return Optional.ofNullable(strictLocations);
+    }
+
+    /**
+     * Returns whether ARM answers as the caller's tenant: the (unverified) {@code tid} of a Bearer token
+     * picks the tenant, {@code GET /subscriptions} lists that tenant's subscriptions, and a subscription
+     * seen for the first time is registered under it. When empty, it is on from {@link Level#AZURE}.
+     *
+     * @return the override, or {@link Optional#empty()} if it follows the level
+     */
+    public Optional<Boolean> getTenantScoping() {
+        return Optional.ofNullable(tenantScoping);
+    }
+
+    /**
      * Applies the parity environment variables to the given container. Overrides are only emitted when
      * set, so that they follow the level otherwise.
      *
@@ -147,24 +224,22 @@ public class ParityConfig {
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_AZ_PARITY", level.name().toLowerCase(Locale.ROOT));
 
-        if (subscriptionListing != null) {
-            container.withEnv("FLOCI_AZ_PARITY_OVERRIDES_SUBSCRIPTION_LISTING", String.valueOf(subscriptionListing));
-        }
+        applyOverride(container, "STRICT_TOKENS", strictTokens);
+        applyOverride(container, "SUBSCRIPTION_LISTING", subscriptionListing);
+        applyOverride(container, "STRICT_SUBSCRIPTIONS", strictSubscriptions);
+        applyOverride(container, "RESOURCE_GROUP_SEMANTICS", resourceGroupSemantics);
+        applyOverride(container, "RESOURCE_GROUP_DELETE", resourceGroupDelete);
+        applyOverride(container, "STRICT_RESOURCE_GROUPS", strictResourceGroups);
+        applyOverride(container, "STRICT_PROVIDERS", strictProviders);
+        applyOverride(container, "STRICT_NAMES", strictNames);
+        applyOverride(container, "LOCATION_NORMALIZE", locationNormalize);
+        applyOverride(container, "STRICT_LOCATIONS", strictLocations);
+        applyOverride(container, "TENANT_SCOPING", tenantScoping);
+    }
 
-        if (strictSubscriptions != null) {
-            container.withEnv("FLOCI_AZ_PARITY_OVERRIDES_STRICT_SUBSCRIPTIONS", String.valueOf(strictSubscriptions));
-        }
-
-        if (resourceGroupSemantics != null) {
-            container.withEnv("FLOCI_AZ_PARITY_OVERRIDES_RESOURCE_GROUP_SEMANTICS", String.valueOf(resourceGroupSemantics));
-        }
-
-        if (resourceGroupDelete != null) {
-            container.withEnv("FLOCI_AZ_PARITY_OVERRIDES_RESOURCE_GROUP_DELETE", String.valueOf(resourceGroupDelete));
-        }
-
-        if (strictResourceGroups != null) {
-            container.withEnv("FLOCI_AZ_PARITY_OVERRIDES_STRICT_RESOURCE_GROUPS", String.valueOf(strictResourceGroups));
+    private static void applyOverride(Container<?> container, String name, Boolean value) {
+        if (value != null) {
+            container.withEnv("FLOCI_AZ_PARITY_OVERRIDES_" + name, String.valueOf(value));
         }
     }
 
@@ -174,11 +249,17 @@ public class ParityConfig {
     public static class Builder {
 
         private Level level = DEFAULT_LEVEL;
+        private Boolean strictTokens;
         private Boolean subscriptionListing;
         private Boolean strictSubscriptions;
         private Boolean resourceGroupSemantics;
         private Boolean resourceGroupDelete;
         private Boolean strictResourceGroups;
+        private Boolean strictProviders;
+        private Boolean strictNames;
+        private Boolean locationNormalize;
+        private Boolean strictLocations;
+        private Boolean tenantScoping;
 
         private Builder() {
             // Allow instantiation only via ParityConfig.builder()
@@ -186,11 +267,17 @@ public class ParityConfig {
 
         private Builder(ParityConfig instance) {
             this.level = instance.level;
+            this.strictTokens = instance.strictTokens;
             this.subscriptionListing = instance.subscriptionListing;
             this.strictSubscriptions = instance.strictSubscriptions;
             this.resourceGroupSemantics = instance.resourceGroupSemantics;
             this.resourceGroupDelete = instance.resourceGroupDelete;
             this.strictResourceGroups = instance.strictResourceGroups;
+            this.strictProviders = instance.strictProviders;
+            this.strictNames = instance.strictNames;
+            this.locationNormalize = instance.locationNormalize;
+            this.strictLocations = instance.strictLocations;
+            this.tenantScoping = instance.tenantScoping;
         }
 
         /**
@@ -201,6 +288,19 @@ public class ParityConfig {
          */
         public Builder level(Level level) {
             this.level = Objects.requireNonNull(level, "level");
+            return this;
+        }
+
+        /**
+         * Sets whether an ARM request whose Bearer token is missing, not signed by the Entra signing key,
+         * expired, or issued for another audience is refused with {@code 401}. When not set, it is on from
+         * {@link Level#STRICT} or when Entra's {@code validateTokens} is set; this override wins over both.
+         *
+         * @param strictTokens the override ({@code null} to follow the level)
+         * @return this builder
+         */
+        public Builder strictTokens(Boolean strictTokens) {
+            this.strictTokens = strictTokens;
             return this;
         }
 
@@ -268,6 +368,74 @@ public class ParityConfig {
          */
         public Builder strictResourceGroups(Boolean strictResourceGroups) {
             this.strictResourceGroups = strictResourceGroups;
+            return this;
+        }
+
+        /**
+         * Sets whether resource providers start {@code NotRegistered} in each subscription, so a request
+         * for a resource type of an unregistered namespace is refused with
+         * {@code 409 MissingSubscriptionRegistration} until the namespace is registered. When not set, it
+         * is on from {@link Level#STRICT}.
+         *
+         * @param strictProviders the override ({@code null} to follow the level)
+         * @return this builder
+         */
+        public Builder strictProviders(Boolean strictProviders) {
+            this.strictProviders = strictProviders;
+            return this;
+        }
+
+        /**
+         * Sets whether a PUT whose resource name breaks its type's naming rule is refused with {@code 400}
+         * before its handler runs. When not set, it is on from {@link Level#STRICT}.
+         *
+         * @param strictNames the override ({@code null} to follow the level)
+         * @return this builder
+         */
+        public Builder strictNames(Boolean strictNames) {
+            this.strictNames = strictNames;
+            return this;
+        }
+
+        /**
+         * Sets whether ARM locations are stored canonical, as Azure stores them: a PUT or PATCH body's
+         * {@code location} is normalized for the subscription's cloud ({@code "East US"} becomes
+         * {@code eastus}) before its handler runs, a type that inherits its group's location gets it when
+         * the body names none, and a global type gets {@code global}. When not set, it is on from
+         * {@link Level#AZURE}.
+         *
+         * @param locationNormalize the override ({@code null} to follow the level)
+         * @return this builder
+         */
+        public Builder locationNormalize(Boolean locationNormalize) {
+            this.locationNormalize = locationNormalize;
+            return this;
+        }
+
+        /**
+         * Sets whether a resource PUT naming a location its subscription's cloud does not offer is refused
+         * with {@code 400 NoRegisteredProviderFound}. When not set, it is on from {@link Level#STRICT}.
+         *
+         * @param strictLocations the override ({@code null} to follow the level)
+         * @return this builder
+         */
+        public Builder strictLocations(Boolean strictLocations) {
+            this.strictLocations = strictLocations;
+            return this;
+        }
+
+        /**
+         * Sets whether ARM answers as the caller's tenant: the (unverified) {@code tid} of a Bearer token
+         * picks the tenant, {@code GET /subscriptions} lists that tenant's subscriptions (the default
+         * subscription when it owns none), and a subscription seen for the first time is registered under
+         * it. {@code GET /tenants} keeps listing every tenant. When not set, it is on from
+         * {@link Level#AZURE}.
+         *
+         * @param tenantScoping the override ({@code null} to follow the level)
+         * @return this builder
+         */
+        public Builder tenantScoping(Boolean tenantScoping) {
+            this.tenantScoping = tenantScoping;
             return this;
         }
 

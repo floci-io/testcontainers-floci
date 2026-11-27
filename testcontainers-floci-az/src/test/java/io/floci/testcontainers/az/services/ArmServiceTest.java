@@ -56,16 +56,57 @@ class ArmServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    void shouldApplyConfiguredDefaultLocationOfCloud() {
+        try (FlociAzContainer armFloci = new FlociAzContainer(IMAGE)
+                .disableAllServices()
+                .withArmConfig(c -> c.enabled(true))
+                .withDirectoryConfig(c -> c.defaultLocation("AzureCloud", "westeurope"))) {
+            armFloci.start();
+
+            RestResponse created = rest(armFloci, "PUT",
+                    "/subscriptions/" + armFloci.getSubscriptionId() + "/resourceGroups/rg?api-version=2021-04-01", "{}");
+
+            assertThat(created.isSuccessful()).as(created.toString()).isTrue();
+            assertThat(created.json().path("location").asText()).isEqualTo("westeurope");
+        }
+    }
+
+    @Test
     void shouldRefuseUnknownSubscriptionWithStrictParity() {
         try (FlociAzContainer armFloci = new FlociAzContainer(IMAGE)
                 .disableAllServices()
                 .withArmConfig(c -> c.enabled(true))
+                .withEntraConfig(c -> c.enabled(true))
                 .withParityConfig(c -> c.level(ParityConfig.Level.STRICT))) {
+            armFloci.start();
+            // The strict level also refuses ARM requests without a valid Entra token, so use a real one
+            // of the seeded dev app
+            RestResponse token = restForm(armFloci, "/organizations/oauth2/v2.0/token",
+                    "grant_type=client_credentials&client_id=11111111-1111-1111-1111-111111111111"
+                            + "&client_secret=floci-az-dev-secret&scope=https%3A%2F%2Fmanagement.azure.com%2F.default");
+            assertThat(token.status()).as(token.toString()).isEqualTo(200);
+
+            RestResponse response = rest(armFloci, "GET",
+                    "/subscriptions/55555555-0000-0000-0000-000000000000?api-version=2022-12-01", null,
+                    token.json().path("access_token").asText());
+
+            assertThat(response.status()).as(response.toString()).isEqualTo(404);
+            assertThat(response.json().path("error").path("code").asText()).isEqualTo("SubscriptionNotFound");
+        }
+    }
+
+    @Test
+    void shouldAcceptAnyTokenWhenStrictTokensAreOverriddenOff() {
+        try (FlociAzContainer armFloci = new FlociAzContainer(IMAGE)
+                .disableAllServices()
+                .withArmConfig(c -> c.enabled(true))
+                .withParityConfig(c -> c.level(ParityConfig.Level.STRICT).strictTokens(false))) {
             armFloci.start();
 
             RestResponse response = rest(armFloci, "GET",
                     "/subscriptions/55555555-0000-0000-0000-000000000000?api-version=2022-12-01", null);
 
+            // The opaque test token passes, while the rest of the strict level still applies
             assertThat(response.status()).as(response.toString()).isEqualTo(404);
             assertThat(response.json().path("error").path("code").asText()).isEqualTo("SubscriptionNotFound");
         }

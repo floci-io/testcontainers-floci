@@ -3,8 +3,10 @@ package io.floci.testcontainers.az.config.services;
 import io.floci.testcontainers.core.config.services.AbstractServiceConfig;
 import io.floci.testcontainers.core.config.services.AbstractServiceConfigBuilder;
 import org.testcontainers.containers.Container;
+import org.testcontainers.images.builder.Transferable;
 
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Configuration for Microsoft Entra ID of Floci Azure.
@@ -19,6 +21,8 @@ import java.util.Optional;
  *     .issuer("https://login.example.com/tenant/v2.0")
  *     .tokenLifetimeSeconds(600L)
  *     .validateClientCredentials(true)
+ *     .validateUserCredentials(true)
+ *     .seed("{\"users\": [{\"id\": \"u1\", \"userPrincipalName\": \"reader@example.test\"}]}")
  *     .build();
  * }</pre>
  */
@@ -28,13 +32,19 @@ public class EntraConfig extends AbstractServiceConfig<EntraConfig.Builder> {
     private static final long DEFAULT_TOKEN_LIFETIME_SECONDS = 3599L;
     private static final boolean DEFAULT_VALIDATE_TOKENS = false;
     private static final boolean DEFAULT_VALIDATE_CLIENT_CREDENTIALS = false;
+    private static final boolean DEFAULT_VALIDATE_USER_CREDENTIALS = false;
+    private static final String SEED_FILE_PREFIX = "/tmp/floci-az-entra-seed-";
+    private static final String SEED_FILE_SUFFIX = ".json";
 
     private final String defaultTenantId;
     private final String issuer;
     private final long tokenLifetimeSeconds;
     private final boolean validateTokens;
     private final boolean validateClientCredentials;
+    private final boolean validateUserCredentials;
     private final String signingKeyPath;
+    private final String seedFile;
+    private final String seed;
 
     private EntraConfig(Builder builder) {
         super(builder);
@@ -43,7 +53,10 @@ public class EntraConfig extends AbstractServiceConfig<EntraConfig.Builder> {
         this.tokenLifetimeSeconds = builder.tokenLifetimeSeconds;
         this.validateTokens = builder.validateTokens;
         this.validateClientCredentials = builder.validateClientCredentials;
+        this.validateUserCredentials = builder.validateUserCredentials;
         this.signingKeyPath = builder.signingKeyPath;
+        this.seedFile = builder.seedFile;
+        this.seed = builder.seed;
     }
 
     /**
@@ -95,8 +108,10 @@ public class EntraConfig extends AbstractServiceConfig<EntraConfig.Builder> {
     }
 
     /**
-     * Returns whether bearer tokens are validated (signature and claims) against the local
-     * signing key.
+     * Returns whether ARM requests whose Bearer token is missing, not signed by the Entra signing key,
+     * expired, or issued for another audience are refused with {@code 401}. This is another way to turn
+     * on the strict-tokens parity check; an explicit
+     * {@link io.floci.testcontainers.az.config.ParityConfig#getStrictTokens() strictTokens} override wins.
      *
      * @return {@code true} if tokens are validated
      */
@@ -116,6 +131,17 @@ public class EntraConfig extends AbstractServiceConfig<EntraConfig.Builder> {
     }
 
     /**
+     * Returns whether password and refresh-token grants are checked against the directory: an unknown
+     * user or a wrong password gets {@code 400 invalid_grant} ({@code AADSTS50126}), a disabled account
+     * {@code AADSTS50057}. Independent of {@link #isValidateClientCredentials()}.
+     *
+     * @return {@code true} if user credentials are validated
+     */
+    public boolean isValidateUserCredentials() {
+        return validateUserCredentials;
+    }
+
+    /**
      * Returns the directory inside the container holding the persisted RSA signing key. When
      * empty, floci-az uses {@code {storage.persistent-path}/entra}.
      *
@@ -123,6 +149,29 @@ public class EntraConfig extends AbstractServiceConfig<EntraConfig.Builder> {
      */
     public Optional<String> getSigningKeyPath() {
         return Optional.ofNullable(signingKeyPath);
+    }
+
+    /**
+     * Returns the path, inside the container, of the JSON seed file that adds applications, users,
+     * groups and memberships to the directory at startup.
+     *
+     * <p>The path is either the one passed to {@link Builder#seedFile(String)} verbatim, or a generated
+     * path pointing at the file whose content was passed to {@link Builder#seed(String)}.
+     *
+     * @return the container path of the seed file, or {@link Optional#empty()} if none is configured
+     */
+    public Optional<String> getSeedFile() {
+        return Optional.ofNullable(seedFile);
+    }
+
+    /**
+     * Returns the raw seed file content supplied via {@link Builder#seed(String)}, if any. When present,
+     * this content is copied into the container at {@link #getSeedFile()}.
+     *
+     * @return the seed content, or {@link Optional#empty()} if the seed was not configured by content
+     */
+    public Optional<String> getSeed() {
+        return Optional.ofNullable(seed);
     }
 
     @Override
@@ -134,6 +183,7 @@ public class EntraConfig extends AbstractServiceConfig<EntraConfig.Builder> {
             container.withEnv("FLOCI_AZ_SERVICES_ENTRA_TOKEN_LIFETIME_SECONDS", String.valueOf(tokenLifetimeSeconds));
             container.withEnv("FLOCI_AZ_SERVICES_ENTRA_VALIDATE_TOKENS", String.valueOf(validateTokens));
             container.withEnv("FLOCI_AZ_SERVICES_ENTRA_VALIDATE_CLIENT_CREDENTIALS", String.valueOf(validateClientCredentials));
+            container.withEnv("FLOCI_AZ_SERVICES_ENTRA_VALIDATE_USER_CREDENTIALS", String.valueOf(validateUserCredentials));
 
             if (issuer != null) {
                 container.withEnv("FLOCI_AZ_SERVICES_ENTRA_ISSUER", issuer);
@@ -142,6 +192,17 @@ public class EntraConfig extends AbstractServiceConfig<EntraConfig.Builder> {
             if (signingKeyPath != null) {
                 container.withEnv("FLOCI_AZ_SERVICES_ENTRA_SIGNING_KEY_PATH", signingKeyPath);
             }
+
+            if (seedFile != null) {
+                container.withEnv("FLOCI_AZ_SERVICES_ENTRA_SEED_FILE", seedFile);
+            }
+        }
+    }
+
+    @Override
+    public void applyFileMountsToContainer(Container<?> container) {
+        if (isEnabled() && seedFile != null && seed != null) {
+            container.withCopyToContainer(Transferable.of(seed), seedFile);
         }
     }
 
@@ -155,7 +216,10 @@ public class EntraConfig extends AbstractServiceConfig<EntraConfig.Builder> {
         private long tokenLifetimeSeconds = DEFAULT_TOKEN_LIFETIME_SECONDS;
         private boolean validateTokens = DEFAULT_VALIDATE_TOKENS;
         private boolean validateClientCredentials = DEFAULT_VALIDATE_CLIENT_CREDENTIALS;
+        private boolean validateUserCredentials = DEFAULT_VALIDATE_USER_CREDENTIALS;
         private String signingKeyPath;
+        private String seedFile;
+        private String seed;
 
         private Builder() {
             // Allow instantiation only via EntraConfig.builder()
@@ -173,7 +237,10 @@ public class EntraConfig extends AbstractServiceConfig<EntraConfig.Builder> {
             this.tokenLifetimeSeconds = instance.tokenLifetimeSeconds;
             this.validateTokens = instance.validateTokens;
             this.validateClientCredentials = instance.validateClientCredentials;
+            this.validateUserCredentials = instance.validateUserCredentials;
             this.signingKeyPath = instance.signingKeyPath;
+            this.seedFile = instance.seedFile;
+            this.seed = instance.seed;
         }
 
         /**
@@ -211,8 +278,11 @@ public class EntraConfig extends AbstractServiceConfig<EntraConfig.Builder> {
         }
 
         /**
-         * Sets whether bearer tokens are validated (signature and claims) against the local signing
-         * key. By default any bearer token is accepted.
+         * Sets whether ARM requests whose Bearer token is missing, not signed by the Entra signing key,
+         * expired, or issued for another audience are refused with {@code 401}. This is another way to
+         * turn on the strict-tokens parity check (on from the {@code STRICT} parity level); an explicit
+         * {@link io.floci.testcontainers.az.config.ParityConfig.Builder#strictTokens(Boolean) strictTokens}
+         * parity override wins. By default any bearer token is accepted.
          *
          * @param validateTokens {@code true} to validate tokens (default {@value DEFAULT_VALIDATE_TOKENS})
          * @return this builder
@@ -237,6 +307,21 @@ public class EntraConfig extends AbstractServiceConfig<EntraConfig.Builder> {
         }
 
         /**
+         * Sets whether password and refresh-token grants are checked against the directory: an unknown
+         * user or a wrong password gets {@code 400 invalid_grant} ({@code AADSTS50126}), a disabled
+         * account {@code AADSTS50057}. Independent of {@link #validateClientCredentials(boolean)}. By
+         * default any user name and password are accepted.
+         *
+         * @param validateUserCredentials {@code true} to validate user credentials
+         *                                (default {@value DEFAULT_VALIDATE_USER_CREDENTIALS})
+         * @return this builder
+         */
+        public Builder validateUserCredentials(boolean validateUserCredentials) {
+            this.validateUserCredentials = validateUserCredentials;
+            return this;
+        }
+
+        /**
          * Sets the directory inside the container holding the persisted RSA signing key. When not
          * set, floci-az uses {@code {storage.persistent-path}/entra}.
          *
@@ -249,12 +334,55 @@ public class EntraConfig extends AbstractServiceConfig<EntraConfig.Builder> {
         }
 
         /**
+         * Sets the path, inside the container, of a JSON seed file that already exists in the container
+         * (for example one added through a volume or another {@code withCopy*} call). At startup, Floci
+         * Azure adds the file's applications, users, groups and memberships to the directory; existing
+         * objects are not overwritten. An invalid file fails startup.
+         *
+         * <p>Use {@link #seed(String)} instead to hand over just the file content and let
+         * {@link EntraConfig} take care of placing the file into the container.
+         *
+         * <p>Calling this method clears any content previously set via {@link #seed(String)}.
+         *
+         * @param seedFile the container path of the seed file, or {@code null} for none
+         * @return this builder
+         */
+        public Builder seedFile(String seedFile) {
+            this.seedFile = seedFile;
+            this.seed = null;
+            return this;
+        }
+
+        /**
+         * Sets the content of a JSON seed file ({@code applications}, {@code users} and {@code groups}
+         * arrays) that Floci Azure adds to the directory at startup; existing objects are not
+         * overwritten. An invalid file fails startup.
+         *
+         * <p>The content is copied into the container under a generated, randomized path, which is then
+         * used as {@link EntraConfig#getSeedFile()}. Callers therefore do not need to manage any files
+         * themselves.
+         *
+         * <p>Calling this method clears any path previously set via {@link #seedFile(String)}.
+         *
+         * @param seed the seed file content, or {@code null} for none
+         * @return this builder
+         */
+        public Builder seed(String seed) {
+            this.seed = seed;
+            this.seedFile = null;
+            return this;
+        }
+
+        /**
          * Creates an immutable {@link EntraConfig} from this builder.
          *
          * @return the Entra ID configuration
          */
         @Override
         public EntraConfig build() {
+            if (seed != null && seedFile == null) {
+                this.seedFile = SEED_FILE_PREFIX + UUID.randomUUID() + SEED_FILE_SUFFIX;
+            }
             return new EntraConfig(this);
         }
     }

@@ -110,8 +110,12 @@ public class FlociAzContainer extends AbstractFlociContainer<FlociAzContainer> {
     private final ServiceConfigRef<NetworkConfig> networkConfig = registerServiceConfig(NetworkConfig.builder().build());
     private final ServiceConfigRef<EventGridConfig> eventGridConfig = registerServiceConfig(EventGridConfig.builder().build());
     private final ServiceConfigRef<ManagedIdentityConfig> managedIdentityConfig = registerServiceConfig(ManagedIdentityConfig.builder().build());
+    private final ServiceConfigRef<DeploymentsConfig> deploymentsConfig = registerServiceConfig(DeploymentsConfig.builder().build());
     private final ServiceConfigRef<ContainerAppsConfig> containerAppsConfig = registerServiceConfig(ContainerAppsConfig.builder().build());
     private final ServiceConfigRef<PolicyConfig> policyConfig = registerServiceConfig(PolicyConfig.builder().build());
+    private final ServiceConfigRef<AuthorizationConfig> authorizationConfig = registerServiceConfig(AuthorizationConfig.builder().build());
+    private final ServiceConfigRef<ResourceGraphConfig> resourceGraphConfig = registerServiceConfig(ResourceGraphConfig.builder().build());
+    private final ServiceConfigRef<ManagementGroupsConfig> managementGroupsConfig = registerServiceConfig(ManagementGroupsConfig.builder().build());
     private final ServiceConfigRef<EmailConfig> emailConfig = registerServiceConfig(EmailConfig.builder().build());
 
     /**
@@ -1030,6 +1034,29 @@ public class FlociAzContainer extends AbstractFlociContainer<FlociAzContainer> {
         return updateServiceConfig(managedIdentityConfig, configurer);
     }
     /**
+     * Returns the Azure Resource Manager template deployments configuration.
+     *
+     * @return the Deployments configuration
+     */
+    public DeploymentsConfig getDeploymentsConfig() {
+        return deploymentsConfig.get();
+    }
+
+    /**
+     * Configures ARM template deployments ({@code Microsoft.Resources/deployments}).
+     *
+     * <pre>{@code
+     * new FlociAzContainer()
+     *     .withDeploymentsConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link DeploymentsConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociAzContainer withDeploymentsConfig(Consumer<DeploymentsConfig.Builder> configurer) {
+        return updateServiceConfig(deploymentsConfig, configurer);
+    }
+    /**
      * Returns the Azure Container Apps configuration.
      *
      * @return the Container Apps configuration
@@ -1062,7 +1089,8 @@ public class FlociAzContainer extends AbstractFlociContainer<FlociAzContainer> {
     }
 
     /**
-     * Configures the Azure Policy control plane (definitions, set definitions, assignments and exemptions).
+     * Configures Azure Policy (definitions, set definitions, assignments and exemptions, rule evaluation on
+     * resource writes and Policy Insights).
      *
      * <pre>{@code
      * new FlociAzContainer()
@@ -1074,6 +1102,78 @@ public class FlociAzContainer extends AbstractFlociContainer<FlociAzContainer> {
      */
     public FlociAzContainer withPolicyConfig(Consumer<PolicyConfig.Builder> configurer) {
         return updateServiceConfig(policyConfig, configurer);
+    }
+    /**
+     * Returns the Azure role-based access control configuration.
+     *
+     * @return the Authorization configuration
+     */
+    public AuthorizationConfig getAuthorizationConfig() {
+        return authorizationConfig.get();
+    }
+
+    /**
+     * Configures Azure role-based access control (built-in role definitions and role assignments under
+     * {@code Microsoft.Authorization}).
+     *
+     * <pre>{@code
+     * new FlociAzContainer()
+     *     .withAuthorizationConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link AuthorizationConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociAzContainer withAuthorizationConfig(Consumer<AuthorizationConfig.Builder> configurer) {
+        return updateServiceConfig(authorizationConfig, configurer);
+    }
+    /**
+     * Returns the Azure Resource Graph configuration.
+     *
+     * @return the Resource Graph configuration
+     */
+    public ResourceGraphConfig getResourceGraphConfig() {
+        return resourceGraphConfig.get();
+    }
+
+    /**
+     * Configures Azure Resource Graph (KQL queries over the resources, resource containers and policy
+     * resources Floci Azure holds).
+     *
+     * <pre>{@code
+     * new FlociAzContainer()
+     *     .withResourceGraphConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link ResourceGraphConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociAzContainer withResourceGraphConfig(Consumer<ResourceGraphConfig.Builder> configurer) {
+        return updateServiceConfig(resourceGraphConfig, configurer);
+    }
+    /**
+     * Returns the Azure Management Groups configuration.
+     *
+     * @return the Management Groups configuration
+     */
+    public ManagementGroupsConfig getManagementGroupsConfig() {
+        return managementGroupsConfig.get();
+    }
+
+    /**
+     * Configures Azure Management Groups ({@code Microsoft.Management}: the tenant hierarchy of groups and
+     * subscriptions).
+     *
+     * <pre>{@code
+     * new FlociAzContainer()
+     *     .withManagementGroupsConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link ManagementGroupsConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociAzContainer withManagementGroupsConfig(Consumer<ManagementGroupsConfig.Builder> configurer) {
+        return updateServiceConfig(managementGroupsConfig, configurer);
     }
     /**
      * Returns the Azure Communication Services Email configuration.

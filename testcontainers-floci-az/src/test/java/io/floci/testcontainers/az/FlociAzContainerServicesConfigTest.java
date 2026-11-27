@@ -198,9 +198,9 @@ class FlociAzContainerServicesConfigTest {
     @Test
     void shouldWireMonitorConfigIntoContainer() {
         assertConfigWired(
-                c -> c.withMonitorConfig(cfg -> cfg.enabled(false)),
-                c -> c.getMonitorConfig().isEnabled(), false,
-                "FLOCI_AZ_SERVICES_MONITOR_ENABLED", "false");
+                c -> c.withMonitorConfig(cfg -> cfg.activityLogPageSize(50)),
+                c -> c.getMonitorConfig().getActivityLogPageSize(), 50,
+                "FLOCI_AZ_SERVICES_MONITOR_ACTIVITY_LOG_PAGE_SIZE", "50");
     }
     @Test
     void shouldWireEntraConfigIntoContainer() {
@@ -245,6 +245,13 @@ class FlociAzContainerServicesConfigTest {
                 "FLOCI_AZ_SERVICES_MANAGED_IDENTITY_SYSTEM_ASSIGNED_SCOPE", "subscriptions/sub/resourceGroups/rg");
     }
     @Test
+    void shouldWireDeploymentsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withDeploymentsConfig(cfg -> cfg.enabled(false)),
+                c -> c.getDeploymentsConfig().isEnabled(), false,
+                "FLOCI_AZ_SERVICES_DEPLOYMENTS_ENABLED", "false");
+    }
+    @Test
     void shouldWireContainerAppsConfigIntoContainer() {
         assertConfigWired(
                 c -> c.withContainerAppsConfig(cfg -> cfg.mocked(false)),
@@ -254,9 +261,30 @@ class FlociAzContainerServicesConfigTest {
     @Test
     void shouldWirePolicyConfigIntoContainer() {
         assertConfigWired(
-                c -> c.withPolicyConfig(cfg -> cfg.enabled(false)),
-                c -> c.getPolicyConfig().isEnabled(), false,
-                "FLOCI_AZ_SERVICES_POLICY_ENABLED", "false");
+                c -> c.withPolicyConfig(cfg -> cfg.enforcement(false)),
+                c -> c.getPolicyConfig().isEnforcement(), false,
+                "FLOCI_AZ_SERVICES_POLICY_ENFORCEMENT", "false");
+    }
+    @Test
+    void shouldWireAuthorizationConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withAuthorizationConfig(cfg -> cfg.enabled(false)),
+                c -> c.getAuthorizationConfig().isEnabled(), false,
+                "FLOCI_AZ_SERVICES_AUTHORIZATION_ENABLED", "false");
+    }
+    @Test
+    void shouldWireResourceGraphConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withResourceGraphConfig(cfg -> cfg.enabled(false)),
+                c -> c.getResourceGraphConfig().isEnabled(), false,
+                "FLOCI_AZ_SERVICES_RESOURCE_GRAPH_ENABLED", "false");
+    }
+    @Test
+    void shouldWireManagementGroupsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withManagementGroupsConfig(cfg -> cfg.enabled(false)),
+                c -> c.getManagementGroupsConfig().isEnabled(), false,
+                "FLOCI_AZ_SERVICES_MANAGEMENT_GROUPS_ENABLED", "false");
     }
     @Test
     void shouldWireEmailConfigIntoContainer() {

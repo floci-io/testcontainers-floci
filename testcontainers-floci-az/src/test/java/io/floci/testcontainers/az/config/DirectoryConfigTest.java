@@ -5,6 +5,7 @@ import org.testcontainers.containers.GenericContainer;
 
 import static io.floci.testcontainers.core.testing.ContainerUtils.genericContainer;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.entry;
 
 class DirectoryConfigTest {
 
@@ -17,6 +18,7 @@ class DirectoryConfigTest {
     void shouldApplyDefaultDirectoryConfig() {
         DirectoryConfig config = DirectoryConfig.builder().build();
         assertThat(config.getDefaultCloud()).isEqualTo("AzureCloud");
+        assertThat(config.getDefaultLocations()).isEmpty();
         assertThat(config.getTenants()).isEmpty();
         assertThat(config.getSubscriptions()).isEmpty();
     }
@@ -25,6 +27,8 @@ class DirectoryConfigTest {
     void shouldApplyCustomDirectoryConfig() {
         DirectoryConfig config = customConfig();
         assertThat(config.getDefaultCloud()).isEqualTo("AzureUSGovernment");
+        assertThat(config.getDefaultLocations())
+                .containsOnly(entry("AzureCloud", "westeurope"), entry("AzureUSGovernment", "usgovtexas"));
 
         assertThat(config.getTenants()).hasSize(2);
         assertThat(config.getTenants().get(0).getId()).isEqualTo(TENANT_ID);
@@ -66,12 +70,26 @@ class DirectoryConfigTest {
     }
 
     @Test
+    void shouldMatchDefaultLocationCloudsCaseInsensitively() {
+        DirectoryConfig config = DirectoryConfig.builder()
+                .defaultLocation("AzureCloud", "westeurope")
+                .defaultLocation("azurecloud", "northeurope")
+                .defaultLocation("AzureChinaCloud", "chinaeast")
+                .defaultLocation("AZURECHINACLOUD", null)
+                .build();
+
+        assertThat(config.getDefaultLocations()).containsOnly(entry("AzureCloud", "northeurope"));
+        assertThat(config.getDefaultLocations().get("AZURECLOUD")).isEqualTo("northeurope");
+    }
+
+    @Test
     void shouldApplyDefaultEnvVarsToContainer() {
         GenericContainer<?> container = genericContainer();
         DirectoryConfig.builder().build().applyEnvVarsToContainer(container);
 
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_AZ_CLOUD_DEFAULT", "AzureCloud")
+                .noneSatisfy((key, value) -> assertThat(key).endsWith("_DEFAULT_LOCATION"))
                 .noneSatisfy((key, value) -> assertThat(key).startsWith("FLOCI_AZ_TENANTS_"))
                 .noneSatisfy((key, value) -> assertThat(key).startsWith("FLOCI_AZ_SUBSCRIPTIONS_"));
     }
@@ -83,6 +101,8 @@ class DirectoryConfigTest {
 
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_AZ_CLOUD_DEFAULT", "AzureUSGovernment")
+                .containsEntry("FLOCI_AZ_CLOUD_AZURECLOUD_DEFAULT_LOCATION", "westeurope")
+                .containsEntry("FLOCI_AZ_CLOUD_AZUREUSGOVERNMENT_DEFAULT_LOCATION", "usgovtexas")
                 .containsEntry("FLOCI_AZ_TENANTS_0__ID", TENANT_ID)
                 .containsEntry("FLOCI_AZ_TENANTS_0__DISPLAY_NAME", "Contoso Gov")
                 .containsEntry("FLOCI_AZ_TENANTS_0__DEFAULT_DOMAIN", "contoso.example")
@@ -106,6 +126,8 @@ class DirectoryConfigTest {
         DirectoryConfig copy = customConfig().toBuilder().build();
 
         assertThat(copy.getDefaultCloud()).isEqualTo("AzureUSGovernment");
+        assertThat(copy.getDefaultLocations())
+                .containsOnly(entry("AzureCloud", "westeurope"), entry("AzureUSGovernment", "usgovtexas"));
         assertThat(copy.getTenants()).extracting(TenantConfig::getId).containsExactly(TENANT_ID, OTHER_TENANT_ID);
         assertThat(copy.getTenants().get(0).getDisplayName()).contains("Contoso Gov");
         assertThat(copy.getTenants().get(0).getDefaultDomain()).contains("contoso.example");
@@ -119,11 +141,13 @@ class DirectoryConfigTest {
 
     @Test
     void shouldNotShareEntriesWithBuilder() {
-        DirectoryConfig.Builder builder = DirectoryConfig.builder().tenant(TENANT_ID).subscription(SUBSCRIPTION_ID);
+        DirectoryConfig.Builder builder = DirectoryConfig.builder().tenant(TENANT_ID).subscription(SUBSCRIPTION_ID)
+                .defaultLocation("AzureCloud", "westeurope");
         DirectoryConfig config = builder.build();
 
-        builder.tenant(OTHER_TENANT_ID).subscription(OTHER_SUBSCRIPTION_ID);
+        builder.tenant(OTHER_TENANT_ID).subscription(OTHER_SUBSCRIPTION_ID).defaultLocation("AzureChinaCloud", "chinaeast");
 
+        assertThat(config.getDefaultLocations()).containsOnlyKeys("AzureCloud");
         assertThat(config.getTenants()).extracting(TenantConfig::getId).containsExactly(TENANT_ID);
         assertThat(config.getSubscriptions()).extracting(SubscriptionConfig::getId).containsExactly(SUBSCRIPTION_ID);
     }
@@ -131,6 +155,8 @@ class DirectoryConfigTest {
     private static DirectoryConfig customConfig() {
         return DirectoryConfig.builder()
                 .defaultCloud("AzureUSGovernment")
+                .defaultLocation("AzureCloud", "westeurope")
+                .defaultLocation("AzureUSGovernment", "usgovtexas")
                 .tenant(TENANT_ID, t -> t
                         .displayName("Contoso Gov")
                         .defaultDomain("contoso.example")

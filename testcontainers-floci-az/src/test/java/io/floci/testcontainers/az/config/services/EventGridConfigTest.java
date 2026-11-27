@@ -12,7 +12,7 @@ class EventGridConfigTest {
     void shouldApplyDefaultEventGridConfig() {
         EventGridConfig config = EventGridConfig.builder().build();
         assertThat(config.isEnabled()).isTrue();
-        assertThat(config.getDefaultRegion()).isEqualTo("eastus");
+        assertThat(config.getDefaultRegion()).isEmpty();
         assertThat(config.getMaxDeliveryAttempts()).isEqualTo(30);
     }
 
@@ -24,7 +24,7 @@ class EventGridConfigTest {
                 .maxDeliveryAttempts(5)
                 .build();
         assertThat(config.isEnabled()).isFalse();
-        assertThat(config.getDefaultRegion()).isEqualTo("westeurope");
+        assertThat(config.getDefaultRegion()).contains("westeurope");
         assertThat(config.getMaxDeliveryAttempts()).isEqualTo(5);
     }
 
@@ -35,7 +35,7 @@ class EventGridConfigTest {
 
         assertThat(container.getEnvMap())
                 .containsEntry("FLOCI_AZ_SERVICES_EVENT_GRID_ENABLED", "true")
-                .containsEntry("FLOCI_AZ_SERVICES_EVENT_GRID_DEFAULT_REGION", "eastus")
+                .doesNotContainKey("FLOCI_AZ_SERVICES_EVENT_GRID_DEFAULT_REGION")
                 .containsEntry("FLOCI_AZ_SERVICES_EVENT_GRID_MAX_DELIVERY_ATTEMPTS", "30");
     }
 
@@ -74,7 +74,7 @@ class EventGridConfigTest {
                 .build();
         EventGridConfig copy = config.toBuilder().build();
         assertThat(copy.isEnabled()).isFalse();
-        assertThat(copy.getDefaultRegion()).isEqualTo("westeurope");
+        assertThat(copy.getDefaultRegion()).contains("westeurope");
         assertThat(copy.getMaxDeliveryAttempts()).isEqualTo(5);
     }
 }

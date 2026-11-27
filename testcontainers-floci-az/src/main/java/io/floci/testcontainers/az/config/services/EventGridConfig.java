@@ -4,6 +4,8 @@ import io.floci.testcontainers.core.config.services.AbstractServiceConfig;
 import io.floci.testcontainers.core.config.services.AbstractServiceConfigBuilder;
 import org.testcontainers.containers.Container;
 
+import java.util.Optional;
+
 /**
  * Configuration for Azure Event Grid of Floci Azure.
  *
@@ -20,7 +22,6 @@ import org.testcontainers.containers.Container;
  */
 public class EventGridConfig extends AbstractServiceConfig<EventGridConfig.Builder> {
 
-    private static final String DEFAULT_DEFAULT_REGION = "eastus";
     private static final int DEFAULT_MAX_DELIVERY_ATTEMPTS = 30;
 
     private final String defaultRegion;
@@ -53,12 +54,13 @@ public class EventGridConfig extends AbstractServiceConfig<EventGridConfig.Build
     }
 
     /**
-     * Returns the region label used in the topic endpoint host returned by ARM.
+     * Returns the location of a topic whose PUT names none, also used in the topic endpoint host
+     * returned by ARM. When empty, Floci Azure uses the default location of the request's cloud.
      *
-     * @return the default region
+     * @return the default region, or {@link Optional#empty()} if it follows the cloud's default location
      */
-    public String getDefaultRegion() {
-        return defaultRegion;
+    public Optional<String> getDefaultRegion() {
+        return Optional.ofNullable(defaultRegion);
     }
 
     /**
@@ -76,7 +78,10 @@ public class EventGridConfig extends AbstractServiceConfig<EventGridConfig.Build
         container.withEnv("FLOCI_AZ_SERVICES_EVENT_GRID_ENABLED", String.valueOf(isEnabled()));
 
         if (isEnabled()) {
-            container.withEnv("FLOCI_AZ_SERVICES_EVENT_GRID_DEFAULT_REGION", defaultRegion);
+            if (defaultRegion != null) {
+                container.withEnv("FLOCI_AZ_SERVICES_EVENT_GRID_DEFAULT_REGION", defaultRegion);
+            }
+
             container.withEnv("FLOCI_AZ_SERVICES_EVENT_GRID_MAX_DELIVERY_ATTEMPTS", String.valueOf(maxDeliveryAttempts));
         }
     }
@@ -86,7 +91,7 @@ public class EventGridConfig extends AbstractServiceConfig<EventGridConfig.Build
      */
     public static class Builder extends AbstractServiceConfigBuilder<Builder, EventGridConfig> {
 
-        private String defaultRegion = DEFAULT_DEFAULT_REGION;
+        private String defaultRegion;
         private int maxDeliveryAttempts = DEFAULT_MAX_DELIVERY_ATTEMPTS;
 
         private Builder() {
@@ -105,9 +110,11 @@ public class EventGridConfig extends AbstractServiceConfig<EventGridConfig.Build
         }
 
         /**
-         * Sets the region label used in the topic endpoint host returned by ARM.
+         * Sets the location of a topic whose PUT names none, also used in the topic endpoint host
+         * returned by ARM. When not set, Floci Azure uses the default location of the request's cloud
+         * ({@code eastus} for {@code AzureCloud}).
          *
-         * @param defaultRegion the default region (default {@value DEFAULT_DEFAULT_REGION})
+         * @param defaultRegion the default region ({@code null} to follow the cloud's default location)
          * @return this builder
          */
         public Builder defaultRegion(String defaultRegion) {

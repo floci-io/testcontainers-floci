@@ -2,14 +2,18 @@ package io.floci.testcontainers.az.config;
 
 import org.testcontainers.containers.Container;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
+import java.util.TreeMap;
 import java.util.function.Consumer;
 
 /**
  * Tenant and subscription directory of the Floci Azure server (root properties {@code cloud.default},
- * {@code tenants} and {@code subscriptions}).
+ * {@code cloud.<name>.default-location}, {@code tenants} and {@code subscriptions}).
  *
  * <p>The directory always holds the default tenant (the Entra ID {@code defaultTenantId}) and the default
  * subscription (the ARM {@code defaultSubscriptionId}). This configuration adds further tenants and
@@ -21,6 +25,7 @@ import java.util.function.Consumer;
  * <pre>{@code
  * DirectoryConfig config = DirectoryConfig.builder()
  *     .defaultCloud("AzureCloud")
+ *     .defaultLocation("AzureCloud", "westeurope")
  *     .tenant("11111111-0000-0000-0000-000000000000", t -> t.displayName("Contoso Gov").cloud("AzureUSGovernment"))
  *     .subscription("22222222-0000-0000-0000-000000000000", s -> s.tenantId("11111111-0000-0000-0000-000000000000"))
  *     .build();
@@ -31,11 +36,13 @@ public class DirectoryConfig {
     private static final String DEFAULT_DEFAULT_CLOUD = "AzureCloud";
 
     private final String defaultCloud;
+    private final Map<String, String> defaultLocations;
     private final List<TenantConfig> tenants;
     private final List<SubscriptionConfig> subscriptions;
 
     private DirectoryConfig(Builder builder) {
         this.defaultCloud = builder.defaultCloud;
+        this.defaultLocations = Collections.unmodifiableMap(newCloudMap(builder.defaultLocations));
         this.tenants = List.copyOf(builder.tenants.values());
         this.subscriptions = List.copyOf(builder.subscriptions.values());
     }
@@ -70,6 +77,18 @@ public class DirectoryConfig {
     }
 
     /**
+     * Returns the configured default locations per cloud, keyed by cloud name (compared case-insensitively).
+     * A resource or resource group of a cloud whose request names no {@code location} gets that cloud's
+     * default location; a cloud without an entry uses the first location of Floci Azure's catalog
+     * ({@code eastus} for {@code AzureCloud}).
+     *
+     * @return the configured default locations, never {@code null}
+     */
+    public Map<String, String> getDefaultLocations() {
+        return defaultLocations;
+    }
+
+    /**
      * Returns the tenants the directory holds besides the default one, in configuration order.
      *
      * @return the configured tenants, never {@code null}
@@ -88,14 +107,18 @@ public class DirectoryConfig {
     }
 
     /**
-     * Applies the directory environment variables to the given container. Tenants and subscriptions are
-     * emitted as indexed properties ({@code FLOCI_AZ_TENANTS_<n>__ID}, {@code FLOCI_AZ_SUBSCRIPTIONS_<n>__ID},
-     * …); optional properties only when set.
+     * Applies the directory environment variables to the given container. Default locations are emitted per
+     * cloud ({@code FLOCI_AZ_CLOUD_<NAME>_DEFAULT_LOCATION}), tenants and subscriptions as indexed properties
+     * ({@code FLOCI_AZ_TENANTS_<n>__ID}, {@code FLOCI_AZ_SUBSCRIPTIONS_<n>__ID}, …); optional properties only
+     * when set.
      *
      * @param container the container to configure
      */
     public void applyEnvVarsToContainer(Container<?> container) {
         container.withEnv("FLOCI_AZ_CLOUD_DEFAULT", defaultCloud);
+
+        defaultLocations.forEach((cloud, location) -> container.withEnv(
+                "FLOCI_AZ_CLOUD_" + cloud.toUpperCase(Locale.ROOT) + "_DEFAULT_LOCATION", location));
 
         for (int i = 0; i < tenants.size(); i++) {
             TenantConfig tenant = tenants.get(i);
@@ -122,6 +145,7 @@ public class DirectoryConfig {
     public static class Builder {
 
         private String defaultCloud = DEFAULT_DEFAULT_CLOUD;
+        private final Map<String, String> defaultLocations = newCloudMap(Map.of());
         private final Map<String, TenantConfig> tenants = new LinkedHashMap<>();
         private final Map<String, SubscriptionConfig> subscriptions = new LinkedHashMap<>();
 
@@ -131,6 +155,7 @@ public class DirectoryConfig {
 
         private Builder(DirectoryConfig instance) {
             this.defaultCloud = instance.defaultCloud;
+            this.defaultLocations.putAll(instance.defaultLocations);
             instance.tenants.forEach(tenant -> this.tenants.put(tenant.getId(), tenant));
             instance.subscriptions.forEach(subscription -> this.subscriptions.put(subscription.getId(), subscription));
         }
@@ -147,6 +172,28 @@ public class DirectoryConfig {
          */
         public Builder defaultCloud(String defaultCloud) {
             this.defaultCloud = defaultCloud;
+            return this;
+        }
+
+        /**
+         * Sets the location a resource or resource group of the given cloud gets when its request names
+         * none. Without it, the cloud's first catalog location applies ({@code eastus} for
+         * {@code AzureCloud}, {@code usgovvirginia} for {@code AzureUSGovernment}, {@code chinanorth} for
+         * {@code AzureChinaCloud}). The value may be a name or a display name ({@code West Europe}) and is
+         * stored canonical; a location the cloud does not offer, or an unknown cloud, makes Floci Azure fail
+         * at startup. Cloud names are compared case-insensitively.
+         *
+         * @param cloud    the cloud name, e.g. {@code AzureCloud}
+         * @param location the default location, or {@code null} to remove a previously set one
+         * @return this builder
+         */
+        public Builder defaultLocation(String cloud, String location) {
+            Objects.requireNonNull(cloud, "cloud");
+            if (location == null) {
+                this.defaultLocations.remove(cloud);
+            } else {
+                this.defaultLocations.put(cloud, location);
+            }
             return this;
         }
 
@@ -216,5 +263,11 @@ public class DirectoryConfig {
         public DirectoryConfig build() {
             return new DirectoryConfig(this);
         }
+    }
+
+    private static Map<String, String> newCloudMap(Map<String, String> entries) {
+        Map<String, String> map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        map.putAll(entries);
+        return map;
     }
 }
