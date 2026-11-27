@@ -18,6 +18,7 @@ class OkeConfigTest {
         assertThat(config.getApiServerPortsCount()).isEqualTo(10);
         assertThat(config.getApiServerMaxPort()).isEqualTo(6452);
         assertThat(config.getKubeconfigAuth()).isEqualTo(OkeConfig.KubeconfigAuth.EXEC);
+        assertThat(config.getEndpointMode()).isEqualTo(OkeConfig.EndpointMode.HOST);
         assertThat(config.getReadyTimeoutSeconds()).isEqualTo(300);
     }
 
@@ -29,6 +30,7 @@ class OkeConfigTest {
                 .defaultImage("rancher/k3s:v1.31.4-k3s1")
                 .apiServerPortRange(16443, 5)
                 .kubeconfigAuth(OkeConfig.KubeconfigAuth.TOKEN)
+                .endpointMode(OkeConfig.EndpointMode.NETWORK)
                 .readyTimeoutSeconds(120)
                 .build();
         assertThat(config.isEnabled()).isFalse();
@@ -38,6 +40,7 @@ class OkeConfigTest {
         assertThat(config.getApiServerPortsCount()).isEqualTo(5);
         assertThat(config.getApiServerMaxPort()).isEqualTo(16447);
         assertThat(config.getKubeconfigAuth()).isEqualTo(OkeConfig.KubeconfigAuth.TOKEN);
+        assertThat(config.getEndpointMode()).isEqualTo(OkeConfig.EndpointMode.NETWORK);
         assertThat(config.getReadyTimeoutSeconds()).isEqualTo(120);
     }
 
@@ -53,6 +56,7 @@ class OkeConfigTest {
                 .containsEntry("FLOCI_OCI_SERVICES_OKE_API_SERVER_BASE_PORT", "6443")
                 .containsEntry("FLOCI_OCI_SERVICES_OKE_API_SERVER_MAX_PORT", "6452")
                 .containsEntry("FLOCI_OCI_SERVICES_OKE_KUBECONFIG_AUTH", "exec")
+                .containsEntry("FLOCI_OCI_SERVICES_OKE_ENDPOINT_MODE", "host")
                 .containsEntry("FLOCI_OCI_SERVICES_OKE_READY_TIMEOUT_SECONDS", "300");
     }
 
@@ -64,6 +68,7 @@ class OkeConfigTest {
                 .defaultImage("rancher/k3s:v1.31.4-k3s1")
                 .apiServerPortRange(16443, 5)
                 .kubeconfigAuth(OkeConfig.KubeconfigAuth.TOKEN)
+                .endpointMode(OkeConfig.EndpointMode.NETWORK)
                 .readyTimeoutSeconds(120)
                 .build()
                 .applyEnvVarsToContainer(container);
@@ -75,6 +80,7 @@ class OkeConfigTest {
                 .containsEntry("FLOCI_OCI_SERVICES_OKE_API_SERVER_BASE_PORT", "16443")
                 .containsEntry("FLOCI_OCI_SERVICES_OKE_API_SERVER_MAX_PORT", "16447")
                 .containsEntry("FLOCI_OCI_SERVICES_OKE_KUBECONFIG_AUTH", "token")
+                .containsEntry("FLOCI_OCI_SERVICES_OKE_ENDPOINT_MODE", "network")
                 .containsEntry("FLOCI_OCI_SERVICES_OKE_READY_TIMEOUT_SECONDS", "120");
     }
 
@@ -90,6 +96,7 @@ class OkeConfigTest {
                 .doesNotContainKey("FLOCI_OCI_SERVICES_OKE_API_SERVER_BASE_PORT")
                 .doesNotContainKey("FLOCI_OCI_SERVICES_OKE_API_SERVER_MAX_PORT")
                 .doesNotContainKey("FLOCI_OCI_SERVICES_OKE_KUBECONFIG_AUTH")
+                .doesNotContainKey("FLOCI_OCI_SERVICES_OKE_ENDPOINT_MODE")
                 .doesNotContainKey("FLOCI_OCI_SERVICES_OKE_READY_TIMEOUT_SECONDS");
     }
 
@@ -101,6 +108,7 @@ class OkeConfigTest {
                 .defaultImage("rancher/k3s:v1.31.4-k3s1")
                 .apiServerPortRange(16443, 5)
                 .kubeconfigAuth(OkeConfig.KubeconfigAuth.TOKEN)
+                .endpointMode(OkeConfig.EndpointMode.NETWORK)
                 .readyTimeoutSeconds(120)
                 .build();
         OkeConfig copy = config.toBuilder().build();
@@ -111,6 +119,7 @@ class OkeConfigTest {
         assertThat(copy.getApiServerPortsCount()).isEqualTo(5);
         assertThat(copy.getApiServerMaxPort()).isEqualTo(16447);
         assertThat(copy.getKubeconfigAuth()).isEqualTo(OkeConfig.KubeconfigAuth.TOKEN);
+        assertThat(copy.getEndpointMode()).isEqualTo(OkeConfig.EndpointMode.NETWORK);
         assertThat(copy.getReadyTimeoutSeconds()).isEqualTo(120);
     }
 

@@ -39,7 +39,7 @@ class FlociOciContainerDescriptorTest {
                     .filteredOn(AbstractServiceConfig::requiresDockerSocket)
                     .map(config -> config.getClass().getSimpleName())
                     .containsExactlyInAnyOrder(
-                            "FunctionsConfig", "OkeConfig");
+                            "FunctionsConfig", "OkeConfig", "PsqlConfig");
         }
     }
 

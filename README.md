@@ -536,9 +536,13 @@ String endpoint = floci.getHttpsEndpoint();
 | `withAuthConfig(...)`       | Configures authentication, i.e. whether requests have to be signed                                  |
 | `with*Config(...)`          | Configures service-specific settings, e.g. `withFunctionsConfig(c -> c.mock(true))`                 |
 
-Functions (Fn server) and OKE (k3s) mount the host Docker socket automatically while they are enabled and not `mock`.
-Their sidecar containers publish their ports directly on the Docker host; the port ranges default to 10 ports each
-(`withFunctionsConfig(c -> c.serverPortRange(8085, 10))`, `withOkeConfig(c -> c.apiServerPortRange(6443, 10))`).
+Functions (Fn server), OKE (k3s) and Database with PostgreSQL (one PostgreSQL container per DB system) mount the host
+Docker socket automatically while they are enabled and not `mock`. Their sidecar containers publish their ports
+directly on the Docker host; the port ranges default to 10 ports each
+(`withFunctionsConfig(c -> c.serverPortRange(8085, 10))`, `withOkeConfig(c -> c.apiServerPortRange(6443, 10))`,
+`withPsqlConfig(c -> c.portRange(15432, 10))`). To connect to a DB system from the test, start Floci OCI with
+`withEnv("FLOCI_OCI_DOCKER_ENDPOINT_MODE", "published")`, so `GetConnectionDetails` returns the published host port
+instead of the PostgreSQL container's name.
 Floci OCI reaches the Fn server by its container name, so real (non-mocked) function invocations need
 `withDedicatedNetwork()` and a function image built with a current Fn FDK.
 

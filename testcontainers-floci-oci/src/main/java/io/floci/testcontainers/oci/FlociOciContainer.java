@@ -32,7 +32,7 @@ import java.util.regex.Pattern;
  * Floci OCI parses, but never verifies, request signatures, so an authentication provider with any
  * locally generated RSA key works.
  *
- * <p>Container-based services (Functions and OKE) require access to the Docker daemon. This module automatically
+ * <p>Container-based services (Functions, OKE and Database with PostgreSQL) require access to the Docker daemon. This module automatically
  * mounts the Docker socket only when at least one currently enabled service actually needs it. Use
  * {@link #withDockerSocket(boolean)} to override this auto-detection.
  *
@@ -109,6 +109,9 @@ public class FlociOciContainer extends AbstractFlociContainer<FlociOciContainer>
     private final ServiceConfigRef<StreamingConfig> streamingConfig = registerServiceConfig(StreamingConfig.builder().build());
     private final ServiceConfigRef<FunctionsConfig> functionsConfig = registerServiceConfig(FunctionsConfig.builder().build());
     private final ServiceConfigRef<OkeConfig> okeConfig = registerServiceConfig(OkeConfig.builder().build());
+    private final ServiceConfigRef<OrganizationsConfig> organizationsConfig = registerServiceConfig(OrganizationsConfig.builder().build());
+    private final ServiceConfigRef<GovernanceRulesConfig> governanceRulesConfig = registerServiceConfig(GovernanceRulesConfig.builder().build());
+    private final ServiceConfigRef<PsqlConfig> psqlConfig = registerServiceConfig(PsqlConfig.builder().build());
 
     /**
      * Creates a new Floci OCI container with the default image ({@code floci/floci-oci:latest}).
@@ -582,5 +585,77 @@ public class FlociOciContainer extends AbstractFlociContainer<FlociOciContainer>
      */
     public FlociOciContainer withOkeConfig(Consumer<OkeConfig.Builder> configurer) {
         return updateServiceConfig(okeConfig, configurer);
+    }
+
+    /**
+     * Returns the OCI Organizations configuration.
+     *
+     * @return the OCI Organizations configuration
+     */
+    public OrganizationsConfig getOrganizationsConfig() {
+        return organizationsConfig.get();
+    }
+
+    /**
+     * Configures OCI Organizations (Tenant Manager control plane): organizations, child tenancies and their links.
+     *
+     * <pre>{@code
+     * new FlociOciContainer()
+     *     .withOrganizationsConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link OrganizationsConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociOciContainer withOrganizationsConfig(Consumer<OrganizationsConfig.Builder> configurer) {
+        return updateServiceConfig(organizationsConfig, configurer);
+    }
+
+    /**
+     * Returns the OCI Governance Rules configuration.
+     *
+     * @return the OCI Governance Rules configuration
+     */
+    public GovernanceRulesConfig getGovernanceRulesConfig() {
+        return governanceRulesConfig.get();
+    }
+
+    /**
+     * Configures OCI Governance Rules: rules a parent tenancy defines for the child tenancies of its organization.
+     *
+     * <pre>{@code
+     * new FlociOciContainer()
+     *     .withGovernanceRulesConfig(c -> c.enabled(false));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link GovernanceRulesConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociOciContainer withGovernanceRulesConfig(Consumer<GovernanceRulesConfig.Builder> configurer) {
+        return updateServiceConfig(governanceRulesConfig, configurer);
+    }
+
+    /**
+     * Returns the OCI Database with PostgreSQL configuration.
+     *
+     * @return the OCI Database with PostgreSQL configuration
+     */
+    public PsqlConfig getPsqlConfig() {
+        return psqlConfig.get();
+    }
+
+    /**
+     * Configures OCI Database with PostgreSQL, which runs each DB system in a sibling PostgreSQL container and therefore requires the Docker socket unless mocked.
+     *
+     * <pre>{@code
+     * new FlociOciContainer()
+     *     .withPsqlConfig(c -> c.mock(true));
+     * }</pre>
+     *
+     * @param configurer a consumer that receives a {@link PsqlConfig.Builder} to modify
+     * @return this container instance
+     */
+    public FlociOciContainer withPsqlConfig(Consumer<PsqlConfig.Builder> configurer) {
+        return updateServiceConfig(psqlConfig, configurer);
     }
 }

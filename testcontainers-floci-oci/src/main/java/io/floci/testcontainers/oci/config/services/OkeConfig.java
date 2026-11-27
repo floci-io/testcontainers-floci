@@ -23,6 +23,7 @@ import java.util.Locale;
  *     .defaultImage("rancher/k3s:v1.31.4-k3s1")
  *     .apiServerPortRange(16443, 5)
  *     .kubeconfigAuth(OkeConfig.KubeconfigAuth.TOKEN)
+ *     .endpointMode(OkeConfig.EndpointMode.NETWORK)
  *     .build();
  * }</pre>
  */
@@ -33,6 +34,7 @@ public class OkeConfig extends AbstractServiceConfig<OkeConfig.Builder> {
     private static final int DEFAULT_API_SERVER_BASE_PORT = 6443;
     private static final int DEFAULT_API_SERVER_PORTS_COUNT = 10;
     private static final KubeconfigAuth DEFAULT_KUBECONFIG_AUTH = KubeconfigAuth.EXEC;
+    private static final EndpointMode DEFAULT_ENDPOINT_MODE = EndpointMode.HOST;
     private static final int DEFAULT_READY_TIMEOUT_SECONDS = 300;
 
     private final boolean mock;
@@ -40,6 +42,7 @@ public class OkeConfig extends AbstractServiceConfig<OkeConfig.Builder> {
     private final int apiServerBasePort;
     private final int apiServerPortsCount;
     private final KubeconfigAuth kubeconfigAuth;
+    private final EndpointMode endpointMode;
     private final int readyTimeoutSeconds;
 
     private OkeConfig(Builder builder) {
@@ -49,6 +52,7 @@ public class OkeConfig extends AbstractServiceConfig<OkeConfig.Builder> {
         this.apiServerBasePort = builder.apiServerBasePort;
         this.apiServerPortsCount = builder.apiServerPortsCount;
         this.kubeconfigAuth = builder.kubeconfigAuth;
+        this.endpointMode = builder.endpointMode;
         this.readyTimeoutSeconds = builder.readyTimeoutSeconds;
     }
 
@@ -128,6 +132,16 @@ public class OkeConfig extends AbstractServiceConfig<OkeConfig.Builder> {
     }
 
     /**
+     * Returns which API server address the cluster's {@code kubernetes} endpoint and the kubeconfig returned by
+     * {@code CreateKubeconfig} advertise.
+     *
+     * @return the endpoint mode
+     */
+    public EndpointMode getEndpointMode() {
+        return endpointMode;
+    }
+
+    /**
      * Returns how long a cluster may stay {@code CREATING} before its k3s API server answers; after that, the cluster
      * and its work request go {@code FAILED}.
      *
@@ -147,6 +161,7 @@ public class OkeConfig extends AbstractServiceConfig<OkeConfig.Builder> {
             container.withEnv("FLOCI_OCI_SERVICES_OKE_API_SERVER_BASE_PORT", String.valueOf(apiServerBasePort));
             container.withEnv("FLOCI_OCI_SERVICES_OKE_API_SERVER_MAX_PORT", String.valueOf(getApiServerMaxPort()));
             container.withEnv("FLOCI_OCI_SERVICES_OKE_KUBECONFIG_AUTH", kubeconfigAuth.name().toLowerCase(Locale.ROOT));
+            container.withEnv("FLOCI_OCI_SERVICES_OKE_ENDPOINT_MODE", endpointMode.name().toLowerCase(Locale.ROOT));
             container.withEnv("FLOCI_OCI_SERVICES_OKE_READY_TIMEOUT_SECONDS", String.valueOf(readyTimeoutSeconds));
         }
     }
@@ -174,6 +189,24 @@ public class OkeConfig extends AbstractServiceConfig<OkeConfig.Builder> {
     }
 
     /**
+     * Which API server address the cluster's {@code kubernetes} endpoint and the kubeconfig advertise.
+     */
+    public enum EndpointMode {
+
+        /**
+         * {@code https://127.0.0.1:<hostPort>}, for clients on the Docker host, e.g. the test itself.
+         */
+        HOST,
+
+        /**
+         * The k3s container's name on Floci OCI's Docker network, for clients in other containers on that network
+         * (see {@code FlociOciContainer.withDedicatedNetwork()}). Falls back to {@link #HOST} when Floci OCI does not
+         * run in a container.
+         */
+        NETWORK
+    }
+
+    /**
      * Builder for {@link OkeConfig}.
      */
     public static class Builder extends AbstractServiceConfigBuilder<Builder, OkeConfig> {
@@ -183,6 +216,7 @@ public class OkeConfig extends AbstractServiceConfig<OkeConfig.Builder> {
         private int apiServerBasePort = DEFAULT_API_SERVER_BASE_PORT;
         private int apiServerPortsCount = DEFAULT_API_SERVER_PORTS_COUNT;
         private KubeconfigAuth kubeconfigAuth = DEFAULT_KUBECONFIG_AUTH;
+        private EndpointMode endpointMode = DEFAULT_ENDPOINT_MODE;
         private int readyTimeoutSeconds = DEFAULT_READY_TIMEOUT_SECONDS;
 
         private Builder() {
@@ -201,6 +235,7 @@ public class OkeConfig extends AbstractServiceConfig<OkeConfig.Builder> {
             this.apiServerBasePort = instance.apiServerBasePort;
             this.apiServerPortsCount = instance.apiServerPortsCount;
             this.kubeconfigAuth = instance.kubeconfigAuth;
+            this.endpointMode = instance.endpointMode;
             this.readyTimeoutSeconds = instance.readyTimeoutSeconds;
         }
 
@@ -250,6 +285,19 @@ public class OkeConfig extends AbstractServiceConfig<OkeConfig.Builder> {
          */
         public Builder kubeconfigAuth(KubeconfigAuth kubeconfigAuth) {
             this.kubeconfigAuth = kubeconfigAuth;
+            return this;
+        }
+
+        /**
+         * Sets which API server address the cluster's {@code kubernetes} endpoint and the kubeconfig returned by
+         * {@code CreateKubeconfig} advertise. Use {@link EndpointMode#NETWORK} when the Kubernetes client runs in
+         * another container on Floci OCI's Docker network.
+         *
+         * @param endpointMode the endpoint mode (default {@code HOST})
+         * @return this builder
+         */
+        public Builder endpointMode(EndpointMode endpointMode) {
+            this.endpointMode = endpointMode;
             return this;
         }
 

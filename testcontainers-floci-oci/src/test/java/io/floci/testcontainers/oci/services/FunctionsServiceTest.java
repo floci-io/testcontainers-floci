@@ -4,6 +4,7 @@ import com.oracle.bmc.functions.FunctionsInvokeClient;
 import com.oracle.bmc.functions.FunctionsManagementClient;
 import com.oracle.bmc.functions.model.Application;
 import com.oracle.bmc.functions.model.CreateApplicationDetails;
+import com.oracle.bmc.functions.model.CreateContainerImageFunctionSourceDetails;
 import com.oracle.bmc.functions.model.CreateFunctionDetails;
 import com.oracle.bmc.functions.model.Function;
 import com.oracle.bmc.functions.requests.CreateApplicationRequest;
@@ -129,7 +130,7 @@ class FunctionsServiceTest extends AbstractServiceTest {
                 .createFunctionDetails(CreateFunctionDetails.builder()
                         .applicationId(application.getId())
                         .displayName("hello")
-                        .image(image)
+                        .sourceDetails(CreateContainerImageFunctionSourceDetails.builder().image(image).build())
                         .memoryInMBs(128L)
                         .build())
                 .build()).getFunction();

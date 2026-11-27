@@ -113,6 +113,30 @@ class FlociOciContainerServicesConfigTest {
                 "FLOCI_OCI_SERVICES_OKE_MOCK", "true");
     }
 
+    @Test
+    void shouldWireOrganizationsConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withOrganizationsConfig(cfg -> cfg.enabled(false)),
+                c -> c.getOrganizationsConfig().isEnabled(), false,
+                "FLOCI_OCI_SERVICES_ORGANIZATIONS_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWireGovernanceRulesConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withGovernanceRulesConfig(cfg -> cfg.enabled(false)),
+                c -> c.getGovernanceRulesConfig().isEnabled(), false,
+                "FLOCI_OCI_SERVICES_GOVERNANCERULES_ENABLED", "false");
+    }
+
+    @Test
+    void shouldWirePsqlConfigIntoContainer() {
+        assertConfigWired(
+                c -> c.withPsqlConfig(cfg -> cfg.mock(true)),
+                c -> c.getPsqlConfig().isMock(), true,
+                "FLOCI_OCI_SERVICES_PSQL_MOCK", "true");
+    }
+
     // --- Cross-cutting configs (config/) ----------------------------------------------------------
 
     @Test

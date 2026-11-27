@@ -5,6 +5,7 @@ import com.oracle.bmc.common.ClientBuilderBase;
 import com.oracle.bmc.functions.FunctionsInvokeClient;
 import com.oracle.bmc.functions.FunctionsManagementClient;
 import com.oracle.bmc.functions.model.CreateApplicationDetails;
+import com.oracle.bmc.functions.model.CreateContainerImageFunctionSourceDetails;
 import com.oracle.bmc.functions.model.CreateFunctionDetails;
 import com.oracle.bmc.functions.requests.CreateApplicationRequest;
 import com.oracle.bmc.functions.requests.CreateFunctionRequest;
@@ -106,7 +107,7 @@ class ContainerLifecycleTest {
                     .createFunctionDetails(CreateFunctionDetails.builder()
                             .applicationId(applicationId)
                             .displayName("hello")
-                            .image("fnproject/hello:latest")
+                            .sourceDetails(CreateContainerImageFunctionSourceDetails.builder().image("fnproject/hello:latest").build())
                             .memoryInMBs(128L)
                             .timeoutInSeconds(5)
                             .build())
